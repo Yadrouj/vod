@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# server-side video cache (downloaded MuscleWiki clips)
+/.media-cache/
+
+# serwist (generated service worker)
+/public/sw.js
+/public/sw.js.map
+/public/swe-worker-*.js
+
+# playwright test artifacts
+/scripts/e2e-failure.png
+/scripts/shots/
