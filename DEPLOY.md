@@ -75,6 +75,24 @@ server {
 - [ ] `/admin` فقط با `NEXT_PUBLIC_ADMIN_CODE` باز می‌شود — کد پیش‌فرض را حتماً عوض کن.
 - [ ] PWA: کاربران از منوی مرورگر «Add to Home Screen / نصب» را می‌زنند.
 
+## ⚠️ ویدیوها روی سرورهای دیتاسنتری (curl-impersonate)
+
+کلودفلر روی مسیر ویدیوی مسل‌ویکی، **اثرانگشت TLS** را چک می‌کند و `curl` معمولی لینوکس را
+از IPهای دیتاسنتری با **403** رد می‌کند (عکس‌ها ۲۰۰ می‌دهند، فقط mp4 بلاک می‌شود). راه‌حل:
+[curl-impersonate](https://github.com/lexiforest/curl-impersonate) که JA3 کروم را تقلید می‌کند.
+
+```bash
+# روی سرور
+URL=$(curl -s https://api.github.com/repos/lexiforest/curl-impersonate/releases/latest \
+      | grep -o 'https://[^"]*x86_64-linux-gnu.tar.gz' | head -1)
+cd /tmp && curl -sL "$URL" | tar xz
+sudo cp curl-impersonate /usr/local/bin/
+# یک رَپر بساز که هدرهای کروم + Range را ست کند و نامش را در env بگذار:
+#   MEDIA_CURL=/usr/local/bin/mw-curl   (روت app/api/media از این باینری استفاده می‌کند)
+```
+روت `app/api/media/route.ts` اگر `MEDIA_CURL` ست باشد از همان استفاده می‌کند، وگرنه `curl` معمولی.
+(روی سیستم محلی/ایرانی نیازی نیست — curl سیستم جواب می‌دهد.)
+
 ## نکته‌ها
 
 - دادهٔ کاربر (برنامه، رژیم، تاریخچه، عکس‌های آنالیز) **local-first** است و در IndexedDB مرورگر خود کاربر می‌ماند؛ سرور دیتابیس ندارد.

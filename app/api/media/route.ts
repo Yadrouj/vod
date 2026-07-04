@@ -36,26 +36,16 @@ async function ensureCached(url: string): Promise<string> {
     /* miss -> download */
   }
   const tmp = path.join(tmpdir(), `mw-${process.pid}-${Date.now()}.mp4`);
-  await execFileP(
-    "curl",
-    [
-      "-s",
-      "--fail",
-      "--compressed",
-      "--max-time",
-      "60",
-      "-A",
-      UA,
-      "-H",
-      "Referer: https://musclewiki.com/",
-      "-H",
-      "Range: bytes=0-", // the form Cloudflare reliably serves
-      "-o",
-      tmp,
-      url,
-    ],
-    { maxBuffer: 128 * 1024 * 1024 }
-  );
+  // On datacenter IPs Cloudflare fingerprints the TLS handshake and 403s plain
+  // curl for the video path (posters still work). Set MEDIA_CURL to a
+  // curl-impersonate wrapper (mimics Chrome's JA3) to bypass it; that wrapper
+  // already sets the browser UA/headers, so we don't re-add -A here.
+  const CURL_BIN = process.env.MEDIA_CURL || "curl";
+  const impersonate = CURL_BIN !== "curl";
+  const args = impersonate
+    ? ["-s", "--fail", "--max-time", "60", "-H", "Referer: https://musclewiki.com/", "-H", "Range: bytes=0-", "-o", tmp, url]
+    : ["-s", "--fail", "--compressed", "--max-time", "60", "-A", UA, "-H", "Referer: https://musclewiki.com/", "-H", "Range: bytes=0-", "-o", tmp, url];
+  await execFileP(CURL_BIN, args, { maxBuffer: 128 * 1024 * 1024 });
   await fs.rename(tmp, dest);
   return dest;
 }
