@@ -41,6 +41,18 @@ That writes whatever exists inside the archive HTML into:
 public/data/vod-catalog.json
 ```
 
+Best-effort IMDb image scraper:
+
+```powershell
+$env:IMDB_LIMIT="10"
+npm run scrape-imdb-images
+```
+
+It reads `public/data/vod-catalog.json`, tries IMDb title/media pages by IMDb ID,
+downloads visible image URLs into `public/media/imdb/`, and writes local image
+paths back to the catalog. It does not bypass IMDb WAF, login, CAPTCHA, or
+other access controls.
+
 With poster/backdrop enrichment:
 
 ```powershell
