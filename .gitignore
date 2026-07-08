@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+build
+*.tsbuildinfo
+next-env.d.ts
+.env*
+.DS_Store
+npm-debug.log*
+dev-server*.log
+dev-server*.err.log
+public/data/title.*.tsv.gz
