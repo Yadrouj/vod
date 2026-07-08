@@ -79,3 +79,48 @@ export type VodArchive = {
   apiMatchedTitles?: number;
   items: VodItem[];
 };
+
+export type VodCard = {
+  id: string;
+  title: string;
+  imdbCode: string;
+  type: string;
+  year: number | null;
+  imdbVotes: number | null;
+  imdbRating: number | null;
+  genres: string[];
+  countries: string[];
+  languages: string[];
+  posterUrl: string | null;
+  backdropUrl: string | null;
+  runtimeMinutes: number | null;
+  overview: string | null;
+  qualities: string[];
+  groups: string[];
+  linksCount: number;
+};
+
+export type VodHomeSection = {
+  id: string;
+  title: string;
+  subtitle: string;
+  total: number;
+  items: VodCard[];
+};
+
+export type VodCatalogIndex = {
+  sourceUrl: string;
+  totalTitles: number;
+  totalLinks: number;
+  generatedAt: string;
+  filters: {
+    genres: string[];
+    countries: string[];
+    languages: string[];
+    years: string[];
+    qualities: string[];
+    groups: string[];
+  };
+  sections: VodHomeSection[];
+  items: VodCard[];
+};
