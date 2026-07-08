@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { BannerCarousel, BannerStrip } from "@/components/banner-carousel";
+import { BannerCarousel } from "@/components/banner-carousel";
+import { FocusRail } from "@/components/focus-rail";
+import { GradientMenu } from "@/components/gradient-menu";
 import { PosterCard } from "@/components/poster-card";
 import { SearchSuggest } from "@/components/search-suggest";
 import { loadVodIndex } from "@/lib/vod-index";
@@ -20,18 +22,7 @@ export default async function HomePage() {
   return (
     <main className="shell">
       <section className="hero home-hero">
-        <header className="topbar hero-topbar wrap">
-          <Link className="brand" href="/">VOD</Link>
-          <nav className="nav-links" aria-label="Primary">
-            <Link href="/browse?section=top-imdb">Top IMDb</Link>
-            <Link href="/browse?section=recent-films">Films</Link>
-            <Link href="/browse?section=best-series">Series</Link>
-            <Link href="/browse?section=animation">Animation</Link>
-          </nav>
-          <Link className="pill" href="/browse">
-            Browse {index.totalTitles.toLocaleString()}
-          </Link>
-        </header>
+        <GradientMenu totalTitles={index.totalTitles} />
 
         <BannerCarousel items={heroBanners} />
 
@@ -55,7 +46,7 @@ export default async function HomePage() {
         {index.sections.map((section, index) => (
           <div key={section.id}>
             <HomeRail section={section} />
-            {index === 0 && <BannerStrip items={midBanners} />}
+            {index === 0 && <FocusRail items={midBanners} />}
           </div>
         ))}
       </section>

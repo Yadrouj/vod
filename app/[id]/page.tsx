@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DownloadAction } from "@/components/download-action";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { episodeLabel } from "@/lib/link-labels";
 import { subzoneSearchUrl } from "@/lib/subtitles";
@@ -75,9 +76,9 @@ export default async function DetailPage({ params }: Props) {
                 <Link className="play-glow" href={`/watch/${item.imdbCode}`}>
                   <span className="play-dot" /> Play online
                 </Link>
-                {best && <a className="chip active" href={best.url}>Download best</a>}
+                {best && <a className="hover-button" href={best.url}><DownloadAction label="Best file" /></a>}
                 <a
-                  className="chip"
+                  className="hover-button"
                   href={subzoneSearchUrl(item.title, item.year)}
                   target="_blank"
                   rel="noreferrer"
@@ -85,7 +86,7 @@ export default async function DetailPage({ params }: Props) {
                   Subzone subtitles
                 </a>
                 <a
-                  className="chip"
+                  className="hover-button"
                   href={item.imdbUrl ?? `https://www.imdb.com/title/${item.imdbCode}/`}
                   target="_blank"
                   rel="noreferrer"
@@ -206,7 +207,7 @@ export default async function DetailPage({ params }: Props) {
                       {link.release ?? "release"} / {link.size ?? "size unknown"}
                     </span>
                   </span>
-                  <strong style={{ color: "var(--gold)" }}>{link.quality ?? "File"}</strong>
+                  <DownloadAction label={link.quality ?? "File"} />
                 </a>
               ))}
             </div>
