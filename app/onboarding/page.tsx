@@ -18,7 +18,7 @@ import type { Gender, Level, TrainingGoal, ViewMode } from "@/lib/types";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { t } = useLang();
+  const { t, n } = useLang();
   const existing = useSettings();
 
   const [gender, setGender] = useState<Gender>(DEFAULT_SETTINGS.gender);
@@ -128,7 +128,7 @@ export default function OnboardingPage() {
                       : "bg-card2 text-muted ring-1 ring-line"
                   }`}
                 >
-                  {d}
+                  {n(d)}
                 </button>
               ))}
             </div>

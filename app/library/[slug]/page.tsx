@@ -20,7 +20,7 @@ export default function ExerciseDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = use(params);
-  const { t, lang } = useLang();
+  const { t, lang, n } = useLang();
   const { index } = useExercises();
   const settings = useSettings() ?? DEFAULT_SETTINGS;
   const program = useProgram();
@@ -103,23 +103,30 @@ export default function ExerciseDetailPage({
         </div>
       </section>
 
-      {exercise.steps.length > 0 && (
-        <section className="mt-5">
-          <h2 className="text-sm font-bold text-ink">{t("ex.howTo")}</h2>
-          <ol className="mt-2 space-y-2">
-            {exercise.steps.map((step, i) => (
-              <li key={i} className="flex gap-3">
-                <span className="flex size-6 flex-shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-brandink">
-                  {i + 1}
-                </span>
-                <span className="text-sm text-muted" dir="ltr">
-                  {step}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
+      {(() => {
+        // Prefer the Persian translation in fa mode; fall back to English steps.
+        const faSteps = exercise.steps_fa;
+        const showFa = lang === "fa" && faSteps && faSteps.length === exercise.steps.length;
+        const steps = showFa ? faSteps! : exercise.steps;
+        if (steps.length === 0) return null;
+        return (
+          <section className="mt-5">
+            <h2 className="text-sm font-bold text-ink">{t("ex.howTo")}</h2>
+            <ol className="mt-2 space-y-2">
+              {steps.map((step, i) => (
+                <li key={i} className="flex gap-3">
+                  <span className="flex size-6 flex-shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-brandink">
+                    {n(i + 1)}
+                  </span>
+                  <span className="text-sm text-muted" dir={showFa ? "rtl" : "ltr"}>
+                    {step}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        );
+      })()}
 
       <section className="mt-6 rounded-2xl bg-card p-4 ring-1 ring-line">
         <h2 className="text-sm font-bold text-ink">{t("ex.addToDay")}</h2>

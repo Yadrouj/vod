@@ -12,11 +12,12 @@ import {
   getProgram,
   getSessions,
   getSettings,
+  getSocial,
   getUsage,
   needsLogin,
   bumpUsage,
 } from "./db";
-import type { Account, Program, Session, Settings, Usage } from "./types";
+import type { Account, Program, Session, Settings, SocialProfile, Usage } from "./types";
 import type { DietProfile } from "./nutrition";
 import type { DietPlan } from "./foods";
 
@@ -62,6 +63,11 @@ export function useAccount(): Account | null | undefined {
 
 export function useUsage(): Usage | undefined {
   return useLiveQuery(getUsage, []);
+}
+
+export function useSocial(): SocialProfile | null | undefined {
+  // undefined = loading, null = not set up yet
+  return useLiveQuery(async () => (await getSocial()) ?? null, []);
 }
 
 /**

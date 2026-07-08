@@ -8,9 +8,9 @@
   --color-card2: #1a2136;
   --color-card3: #222b45; /* hover/pressed surface */
 
-  /* Hairlines */
-  --color-line: #273049;
-  --color-line2: #38445f; /* emphasized border */
+  /* Hairlines — very subtle for a flat, minimal look (strokes almost disappear) */
+  --color-line: #1a2136;
+  --color-line2: #232c45; /* emphasized border */
 
   /* Text */
   --color-ink: #f0f4fd;
@@ -39,6 +39,12 @@
   --color-fat: #ff8fb0;
 
   --font-sans: var(--font-vazir), ui-sans-serif, system-ui, sans-serif;
+
+  /* Rounding — tightened for a flatter, minimal, premium feel (rounded-full unchanged) */
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.3rem;
+  --radius-2xl: 0.4rem;
+  --radius-3xl: 0.55rem;
 }
 
 body {
@@ -167,6 +173,23 @@ select {
   }
   50% {
     filter: drop-shadow(0 0 16px rgb(184 242 74 / 0.8));
+  }
+}
+
+/* Flashy call-to-action — pulsing lime glow + gentle scale, for the "start next
+   exercise" button that appears once an exercise's sets are all finished. */
+.flashy {
+  animation: flashy 1.05s ease-in-out infinite;
+}
+@keyframes flashy {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(184 242 74 / 0.55), 0 8px 28px -8px rgb(184 242 74 / 0.5);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgb(184 242 74 / 0), 0 10px 34px -6px rgb(184 242 74 / 0.7);
+    transform: scale(1.035);
   }
 }
 

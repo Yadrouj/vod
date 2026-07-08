@@ -139,4 +139,82 @@ export function nutritionExtras(p: DietProfile, t: MacroTargets): NutritionExtra
   };
 }
 
+// ---- Peri-workout nutrition (what & when to eat around training) ----
+
+export interface PeriMeal {
+  when: string;
+  whenFa: string;
+  foods: string;
+  foodsFa: string;
+  carbs: number; // grams
+  protein: number; // grams
+  tip: string;
+  tipFa: string;
+}
+export interface PeriWorkout {
+  pre: PeriMeal;
+  post: PeriMeal;
+  hydration: string;
+  hydrationFa: string;
+}
+
+/** Evidence-based pre/post-workout meal guidance, scaled to bodyweight, goal & diet style. */
+export function periWorkout(p: DietProfile): PeriWorkout {
+  const goalMul = p.goal === "lose" ? 0.65 : p.goal === "gain" ? 1.15 : 0.85;
+  const preCarb = round(p.weightKg * 0.8 * goalMul);
+  const prePro = round(p.weightKg * 0.3);
+  const postCarb = round(p.weightKg * 0.9 * goalMul);
+  const postPro = round(p.weightKg * 0.4);
+
+  const vegan = p.style === "vegan";
+  const veg = p.style === "vegetarian";
+
+  const preFoodsFa = vegan
+    ? "جو دوسر + کره‌بادام‌زمینی + موز"
+    : veg
+    ? "نان سنگک + پنیر کم‌چرب + عسل + موز"
+    : "نان سنگک + تخم‌مرغ + موز";
+  const preFoods = vegan
+    ? "Oats + peanut butter + banana"
+    : veg
+    ? "Bread + low-fat cheese + honey + banana"
+    : "Bread + eggs + banana";
+
+  const postFoodsFa = vegan
+    ? "پروتئین گیاهی + برنج یا خرما"
+    : veg
+    ? "تخم‌مرغ + سیب‌زمینی، یا وی + موز"
+    : "سینه مرغ + برنج، یا وی + موز";
+  const postFoods = vegan
+    ? "Plant protein + rice or dates"
+    : veg
+    ? "Eggs + potato, or whey + banana"
+    : "Chicken breast + rice, or whey + banana";
+
+  return {
+    pre: {
+      when: "1–2 h before",
+      whenFa: "۱ تا ۲ ساعت قبل تمرین",
+      foods: preFoods,
+      foodsFa: preFoodsFa,
+      carbs: preCarb,
+      protein: prePro,
+      tip: "Carb-forward, low fat & fiber so it digests fast and fuels the session.",
+      tipFa: "کربوهیدرات محور، کم‌چرب و کم‌فیبر تا سریع هضم شود و انرژی تمرین را بدهد.",
+    },
+    post: {
+      when: "within 60 min after",
+      whenFa: "تا ۶۰ دقیقه بعد تمرین",
+      foods: postFoods,
+      foodsFa: postFoodsFa,
+      carbs: postCarb,
+      protein: postPro,
+      tip: "Fast protein + carbs to restart muscle protein synthesis and refill glycogen.",
+      tipFa: "پروتئین سریع + کربوهیدرات برای شروع عضله‌سازی و پرکردن ذخیره‌ی گلیکوژن.",
+    },
+    hydration: "Sip 400–600 ml water in the hour before, and 500 ml per 0.5 kg lost during training.",
+    hydrationFa: "یک ساعت قبل ۴۰۰ تا ۶۰۰ میلی‌لیتر آب بنوش و بعد تمرین به‌ازای هر نیم‌کیلو کاهش وزن، ۵۰۰ میلی‌لیتر جبران کن.",
+  };
+}
+
 export const DIET_PROFILE_ID = "me";

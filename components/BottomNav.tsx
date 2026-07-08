@@ -12,6 +12,7 @@ const TABS: { href: string; key: string; icon: IconName }[] = [
   { href: "/", key: "nav.home", icon: "home" },
   { href: "/program", key: "nav.train", icon: "dumbbell" },
   { href: "/diet", key: "nav.diet", icon: "diet" },
+  { href: "/gyms", key: "nav.gyms", icon: "pin" },
   { href: "/market", key: "nav.store", icon: "store" },
 ];
 
@@ -24,11 +25,13 @@ export default function BottomNav() {
   }
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t border-line/70 bg-base2/90 backdrop-blur-xl pb-safe">
+    <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md bg-base2/60 backdrop-blur-2xl pb-safe shadow-[0_-10px_30px_-12px_rgb(0_0_0/0.7)]">
       <ul className="flex">
         {TABS.map((tab) => {
           const active =
-            tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
+            tab.href === "/"
+              ? pathname === "/"
+              : pathname.startsWith(tab.href) || (tab.href === "/gyms" && pathname.startsWith("/stores"));
           return (
             <li key={tab.href} className="flex-1">
               <Link

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Button, Segmented, cn } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { useLang } from "@/components/LangProvider";
-import { saveDietPlan, saveDietProfile } from "@/lib/db";
+import { clearDietPlan, saveDietProfile } from "@/lib/db";
 import { useDietProfile, useSettings } from "@/lib/hooks";
 import {
   ACTIVITY_OPTIONS,
@@ -14,7 +14,6 @@ import {
   DIET_PROFILE_ID,
   GOAL_OPTIONS,
   STYLE_OPTIONS,
-  macroTargets,
   type ActivityLevel,
   type Allergen,
   type DietProfile,
@@ -22,7 +21,6 @@ import {
   type Goal,
   type Sex,
 } from "@/lib/nutrition";
-import { generatePlan } from "@/lib/foods";
 
 export default function DietSetupPage() {
   const router = useRouter();
@@ -77,9 +75,8 @@ export default function DietSetupPage() {
       mealsPerDay: meals,
     };
     await saveDietProfile(profile);
-    const targets = macroTargets(profile);
-    const plan = generatePlan(profile, targets, 7, Math.floor(Date.now() % 2147483647));
-    await saveDietPlan({ ...plan, createdAt: Date.now() });
+    // Clear any old plan so /diet regenerates it fresh — with the "designing…" animation.
+    await clearDietPlan();
     router.push("/diet");
   }
 

@@ -18,6 +18,16 @@ import ExerciseCard from "./ExerciseCard";
 
 const PAGE = 40;
 
+// Which equipment you can realistically train with at home vs. what needs a gym.
+const HOME_EQUIP = new Set([
+  "Bodyweight", "Dumbbells", "Kettlebells", "Band", "TRX", "Medicine-Ball",
+  "Medicineball", "Bosu-Ball", "Yoga", "Pilates", "Stretches", "Recovery", "Cardio",
+]);
+const GYM_EQUIP = new Set([
+  "Barbell", "Machine", "Cables", "Smith-Machine", "Plate", "Vitruvian",
+]);
+type Place = "all" | "home" | "gym";
+
 // MuscleWiki's equipment ordering + icon per category.
 const EQUIP_META: { key: string; icon: IconName }[] = [
   { key: "Barbell", icon: "barbell" },
@@ -72,6 +82,7 @@ export default function ExerciseBrowser({
   const [gender, setGender] = useState<Gender>(settings.gender);
   const [view, setView] = useState<ViewMode>(settings.view);
   const [equip, setEquip] = useState<string>("All");
+  const [place, setPlace] = useState<Place>("all");
   const [equipOpen, setEquipOpen] = useState(true);
   const [innerGroup, setInnerGroup] = useState<string>(initialFocus?.[0] ?? "All");
   const [limit, setLimit] = useState(PAGE);
@@ -88,6 +99,8 @@ export default function ExerciseBrowser({
     return index.all.filter((ex) => {
       if (!matchesView(ex.category, view)) return false;
       if (!levelAllows(settings.level, ex.difficulty)) return false;
+      if (place === "home" && !HOME_EQUIP.has(ex.category)) return false;
+      if (place === "gym" && !GYM_EQUIP.has(ex.category)) return false;
       if (equip !== "All" && ex.category !== equip) return false;
       if (muscles && !ex.primaryMuscles.some((m) => muscles.includes(m)))
         return false;
@@ -96,9 +109,9 @@ export default function ExerciseBrowser({
       if (query && !ex.name.toLowerCase().includes(query)) return false;
       return true;
     });
-  }, [index, q, view, equip, group, muscleFilter, settings.level]);
+  }, [index, q, view, equip, place, group, muscleFilter, settings.level]);
 
-  useEffect(() => setLimit(PAGE), [q, view, equip, group, muscleFilter]);
+  useEffect(() => setLimit(PAGE), [q, view, equip, place, group, muscleFilter]);
 
   function changeGender(g: Gender) {
     setGender(g);
@@ -148,6 +161,17 @@ export default function ExerciseBrowser({
           ]}
         />
       </div>
+
+      {/* where you train — home vs gym */}
+      <Segmented
+        value={place}
+        onChange={setPlace}
+        options={[
+          { value: "all", label: t("lib.locAll") },
+          { value: "home", label: t("lib.locHome") },
+          { value: "gym", label: t("lib.locGym") },
+        ]}
+      />
 
       {/* body-part chips */}
       <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 py-0.5">

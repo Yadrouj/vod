@@ -6,13 +6,16 @@ import { Icon } from "@/components/icons";
 import { useLang } from "@/components/LangProvider";
 import { tFocus, tWeekday } from "@/lib/i18n";
 import { makeDay, makeProgram, saveProgram, PROGRAM_ID } from "@/lib/db";
-import { useProgram } from "@/lib/hooks";
+import { useDietProfile, useProgram } from "@/lib/hooks";
+import { estimateSessionKcal } from "@/lib/calories";
 import { FOCUS_GROUPS, WEEKDAYS } from "@/lib/taxonomy";
 import type { Program, ProgramDay } from "@/lib/types";
 
 export default function ProgramPage() {
   const { t, lang } = useLang();
   const program = useProgram();
+  const dietProfile = useDietProfile();
+  const weightKg = dietProfile?.weightKg ?? 75;
 
   if (program === undefined) return <Spinner />;
 
@@ -63,6 +66,7 @@ export default function ProgramPage() {
             day={day}
             lang={lang}
             t={t}
+            weightKg={weightKg}
             onLabel={(l) => setLabel(day.id, l)}
             onToggleFocus={(f) => toggleFocus(day.id, f)}
             onRemove={() => removeDay(day.id)}
@@ -83,6 +87,7 @@ function DayEditor({
   day,
   lang,
   t,
+  weightKg,
   onLabel,
   onToggleFocus,
   onRemove,
@@ -90,10 +95,13 @@ function DayEditor({
   day: ProgramDay;
   lang: "fa" | "en";
   t: (k: string, p?: Record<string, string | number>) => string;
+  weightKg: number;
   onLabel: (label: string) => void;
   onToggleFocus: (focus: string) => void;
   onRemove: () => void;
 }) {
+  const kcal = estimateSessionKcal(day.exercises, weightKg);
+  const hasExercises = day.exercises.length > 0;
   return (
     <div className="rounded-2xl bg-card p-4 ring-1 ring-line">
       <div className="flex items-center justify-between">
@@ -135,16 +143,33 @@ function DayEditor({
         ))}
       </div>
 
-      <div className="mt-4 flex items-center justify-between border-t border-line pt-3">
-        <span className="text-sm text-muted">
-          {t("common.exercisesN", { n: day.exercises.length })}
-        </span>
-        <Link
-          href={`/program/${day.id}`}
-          className="inline-flex items-center gap-1 text-sm font-bold text-brand"
-        >
-          {t("prog.editExercises")} <Icon name="chevronRight" className="size-4 flip-rtl" />
-        </Link>
+      <div className="mt-4 flex items-center justify-between gap-2 border-t border-line pt-3">
+        <div className="flex flex-col">
+          <span className="text-sm text-muted">
+            {t("common.exercisesN", { n: day.exercises.length })}
+          </span>
+          {hasExercises && (
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-orange-300">
+              <Icon name="flame" className="size-3.5" /> {t("prog.kcalEst", { n: kcal })}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/program/${day.id}`}
+            className="inline-flex items-center gap-1 rounded-full bg-card2 px-3 py-1.5 text-xs font-bold text-muted ring-1 ring-line"
+          >
+            <Icon name="edit" className="size-3.5" /> {t("prog.editExercises")}
+          </Link>
+          {hasExercises && (
+            <Link
+              href={`/workout/${day.id}`}
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-1.5 text-sm font-extrabold text-brandink shadow-[0_4px_14px_-4px_rgb(184_242_74/0.6)] active:scale-95"
+            >
+              <Icon name="play" className="size-4 flip-rtl" /> {t("prog.start")}
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );

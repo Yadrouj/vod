@@ -8,6 +8,7 @@ export const DICT: Record<string, Entry> = {
   // Brand
   "app.name": ["رمق", "Ramagh"],
   "app.tagline": ["تمرین و تغذیه‌ی تو، یکجا", "Your training & nutrition, together"],
+  "app.slogan": ["انرژی‌ات را بساز، قوی‌تر از دیروز", "Build your energy — stronger than yesterday"],
 
   // Common
   "common.loading": ["در حال بارگذاری…", "Loading…"],
@@ -15,6 +16,7 @@ export const DICT: Record<string, Entry> = {
   "common.edit": ["ویرایش", "Edit"],
   "common.remove": ["حذف", "Remove"],
   "common.done": ["تمام", "Done"],
+  "common.cancel": ["انصراف", "Cancel"],
   "common.start": ["شروع", "Start"],
   "common.plan": ["برنامه‌ریزی", "Plan"],
   "common.settings": ["تنظیمات", "Settings"],
@@ -92,6 +94,9 @@ export const DICT: Record<string, Entry> = {
   ],
   "lib.search": ["جستجوی تمرین…", "Search exercises…"],
   "lib.allParts": ["همه", "All parts"],
+  "lib.locAll": ["همه‌جا", "Anywhere"],
+  "lib.locHome": ["خانه", "Home"],
+  "lib.locGym": ["باشگاه", "Gym"],
   "lib.allGear": ["همه‌ی ابزار", "All gear"],
   "lib.equipment": ["ابزار تمرین", "Equipment"],
   "lib.countN": ["{n} تمرین", "{n} exercise(s)"],
@@ -123,8 +128,10 @@ export const DICT: Record<string, Entry> = {
     "Assign a focus to each day, then add exercises.",
   ],
   "prog.create4": ["ساخت برنامه‌ی ۴ روزه", "Create a 4-day program"],
-  "prog.editExercises": ["ویرایش تمرین‌ها", "Edit exercises"],
+  "prog.editExercises": ["ویرایش", "Edit"],
   "prog.addDay": ["افزودن روز تمرین", "Add a training day"],
+  "prog.start": ["شروع", "Start"],
+  "prog.kcalEst": ["≈ {n} کالری", "≈ {n} kcal"],
   "prog.noFocus": ["تمرکزی تعیین نشده", "No focus set"],
   "prog.tapAdd": ["برای افزودن / حذف بزن", "Tap to add / remove"],
   "prog.noExercises": ["هنوز تمرینی نیست. از پایین اضافه کن.", "No exercises yet. Add some below."],
@@ -149,11 +156,14 @@ export const DICT: Record<string, Entry> = {
   "wo.resume": ["ادامه", "Resume"],
   "wo.hold": ["نگه‌دار", "hold"],
   "wo.skipRest": ["رد استراحت ←", "Skip rest →"],
+  "wo.startNext": ["شروع تمرین بعدی ←", "Start next exercise →"],
+  "wo.exerciseDone": ["این تمرین تمام شد!", "Exercise complete!"],
   "wo.upNext": ["بعدی: {x}", "Up next: {x}"],
   "wo.nextSet": ["ست {n} · {x}", "Set {n} · {x}"],
   "wo.finish": ["پایان", "Finish"],
   "wo.complete": ["تمرین تمام شد!", "Workout complete!"],
   "wo.setsDone": ["{day} · {n} ست انجام شد", "{day} · {n} sets done"],
+  "wo.kcalBurned": ["حدود {n} کالری سوزاندی", "≈ {n} kcal burned"],
   "wo.saveWorkout": ["ذخیره‌ی تمرین", "Save workout"],
   "wo.discard": ["حذف", "Discard"],
   "wo.leaveConfirm": [
@@ -207,6 +217,23 @@ export const DICT: Record<string, Entry> = {
   "diet.torobFrom": ["از {p} تومان", "from {p} Toman"],
   "diet.viewTorob": ["ترب", "Torob"],
   "diet.priceNA": ["قیمت لحظه‌ای در دسترس نیست", "Live price unavailable"],
+  "diet.estPrice": ["تخمین قیمت", "Est. price"],
+  "diet.toman": ["تومان", "Toman"],
+  "diet.onTorob": ["دیدن در ترب", "View on Torob"],
+  "diet.downloadPdf": ["دانلود برنامه (PDF)", "Download plan (PDF)"],
+  "diet.designing": ["در حال طراحی برنامه‌ی تو…", "Designing your plan…"],
+  "diet.gen1": ["تحلیل نیازها و هدف تو", "Analyzing your needs & goal"],
+  "diet.gen2": ["محاسبه‌ی کالری و درشت‌مغذی‌ها", "Calculating calories & macros"],
+  "diet.gen3": ["طراحی وعده‌های غذایی", "Designing your meals"],
+  "diet.gen4": ["انتخاب مکمل‌های مناسب", "Selecting the right supplements"],
+  "peri.title": ["تغذیه‌ی دور تمرین", "Peri-workout nutrition"],
+  "peri.subtitle": ["چی و کِی بخوری تا بیشترین نتیجه را از تمرین بگیری", "What & when to eat to get the most from training"],
+  "peri.pre": ["قبل تمرین", "Pre-workout"],
+  "peri.post": ["بعد تمرین", "Post-workout"],
+  "peri.hydration": ["آب‌رسانی", "Hydration"],
+  "pr.title": ["رکوردهای شخصی تو", "Your personal records"],
+  "pr.subtitle": ["بهترین رکورد هر حرکت — اضافه‌بار تدریجی را دنبال کن", "Your best lift per move — chase progressive overload"],
+  "pr.est1RM": ["یک‌تکرار بیشینه‌ی تخمینی", "Estimated 1-rep max"],
   "diet.livePriceNote": ["قیمت‌ها به‌صورت زنده از ترب گرفته می‌شوند", "Live prices from Torob"],
 
   // Meals
@@ -355,6 +382,7 @@ export const DICT: Record<string, Entry> = {
 
   // AI coach
   "coach.title": ["مربی هوشمند", "AI Coach"],
+  "coach.clear": ["گفتگوی جدید", "New chat"],
   "coach.subtitle": [
     "درباره‌ی تمرین، تغذیه و ریکاوری بپرس — با شناخت برنامه‌ی خودت.",
     "Ask about training, nutrition and recovery — aware of your own plan.",
@@ -363,8 +391,8 @@ export const DICT: Record<string, Entry> = {
   "coach.send": ["ارسال", "Send"],
   "coach.thinking": ["در حال فکر کردن…", "Thinking…"],
   "coach.hello": [
-    "سلام! مربی رمق هستم 👋\nبرای این‌که دقیق راهنمایی‌ات کنم، هر چه‌قدر از این‌ها را بدانم بهتر جواب می‌دهم:\n• سن، قد، وزن و جنسیت\n• سابقه‌ی تمرین و سطح آمادگی\n• آسیب‌دیدگی یا درد مفصلی\n• بیماری (قلب، فشار، دیابت) یا مشکل گوارشی\n• داروها، کیفیت خواب و استرس\n\nحالا بگو: هدف و سؤالت چیست؟",
-    "Hi! I'm your Ramagh coach 👋\nThe more of these I know, the better my advice:\n• Age, height, weight, sex\n• Training history & fitness level\n• Injuries or joint pain\n• Medical conditions (heart, BP, diabetes) or digestive issues\n• Medications, sleep quality, stress\n\nSo — what's your goal and your question?",
+    "سلام! مربی رمق هستم.\nبرای این‌که دقیق راهنمایی‌ات کنم، هر چه‌قدر از این‌ها را بدانم بهتر جواب می‌دهم:\n• سن، قد، وزن و جنسیت\n• سابقه‌ی تمرین و سطح آمادگی\n• آسیب‌دیدگی یا درد مفصلی\n• بیماری (قلب، فشار، دیابت) یا مشکل گوارشی\n• داروها، کیفیت خواب و استرس\n\nحالا بگو: هدف و سؤالت چیست؟",
+    "Hi! I'm your Ramagh coach.\nThe more of these I know, the better my advice:\n• Age, height, weight, sex\n• Training history & fitness level\n• Injuries or joint pain\n• Medical conditions (heart, BP, diabetes) or digestive issues\n• Medications, sleep quality, stress\n\nSo — what's your goal and your question?",
   ],
   "coach.error": [
     "پاسخ دریافت نشد. اتصال یا کلید API را بررسی کن.",
@@ -395,7 +423,7 @@ export const DICT: Record<string, Entry> = {
   "sup.message": ["پیامت را بنویس…", "Write your message…"],
   "sup.contact": ["راه تماس (اختیاری — ایمیل یا تلفن)", "Contact (optional — email or phone)"],
   "sup.send": ["ارسال", "Send"],
-  "sup.sent": ["دریافت شد — ممنون! 🙏", "Received — thank you! 🙏"],
+  "sup.sent": ["دریافت شد — ممنون!", "Received — thank you!"],
   "sup.history": ["پیام‌های قبلی تو", "Your previous messages"],
   "sup.empty": ["پیام خالی است.", "Message is empty."],
   "sup.contactUs": ["ارتباط با ما", "Contact us"],
@@ -439,10 +467,197 @@ export const DICT: Record<string, Entry> = {
   // News bell
   "news.title": ["اخبار و اطلاعیه‌ها", "News & alerts"],
   "news.empty": ["خبر جدیدی نیست.", "Nothing new."],
+
+  // Trainer profile
+  "trn.coaches": ["مربیان ما", "Our coaches"],
+  "trn.viewAll": ["همه", "All"],
+  "trn.about": ["درباره", "About"],
+  "trn.specialties": ["تخصص‌ها", "Specialties"],
+  "trn.contact": ["راه‌های ارتباط", "Get in touch"],
+  "trn.plans": ["برنامه‌ها و تمرین‌های او", "Their plans & workouts"],
+  "trn.plansN": ["{n} برنامه", "{n} plans"],
+  "trn.news": ["اخبار و به‌روزرسانی‌ها", "News & updates"],
+  "trn.clients": ["شاگرد", "clients"],
+  "trn.yearsExp": ["سال سابقه", "yrs exp"],
+  "trn.rating": ["امتیاز", "rating"],
+  "trn.viewProfile": ["مشاهده‌ی پروفایل مربی", "View coach profile"],
+  "trn.verified": ["مربی تأییدشده‌ی رمق", "Verified Ramagh coach"],
+  "trn.notFound": ["مربی پیدا نشد", "Coach not found"],
+  "trn.book": ["درخواست مشاوره", "Request coaching"],
+
+  // Nearby gyms / map
+  "nav.gyms": ["باشگاه‌ها", "Gyms"],
+  "places.title": ["باشگاه‌ها و فروشگاه‌ها", "Gyms & stores"],
+  "places.subtitle": ["باشگاه، داروخانه، مکمل و فروشگاه ورزشی نزدیک تو", "Gyms, pharmacies, supplements and sports stores near you"],
+  "gym.title": ["باشگاه‌های نزدیک", "Nearby gyms"],
+  "gym.subtitle": ["باشگاه‌های تهران روی نقشه — نزدیک‌ترین‌ها به تو", "Tehran gyms on the map — closest to you"],
+  "gym.locate": ["نزدیک‌ترین به من", "Nearest to me"],
+  "gym.locating": ["در حال یافتن موقعیت…", "Locating…"],
+  "gym.permDenied": ["دسترسی به موقعیت داده نشد. می‌توانی روی نقشه بگردی.", "Location access denied. You can browse the map."],
+  "gym.geoUnavailable": ["موقعیت‌یابی در دسترس نیست.", "Geolocation unavailable."],
+  "gym.km": ["{n} کیلومتر", "{n} km"],
+  "gym.m": ["{n} متر", "{n} m"],
+  "gym.route": ["مسیریابی", "Directions"],
+  "gym.call": ["تماس", "Call"],
+  "gym.site": ["وب‌سایت", "Website"],
+  "gym.search": ["جستجوی باشگاه یا محله…", "Search gym or area…"],
+  "gym.countN": ["{n} باشگاه", "{n} gyms"],
+  "gym.kind.gym": ["باشگاه بدنسازی", "Gym"],
+  "gym.kind.pool": ["استخر", "Pool"],
+  "gym.kind.sports": ["مجموعه ورزشی", "Sports centre"],
+  "gym.women": ["بانوان", "Women"],
+  "gym.myLocation": ["موقعیت من", "You"],
+  "gym.noMatch": ["باشگاهی پیدا نشد.", "No gyms found."],
+  "gym.attribution": ["داده‌ها © OpenStreetMap", "Data © OpenStreetMap"],
+  "gym.offline": ["دانلود نقشه‌ی آفلاین تهران", "Download offline Tehran map"],
+  "gym.offlineHint": ["نقشه را برای استفاده بدون اینترنت ذخیره کن (~۸ مگابایت).", "Save the map for offline use (~8 MB)."],
+  "gym.offlineDl": ["در حال دانلود نقشه… {n}٪", "Downloading map… {n}%"],
+  "gym.offlineDone": ["نقشه‌ی تهران آفلاین ذخیره شد ✓", "Tehran map saved offline ✓"],
+  "gym.routeVia": ["مسیریابی با", "Route via"],
+  "gym.neshan": ["نشان", "Neshan"],
+  "gym.gmaps": ["گوگل‌مپ", "Google Maps"],
+  "gym.directionsTo": ["مسیر به «{name}»", "Directions to “{name}”"],
+  "gym.mapLoading": ["در حال بارگذاری نقشه…", "Loading map…"],
+
+  // Stores (pharmacies / supplement / sports shops) — mirrors the gyms feature
+  "nav.stores": ["فروشگاه‌ها", "Stores"],
+  "store.title": ["فروشگاه‌ها", "Stores"],
+  "store.subtitle": ["داروخانه، مکمل و فروشگاه ورزشی نزدیک تو", "Pharmacies, supplement & sports stores near you"],
+  "store.countN": ["{n} فروشگاه", "{n} stores"],
+  "store.kind.pharmacy": ["داروخانه", "Pharmacy"],
+  "store.kind.supplement": ["فروشگاه مکمل", "Supplement store"],
+  "store.kind.sports": ["فروشگاه ورزشی", "Sports store"],
+  "store.kind.medical": ["تجهیزات پزشکی", "Medical supply"],
+  "store.all": ["همه", "All"],
+  "store.noMatch": ["فروشگاهی پیدا نشد.", "No stores found."],
+  "store.search": ["جستجوی فروشگاه یا محله…", "Search store or area…"],
+
+  // Social account
+  "soc.account": ["حساب اجتماعی", "Social account"],
+  "soc.setup": ["ساخت حساب اجتماعی", "Create your social profile"],
+  "soc.setupHint": ["برای نظر دادن به باشگاه‌ها و اشتراک عکس روزانه، یک نام کاربری و آواتار انتخاب کن.", "Pick a username & avatar to review gyms and share daily photos."],
+  "soc.username": ["نام کاربری", "Username"],
+  "soc.usernamePh": ["مثلاً: علی_فیت", "e.g. ali_fit"],
+  "soc.pickAvatar": ["انتخاب آواتار", "Choose your avatar"],
+  "soc.skin": ["رنگ پوست", "Skin tone"],
+  "soc.userId": ["شناسه کاربری", "User ID"],
+  "soc.save": ["ذخیره حساب", "Save profile"],
+  "soc.saved": ["ذخیره شد ✓", "Saved ✓"],
+  "soc.edit": ["ویرایش حساب اجتماعی", "Edit social profile"],
+  "soc.needAccount": ["برای مشارکت در جامعه، اول حساب اجتماعی‌ات را بساز.", "Set up your social profile to join the community."],
+  "soc.goProfile": ["ساخت حساب در پروفایل", "Set up in Profile"],
+  "soc.nameRequired": ["یک نام کاربری وارد کن.", "Enter a username."],
+  "soc.member": ["عضو جامعه‌ی رمق", "Ramagh community member"],
+
+  // Reviews
+  "rev.title": ["نظرات کاربران", "Community reviews"],
+  "rev.countN": ["{n} نظر", "{n} reviews"],
+  "rev.write": ["ثبت نظر", "Write a review"],
+  "rev.yourRating": ["امتیاز تو", "Your rating"],
+  "rev.placeholder": ["تجربه‌ات از این باشگاه را بنویس…", "Share your experience at this gym…"],
+  "rev.addPhoto": ["افزودن عکس", "Add photo"],
+  "rev.submit": ["ارسال نظر", "Post review"],
+  "rev.sending": ["در حال ارسال…", "Posting…"],
+  "rev.none": ["هنوز نظری ثبت نشده — اولین نفر باش!", "No reviews yet — be the first!"],
+  "rev.needText": ["یک نظر بنویس یا امتیاز بده.", "Add a rating or a comment."],
+
+  // Social feed (in market)
+  "feed.title": ["فید جامعه", "Community feed"],
+  "feed.subtitle": ["عکس امروزت را از باشگاه با بقیه به اشتراک بگذار.", "Share today's gym photo with everyone."],
+  "feed.share": ["اشتراک عکس امروز", "Share today's photo"],
+  "feed.caption": ["یک توضیح بنویس…", "Write a caption…"],
+  "feed.atGym": ["باشگاه (اختیاری)", "Gym (optional)"],
+  "feed.post": ["انتشار", "Post"],
+  "feed.posting": ["در حال انتشار…", "Posting…"],
+  "feed.empty": ["هنوز پستی نیست — اولین عکس را تو بگذار!", "No posts yet — share the first!"],
+  "feed.needContent": ["یک عکس یا متن اضافه کن.", "Add a photo or some text."],
+  "feed.addPhoto": ["انتخاب عکس", "Choose photo"],
+  "feed.at": ["در {gym}", "at {gym}"],
+
+  // Market sections
+  "mkt.secPlans": ["برنامه‌ها", "Plans"],
+  "mkt.secGyms": ["باشگاه‌ها", "Gyms"],
+  "mkt.secSocial": ["اجتماعی", "Social"],
+  "mkt.secExercise": ["تمرین", "Exercise"],
+  "mkt.secNutrition": ["تغذیه", "Nutrition"],
+  "mkt.gymsCta": ["یافتن باشگاه‌های نزدیک تو روی نقشه", "Find gyms near you on the map"],
+  "mkt.gymsCtaBtn": ["باز کردن نقشه‌ی باشگاه‌ها", "Open gym map"],
+  "mkt.secStores": ["فروشگاه‌ها", "Stores"],
+  "mkt.storesCtaBtn": ["باز کردن نقشه‌ی فروشگاه‌ها", "Open store map"],
+
+  // Feed composer / post types
+  "feed.tab.story": ["استوری", "Story"],
+  "feed.tab.photo": ["عکس", "Photo"],
+  "feed.tab.activity": ["فعالیت", "Activity"],
+  "feed.tab.program": ["برنامه", "Program"],
+  "feed.storyPh": ["چی تو ذهنته؟ تجربه، انگیزه یا مسیرت را بنویس…", "What's on your mind? Share a win, tip or your journey…"],
+  "feed.pickActivity": ["یک تمرین را برای اشتراک انتخاب کن:", "Pick a workout to share:"],
+  "feed.noActivity": ["هنوز تمرینی ثبت نکرده‌ای. یک تمرین کامل کن.", "No workouts logged yet. Finish one first."],
+  "feed.shareProgram": ["برنامه‌ی فعلی من", "My current program"],
+  "feed.noProgram": ["هنوز برنامه‌ای نساخته‌ای.", "You have no program yet."],
+  "feed.likeN": ["{n}", "{n}"],
+  "post.didActivity": ["یک تمرین را کامل کرد", "completed a workout"],
+  "post.sharedProgram": ["برنامه‌اش را به اشتراک گذاشت", "shared a program"],
+  "post.setsN": ["{n} ست", "{n} sets"],
+  "post.exercisesN": ["{n} حرکت", "{n} exercises"],
+  "post.daysWeek": ["{n} روز در هفته", "{n} days/week"],
+  "post.workoutOn": ["تمرین {day}", "{day} workout"],
+
+  // Coach registration panel
+  "coachreg.title": ["پنل مربیان", "Coach panel"],
+  "coachreg.subtitle": ["به‌عنوان مربی ثبت‌نام کن و برنامه‌هایت را در رمق منتشر کن.", "Register as a coach and publish your programs on Ramagh."],
+  "coachreg.menu": ["پنل مربیان — ثبت‌نام و ارسال برنامه", "Coach panel — register & submit"],
+  "coachreg.reg": ["ثبت‌نام مربی", "Coach registration"],
+  "coachreg.name": ["نام و نام خانوادگی", "Full name"],
+  "coachreg.cred": ["مدرک / تخصص", "Credential / expertise"],
+  "coachreg.credPh": ["مثلاً مربی رسمی بدنسازی، ۱۰ سال سابقه", "e.g. certified S&C coach, 10y"],
+  "coachreg.city": ["شهر", "City"],
+  "coachreg.phone": ["تلفن", "Phone"],
+  "coachreg.instagram": ["اینستاگرام (بدون @)", "Instagram (no @)"],
+  "coachreg.email": ["ایمیل", "Email"],
+  "coachreg.bio": ["درباره‌ی تو و روش کارت…", "About you and your coaching…"],
+  "coachreg.specialties": ["تخصص‌ها (با ویرگول جدا کن)", "Specialties (comma-separated)"],
+  "coachreg.photo": ["عکس پروفایل", "Profile photo"],
+  "coachreg.submit": ["ثبت‌نام", "Register"],
+  "coachreg.registered": ["ثبت‌نام تو دریافت شد ✓ بعد از تأیید، پروفایل مربی‌ات فعال می‌شود.", "Received ✓ Your coach profile goes live after review."],
+  "coachreg.progTitle": ["ارسال برنامه", "Submit a program"],
+  "coachreg.progHint": ["برنامه‌ی تمرین یا تغذیه‌ات را برای انتشار در بازار بفرست.", "Send a training or nutrition program to publish in the market."],
+  "coachreg.progName": ["عنوان برنامه", "Program title"],
+  "coachreg.progKind": ["نوع", "Type"],
+  "coachreg.progGoal": ["هدف", "Goal"],
+  "coachreg.progLevel": ["سطح", "Level"],
+  "coachreg.progDays": ["روز در هفته", "Days/week"],
+  "coachreg.progDesc": ["توضیح کامل برنامه…", "Full program description…"],
+  "coachreg.progSubmit": ["ارسال برنامه", "Submit program"],
+  "coachreg.progSent": ["برنامه‌ات ارسال شد ✓ در انتظار تأیید.", "Program submitted ✓ pending review."],
+  "coachreg.needName": ["نام و مدرک را وارد کن.", "Enter your name and credential."],
+  "coachreg.needTitle": ["عنوان و توضیح برنامه را وارد کن.", "Enter a program title and description."],
+  "coachreg.gymKind": ["تمرینی", "Training"],
+  "coachreg.dietKind": ["تغذیه‌ای", "Nutrition"],
+
+  // Admin: coach submissions
+  "adm.coaches": ["مربیان و برنامه‌ها", "Coaches & programs"],
+  "adm.coachApps": ["ثبت‌نام مربیان", "Coach registrations"],
+  "adm.coachProgs": ["برنامه‌های ارسالی", "Submitted programs"],
+  "adm.pending": ["در انتظار", "pending"],
+  "adm.noSubs": ["هنوز موردی ثبت نشده.", "Nothing submitted yet."],
 };
 
 const FA_INDEX = 0;
 const EN_INDEX = 1;
+
+// ---- Persian (Eastern Arabic-Indic) digits ----
+const FA_DIGITS = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"] as const;
+
+/** Convert Latin 0-9 in a string to Persian digits (leaves everything else). */
+export function faDigits(input: string | number): string {
+  return String(input).replace(/[0-9]/g, (d) => FA_DIGITS[+d]);
+}
+
+/** Format a number for display: Persian digits in fa, plain in en. */
+export function faNum(lang: Lang, v: string | number): string {
+  return lang === "fa" ? faDigits(v) : String(v);
+}
 
 export function translate(
   lang: Lang,
@@ -456,6 +671,9 @@ export function translate(
       s = s.replace(new RegExp(`\\{${k}\\}`, "g"), String(v));
     }
   }
+  // In Persian, render every Latin digit (from params or the phrase itself) as a
+  // Persian numeral so the whole UI reads natively.
+  if (lang === "fa") s = faDigits(s);
   return s;
 }
 
@@ -552,4 +770,3 @@ const TAG_FA: Record<string, string> = {
 export function tTag(lang: Lang, en: string): string {
   return lang === "fa" ? TAG_FA[en] ?? en : en;
 }
-

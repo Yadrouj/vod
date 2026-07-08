@@ -18,6 +18,7 @@ import {
   useUsage,
 } from "@/lib/hooks";
 import { ALL_PLANS, DIET_PLANS, GYM_PLANS } from "@/lib/marketplace";
+import { fetchCoachData, mediaUrl, type CoachApplication, type CoachProgram } from "@/lib/social";
 
 const SECTION_FA: Record<string, string> = {
   home: "خانه",
@@ -36,7 +37,7 @@ const SECTION_FA: Record<string, string> = {
 };
 
 export default function AdminPage() {
-  const { t, lang } = useLang();
+  const { t, lang, n } = useLang();
   const stats = useSectionStats();
   const feedback = useFeedbackList();
   const sessions = useSessions();
@@ -126,7 +127,7 @@ export default function AdminPage() {
         <Kpi
           label={lang === "fa" ? "برنامه در بازار" : "Marketplace plans"}
           value={ALL_PLANS.length}
-          sub={`${GYM_PLANS.length} 🏋️ · ${DIET_PLANS.length} 🍽️`}
+          sub={lang === "fa" ? `${GYM_PLANS.length} تمرین · ${DIET_PLANS.length} رژیم` : `${GYM_PLANS.length} gym · ${DIET_PLANS.length} diet`}
         />
         <Kpi
           label={lang === "fa" ? "اقدام مصرف‌شده" : "Actions used"}
@@ -136,7 +137,7 @@ export default function AdminPage() {
       </div>
 
       {/* Section usage */}
-      <Section title={lang === "fa" ? `استفاده از بخش‌ها (${totalVisits} بازدید)` : `Section usage (${totalVisits} visits)`}>
+      <Section title={lang === "fa" ? `استفاده از بخش‌ها (${n(totalVisits)} بازدید)` : `Section usage (${totalVisits} visits)`}>
         <div className="space-y-2">
           {sorted.map((s) => (
             <div key={s.section} className="flex items-center gap-2">
@@ -149,7 +150,7 @@ export default function AdminPage() {
                   style={{ width: `${(s.count / maxCount) * 100}%` }}
                 />
               </div>
-              <span className="tnum w-8 text-end text-xs font-extrabold text-ink">{s.count}</span>
+              <span className="tnum w-8 text-end text-xs font-extrabold text-ink">{n(s.count)}</span>
             </div>
           ))}
           {sorted.length === 0 && (
@@ -161,7 +162,7 @@ export default function AdminPage() {
       {/* Feedback inbox */}
       <Section
         title={
-          lang === "fa" ? `صندوق بازخورد (${feedback.length})` : `Feedback inbox (${feedback.length})`
+          lang === "fa" ? `صندوق بازخورد (${n(feedback.length)})` : `Feedback inbox (${feedback.length})`
         }
       >
         <div className="space-y-2">
@@ -207,16 +208,77 @@ export default function AdminPage() {
       >
         <AnalysisResponder pending={pendingAnalysis} />
       </Section>
+
+      {/* Coach registrations & submitted programs */}
+      <Section title={t("adm.coaches")}>
+        <CoachSubmissions />
+      </Section>
+    </div>
+  );
+}
+
+function CoachSubmissions() {
+  const { t, lang, n } = useLang();
+  const [data, setData] = useState<{ applications: CoachApplication[]; programs: CoachProgram[] } | null>(null);
+
+  useEffect(() => {
+    fetchCoachData().then(setData).catch(() => setData({ applications: [], programs: [] }));
+  }, []);
+
+  if (!data) return <p className="text-xs text-faint">…</p>;
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="mb-2 text-xs font-bold text-faint">{t("adm.coachApps")} · {n(data.applications.length)}</p>
+        <div className="space-y-2">
+          {data.applications.map((a) => (
+            <div key={a.id} className="flex items-start gap-2 rounded-xl bg-card2 p-2.5 ring-1 ring-line">
+              {a.photoId ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={mediaUrl(a.photoId)!} alt="" className="size-10 flex-shrink-0 rounded-full object-cover" />
+              ) : (
+                <span className="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-card text-faint"><Icon name="user" className="size-5" /></span>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-ink">{a.name}</p>
+                <p className="truncate text-[11px] text-muted">{a.cred}{a.city && ` · ${a.city}`}</p>
+                {a.bio && <p className="mt-0.5 line-clamp-2 text-[11px] text-faint">{a.bio}</p>}
+                <p className="mt-0.5 text-[10px] text-faint" dir="ltr">{[a.phone, a.instagram && `@${a.instagram}`, a.email].filter(Boolean).join(" · ")}</p>
+              </div>
+              <span className="rounded-full bg-warn/15 px-1.5 py-0.5 text-[9px] font-bold text-warn">{t("adm.pending")}</span>
+            </div>
+          ))}
+          {data.applications.length === 0 && <p className="text-xs text-faint">{t("adm.noSubs")}</p>}
+        </div>
+      </div>
+      <div>
+        <p className="mb-2 text-xs font-bold text-faint">{t("adm.coachProgs")} · {n(data.programs.length)}</p>
+        <div className="space-y-2">
+          {data.programs.map((p) => (
+            <div key={p.id} className="rounded-xl bg-card2 p-2.5 ring-1 ring-line">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-bold text-ink">{p.title}</p>
+                <span className="rounded-full bg-brand/15 px-1.5 py-0.5 text-[9px] font-bold text-brand">{t(p.kind === "diet" ? "coachreg.dietKind" : "coachreg.gymKind")}</span>
+              </div>
+              <p className="text-[11px] text-muted">{p.coachName}{p.goal && ` · ${p.goal}`}{p.days ? ` · ${n(p.days)}${lang === "fa" ? " روز" : "d"}` : ""}</p>
+              {p.description && <p className="mt-0.5 line-clamp-3 text-[11px] text-faint">{p.description}</p>}
+            </div>
+          ))}
+          {data.programs.length === 0 && <p className="text-xs text-faint">{t("adm.noSubs")}</p>}
+        </div>
+      </div>
     </div>
   );
 }
 
 function Kpi({ label, value, sub }: { label: string; value: number; sub?: string }) {
+  const { n } = useLang();
   return (
     <div className="rounded-2xl bg-card p-4 ring-1 ring-line">
-      <p className="tnum text-2xl font-extrabold text-brand">{value}</p>
+      <p className="tnum text-2xl font-extrabold text-brand">{n(value)}</p>
       <p className="mt-0.5 text-xs text-muted">{label}</p>
-      {sub && <p className="text-[10px] text-faint">{sub}</p>}
+      {sub && <p className="text-[10px] text-faint">{n(sub)}</p>}
     </div>
   );
 }

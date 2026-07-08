@@ -3,18 +3,18 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Spinner } from "@/components/ui";
+import LoadingSplash from "@/components/LoadingSplash";
 import { Icon, type IconName } from "@/components/icons";
-import NewsBell from "@/components/NewsBell";
 import { useLang } from "@/components/LangProvider";
 import { tFocus, tWeekday } from "@/lib/i18n";
 import { getSettings } from "@/lib/db";
+import { loadIndex } from "@/lib/exercises";
 import { useProgram, useSessions } from "@/lib/hooks";
 import type { ProgramDay } from "@/lib/types";
 
 export default function HomePage() {
   const router = useRouter();
-  const { t, lang, setLang } = useLang();
+  const { t, lang } = useLang();
   const [status, setStatus] = useState<"loading" | "ready">("loading");
   const program = useProgram();
   const sessions = useSessions();
@@ -24,9 +24,11 @@ export default function HomePage() {
       if (!s || !s.onboarded) router.replace("/onboarding");
       else setStatus("ready");
     });
+    // Warm the exercise dataset in the background so "Start workout" is instant.
+    loadIndex().catch(() => {});
   }, [router]);
 
-  if (status === "loading") return <Spinner />;
+  if (status === "loading") return <LoadingSplash />;
 
   const todayEn = new Date().toLocaleDateString("en-US", { weekday: "long" });
   const todayFa = new Date().toLocaleDateString("fa-IR", { weekday: "long" });
@@ -42,39 +44,13 @@ export default function HomePage() {
 
   return (
     <div className="px-4 pt-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-muted">
-            {lang === "fa" ? todayFa : todayEn}
-          </p>
-          <h1 className="text-2xl font-extrabold tracking-tight text-ink">
-            {t("home.move")}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setLang(lang === "fa" ? "en" : "fa")}
-            className="flex h-10 items-center rounded-full bg-card px-3 text-xs font-bold text-muted ring-1 ring-line"
-          >
-            {lang === "fa" ? "EN" : "فا"}
-          </button>
-          <NewsBell />
-          <Link
-            href="/history"
-            className="flex size-10 items-center justify-center rounded-full bg-card text-muted ring-1 ring-line"
-            aria-label={t("nav.history")}
-          >
-            <Icon name="history" className="size-5" />
-          </Link>
-          <Link
-            href="/profile"
-            className="flex size-10 items-center justify-center rounded-full bg-card text-muted ring-1 ring-line"
-            aria-label={t("prof.title")}
-          >
-            <Icon name="user" className="size-5" />
-          </Link>
-        </div>
+      <div>
+        <p className="text-sm font-medium text-muted">
+          {lang === "fa" ? todayFa : todayEn}
+        </p>
+        <h1 className="text-2xl font-extrabold tracking-tight text-ink">
+          {t("home.move")}
+        </h1>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
@@ -109,7 +85,7 @@ export default function HomePage() {
 
       <div className="mt-4 grid grid-cols-3 gap-2">
         <QuickLink href="/library" icon="library" label={t("home.qlLibrary")} />
-        <QuickLink href="/coach" icon="sparkles" label={t("home.qlCoach")} />
+        <QuickLink href="/coach" icon="whistle" label={t("home.qlCoach")} />
         <QuickLink href="/analysis" icon="user" label={t("home.qlAnalysis")} />
       </div>
 
@@ -152,11 +128,12 @@ function Stat({
   label: string;
   icon: IconName;
 }) {
+  const { n } = useLang();
   return (
     <div className="rounded-2xl bg-card p-3 ring-1 ring-line">
       <div className="flex items-center gap-2 text-brand">
         <Icon name={icon} className="size-5" />
-        <p className="text-xl font-extrabold text-ink">{value}</p>
+        <p className="text-xl font-extrabold text-ink">{n(value)}</p>
       </div>
       <p className="mt-1 text-xs text-muted">{label}</p>
     </div>

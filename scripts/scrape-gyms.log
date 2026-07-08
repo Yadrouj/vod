@@ -1,0 +1,5 @@
+endpoint failed: https://overpass-api.de/api/interpreter Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+endpoint failed: https://overpass.kumi.systems/api/interpreter Command failed: curl -s --max-time 150 -A Mozilla/5.0 (compa
+Error: all Overpass endpoints failed
+    at fetchOverpass (file:///C:/Users/yadro/gym-trainer/scripts/build-gyms.mjs:57:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)

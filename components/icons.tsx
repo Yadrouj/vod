@@ -182,6 +182,89 @@ const PATHS: Record<string, React.ReactNode> = {
       <circle cx="8.5" cy="10.5" r="2" />
     </>
   ),
+  // ---- social / contact ----
+  instagram: (
+    <>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
+    </>
+  ),
+  telegram: <path d="M21 4 3 11l5 2 2 6 3-4 5 4 3-15Z M8 13l9-6-6 8" />,
+  phone: (
+    <path d="M6 3h3l1.5 5-2 1.5a11 11 0 0 0 6 6l1.5-2 5 1.5V19a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2Z" />
+  ),
+  mail: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3.5 6.5 12 13l8.5-6.5" />
+    </>
+  ),
+  globe: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M3.5 12h17M12 3.5c3 3 3 14 0 17M12 3.5c-3 3-3 14 0 17" />
+    </>
+  ),
+  message: (
+    <path d="M4 5h16v11H9l-5 4V5Z" />
+  ),
+  // ---- pro / trust ----
+  medal: (
+    <>
+      <path d="M8 3h8l-2 6H10z" />
+      <circle cx="12" cy="15" r="5" />
+      <path d="M12 13v4M10.5 15h3" />
+    </>
+  ),
+  verified: (
+    <>
+      <circle cx="12" cy="12" r="9" fill="currentColor" stroke="none" />
+      <path d="M8 12.2 10.7 15 16 9" stroke="#0b1418" strokeWidth="2.4" />
+    </>
+  ),
+  star: (
+    <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 17l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z" fill="currentColor" stroke="none" />
+  ),
+  users: (
+    <>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20c0-3.6 3-5.5 6.5-5.5s6.5 1.9 6.5 5.5" />
+      <path d="M16 5.2a3.3 3.3 0 0 1 0 6.1M17.5 14.7c2.6.5 4 2.2 4 5.3" />
+    </>
+  ),
+  newspaper: (
+    <>
+      <path d="M4 5h13v14a1.5 1.5 0 0 0 3 0V8h-3" />
+      <path d="M4 5v14a1.5 1.5 0 0 0 1.5 1.5H18" />
+      <path d="M7 9h7M7 12.5h7M7 16h4" />
+    </>
+  ),
+  utensils: (
+    <>
+      <path d="M7 3v8M5 3v4a2 2 0 0 0 4 0V3M7 11v10" />
+      <path d="M16 3c-2 0-3 2-3 5s1 4 3 4M16 3v18" />
+    </>
+  ),
+  pin: (
+    <>
+      <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </>
+  ),
+  download: (
+    <>
+      <path d="M12 3v12M7 10l5 5 5-5" />
+      <path d="M4 20h16" />
+    </>
+  ),
+  whistle: (
+    <>
+      <path d="M4 9h11l5 2.5-5 2.5h-6a5 5 0 1 1-5-5Z" />
+      <circle cx="7.5" cy="13.5" r="1.6" fill="currentColor" stroke="none" />
+      <path d="M15 9V6" />
+    </>
+  ),
 };
 
 export type IconName = keyof typeof PATHS;

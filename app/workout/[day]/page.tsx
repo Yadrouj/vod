@@ -11,7 +11,8 @@ import { useLang } from "@/components/LangProvider";
 import { tWeekday } from "@/lib/i18n";
 import { addSession, DEFAULT_SETTINGS } from "@/lib/db";
 import { useExercises } from "@/lib/exercises";
-import { gateAction, useProgram, useSettings } from "@/lib/hooks";
+import { estimateSessionKcal } from "@/lib/calories";
+import { gateAction, useDietProfile, useProgram, useSettings } from "@/lib/hooks";
 import { beep, useCountdown, useWakeLock, vibrate } from "@/lib/timer";
 import type { Exercise, LoggedExercise, ProgramExercise, Session } from "@/lib/types";
 
@@ -27,11 +28,13 @@ export default function WorkoutPage({
   params: Promise<{ day: string }>;
 }) {
   const { day: dayId } = use(params);
-  const { t, lang } = useLang();
+  const { t, lang, n } = useLang();
   const router = useRouter();
   const program = useProgram();
   const { index } = useExercises();
   const settings = useSettings() ?? DEFAULT_SETTINGS;
+  const dietProfile = useDietProfile();
+  const weightKg = dietProfile?.weightKg ?? 75;
 
   const day = program?.days.find((d) => d.id === dayId);
 
@@ -194,6 +197,10 @@ export default function WorkoutPage({
 
   if (phase === "done") {
     const doneSets = logs.reduce((n, le) => n + le.sets.filter((s) => s.done).length, 0);
+    const prescribedSets = queue.reduce((n, q) => n + q.pe.sets, 0) || 1;
+    const kcalBurned = Math.round(
+      estimateSessionKcal(queue.map((q) => q.pe), weightKg) * (doneSets / prescribedSets)
+    );
     return (
       <div className="min-h-dvh bg-gradient-to-b from-brand to-brand2 px-6 pb-10 pt-16 text-brandink">
         <div className="mx-auto max-w-md text-center">
@@ -202,6 +209,11 @@ export default function WorkoutPage({
           <p className="mt-2 font-semibold opacity-80">
             {t("wo.setsDone", { day: tWeekday(lang, day.label), n: doneSets })}
           </p>
+          {kcalBurned > 0 && (
+            <div className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full bg-brandink/15 px-4 py-2 text-sm font-extrabold">
+              <Icon name="flame" className="size-4" /> {t("wo.kcalBurned", { n: n(kcalBurned) })}
+            </div>
+          )}
 
           <div className="mt-6 space-y-2 text-start">
             {logs.map((le) => {
@@ -213,13 +225,15 @@ export default function WorkoutPage({
                     {le.name}
                   </p>
                   <p className="opacity-80" dir="ltr">
-                    {done
-                      .map((s) =>
-                        s.durationSec != null
-                          ? `${s.durationSec}s`
-                          : `${s.reps}${s.weight ? `×${s.weight}kg` : ""}`
-                      )
-                      .join(" · ")}
+                    {n(
+                      done
+                        .map((s) =>
+                          s.durationSec != null
+                            ? `${s.durationSec}s`
+                            : `${s.reps}${s.weight ? `×${s.weight}kg` : ""}`
+                        )
+                        .join(" · ")
+                    )}
                   </p>
                 </div>
               );
@@ -266,7 +280,7 @@ export default function WorkoutPage({
       </div>
 
       {phase === "rest" ? (
-        <RestView timer={timer} ringTotal={ringTotal} nextLabel={nextLabel} onAdd={() => timer.addTime(15)} onSub={() => timer.addTime(-15)} onSkip={skipRest} onTogglePause={() => (timer.running ? timer.pause() : timer.resume())} />
+        <RestView timer={timer} ringTotal={ringTotal} nextLabel={nextLabel} nextIsNewExercise={Boolean(nxt) && nxt!.ei !== exIndex} onAdd={() => timer.addTime(15)} onSub={() => timer.addTime(-15)} onSkip={skipRest} onTogglePause={() => (timer.running ? timer.pause() : timer.resume())} />
       ) : (
         <div className="mt-3 flex flex-1 flex-col">
           <VideoPlayer exercise={current.ex} gender={settings.gender} angle={settings.angle} loopAutoplay showAngles={false} className="mx-auto w-full max-w-xs" />
@@ -286,7 +300,7 @@ export default function WorkoutPage({
                   s.done ? "bg-brand text-brandink" : i === setIndex ? "bg-card2 text-ink ring-2 ring-brand" : "bg-card2 text-faint"
                 )}
               >
-                {s.done ? <Icon name="check" className="size-4" /> : i + 1}
+                {s.done ? <Icon name="check" className="size-4" /> : n(i + 1)}
               </span>
             ))}
           </div>
@@ -328,6 +342,7 @@ function BigStepper({
   min?: number;
   onChange: (v: number) => void;
 }) {
+  const { n } = useLang();
   return (
     <div className="flex flex-1 flex-col items-center rounded-2xl bg-card2 py-3 ring-1 ring-line">
       <span className="text-xs font-bold text-faint">{label}</span>
@@ -336,7 +351,7 @@ function BigStepper({
           <Icon name="minus" className="size-4" />
         </button>
         <span className="w-16 text-center text-2xl font-extrabold tabular-nums text-ink">
-          {value}
+          {n(value)}
           {unit}
         </span>
         <button type="button" onClick={() => onChange(value + step)} className="flex size-9 items-center justify-center rounded-full bg-card text-muted ring-1 ring-line">
@@ -414,6 +429,7 @@ function RestView({
   timer,
   ringTotal,
   nextLabel,
+  nextIsNewExercise,
   onAdd,
   onSub,
   onSkip,
@@ -422,28 +438,36 @@ function RestView({
   timer: ReturnType<typeof useCountdown>;
   ringTotal: number;
   nextLabel: string;
+  nextIsNewExercise: boolean;
   onAdd: () => void;
   onSub: () => void;
   onSkip: () => void;
   onTogglePause: () => void;
 }) {
-  const { t } = useLang();
+  const { t, n } = useLang();
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6">
-      <p className="text-lg font-extrabold text-ink">{t("wo.rest")}</p>
+      <p className="text-lg font-extrabold text-ink">
+        {nextIsNewExercise ? t("wo.exerciseDone") : t("wo.rest")}
+      </p>
       <TimerRing remainingSec={timer.remainingSec} totalSec={ringTotal} accent="#22d3ee" caption={t("wo.untilNext")} />
       <p className="text-sm text-muted" dir="auto">
         {nextLabel}
       </p>
       <div className="flex gap-2">
-        <Button variant="secondary" onClick={onSub}>−15s</Button>
+        <Button variant="secondary" onClick={onSub}>−{n(15)}s</Button>
         <Button variant="secondary" onClick={onTogglePause}>
           {timer.running ? t("wo.pause") : t("wo.resume")}
         </Button>
-        <Button variant="secondary" onClick={onAdd}>+15s</Button>
+        <Button variant="secondary" onClick={onAdd}>+{n(15)}s</Button>
       </div>
-      <Button className="w-full" onClick={onSkip}>
-        {t("wo.skipRest")}
+      {/* When the whole exercise (its "package" of sets) is finished, the button to
+          begin the next exercise is bright and flashy so it's unmissable mid-workout. */}
+      <Button
+        className={cn("w-full", nextIsNewExercise && "flashy")}
+        onClick={onSkip}
+      >
+        {nextIsNewExercise ? t("wo.startNext") : t("wo.skipRest")}
       </Button>
     </div>
   );

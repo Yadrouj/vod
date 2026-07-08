@@ -148,25 +148,193 @@ export const DIET_PLANS: DietPlanTpl[] = [
 
 // ---- Expert personas (each plan is authored by a coach) ----
 
+/** Illustrated-portrait appearance knobs (rendered by <TrainerAvatar>). */
+export interface AvatarSpec {
+  skin: string; // face fill
+  hair: string; // hair fill
+  hairStyle: "short" | "buzz" | "quiff" | "bun" | "pony" | "wavy" | "bob" | "hijab";
+  beard?: "none" | "stubble" | "beard";
+  top: string; // athletic top color
+}
+
+export interface TrainerNews {
+  date: string; // ISO — formatted per-locale in the UI
+  title: string;
+  titleFa: string;
+  body: string;
+  bodyFa: string;
+}
+
+export interface TrainerContacts {
+  instagram?: string; // handle without @
+  telegram?: string; // username without @
+  phone?: string; // tel: number
+  email?: string;
+  website?: string;
+}
+
+export interface Specialty {
+  icon: string; // Icon name
+  fa: string;
+  en: string;
+}
+
 export interface Trainer {
   id: string;
   name: string;
   nameFa: string;
+  gender: "male" | "female";
   cred: string;
   credFa: string;
-  color: string; // avatar gradient seed
+  color: string; // avatar gradient / accent seed
+  photo?: string; // optional real photo at /trainers/<id>.jpg — used if present, else the illustrated avatar
+  city: string;
+  cityFa: string;
+  years: number; // experience
+  rating: number; // 0–5
+  clients: number;
+  bio: string;
+  bioFa: string;
+  specialties: Specialty[];
+  avatar: AvatarSpec;
+  contacts: TrainerContacts;
+  news: TrainerNews[];
 }
 
-export const TRAINERS: Trainer[] = [
-  { id: "t1", name: "Amir Rostami", nameFa: "امیر رستمی", cred: "IFBB-certified coach · 12y", credFa: "مربی رسمی فدراسیون بدنسازی · ۱۲ سال سابقه", color: "#7bd93a" },
-  { id: "t2", name: "Sara Mohammadi", nameFa: "سارا محمدی", cred: "MSc Exercise Physiology", credFa: "کارشناس ارشد فیزیولوژی ورزشی", color: "#56b8ff" },
-  { id: "t3", name: "Dr. Reza Karimi", nameFa: "دکتر رضا کریمی", cred: "PhD Strength & Conditioning", credFa: "دکترای علوم تمرین و قدرت", color: "#a78bfa" },
-  { id: "t4", name: "Maryam Ahmadi", nameFa: "مریم احمدی", cred: "Sports Nutritionist", credFa: "متخصص تغذیه‌ی ورزشی", color: "#ff8fb0" },
-  { id: "t5", name: "Hossein Ghasemi", nameFa: "حسین قاسمی", cred: "CrossFit L2 Trainer", credFa: "مربی کراس‌فیت سطح ۲", color: "#ffc94d" },
-  { id: "t6", name: "Dr. Negar Mousavi", nameFa: "دکتر نگار موسوی", cred: "PhD Clinical Nutrition", credFa: "دکترای تغذیه‌ی بالینی", color: "#3ee08f" },
-  { id: "t7", name: "Ali Nazari", nameFa: "علی نظری", cred: "Athletic Performance Coach", credFa: "مربی آمادگی جسمانی", color: "#b8f24a" },
-  { id: "t8", name: "Shima Rahimi", nameFa: "شیما رحیمی", cred: "Corrective Exercise Specialist", credFa: "متخصص حرکات اصلاحی و یوگا", color: "#ee5f7b" },
+const SP = {
+  hypertrophy: { icon: "dumbbell", fa: "عضله‌سازی", en: "Hypertrophy" },
+  strength: { icon: "barbell", fa: "قدرت", en: "Strength" },
+  contest: { icon: "trophy", fa: "آماده‌سازی مسابقه", en: "Contest prep" },
+  nutrition: { icon: "diet", fa: "تغذیه‌ی ورزشی", en: "Sports nutrition" },
+  women: { icon: "heart", fa: "تمرین بانوان", en: "Women's training" },
+  fatloss: { icon: "flame", fa: "چربی‌سوزی", en: "Fat loss" },
+  programming: { icon: "calendar", fa: "برنامه‌ریزی تمرین", en: "Programming" },
+  powerlifting: { icon: "plate", fa: "پاورلیفتینگ", en: "Powerlifting" },
+  athletes: { icon: "target", fa: "ورزشکاران", en: "Athletes" },
+  conditioning: { icon: "timer", fa: "آمادگی جسمانی", en: "Conditioning" },
+  clinical: { icon: "pill", fa: "تغذیه‌ی بالینی", en: "Clinical nutrition" },
+  gut: { icon: "heart", fa: "سلامت گوارش", en: "Gut health" },
+  performance: { icon: "flame", fa: "عملکرد ورزشی", en: "Performance" },
+  mobility: { icon: "yoga", fa: "تحرک و اصلاحی", en: "Mobility & corrective" },
+  rehab: { icon: "heart", fa: "بازتوانی", en: "Rehab" },
+} as const;
+
+const RAW_TRAINERS: Trainer[] = [
+  {
+    id: "t1", name: "Amir Rostami", nameFa: "امیر رستمی", gender: "male",
+    cred: "IFBB-certified coach · 12y", credFa: "مربی رسمی فدراسیون بدنسازی · ۱۲ سال سابقه",
+    color: "#7bd93a", city: "Tehran", cityFa: "تهران", years: 12, rating: 4.9, clients: 1240,
+    bio: "IFBB-certified bodybuilding coach. I've prepped 30+ athletes for national stages and specialise in drug-free hypertrophy and contest prep.",
+    bioFa: "مربی رسمی بدنسازی فدراسیون. بیش از ۳۰ ورزشکار را برای صحنه‌ی مسابقات ملی آماده کرده‌ام و تخصصم عضله‌سازی طبیعی و آماده‌سازی مسابقه است. تمرکزم روی تکنیک درست، اضافه‌بار تدریجی و برنامه‌ی قابل‌اجرا برای زندگی واقعی است.",
+    specialties: [SP.hypertrophy, SP.contest, SP.nutrition, SP.strength],
+    avatar: { skin: "#e0a878", hair: "#231a14", hairStyle: "short", beard: "beard", top: "#2e7d32" },
+    contacts: { instagram: "amir.rostami.coach", telegram: "amirrostami", phone: "+989121110011", email: "amir@ramagh.app" },
+    news: [
+      { date: "2026-06-28", title: "New 6-week hypertrophy block released", titleFa: "بلوک ۶ هفته‌ای عضله‌سازی منتشر شد", body: "A push/pull/legs progression with auto-regulated volume.", bodyFa: "یک برنامه‌ی پوش‌پول‌لگ با حجم تنظیم‌شونده و تمرکز روی رشد سینه و پشت." },
+      { date: "2026-06-10", title: "Free posing workshop in Tehran", titleFa: "کارگاه رایگان پوزینگ در تهران", body: "Sat 10am — bring your routine.", bodyFa: "شنبه ساعت ۱۰ صبح — روتین‌تان را بیاورید و اصلاح می‌کنیم." },
+    ],
+  },
+  {
+    id: "t2", name: "Sara Mohammadi", nameFa: "سارا محمدی", gender: "female",
+    cred: "MSc Exercise Physiology", credFa: "کارشناس ارشد فیزیولوژی ورزشی",
+    color: "#56b8ff", city: "Isfahan", cityFa: "اصفهان", years: 8, rating: 4.8, clients: 960,
+    bio: "MSc in Exercise Physiology. I write evidence-based programs for women and beginners — smart progressions, no gimmicks.",
+    bioFa: "کارشناس ارشد فیزیولوژی ورزشی. برنامه‌های علمی و بدون شعار برای بانوان و مبتدی‌ها می‌نویسم؛ پیشرفت هوشمند، تمرکز روی فرم و پایداری در بلندمدت. باور دارم تمرین باید با زندگی‌ات جور باشد نه برعکس.",
+    specialties: [SP.programming, SP.women, SP.fatloss, SP.hypertrophy],
+    avatar: { skin: "#e8b48c", hair: "#2a2018", hairStyle: "pony", top: "#1e88e5" },
+    contacts: { instagram: "sara.physio", telegram: "saramohammadi", email: "sara@ramagh.app" },
+    news: [
+      { date: "2026-06-22", title: "Women's strength cycle updated", titleFa: "دوره‌ی قدرت بانوان به‌روزرسانی شد", body: "Added a deload week and hip-focused accessories.", bodyFa: "یک هفته‌ی دیلود و حرکات کمکی تمرکز باسن اضافه شد." },
+      { date: "2026-05-30", title: "Q&A: training around your cycle", titleFa: "پرسش و پاسخ: تمرین در دوران قاعدگی", body: "Saved highlights on my page.", bodyFa: "هایلایت پاسخ‌ها در صفحه‌ام ذخیره شده است." },
+    ],
+  },
+  {
+    id: "t3", name: "Dr. Reza Karimi", nameFa: "دکتر رضا کریمی", gender: "male",
+    cred: "PhD Strength & Conditioning", credFa: "دکترای علوم تمرین و قدرت",
+    color: "#a78bfa", city: "Tehran", cityFa: "تهران", years: 15, rating: 4.9, clients: 1520,
+    bio: "PhD in Strength & Conditioning. I coach powerlifters and team-sport athletes and teach barbell technique that lasts.",
+    bioFa: "دکترای علوم تمرین و قدرت. پاورلیفترها و ورزشکاران تیمی را مربی‌گری می‌کنم و تکنیک لیفت‌های بزرگ (اسکات، پرس، ددلیفت) را ماندگار آموزش می‌دهم. برنامه‌هایم بر پایه‌ی پژوهش و پریودایزیشن اصولی است.",
+    specialties: [SP.strength, SP.powerlifting, SP.athletes, SP.programming],
+    avatar: { skin: "#d69a6c", hair: "#3a3a3a", hairStyle: "short", beard: "stubble", top: "#5e35b1" },
+    contacts: { instagram: "dr.karimi.sc", telegram: "rezakarimi", phone: "+989121110033", email: "reza@ramagh.app", website: "karimisc.ir" },
+    news: [
+      { date: "2026-06-18", title: "Peaking guide for meet day", titleFa: "راهنمای پیکینگ برای روز مسابقه", body: "How to taper the last 10 days.", bodyFa: "چطور ۱۰ روز آخر را تیپر کنیم تا در مسابقه اوج بگیریم." },
+    ],
+  },
+  {
+    id: "t4", name: "Maryam Ahmadi", nameFa: "مریم احمدی", gender: "female",
+    cred: "Sports Nutritionist", credFa: "متخصص تغذیه‌ی ورزشی",
+    color: "#ff8fb0", city: "Shiraz", cityFa: "شیراز", years: 9, rating: 4.8, clients: 1100,
+    bio: "Sports nutritionist. I build realistic Iranian meal plans that hit your macros with foods you actually eat.",
+    bioFa: "متخصص تغذیه‌ی ورزشی. برنامه‌های غذایی واقع‌بینانه با غذاهای ایرانی می‌نویسم که هم درشت‌مغذی‌هایت را بزند و هم قابل‌اجرا و کم‌هزینه باشد. تغذیه‌ی خوب یعنی چیزی که بتوانی ادامه‌اش بدهی.",
+    specialties: [SP.nutrition, SP.fatloss, SP.women, SP.clinical],
+    avatar: { skin: "#eebf9a", hair: "#1f1a16", hairStyle: "hijab", top: "#ec407a" },
+    contacts: { instagram: "maryam.nutrition", telegram: "maryamahmadi", email: "maryam@ramagh.app" },
+    news: [
+      { date: "2026-06-25", title: "Budget high-protein grocery list", titleFa: "لیست خرید پرپروتئین اقتصادی", body: "Under 1M toman/week.", bodyFa: "زیر یک میلیون تومان در هفته — تخم‌مرغ، عدس، مرغ و لبنیات." },
+      { date: "2026-06-05", title: "Ramadan fueling plan", titleFa: "برنامه‌ی تغذیه‌ی ماه رمضان", body: "Sahur & iftar macro split.", bodyFa: "تقسیم درشت‌مغذی سحری و افطار برای حفظ عضله." },
+    ],
+  },
+  {
+    id: "t5", name: "Hossein Ghasemi", nameFa: "حسین قاسمی", gender: "male",
+    cred: "CrossFit L2 Trainer", credFa: "مربی کراس‌فیت سطح ۲",
+    color: "#ffc94d", city: "Tabriz", cityFa: "تبریز", years: 7, rating: 4.7, clients: 720,
+    bio: "CrossFit L2. Conditioning, HIIT and metcons that build a real engine without wrecking your joints.",
+    bioFa: "مربی کراس‌فیت سطح ۲. آمادگی جسمانی، اینتروال و متکان‌هایی که موتور بدنت را می‌سازد بدون آسیب به مفاصل. عاشق تمرین‌های کوتاه، شدید و پرانرژی‌ام.",
+    specialties: [SP.conditioning, SP.performance, SP.fatloss, SP.athletes],
+    avatar: { skin: "#c98a5e", hair: "#17130f", hairStyle: "buzz", beard: "stubble", top: "#f9a825" },
+    contacts: { instagram: "hossein.wod", telegram: "hosseinghasemi", phone: "+989121110055" },
+    news: [
+      { date: "2026-06-20", title: "New 20-min metcon pack", titleFa: "پک متکان ۲۰ دقیقه‌ای جدید", body: "Minimal equipment, max sweat.", bodyFa: "با کمترین وسیله، بیشترین کالری — مناسب خانه و باشگاه." },
+    ],
+  },
+  {
+    id: "t6", name: "Dr. Negar Mousavi", nameFa: "دکتر نگار موسوی", gender: "female",
+    cred: "PhD Clinical Nutrition", credFa: "دکترای تغذیه‌ی بالینی",
+    color: "#3ee08f", city: "Tehran", cityFa: "تهران", years: 11, rating: 4.9, clients: 1330,
+    bio: "PhD in Clinical Nutrition. I specialise in gut-friendly, whole-food plans and nutrition for health conditions.",
+    bioFa: "دکترای تغذیه‌ی بالینی. تخصصم برنامه‌های گوارش‌دوست و غذای کامل، و تغذیه برای شرایط خاص (دیابت، فشار، کبد چرب) است. غذا را دارو می‌بینم، نه محدودیت.",
+    specialties: [SP.clinical, SP.gut, SP.nutrition, SP.women],
+    avatar: { skin: "#ecc2a0", hair: "#241c17", hairStyle: "bob", top: "#43a047" },
+    contacts: { instagram: "dr.negar.nutrition", telegram: "negarmousavi", email: "negar@ramagh.app", website: "negarclinic.ir" },
+    news: [
+      { date: "2026-06-15", title: "Fiber & the microbiome — free guide", titleFa: "فیبر و میکروبیوم — راهنمای رایگان", body: "How to reach 30g/day gently.", bodyFa: "چطور بدون نفخ به ۳۰ گرم فیبر روزانه برسیم." },
+    ],
+  },
+  {
+    id: "t7", name: "Ali Nazari", nameFa: "علی نظری", gender: "male",
+    cred: "Athletic Performance Coach", credFa: "مربی آمادگی جسمانی",
+    color: "#b8f24a", city: "Mashhad", cityFa: "مشهد", years: 10, rating: 4.8, clients: 890,
+    bio: "Performance coach. Speed, power and hybrid training for athletes who want to run faster and lift heavier.",
+    bioFa: "مربی آمادگی جسمانی. تمرین سرعت، توان و هیبرید برای ورزشکارانی که می‌خواهند هم سریع‌تر بدوند و هم سنگین‌تر بزنند. ترکیب هوشمند قدرت و استقامت، بدون فرسودگی.",
+    specialties: [SP.performance, SP.athletes, SP.conditioning, SP.strength],
+    avatar: { skin: "#d9a273", hair: "#211a13", hairStyle: "quiff", top: "#9ccc2b" },
+    contacts: { instagram: "ali.performance", telegram: "alinazari", phone: "+989121110077" },
+    news: [
+      { date: "2026-06-12", title: "Off-season speed block", titleFa: "بلوک سرعت فصل آماده‌سازی", body: "Sprint mechanics + plyos.", bodyFa: "مکانیک دو سرعت و پلایومتریک برای انفجار بیشتر." },
+    ],
+  },
+  {
+    id: "t8", name: "Shima Rahimi", nameFa: "شیما رحیمی", gender: "female",
+    cred: "Corrective Exercise Specialist", credFa: "متخصص حرکات اصلاحی و یوگا",
+    color: "#ee5f7b", city: "Karaj", cityFa: "کرج", years: 8, rating: 4.9, clients: 1050,
+    bio: "Corrective exercise & yoga specialist. Mobility, posture and pain-free movement — great for desk workers and returners.",
+    bioFa: "متخصص حرکات اصلاحی و یوگا. تحرک، اصلاح وضعیت بدن و حرکت بدون درد — عالی برای کارمندان پشت‌میزنشین و کسانی که بعد از مدت‌ها به تمرین برمی‌گردند. بدن سالم از حرکت درست شروع می‌شود.",
+    specialties: [SP.mobility, SP.rehab, SP.women, SP.conditioning],
+    avatar: { skin: "#eabf9c", hair: "#2b211a", hairStyle: "wavy", top: "#e91e63" },
+    contacts: { instagram: "shima.mobility", telegram: "shimarahimi", email: "shima@ramagh.app" },
+    news: [
+      { date: "2026-06-19", title: "10-min desk mobility routine", titleFa: "روتین ۱۰ دقیقه‌ای تحرک پشت‌میز", body: "Undo the sitting slump.", bodyFa: "برای جبران قوز و خشکی ناشی از نشستن طولانی." },
+    ],
+  },
 ];
+
+// Each coach shows a real photo from public/trainers/<id>.jpg; the illustrated
+// portrait in <TrainerAvatar> stays as a graceful fallback if the file is missing.
+export const TRAINERS: Trainer[] = RAW_TRAINERS.map((t) => ({
+  ...t,
+  photo: t.photo ?? `/trainers/${t.id}.jpg`,
+}));
 
 const GYM_POOL = ["t1", "t2", "t3", "t5", "t7", "t8"];
 const DIET_POOL = ["t4", "t6", "t2", "t8"];
@@ -182,6 +350,15 @@ export function trainerOf(plan: MarketPlan): Trainer {
   const pool = plan.kind === "gym" ? GYM_POOL : DIET_POOL;
   const id = pool[hash(plan.id) % pool.length];
   return TRAINERS.find((t) => t.id === id)!;
+}
+
+export function getTrainer(id: string): Trainer | undefined {
+  return TRAINERS.find((t) => t.id === id);
+}
+
+/** All plans authored by a given trainer (stable, via trainerOf). */
+export function plansByTrainer(id: string): MarketPlan[] {
+  return ALL_PLANS.filter((p) => trainerOf(p).id === id);
 }
 
 // ---- Categories ----

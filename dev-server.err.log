@@ -1,0 +1,19 @@
+[browser] Uncaught TypeError: Cannot read properties of undefined (reading '_leaflet_pos')
+    at GymMap.useEffect (components/GymMap.tsx:59:26)
+  57 |     mapRef.current = map;
+  58 |     // container may size a tick after mount (dynamic import / flex layout)
+> 59 |     setTimeout(() => map.invalidateSize(), 200);
+     |                          ^
+  60 |     return () => {
+  61 |       map.remove();
+  62 |       mapRef.current = null;
+[browser] Uncaught TypeError: Cannot read properties of undefined (reading '_leaflet_pos')
+    at GymMap.useEffect (components/GymMap.tsx:59:26)
+  57 |     mapRef.current = map;
+  58 |     // container may size a tick after mount (dynamic import / flex layout)
+> 59 |     setTimeout(() => map.invalidateSize(), 200);
+     |                          ^
+  60 |     return () => {
+  61 |       map.remove();
+  62 |       mapRef.current = null;
+⚠ Fast Refresh had to perform a full reload when ./lib/i18n.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload

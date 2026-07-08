@@ -178,6 +178,7 @@ function Stepper({
   min?: number;
   onChange: (v: number) => void;
 }) {
+  const { n } = useLang();
   return (
     <div className="flex flex-1 flex-col items-center">
       <span className="text-[10px] font-bold text-faint">{label}</span>
@@ -190,7 +191,7 @@ function Stepper({
           <Icon name="minus" className="size-3.5" />
         </button>
         <span className="w-10 text-center text-sm font-bold text-ink">
-          {value}
+          {n(value)}
           {unit}
         </span>
         <button

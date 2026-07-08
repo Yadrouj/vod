@@ -1,6 +1,7 @@
 "use client";
 
 import { formatTime } from "@/lib/timer";
+import { useLang } from "./LangProvider";
 
 export default function TimerRing({
   remainingSec,
@@ -15,6 +16,7 @@ export default function TimerRing({
   accent?: string;
   caption?: string;
 }) {
+  const { n } = useLang();
   const stroke = 14;
   const r = size / 2 - stroke;
   const c = 2 * Math.PI * r;
@@ -51,7 +53,7 @@ export default function TimerRing({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-5xl font-extrabold tabular-nums text-ink">
-          {formatTime(remainingSec)}
+          {n(formatTime(remainingSec))}
         </span>
         {caption && (
           <span className="mt-1 text-sm font-medium text-muted">{caption}</span>

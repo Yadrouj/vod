@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button, PageHeader, Segmented, Spinner, cn } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import SocialAccountSection from "@/components/SocialAccountSection";
 import { useLang } from "@/components/LangProvider";
 import {
   FREE_USAGE_LIMIT,
@@ -145,6 +146,9 @@ export default function ProfilePage() {
         defaultSex={settings.gender}
       />
 
+      {/* Social / community profile */}
+      <SocialAccountSection />
+
       {/* Training settings */}
       <Section title={t("prof.training")}>
         <div className="flex flex-wrap gap-2">
@@ -178,6 +182,11 @@ export default function ProfilePage() {
             <Icon name="diet" className="size-4" /> {t("prof.editDiet")}
           </Button>
         </Link>
+        <Link href="/coach-apply" className="block">
+          <Button variant="secondary" className="w-full">
+            <Icon name="medal" className="size-4" /> {t("coachreg.menu")}
+          </Button>
+        </Link>
         <Link href="/support" className="block">
           <Button variant="secondary" className="w-full">
             <Icon name="edit" className="size-4" /> {t("sup.contactUs")}
@@ -202,11 +211,12 @@ function Stat({
   value: number;
   label: string;
 }) {
+  const { n } = useLang();
   return (
     <div className="rounded-2xl bg-card p-4 ring-1 ring-line">
       <div className="flex items-center gap-2 text-brand">
         <Icon name={icon} className="size-5" />
-        <p className="tnum text-2xl font-extrabold text-ink">{value}</p>
+        <p className="tnum text-2xl font-extrabold text-ink">{n(value)}</p>
       </div>
       <p className="mt-1 text-xs text-muted">{label}</p>
     </div>
@@ -336,11 +346,12 @@ function EditNum({
 }
 
 function Mini({ label, value }: { label: string; value: string }) {
+  const { n } = useLang();
   return (
     <div className="rounded-xl bg-base2 p-3 text-center ring-1 ring-line">
       <p className="text-[11px] font-bold text-faint">{label}</p>
       <p className="tnum mt-0.5 text-sm font-extrabold text-ink" dir="ltr">
-        {value}
+        {n(value)}
       </p>
     </div>
   );

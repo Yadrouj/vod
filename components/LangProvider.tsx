@@ -7,12 +7,14 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { translate, type Lang } from "@/lib/i18n";
+import { faNum, translate, type Lang } from "@/lib/i18n";
 
 interface LangCtx {
   lang: Lang;
   setLang: (l: Lang) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
+  /** Format a number/digit-string with Persian numerals in fa, plain in en. */
+  n: (v: string | number) => string;
   dir: "rtl" | "ltr";
 }
 
@@ -20,6 +22,7 @@ const Ctx = createContext<LangCtx>({
   lang: "fa",
   setLang: () => {},
   t: (k) => translate("fa", k),
+  n: (v) => faNum("fa", v),
   dir: "rtl",
 });
 
@@ -48,6 +51,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
     lang,
     setLang,
     t: (key, params) => translate(lang, key, params),
+    n: (v) => faNum(lang, v),
     dir: lang === "fa" ? "rtl" : "ltr",
   };
 

@@ -5,16 +5,20 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, EmptyState, PageHeader, Segmented, Spinner } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import GeneratingOverlay from "@/components/GeneratingOverlay";
 import { useLang } from "@/components/LangProvider";
+import { downloadDietPdf } from "@/lib/pdf";
 import { gateAction } from "@/lib/hooks";
 import { getDietPlan, getDietProfile, saveDietPlan } from "@/lib/db";
 import {
   GOAL_OPTIONS,
   macroTargets,
   nutritionExtras,
+  periWorkout,
   tdee,
   type DietProfile,
   type MacroTargets,
+  type PeriMeal,
 } from "@/lib/nutrition";
 import {
   dayTotals,
@@ -38,11 +42,12 @@ function mealLabel(t: (k: string) => string, name: string): string {
 }
 
 export default function DietPage() {
-  const { t, lang } = useLang();
+  const { t, lang, n } = useLang();
   const router = useRouter();
-  const [state, setState] = useState<"loading" | "noprofile" | "ready">("loading");
+  const [state, setState] = useState<"loading" | "noprofile" | "generating" | "ready">("loading");
   const [profile, setProfile] = useState<DietProfile | null>(null);
   const [plan, setPlan] = useState<DietPlan | null>(null);
+  const [pending, setPending] = useState<DietPlan | null>(null);
   const [view, setView] = useState<"day" | "week">("day");
 
   useEffect(() => {
@@ -53,13 +58,17 @@ export default function DietPage() {
         return;
       }
       setProfile(p);
-      let pl = await getDietPlan();
-      if (!pl) {
-        pl = { ...generatePlan(p, macroTargets(p, p.bias), 7, newSeed()), createdAt: Date.now() };
+      const existing = await getDietPlan();
+      if (existing) {
+        setPlan(existing);
+        setState("ready");
+      } else {
+        // First plan — show the "designing…" animation.
+        const pl = { ...generatePlan(p, macroTargets(p, p.bias), 7, newSeed()), createdAt: Date.now() };
         await saveDietPlan(pl);
+        setPending(pl);
+        setState("generating");
       }
-      setPlan(pl);
-      setState("ready");
     })();
   }, []);
 
@@ -72,10 +81,43 @@ export default function DietPage() {
       createdAt: Date.now(),
     };
     await saveDietPlan(pl);
-    setPlan(pl);
+    setPending(pl);
+    setState("generating");
+  }
+
+  function revealPlan() {
+    if (pending) setPlan(pending);
+    setPending(null);
+    setState("ready");
+  }
+
+  function handlePdf() {
+    if (!plan || !profile) return;
+    const tg = macroTargets(profile, profile.bias);
+    downloadDietPdf({
+      lang,
+      profile,
+      targets: tg,
+      plan,
+      supplements: recommendSupplements(profile),
+      extras: nutritionExtras(profile, tg),
+      goalLabel: t(`dgoal.${profile.goal}`),
+      mealName: (name) => mealLabel(t, name),
+    });
   }
 
   if (state === "loading") return <Spinner />;
+
+  if (state === "generating") {
+    return (
+      <GeneratingOverlay
+        title={t("diet.designing")}
+        icon="diet"
+        steps={[t("diet.gen1"), t("diet.gen2"), t("diet.gen3"), t("diet.gen4")]}
+        onDone={revealPlan}
+      />
+    );
+  }
 
   if (state === "noprofile") {
     return (
@@ -105,6 +147,7 @@ export default function DietPage() {
   const goalLabel = t(`dgoal.${profile!.goal}`);
   const days = view === "day" ? plan!.days.slice(0, 1) : plan!.days;
   const supplements = recommendSupplements(profile!);
+  const peri = periWorkout(profile!);
 
   return (
     <div className="px-4 pt-6">
@@ -125,7 +168,7 @@ export default function DietPage() {
       <div className="mt-4 rounded-3xl bg-gradient-to-br from-brand to-brand2 p-5 text-brandink shadow-xl shadow-brand/20">
         <p className="text-sm font-bold opacity-70">{t("diet.dailyTarget")}</p>
         <p className="mt-1 text-4xl font-extrabold">
-          {targets.kcal}
+          {n(targets.kcal)}
           <span className="mx-1 text-lg font-bold opacity-70">{t("diet.kcal")}</span>
         </p>
         <div className="mt-4 grid grid-cols-3 gap-2">
@@ -139,7 +182,15 @@ export default function DietPage() {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-2">
+      <button
+        type="button"
+        onClick={handlePdf}
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-card2 py-2.5 text-sm font-bold text-ink ring-1 ring-line transition-colors hover:bg-card3"
+      >
+        <Icon name="download" className="size-4 text-brand" /> {t("diet.downloadPdf")}
+      </button>
+
+      <div className="mt-3 flex items-center gap-2">
         <div className="flex-1">
           <Segmented
             value={view}
@@ -175,6 +226,23 @@ export default function DietPage() {
 
       <section className="mt-7">
         <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
+          <Icon name="timer" className="size-5 text-brand" /> {t("peri.title")}
+        </h2>
+        <p className="mt-1 text-xs text-faint">{t("peri.subtitle")}</p>
+        <div className="mt-3 grid gap-2">
+          <PeriCard label={t("peri.pre")} icon="play" accent="brand" meal={peri.pre} />
+          <PeriCard label={t("peri.post")} icon="flame" accent="orange" meal={peri.post} />
+        </div>
+        <div className="mt-2 flex items-start gap-2 rounded-2xl bg-sky-500/10 p-3 text-xs font-semibold text-sky-200 ring-1 ring-sky-500/20">
+          <Icon name="diet" className="mt-0.5 size-4 flex-shrink-0 text-sky-300" />
+          <span>
+            <b>{t("peri.hydration")}:</b> {lang === "fa" ? peri.hydrationFa : peri.hydration}
+          </span>
+        </div>
+      </section>
+
+      <section className="mt-7">
+        <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
           <Icon name="pill" className="size-5 text-brand" /> {t("diet.suppTitle")}
         </h2>
         <p className="mt-1 text-xs text-faint">{t("diet.livePriceNote")}</p>
@@ -190,22 +258,23 @@ export default function DietPage() {
 }
 
 function MacroPill({ label, grams }: { label: string; grams: number }) {
+  const { n } = useLang();
   return (
     <div className="rounded-xl bg-brandink/10 p-2 text-center">
-      <p className="text-lg font-extrabold">{grams}g</p>
+      <p className="text-lg font-extrabold">{n(grams)}g</p>
       <p className="text-[10px] font-bold opacity-70">{label}</p>
     </div>
   );
 }
 
 function MealCard({ meal }: { meal: PlanMeal }) {
-  const { t, lang } = useLang();
+  const { t, lang, n } = useLang();
   return (
     <div className="rounded-2xl bg-card p-4 ring-1 ring-line">
       <div className="flex items-center justify-between">
         <h3 className="font-extrabold text-ink">{mealLabel(t, meal.name)}</h3>
         <span className="text-sm font-bold text-brand">
-          {meal.kcal} {t("diet.kcal")}
+          {n(meal.kcal)} {t("diet.kcal")}
         </span>
       </div>
       <div className="mt-3 space-y-2">
@@ -219,22 +288,22 @@ function MealCard({ meal }: { meal: PlanMeal }) {
               <p className="text-xs text-faint">{it.label}</p>
             </div>
             <span className="text-xs font-semibold text-muted">
-              {it.kcal} {t("diet.kcal")}
+              {n(it.kcal)} {t("diet.kcal")}
             </span>
           </div>
         ))}
       </div>
       <div className="mt-3 flex gap-3 border-t border-line pt-2 text-xs font-semibold">
-        <span className="text-protein" dir="ltr">P {meal.protein}g</span>
-        <span className="text-carbs" dir="ltr">C {meal.carbs}g</span>
-        <span className="text-fat" dir="ltr">F {meal.fat}g</span>
+        <span className="text-protein" dir="ltr">P {n(meal.protein)}g</span>
+        <span className="text-carbs" dir="ltr">C {n(meal.carbs)}g</span>
+        <span className="text-fat" dir="ltr">F {n(meal.fat)}g</span>
       </div>
     </div>
   );
 }
 
 function DayTotalRow({ totals, target }: { totals: MacroTargets; target: MacroTargets }) {
-  const { t } = useLang();
+  const { t, n } = useLang();
   const pct = Math.round((totals.kcal / target.kcal) * 100);
   // Verdict color: near-target reads success, under warns, over flags.
   const verdict =
@@ -247,30 +316,72 @@ function DayTotalRow({ totals, target }: { totals: MacroTargets; target: MacroTa
     <div className="mt-2 flex items-center justify-between rounded-2xl bg-card2 px-4 py-3 ring-1 ring-line">
       <span className="text-sm font-bold text-ink">{t("diet.dayTotal")}</span>
       <div className="flex items-center gap-3 text-xs font-semibold">
-        <span className="text-protein" dir="ltr">{totals.protein}g P</span>
+        <span className="text-protein" dir="ltr">{n(totals.protein)}g P</span>
         <span className="text-muted tnum" dir="ltr">
-          {totals.kcal} / {target.kcal}
+          {n(totals.kcal)} / {n(target.kcal)}
         </span>
         <span className={`tnum font-bold ${verdict}`} dir="ltr">
-          {pct}%
+          {n(pct)}%
         </span>
       </div>
     </div>
   );
 }
 
-function SupplementRow({ supp }: { supp: Supplement }) {
-  const { t, lang } = useLang();
-  const [data, setData] = useState<
-    { found: boolean; price?: number; url?: string } | null
-  >(null);
+function PeriCard({
+  label,
+  icon,
+  accent,
+  meal,
+}: {
+  label: string;
+  icon: "play" | "flame";
+  accent: "brand" | "orange";
+  meal: PeriMeal;
+}) {
+  const { t, lang, n } = useLang();
+  const tone =
+    accent === "brand"
+      ? "bg-brand/15 text-brand ring-brand/25"
+      : "bg-orange-500/15 text-orange-300 ring-orange-500/25";
+  return (
+    <div className="rounded-2xl bg-card p-4 ring-1 ring-line">
+      <div className="flex items-center justify-between">
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-extrabold ring-1 ${tone}`}>
+          <Icon name={icon} className="size-3.5 flip-rtl" /> {label}
+        </span>
+        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-muted">
+          <Icon name="clock" className="size-3.5 text-faint" /> {lang === "fa" ? meal.whenFa : meal.when}
+        </span>
+      </div>
+      <p className="mt-2 text-sm font-bold text-ink">{lang === "fa" ? meal.foodsFa : meal.foods}</p>
+      <div className="mt-2 flex gap-2">
+        <span className="rounded-full bg-carbs/15 px-2 py-0.5 text-[11px] font-bold text-carbs" dir="ltr">
+          {n(meal.carbs)}g {lang === "fa" ? "کربو" : "carbs"}
+        </span>
+        <span className="rounded-full bg-protein/15 px-2 py-0.5 text-[11px] font-bold text-protein" dir="ltr">
+          {n(meal.protein)}g {lang === "fa" ? "پروتئین" : "protein"}
+        </span>
+      </div>
+      <p className="mt-2 text-xs text-muted">{lang === "fa" ? meal.tipFa : meal.tip}</p>
+    </div>
+  );
+}
 
+function SupplementRow({ supp }: { supp: Supplement }) {
+  const { t, lang, n } = useLang();
+  const [live, setLive] = useState<{ price: number; url: string } | null>(null);
+  const loc = lang === "fa" ? "fa-IR" : "en-US";
+
+  // Show the estimate immediately; upgrade to a live Torob price if reachable.
   useEffect(() => {
     let alive = true;
     fetch(`/api/torob?q=${encodeURIComponent(supp.query)}`)
       .then((r) => r.json())
-      .then((d) => alive && setData(d))
-      .catch(() => alive && setData({ found: false }));
+      .then((d) => {
+        if (alive && d?.found && d.price) setLive({ price: d.price, url: d.url });
+      })
+      .catch(() => {});
     return () => {
       alive = false;
     };
@@ -278,6 +389,8 @@ function SupplementRow({ supp }: { supp: Supplement }) {
 
   const name = lang === "fa" ? supp.nameFa : supp.name;
   const why = lang === "fa" ? supp.whyFa : supp.why;
+  const timing = lang === "fa" ? supp.timingFa : supp.timing;
+  const torobSearch = `https://torob.com/search/?query=${encodeURIComponent(supp.query)}`;
 
   return (
     <div className="rounded-2xl bg-card p-4 ring-1 ring-line">
@@ -289,7 +402,9 @@ function SupplementRow({ supp }: { supp: Supplement }) {
               className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold ring-1 ${
                 supp.tier === "A"
                   ? "bg-success-dim text-success ring-success/25"
-                  : "bg-info-dim text-info ring-info/25"
+                  : supp.tier === "B"
+                  ? "bg-info-dim text-info ring-info/25"
+                  : "bg-card2 text-faint ring-line"
               }`}
               title={lang === "fa" ? "سطح شواهد علمی" : "Evidence tier"}
             >
@@ -299,28 +414,32 @@ function SupplementRow({ supp }: { supp: Supplement }) {
           <p className="mt-0.5 text-sm text-muted">{why}</p>
         </div>
         <span className="flex-shrink-0 rounded-full bg-brand/15 px-2.5 py-0.5 text-xs font-bold text-brand">
-          {supp.dose}
+          {n(supp.dose)}
         </span>
       </div>
-      <div className="mt-3 border-t border-line pt-2">
-        {data == null ? (
-          <span className="inline-block h-4 w-24 animate-pulse rounded-full bg-card2" />
-        ) : data.found && data.price ? (
-          <a
-            href={data.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm font-bold text-brand"
-          >
+
+      <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-card2 px-2 py-0.5 text-[11px] font-bold text-muted ring-1 ring-line">
+        <Icon name="clock" className="size-3 text-brand" /> {timing}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between border-t border-line pt-2">
+        {live ? (
+          <a href={live.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-bold text-brand">
             <Icon name="store" className="size-4" />
-            {t("diet.torobFrom", {
-              p: data.price.toLocaleString(lang === "fa" ? "fa-IR" : "en-US"),
-            })}
-            <Icon name="chevronRight" className="size-3.5 flip-rtl opacity-70" />
+            {t("diet.torobFrom", { p: live.price.toLocaleString(loc) })}
           </a>
         ) : (
-          <span className="text-xs text-faint">{t("diet.priceNA")}</span>
+          <span className="text-xs font-semibold text-faint">
+            {t("diet.estPrice")}:{" "}
+            <span className="text-muted" dir="ltr">
+              {n(supp.priceFrom.toLocaleString(loc))}–{n(supp.priceTo.toLocaleString(loc))}
+            </span>{" "}
+            {t("diet.toman")}
+          </span>
         )}
+        <a href={torobSearch} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] font-bold text-sky-300">
+          <Icon name="store" className="size-3.5" /> {t("diet.onTorob")}
+        </a>
       </div>
     </div>
   );

@@ -25,6 +25,8 @@ export interface Exercise {
   secondaryMuscles: string[];
   grips: string[];
   steps: string[];
+  steps_fa?: string[]; // Persian translation of `steps` (from scripts/translate-steps.mjs)
+  name_fa?: string; // Persian exercise name
   thumbnail: string | null;
   videos: { male: VideoClip[]; female: VideoClip[] };
 }
@@ -142,4 +144,15 @@ export interface Usage {
   count: number;
   firstUsedAt: number;
   lastUsedAt: number;
+}
+
+/** Public social identity — required to post in the community (reviews & the gym feed). */
+export interface SocialProfile {
+  id: string; // always SOCIAL_ID
+  userId: string; // assigned on creation
+  username: string; // public display name / handle
+  avatarId: number; // 0..9 (see USER_AVATARS)
+  skin: string; // hex skin tone
+  gender: "male" | "female";
+  createdAt: number;
 }

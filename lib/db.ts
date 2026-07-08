@@ -11,6 +11,7 @@ import type {
   SectionStat,
   Session,
   Settings,
+  SocialProfile,
   Usage,
 } from "./types";
 import { WEEKDAYS } from "./taxonomy";
@@ -33,6 +34,7 @@ class GymDB extends Dexie {
   sectionStats!: Table<SectionStat, string>;
   feedback!: Table<Feedback, number>;
   analysis!: Table<AnalysisMsg, number>;
+  social!: Table<SocialProfile, string>;
 
   constructor() {
     super("gym-trainer");
@@ -53,6 +55,9 @@ class GymDB extends Dexie {
       sectionStats: "section",
       feedback: "++id, createdAt",
       analysis: "++id, createdAt",
+    });
+    this.version(5).stores({
+      social: "id",
     });
   }
 }
@@ -140,6 +145,11 @@ export async function saveDietPlan(plan: DietPlan): Promise<void> {
   await db.dietPlan.put({ ...plan, id: DIET_PLAN_ID });
 }
 
+/** Drop the saved plan so the diet page regenerates a fresh one (with the "designing…" animation). */
+export async function clearDietPlan(): Promise<void> {
+  await db.dietPlan.delete(DIET_PLAN_ID);
+}
+
 // ---- Account & usage gate ----
 
 export const ACCOUNT_ID = "me";
@@ -187,6 +197,34 @@ export async function needsLogin(): Promise<boolean> {
   if (account) return false;
   const u = await getUsage();
   return (u?.count ?? 0) >= FREE_USAGE_LIMIT;
+}
+
+// ---- Social identity (community reviews & gym feed) ----
+
+export const SOCIAL_ID = "me";
+
+export function getSocial(): Promise<SocialProfile | undefined> {
+  return db.social.get(SOCIAL_ID);
+}
+
+/** Create (with a fresh userId) or update the public social profile. */
+export async function saveSocial(
+  patch: Partial<Omit<SocialProfile, "id" | "userId" | "createdAt">>
+): Promise<SocialProfile> {
+  const existing = await getSocial();
+  const profile: SocialProfile = existing
+    ? { ...existing, ...patch }
+    : {
+        id: SOCIAL_ID,
+        userId: "u_" + uid().replace(/-/g, "").slice(0, 12),
+        username: patch.username ?? "",
+        avatarId: patch.avatarId ?? 0,
+        skin: patch.skin ?? "#e0a878",
+        gender: patch.gender ?? "male",
+        createdAt: Date.now(),
+      };
+  await db.social.put(profile);
+  return profile;
 }
 
 // ---- Section analytics (for /admin) ----

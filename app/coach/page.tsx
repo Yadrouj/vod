@@ -6,8 +6,9 @@ import { useEffect, useRef, useState } from "react";
 import { PageHeader, Spinner, cn } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { useLang } from "@/components/LangProvider";
-import { useDietProfile, useProgram, useSettings, gateAction } from "@/lib/hooks";
+import { useDietProfile, useProgram, useSessions, useSettings, gateAction } from "@/lib/hooks";
 import { macroTargets } from "@/lib/nutrition";
+import { computePRs } from "@/lib/records";
 
 interface Msg {
   role: "user" | "assistant";
@@ -20,12 +21,12 @@ interface Msg {
 const QUICK: Record<"fa" | "en", { start: string[]; intake: string[]; followup: string[] }> = {
   fa: {
     start: [
-      "برنامه تمرین می‌خوام 🏋️",
-      "رژیم غذایی می‌خوام 🍽️",
-      "هدفم کاهش وزنه ⚖️",
-      "هدفم عضله‌سازیه 💪",
+      "برنامه تمرین می‌خوام",
+      "رژیم غذایی می‌خوام",
+      "هدفم کاهش وزنه",
+      "هدفم عضله‌سازیه",
       "چه مکملی بخورم؟",
-      "تمرین خانگی می‌خوام 🏠",
+      "تمرین خانگی می‌خوام",
     ],
     intake: [
       "آسیب‌دیدگی ندارم",
@@ -48,12 +49,12 @@ const QUICK: Record<"fa" | "en", { start: string[]; intake: string[]; followup: 
   },
   en: {
     start: [
-      "I want a training plan 🏋️",
-      "I want a diet plan 🍽️",
-      "My goal is fat loss ⚖️",
-      "My goal is muscle 💪",
+      "I want a training plan",
+      "I want a diet plan",
+      "My goal is fat loss",
+      "My goal is muscle",
       "Which supplements?",
-      "Home workout please 🏠",
+      "Home workout please",
     ],
     intake: [
       "No injuries",
@@ -92,12 +93,43 @@ export default function CoachPage() {
   const settings = useSettings();
   const program = useProgram();
   const dietProfile = useDietProfile();
+  const sessions = useSessions();
 
   const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+
+  // Persist the conversation so it survives leaving/returning to the page.
+  const CHAT_KEY = "ramagh-coach-chat";
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CHAT_KEY);
+      if (raw) setMsgs(JSON.parse(raw));
+    } catch {
+      /* ignore */
+    }
+    setLoaded(true);
+  }, []);
+  useEffect(() => {
+    if (!loaded) return;
+    try {
+      localStorage.setItem(CHAT_KEY, JSON.stringify(msgs.slice(-40)));
+    } catch {
+      /* ignore */
+    }
+  }, [msgs, loaded]);
+
+  function clearChat() {
+    setMsgs([]);
+    try {
+      localStorage.removeItem(CHAT_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -105,13 +137,14 @@ export default function CoachPage() {
 
   function systemPrompt(): string {
     const parts: string[] = [
-      "You are «مربی رمق», an expert strength coach and sports nutritionist inside the Ramagh fitness app.",
+      "You are «مربی رمق», a board-level sports nutritionist (MSc/PhD-level, ISSN-informed) and strength & conditioning coach inside the Ramagh fitness app. Hold yourself to the standard of a professional consultation.",
       lang === "fa"
-        ? "Always answer in Persian (Farsi), warm but professional. Use metric units and Persian food examples."
-        : "Answer in English, warm but professional. Use metric units.",
-      // Intake-first behavior: a real coach asks before prescribing.
-      "INTAKE RULE: before giving any full program, diet plan, or major recommendation, check what you know about the user (from CONTEXT below and the conversation). The critical intake list is: age, sex, height, weight, activity level, training experience, goal, injuries or joint pain, medical conditions (heart, blood pressure, diabetes), digestive problems, food allergies/intolerances, medications, sleep quality, and stress. If any item that matters for the current question is unknown, FIRST ask for it — at most 3 short, numbered questions per turn — then answer fully once the user replies. For small factual questions, answer directly without interrogating.",
-      "Personalize every answer with the user's data. When you make numeric recommendations (sets, reps, calories, protein), show the numbers explicitly. Never give medical diagnoses; for red-flag symptoms or diseases, advise seeing a physician first.",
+        ? "Always answer in Persian (Farsi), warm but clinical and precise. Use metric units, grams, and affordable Iranian food examples (تخم‌مرغ، عدس، مرغ، ماست، نان سنگک…)."
+        : "Answer in English, warm but clinical and precise. Use metric units and grams.",
+      // Intake-first behavior: a real specialist assesses before prescribing.
+      "INTAKE RULE — assess before you prescribe. Before any full diet/training plan, do a brief professional intake. Nutrition intake covers: current weight & goal weight and target rate (kg/week), height, age, sex, activity & job type, training days, food preferences/dislikes & cuisine, budget, meals per day & schedule, appetite, digestion/GI issues (bloating, IBS, reflux), food allergies/intolerances, alcohol/caffeine, water intake, prior diets & what failed, sleep, stress, relevant bloodwork if known (lipids, HbA1c, ferritin, vitamin D, TSH), medications/conditions. Ask ONLY the items that matter for the current request and that you don't already know from CONTEXT — at most 3 crisp, numbered questions per turn — then deliver. For small factual questions, answer directly.",
+      "ANSWER LIKE A SPECIALIST: (1) state the plan's rationale in 1–2 lines; (2) give explicit numbers — total kcal, protein/carb/fat in grams (and g/kg bodyweight), fiber, water; (3) give concrete meals with portion sizes in grams and a couple of swaps; (4) add meal timing around training; (5) cite the mechanism/evidence briefly when relevant (e.g., protein 1.6–2.2 g/kg, ~500 kcal deficit ≈ 0.5 kg/week); (6) flag 1–2 practical adjustments to make next week based on progress. Be decisive and structured (short headers, bullets), not vague.",
+      "Personalize every answer with the user's data and prior messages. Never invent bloodwork or diagnose disease; for red-flag symptoms (chest pain, disordered eating, uncontrolled diabetes/BP) advise seeing a physician/dietitian first. Note supplements are optional add-ons, not the foundation.",
     ];
     const known: string[] = [];
     if (settings) {
@@ -131,6 +164,18 @@ export default function CoachPage() {
         .map((d) => `${d.label}: ${d.focus.join("+") || "unset"} (${d.exercises.length} exercises)`)
         .join("; ");
       known.push(`weekly program: ${split}`);
+    }
+    if (sessions?.length) {
+      const weekAgo = Date.now() - 7 * 864e5;
+      const thisWeek = sessions.filter((s) => s.startedAt >= weekAgo).length;
+      const prs = computePRs(sessions).slice(0, 5);
+      known.push(
+        `training log: ${sessions.length} workouts logged, ${thisWeek} in the last 7 days`
+      );
+      if (prs.length)
+        known.push(
+          `personal records (est 1RM): ${prs.map((p) => `${p.name} ${p.est1RM}kg`).join(", ")} — use these exact numbers to judge progress and prescribe next weights`
+        );
     }
     parts.push(
       known.length
@@ -184,13 +229,26 @@ export default function CoachPage() {
         title={t("coach.title")}
         subtitle={t("coach.subtitle")}
         right={
-          <Link
-            href="/profile"
-            className="flex size-10 items-center justify-center rounded-full bg-card text-muted ring-1 ring-line"
-            aria-label={t("prof.title")}
-          >
-            <Icon name="user" className="size-5" />
-          </Link>
+          <div className="flex items-center gap-2">
+            {msgs.length > 0 && (
+              <button
+                type="button"
+                onClick={clearChat}
+                className="flex size-10 items-center justify-center rounded-full bg-card text-muted ring-1 ring-line"
+                aria-label={t("coach.clear")}
+                title={t("coach.clear")}
+              >
+                <Icon name="refresh" className="size-5" />
+              </button>
+            )}
+            <Link
+              href="/profile"
+              className="flex size-10 items-center justify-center rounded-full bg-card text-muted ring-1 ring-line"
+              aria-label={t("prof.title")}
+            >
+              <Icon name="user" className="size-5" />
+            </Link>
+          </div>
         }
       />
 

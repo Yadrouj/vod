@@ -299,33 +299,75 @@ export interface Supplement {
   whyFa: string;
   query: string; // Persian search term for Torob
   tier: "A" | "B" | "C"; // evidence tier (A = strongly supported)
+  timing: string;
+  timingFa: string;
+  priceFrom: number; // Toman — rough 2026 Iran-market estimate
+  priceTo: number;
 }
 
+type Supp = Omit<Supplement, never>;
+
+/**
+ * Personalized, evidence-ranked supplement plan. Reacts to goal, sex, age,
+ * activity, diet style and allergens — not a fixed list. Prices are rough
+ * local-market estimates (used as a fallback when live Torob prices are blocked).
+ */
 export function recommendSupplements(profile: DietProfile): Supplement[] {
-  const s: Supplement[] = [];
+  const s: Supp[] = [];
   const vegan = profile.style === "vegan";
+  const vegetarian = profile.style === "vegetarian";
   const noDairy = vegan || profile.allergens.includes("dairy");
   const hard = profile.activity === "active" || profile.activity === "athlete";
+  const female = profile.sex === "female";
+  const older = profile.age >= 40;
+  const cutting = profile.goal === "lose";
+  const gaining = profile.goal === "gain";
 
+  // 1) Protein — style-aware.
   s.push(
     vegan
-      ? { name: "Plant protein", nameFa: "پروتئین گیاهی", dose: "۱–۲ اسکوپ در روز", why: "Convenient way to hit protein.", whyFa: "راه ساده برای رسیدن به پروتئین روزانه.", query: "پروتئین گیاهی", tier: "A" }
-      : { name: "Whey protein", nameFa: "پروتئین وی", dose: "۱–۲ اسکوپ در روز", why: "Convenient way to hit protein.", whyFa: "راه ساده برای رسیدن به پروتئین روزانه.", query: "پروتئین وی", tier: "A" }
+      ? { name: "Plant protein", nameFa: "پروتئین گیاهی", dose: "۱–۲ اسکوپ (۲۵–۵۰ گرم)", why: "Hit protein without animal products.", whyFa: "رساندن پروتئین بدون محصولات حیوانی.", query: "پروتئین گیاهی", tier: "A", timing: "post-workout / between meals", timingFa: "بعد تمرین یا بین وعده‌ها", priceFrom: 950000, priceTo: 2200000 }
+      : { name: "Whey protein", nameFa: "پروتئین وی", dose: "۱–۲ اسکوپ (۲۵–۵۰ گرم)", why: "Fast, complete protein to reach your target.", whyFa: "سریع‌ترین راه برای رسیدن به هدف پروتئین روزانه.", query: "پروتئین وی", tier: "A", timing: "post-workout / between meals", timingFa: "بعد تمرین یا بین وعده‌ها", priceFrom: 1100000, priceTo: 2800000 }
   );
-  // Creatine is NOT gated on goal: it also preserves lean mass in a deficit.
-  s.push({ name: "Creatine", nameFa: "کراتین مونوهیدرات", dose: "۳–۵ گرم روزانه (حتی روز استراحت)", why: "Best-proven for strength & muscle; keeps lean mass on a cut.", whyFa: "معتبرترین مکمل برای قدرت و عضله؛ در کات هم عضله را حفظ می‌کند.", query: "کراتین", tier: "A" });
-  s.push({ name: "Omega-3", nameFa: "امگا ۳", dose: "۱–۲ گرم EPA+DHA", why: "Recovery, joints, heart.", whyFa: "کمک به ریکاوری، مفاصل و قلب.", query: "امگا 3", tier: "B" });
-  s.push({ name: "Vitamin D3", nameFa: "ویتامین D3", dose: "۱۰۰۰–۲۰۰۰ واحد", why: "Commonly low; confirm with a blood test.", whyFa: "معمولاً کمبود دارد؛ با آزمایش خون تأیید کن.", query: "ویتامین D3", tier: "B" });
+
+  // 2) Creatine — for everyone (strength, muscle, lean-mass on a cut, even cognition).
+  s.push({ name: "Creatine monohydrate", nameFa: "کراتین مونوهیدرات", dose: "۳–۵ گرم روزانه (حتی روز استراحت)", why: "Most-proven for strength & muscle; preserves lean mass on a cut.", whyFa: "معتبرترین مکمل برای قدرت و عضله؛ در کات هم عضله را حفظ می‌کند.", query: "کراتین", tier: "A", timing: "any time, daily", timingFa: "هر ساعتی، هر روز", priceFrom: 350000, priceTo: 950000 });
+
+  // 3) Goal-specific.
+  if (cutting) {
+    s.push({ name: "Caffeine", nameFa: "کافئین", dose: "۱۰۰–۲۰۰ میلی‌گرم", why: "Appetite control + training performance in a deficit.", whyFa: "کنترل اشتها و حفظ عملکرد تمرین در کسری کالری.", query: "کافئین", tier: "A", timing: "45 min pre-workout", timingFa: "۴۵ دقیقه قبل تمرین", priceFrom: 180000, priceTo: 550000 });
+    s.push({ name: "Psyllium fiber", nameFa: "پودر پسیلیوم (اسفرزه)", dose: "۵–۱۰ گرم با آب", why: "Satiety and digestion when calories are low.", whyFa: "افزایش سیری و کمک به گوارش وقتی کالری پایین است.", query: "پسیلیوم اسفرزه", tier: "B", timing: "before meals", timingFa: "قبل وعده‌ها", priceFrom: 120000, priceTo: 400000 });
+  } else if (gaining) {
+    s.push({ name: "Mass gainer / maltodextrin", nameFa: "گینر یا مالتودکسترین", dose: "۵۰–۱۰۰ گرم کربوهیدرات", why: "Easy calories & carbs when eating enough is hard.", whyFa: "رساندن کالری و کربوهیدرات وقتی خوردن کافی سخت است.", query: "گینر", tier: "B", timing: "post-workout", timingFa: "بعد تمرین", priceFrom: 700000, priceTo: 1900000 });
+  } else if (hard) {
+    s.push({ name: "Caffeine", nameFa: "کافئین", dose: "۱۰۰–۲۰۰ میلی‌گرم", why: "Boosts training performance & focus.", whyFa: "افزایش عملکرد و تمرکز در تمرین.", query: "کافئین", tier: "A", timing: "45 min pre-workout", timingFa: "۴۵ دقیقه قبل تمرین", priceFrom: 180000, priceTo: 550000 });
+  }
+
+  // 4) Everyday health.
+  s.push({ name: "Omega-3 (fish oil)", nameFa: "امگا ۳ (روغن ماهی)", dose: "۱–۲ گرم EPA+DHA", why: "Recovery, joints, heart & mood.", whyFa: "کمک به ریکاوری، مفاصل، قلب و خلق‌وخو.", query: vegan ? "امگا 3 گیاهی" : "امگا 3", tier: "B", timing: "with a meal", timingFa: "همراه غذا", priceFrom: 300000, priceTo: 1200000 });
+  s.push({ name: "Vitamin D3", nameFa: "ویتامین D3", dose: "۱۰۰۰–۲۰۰۰ واحد", why: "Very commonly low in Iran; supports bone, immunity, hormones.", whyFa: "کمبودش در ایران بسیار شایع است؛ برای استخوان، ایمنی و هورمون‌ها.", query: "ویتامین D3", tier: "B", timing: "morning, with fat", timingFa: "صبح، همراه چربی", priceFrom: 120000, priceTo: 450000 });
+
+  // 5) Demographic / diet-driven.
+  if (female && (cutting || hard)) {
+    s.push({ name: "Iron", nameFa: "آهن", dose: "طبق آزمایش خون", why: "Women who train/diet are prone to low iron — test first.", whyFa: "بانوانی که تمرین یا رژیم دارند مستعد کمبود آهن‌اند؛ اول آزمایش بده.", query: "قرص آهن", tier: "B", timing: "away from dairy/coffee", timingFa: "دور از لبنیات و قهوه", priceFrom: 90000, priceTo: 350000 });
+  }
+  if (older) {
+    s.push({ name: "Magnesium glycinate", nameFa: "منیزیم گلایسینات", dose: "۲۰۰–۴۰۰ میلی‌گرم", why: "Sleep, cramps & recovery — needs rise with age.", whyFa: "بهبود خواب، گرفتگی عضله و ریکاوری — نیاز با افزایش سن بیشتر می‌شود.", query: "منیزیم", tier: "B", timing: "evening", timingFa: "شب قبل خواب", priceFrom: 250000, priceTo: 800000 });
+    s.push({ name: "Collagen + Vitamin C", nameFa: "کلاژن + ویتامین C", dose: "۱۰–۱۵ گرم", why: "Joint & connective-tissue support for older lifters.", whyFa: "حمایت از مفاصل و بافت همبند برای تمرین در سن بالاتر.", query: "کلاژن", tier: "C", timing: "pre-workout", timingFa: "قبل تمرین", priceFrom: 400000, priceTo: 1500000 });
+  }
   if (vegan) {
-    s.push({ name: "Vitamin B12", nameFa: "ویتامین B12", dose: "۲۵۰ میکروگرم", why: "Essential on a vegan diet.", whyFa: "برای رژیم کاملاً گیاهی ضروری است.", query: "ویتامین B12", tier: "A" });
+    s.push({ name: "Vitamin B12", nameFa: "ویتامین B12", dose: "۲۵۰–۵۰۰ میکروگرم", why: "Essential — plants don't provide it.", whyFa: "ضروری است؛ منابع گیاهی آن را ندارند.", query: "ویتامین B12", tier: "A", timing: "daily", timingFa: "هر روز", priceFrom: 90000, priceTo: 350000 });
+    s.push({ name: "Zinc", nameFa: "زینک (روی)", dose: "۱۵–۳۰ میلی‌گرم", why: "Often low on plant-based diets.", whyFa: "در رژیم گیاهی معمولاً کم دریافت می‌شود.", query: "زینک", tier: "B", timing: "with a meal", timingFa: "همراه غذا", priceFrom: 100000, priceTo: 380000 });
   }
-  if (noDairy) {
-    s.push({ name: "Calcium", nameFa: "کلسیم", dose: "۵۰۰ میلی‌گرم", why: "Covers calcium without dairy.", whyFa: "جبران کلسیم در نبود لبنیات.", query: "کلسیم", tier: "B" });
+  if (noDairy && !s.some((x) => x.name === "Iron")) {
+    s.push({ name: "Calcium", nameFa: "کلسیم", dose: "۵۰۰ میلی‌گرم", why: "Covers calcium without dairy.", whyFa: "جبران کلسیم در نبود لبنیات.", query: "کلسیم", tier: "B", timing: "with a meal", timingFa: "همراه غذا", priceFrom: 100000, priceTo: 400000 });
   }
-  if (hard) {
-    s.push({ name: "Caffeine", nameFa: "کافئین", dose: "۱۰۰–۲۰۰ میلی‌گرم، ۴۵ دقیقه قبل تمرین", why: "Boosts training performance.", whyFa: "افزایش عملکرد و تمرکز در تمرین.", query: "کافئین", tier: "A" });
+  if (vegetarian && !vegan) {
+    s.push({ name: "Vitamin B12", nameFa: "ویتامین B12", dose: "۲۵۰ میکروگرم", why: "Runs low without meat/fish.", whyFa: "بدون گوشت و ماهی معمولاً کم می‌شود.", query: "ویتامین B12", tier: "B", timing: "daily", timingFa: "هر روز", priceFrom: 90000, priceTo: 350000 });
   }
-  return s;
+
+  // Cap and keep the strongest evidence first (protein/creatine already lead).
+  return s.slice(0, 8);
 }
 
 export const DIET_PLAN_ID = "current";

@@ -46,6 +46,21 @@ const serwist = new Serwist({
         ],
       }),
     },
+    // Map tiles for the "nearby gyms" feature (CARTO dark basemap). CacheFirst so
+    // browsed areas — and an explicit "download offline Tehran map" — persist offline.
+    {
+      matcher: ({ url }) => url.hostname.endsWith("basemaps.cartocdn.com"),
+      handler: new CacheFirst({
+        cacheName: "map-tiles",
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 4000,
+            maxAgeSeconds: 60 * 24 * 60 * 60,
+            purgeOnQuotaError: true,
+          }),
+        ],
+      }),
+    },
     // Poster/thumbnail images load fine cross-origin — cache them too.
     {
       matcher: ({ url }) => url.hostname === "media.musclewiki.com",

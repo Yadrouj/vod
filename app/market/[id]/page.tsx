@@ -44,7 +44,7 @@ export default function PlanDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { t, lang } = useLang();
+  const { t, lang, n } = useLang();
   const router = useRouter();
   const plan = getPlan(id);
   const { index } = useExercises();
@@ -110,7 +110,7 @@ export default function PlanDetailPage({
       <div className="mt-4 rounded-3xl bg-gradient-to-br from-brand to-brand2 p-5 text-brandink shadow-xl shadow-brand/20">
         <p className="text-sm font-bold opacity-70">{t("diet.dailyTarget")}</p>
         <p className="mt-1 text-4xl font-extrabold">
-          {targets.kcal}
+          {n(targets.kcal)}
           <span className="mx-1 text-lg font-bold opacity-70">{t("diet.kcal")}</span>
         </p>
         <div className="mt-4 grid grid-cols-3 gap-2">
@@ -136,7 +136,7 @@ export default function PlanDetailPage({
           <div key={i} className="rounded-2xl bg-card p-4 ring-1 ring-line">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-ink">{mealName(t, m.name)}</h3>
-              <span className="text-sm font-bold text-brand">{m.kcal} {t("diet.kcal")}</span>
+              <span className="text-sm font-bold text-brand">{n(m.kcal)} {t("diet.kcal")}</span>
             </div>
             <div className="mt-2 space-y-1">
               {m.items.map((it, j) => (
@@ -145,7 +145,7 @@ export default function PlanDetailPage({
                     {lang === "fa" ? it.nameFa : it.name}{" "}
                     <span className="text-faint">· {it.label}</span>
                   </span>
-                  <span className="text-faint">{it.kcal}</span>
+                  <span className="text-faint">{n(it.kcal)}</span>
                 </div>
               ))}
             </div>
@@ -173,9 +173,10 @@ export default function PlanDetailPage({
 }
 
 function MacroPill({ label, grams }: { label: string; grams: number }) {
+  const { n } = useLang();
   return (
     <div className="rounded-xl bg-brandink/10 p-2 text-center">
-      <p className="text-lg font-extrabold">{grams}g</p>
+      <p className="text-lg font-extrabold">{n(grams)}g</p>
       <p className="text-[10px] font-bold opacity-70">{label}</p>
     </div>
   );
@@ -196,7 +197,7 @@ function GymView({
   applying: boolean;
   onApply: () => void;
 }) {
-  const { t, lang } = useLang();
+  const { t, lang, n } = useLang();
   const comp = schemeFor(plan.goal, "Compound");
   const iso = schemeFor(plan.goal, "Isolation");
 
@@ -210,7 +211,7 @@ function GymView({
 
       <div className="mt-4 grid grid-cols-3 gap-2">
         <Stat label={t("mkt.goal")} value={t(`goal.${plan.goal}`)} />
-        <Stat label={t("mkt.daysWk")} value={`${plan.days}`} />
+        <Stat label={t("mkt.daysWk")} value={n(plan.days)} />
         <Stat label={t("mkt.level")} value={t(`level.${plan.level}`)} />
       </div>
 
@@ -247,7 +248,7 @@ function GymView({
                         {ex?.name}
                       </span>
                       <span className="ms-2 flex-shrink-0 text-faint">
-                        {pe.sets}×{pe.timed ? `${pe.reps}s` : pe.reps}
+                        {n(pe.sets)}×{pe.timed ? `${n(pe.reps)}s` : n(pe.reps)}
                       </span>
                     </li>
                   );
@@ -278,17 +279,23 @@ function TrainerCard({ plan }: { plan: MarketPlan }) {
   const { t, lang } = useLang();
   const trainer = trainerOf(plan);
   return (
-    <div className="mt-3 flex items-center gap-3 rounded-2xl bg-card p-3 ring-1 ring-line">
-      <TrainerAvatar trainer={trainer} size="size-11 text-lg" />
-      <div className="min-w-0">
-        <p className="truncate text-sm font-extrabold text-ink">
+    <Link
+      href={`/market/trainer/${trainer.id}`}
+      className="mt-3 flex items-center gap-3 rounded-2xl bg-card p-3 ring-1 ring-line transition-colors hover:bg-card2"
+    >
+      <TrainerAvatar trainer={trainer} size="size-11" />
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-1 truncate text-sm font-extrabold text-ink">
           {t("mkt.by", { name: lang === "fa" ? trainer.nameFa : trainer.name })}
+          <Icon name="verified" className="size-4 flex-shrink-0 text-brand" />
         </p>
         <p className="truncate text-xs text-muted">
           {lang === "fa" ? trainer.credFa : trainer.cred}
         </p>
+        <p className="mt-0.5 text-[11px] font-bold text-brand">{t("trn.viewProfile")}</p>
       </div>
-    </div>
+      <Icon name="chevronRight" className="size-5 flex-shrink-0 text-faint flip-rtl" />
+    </Link>
   );
 }
 
