@@ -34,10 +34,7 @@ export default function GymMap({
   const markersRef = useRef<Map<string, L.CircleMarker>>(new Map());
   const userRef = useRef<L.LayerGroup | null>(null);
   const onSelectRef = useRef(onSelect);
-
-  useEffect(() => {
-    onSelectRef.current = onSelect;
-  }, [onSelect]);
+  onSelectRef.current = onSelect;
 
   // init once
   useEffect(() => {
@@ -59,11 +56,8 @@ export default function GymMap({
     userRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
     // container may size a tick after mount (dynamic import / flex layout)
-    const invalidateTimer = window.setTimeout(() => {
-      if (mapRef.current === map) map.invalidateSize();
-    }, 200);
+    setTimeout(() => map.invalidateSize(), 200);
     return () => {
-      window.clearTimeout(invalidateTimer);
       map.remove();
       mapRef.current = null;
     };

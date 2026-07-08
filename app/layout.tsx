@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Vazirmatn } from "next/font/google";
 import "./globals.css";
-import AppHeader from "@/components/AppHeader";
+import AppShell from "@/components/AppShell";
 import BottomNav from "@/components/BottomNav";
 import CoachFab from "@/components/CoachFab";
 import SectionTracker from "@/components/SectionTracker";
@@ -40,10 +40,7 @@ export default function RootLayout({
     <html lang="fa" dir="rtl" className={`${vazir.variable} h-full antialiased`}>
       <body className="min-h-full">
         <LangProvider>
-          <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-base shadow-[0_0_60px_-20px_rgb(0_0_0/0.9)]">
-            <AppHeader />
-            <main className="flex-1 pb-24">{children}</main>
-          </div>
+          <AppShell>{children}</AppShell>
           <SectionTracker />
           <CoachFab />
           <BottomNav />

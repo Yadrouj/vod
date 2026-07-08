@@ -9,7 +9,14 @@ import { usePathname } from "next/navigation";
 import { Icon } from "./icons";
 import { useLang } from "./LangProvider";
 
-const HIDDEN_PREFIXES = ["/workout", "/coach", "/onboarding", "/login", "/admin"];
+const HIDDEN_PREFIXES = [
+  "/workout",
+  "/coach",
+  "/onboarding",
+  "/login",
+  "/admin",
+  "/vod",
+];
 
 export default function CoachFab() {
   const pathname = usePathname();

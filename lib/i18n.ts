@@ -487,8 +487,6 @@ export const DICT: Record<string, Entry> = {
 
   // Nearby gyms / map
   "nav.gyms": ["باشگاه‌ها", "Gyms"],
-  "places.title": ["باشگاه‌ها و فروشگاه‌ها", "Gyms & stores"],
-  "places.subtitle": ["باشگاه، داروخانه، مکمل و فروشگاه ورزشی نزدیک تو", "Gyms, pharmacies, supplements and sports stores near you"],
   "gym.title": ["باشگاه‌های نزدیک", "Nearby gyms"],
   "gym.subtitle": ["باشگاه‌های تهران روی نقشه — نزدیک‌ترین‌ها به تو", "Tehran gyms on the map — closest to you"],
   "gym.locate": ["نزدیک‌ترین به من", "Nearest to me"],

@@ -8,7 +8,7 @@ import NewsBell from "./NewsBell";
 import { useLang } from "./LangProvider";
 
 // Full-screen / focused flows get no chrome.
-const HIDDEN = ["/onboarding", "/workout", "/login"];
+const HIDDEN = ["/onboarding", "/workout", "/login", "/vod"];
 
 /**
  * Global glassmorphism top bar — brand logo + the three universal actions

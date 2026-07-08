@@ -199,7 +199,7 @@ function ReviewComposer({ gymId, onPosted }: { gymId: string; onPosted: () => vo
 
 function BackLink({ label }: { label: string }) {
   return (
-    <Link href="/gyms?type=stores" className="inline-flex items-center gap-1 text-sm font-bold text-brand">
+    <Link href="/stores" className="inline-flex items-center gap-1 text-sm font-bold text-brand">
       <Icon name="chevronLeft" className="size-4 flip-rtl" /> {label}
     </Link>
   );

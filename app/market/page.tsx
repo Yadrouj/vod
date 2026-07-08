@@ -114,7 +114,7 @@ export default function MarketPage() {
       {/* ---- Stores finder CTA ---- */}
       {section === "stores" && (
         <PlaceCta
-          href="/gyms?type=stores"
+          href="/stores"
           icon="store"
           title={t("store.title")}
           desc={t("store.subtitle")}

@@ -20,7 +20,11 @@ export default function BottomNav() {
   const pathname = usePathname();
   const { t } = useLang();
 
-  if (pathname.startsWith("/onboarding") || pathname.startsWith("/workout")) {
+  if (
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/workout") ||
+    pathname.startsWith("/vod")
+  ) {
     return null;
   }
 
@@ -29,9 +33,7 @@ export default function BottomNav() {
       <ul className="flex">
         {TABS.map((tab) => {
           const active =
-            tab.href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(tab.href) || (tab.href === "/gyms" && pathname.startsWith("/stores"));
+            tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
           return (
             <li key={tab.href} className="flex-1">
               <Link

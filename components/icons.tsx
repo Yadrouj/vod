@@ -258,6 +258,35 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M4 20h16" />
     </>
   ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-4-4" />
+    </>
+  ),
+  filter: (
+    <>
+      <path d="M4 6h16M7 12h10M10 18h4" />
+    </>
+  ),
+  film: (
+    <>
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <path d="M8 4v16M16 4v16M4 8h4M4 16h4M16 8h4M16 16h4" />
+    </>
+  ),
+  tv: (
+    <>
+      <rect x="3" y="6" width="18" height="12" rx="2" />
+      <path d="M8 21h8M12 18v3M8 3l4 3 4-3" />
+    </>
+  ),
+  subtitles: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M7 13h4M13 13h4M7 16h7" />
+    </>
+  ),
   whistle: (
     <>
       <path d="M4 9h11l5 2.5-5 2.5h-6a5 5 0 1 1-5-5Z" />
