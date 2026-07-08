@@ -9,6 +9,7 @@
     "lint": "eslint",
     "harvest-vod": "node scripts/harvest-vod.mjs",
     "rip-html": "node scripts/rip-vod-html.mjs",
+    "merge-vod-source": "node scripts/merge-vod-source.mjs",
     "build-vod-index": "node scripts/build-vod-index.mjs",
     "build-vod-title-files": "node scripts/build-vod-title-files.mjs",
     "enrich-vod-api": "node scripts/enrich-vod-api.mjs",

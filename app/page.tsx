@@ -20,35 +20,33 @@ export default async function HomePage() {
   return (
     <main className="shell">
       <section className="hero home-hero">
-        <div className="wrap hero-inner">
-          <header className="topbar">
-            <Link className="brand" href="/">VOD</Link>
-            <nav className="nav-links" aria-label="Primary">
-              <Link href="/browse?section=top-imdb">Top IMDb</Link>
-              <Link href="/browse?section=recent-films">Films</Link>
-              <Link href="/browse?section=best-series">Series</Link>
-              <Link href="/browse?section=animation">Animation</Link>
-            </nav>
-            <Link className="pill" href="/browse">
-              Browse {index.totalTitles.toLocaleString()}
-            </Link>
-          </header>
+        <header className="topbar hero-topbar wrap">
+          <Link className="brand" href="/">VOD</Link>
+          <nav className="nav-links" aria-label="Primary">
+            <Link href="/browse?section=top-imdb">Top IMDb</Link>
+            <Link href="/browse?section=recent-films">Films</Link>
+            <Link href="/browse?section=best-series">Series</Link>
+            <Link href="/browse?section=animation">Animation</Link>
+          </nav>
+          <Link className="pill" href="/browse">
+            Browse {index.totalTitles.toLocaleString()}
+          </Link>
+        </header>
 
-          <BannerCarousel items={heroBanners} />
+        <BannerCarousel items={heroBanners} />
 
-          <div className="hero-tools">
-            <form className="hero-search" action="/browse">
-              <SearchSuggest />
-              <button type="submit">Search</button>
-            </form>
-            <div className="quick-tabs">
-              <Link href="/browse?section=top-imdb">Top 250 IMDb</Link>
-              <Link href="/browse?section=recent-films">Recent Film</Link>
-              <Link href="/browse?section=best-movies">Best Movies</Link>
-              <Link href="/browse?section=best-series">Best Series</Link>
-              <Link href="/browse?section=kids">Kids</Link>
-              <Link href="/browse?section=animation">Animation</Link>
-            </div>
+        <div className="hero-tools wrap">
+          <form className="hero-search" action="/browse">
+            <SearchSuggest />
+            <button type="submit">Search</button>
+          </form>
+          <div className="quick-tabs">
+            <Link href="/browse?section=top-imdb">Top 250 IMDb</Link>
+            <Link href="/browse?section=recent-films">Recent Film</Link>
+            <Link href="/browse?section=best-movies">Best Movies</Link>
+            <Link href="/browse?section=best-series">Best Series</Link>
+            <Link href="/browse?section=kids">Kids</Link>
+            <Link href="/browse?section=animation">Animation</Link>
           </div>
         </div>
       </section>

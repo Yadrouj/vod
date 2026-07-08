@@ -83,7 +83,7 @@ function extractImages(html, baseUrl) {
 }
 
 function parseBlock(block, baseUrl) {
-  const heading = /<h3[^>]*>\s*(?:\d+\.\s*)?(.+?)\s+start_year\s*<\/h3>/is.exec(block);
+  const heading = /<h3[^>]*>\s*(?:\d+\.\s*)?(.+?)(?:\s+start_year)?\s*<\/h3>/is.exec(block);
   if (!heading) return null;
 
   const title = stripTags(heading[1]);
@@ -93,20 +93,23 @@ function parseBlock(block, baseUrl) {
   const ratingRaw = stripTags(/<b>\s*IMDb Rates:\s*<\/b>\s*([^<]+)/i.exec(block)?.[1] ?? "");
   const imageUrls = extractImages(block, baseUrl);
   const links = [];
-  const linkPattern = /<p[^>]*>\s*<a\s+href=["']([^"']+)["'][^>]*>(.*?)<\/a>\s*\/\s*([^<]+)<\/p>/gis;
+  const linkPattern = /<a\s+href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
   let match;
 
   while ((match = linkPattern.exec(block))) {
     const before = block.slice(0, match.index);
-    const groupMatches = Array.from(before.matchAll(/<p[^>]*>\s*<b>(.*?)<\/b>\s*<\/p>/gis));
+    const after = block.slice(match.index + match[0].length, match.index + match[0].length + 160);
+    const groupMatches = Array.from(before.matchAll(/<p[^>]*>\s*<b>([^<]+)<\/b>\s*<\/p>/gi));
+    const seasonMatches = Array.from(before.matchAll(/<p[^>]*>\s*season\s+(\d+)\s*<\/p>/gis));
     const group = stripTags(groupMatches.at(-1)?.[1] ?? "Files");
+    const season = seasonMatches.at(-1)?.[1] ?? null;
     const url = absolutize(match[1], baseUrl);
     const label = stripTags(match[2]);
 
     links.push({
-      label,
+      label: season ? `Season ${Number(season)} / ${label}` : label,
       url,
-      size: parseSize(match[3]),
+      size: parseSize(after),
       group,
       quality: inferQuality(label, url),
       release: inferRelease(label, url),
