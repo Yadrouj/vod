@@ -29,6 +29,18 @@ Run the full scraper/enricher:
 npm run harvest-vod
 ```
 
+HTML-only ripper, no API, no external metadata:
+
+```bash
+npm run rip-html
+```
+
+That writes whatever exists inside the archive HTML into:
+
+```text
+public/data/vod-catalog.json
+```
+
 With poster/backdrop enrichment:
 
 ```powershell
