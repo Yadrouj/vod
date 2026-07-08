@@ -16,6 +16,7 @@ export default function HomePage() {
   const router = useRouter();
   const { t, lang } = useLang();
   const [status, setStatus] = useState<"loading" | "ready">("loading");
+  const [now] = useState(() => Date.now());
   const program = useProgram();
   const sessions = useSessions();
 
@@ -35,7 +36,7 @@ export default function HomePage() {
   const days = program?.days ?? [];
   const todayDay = days.find((d) => d.label === todayEn && d.exercises.length > 0);
 
-  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
   const thisWeek = (sessions ?? []).filter((s) => s.startedAt >= weekAgo).length;
   const total = sessions?.length ?? 0;
 
@@ -43,7 +44,7 @@ export default function HomePage() {
     d.focus.map((f) => tFocus(lang, f)).join(" + ");
 
   return (
-    <div className="px-4 pt-6">
+    <div className="px-4 pb-36 pt-6">
       <div>
         <p className="text-sm font-medium text-muted">
           {lang === "fa" ? todayFa : todayEn}
