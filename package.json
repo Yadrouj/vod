@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "build-dataset": "node scripts/build-dataset.mjs",
+    "scrape-vod": "node scripts/scrape-vod-archive.mjs",
     "selfcheck": "node scripts/selfcheck.mjs",
     "e2e": "node scripts/e2e.mjs"
   },

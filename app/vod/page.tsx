@@ -1,204 +1,41 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/icons";
 import { cn } from "@/components/ui";
 
 type MediaType = "all" | "movie" | "series";
 
-type VodItem = {
-  id: string;
-  title: string;
-  type: Exclude<MediaType, "all">;
-  year: number;
-  country: string;
-  genres: string[];
-  imdb: number;
-  duration: string;
-  subtitle: string[];
-  qualities: string[];
-  poster: string;
-  backdrop: string;
-  sourceUrl: string;
-  downloadUrl: string;
-  imdbUrl: string;
-  description: string;
+type ArchiveLink = {
+  label: string;
+  url: string;
+  size: string | null;
+  group: string;
+  quality: string | null;
+  release: string | null;
 };
 
-const SAMPLE_VIDEO =
-  "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4";
+type ArchiveItem = {
+  id: string;
+  title: string;
+  imdbCode: string;
+  imdbUrl: string | null;
+  type: string;
+  year: number | null;
+  imdbVotes: number | null;
+  imdbRating: number | null;
+  groups: string[];
+  qualities: string[];
+  links: ArchiveLink[];
+};
 
-const CATALOG: VodItem[] = [
-  {
-    id: "neon-divide",
-    title: "Neon Divide",
-    type: "movie",
-    year: 2026,
-    country: "United States",
-    genres: ["Sci-Fi", "Thriller"],
-    imdb: 8.4,
-    duration: "2h 08m",
-    subtitle: ["English", "Persian"],
-    qualities: ["1080p", "4K", "HDR"],
-    poster:
-      "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=700&q=80",
-    backdrop:
-      "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1800&q=80",
-    sourceUrl: SAMPLE_VIDEO,
-    downloadUrl: SAMPLE_VIDEO,
-    imdbUrl: "https://www.imdb.com/",
-    description:
-      "A midnight courier follows a signal through a city where every screen is watching back.",
-  },
-  {
-    id: "last-horizon",
-    title: "Last Horizon",
-    type: "series",
-    year: 2025,
-    country: "United Kingdom",
-    genres: ["Drama", "Mystery"],
-    imdb: 8.7,
-    duration: "8 eps",
-    subtitle: ["English", "Arabic", "Persian"],
-    qualities: ["720p", "1080p"],
-    poster:
-      "https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=700&q=80",
-    backdrop:
-      "https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?auto=format&fit=crop&w=1800&q=80",
-    sourceUrl: SAMPLE_VIDEO,
-    downloadUrl: SAMPLE_VIDEO,
-    imdbUrl: "https://www.imdb.com/",
-    description:
-      "A coastal town reopens an old observatory and finds a message that should not exist.",
-  },
-  {
-    id: "iron-silk",
-    title: "Iron Silk",
-    type: "movie",
-    year: 2024,
-    country: "South Korea",
-    genres: ["Action", "Crime"],
-    imdb: 7.9,
-    duration: "1h 54m",
-    subtitle: ["Korean", "English", "Persian"],
-    qualities: ["720p", "1080p", "4K"],
-    poster:
-      "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=700&q=80",
-    backdrop:
-      "https://images.unsplash.com/photo-1505686994434-e3cc5abf1330?auto=format&fit=crop&w=1800&q=80",
-    sourceUrl: SAMPLE_VIDEO,
-    downloadUrl: SAMPLE_VIDEO,
-    imdbUrl: "https://www.imdb.com/",
-    description:
-      "An ex-fighter protects one witness through a citywide blackout and a collapsing truce.",
-  },
-  {
-    id: "glass-river",
-    title: "Glass River",
-    type: "series",
-    year: 2023,
-    country: "France",
-    genres: ["Romance", "Drama"],
-    imdb: 7.6,
-    duration: "6 eps",
-    subtitle: ["French", "English"],
-    qualities: ["720p", "1080p"],
-    poster:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=700&q=80",
-    backdrop:
-      "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1800&q=80",
-    sourceUrl: SAMPLE_VIDEO,
-    downloadUrl: SAMPLE_VIDEO,
-    imdbUrl: "https://www.imdb.com/",
-    description:
-      "Two former lovers meet every winter at the same station, each carrying a different truth.",
-  },
-  {
-    id: "north-signal",
-    title: "North Signal",
-    type: "movie",
-    year: 2022,
-    country: "Canada",
-    genres: ["Adventure", "Mystery"],
-    imdb: 8.1,
-    duration: "2h 16m",
-    subtitle: ["English", "Persian"],
-    qualities: ["1080p", "4K"],
-    poster:
-      "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=700&q=80",
-    backdrop:
-      "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1800&q=80",
-    sourceUrl: SAMPLE_VIDEO,
-    downloadUrl: SAMPLE_VIDEO,
-    imdbUrl: "https://www.imdb.com/",
-    description:
-      "A rescue pilot follows a distress beacon into a storm that has been circling for years.",
-  },
-  {
-    id: "paper-moon",
-    title: "Paper Moon Hotel",
-    type: "series",
-    year: 2021,
-    country: "Japan",
-    genres: ["Comedy", "Drama"],
-    imdb: 7.4,
-    duration: "10 eps",
-    subtitle: ["Japanese", "English", "Persian"],
-    qualities: ["720p", "1080p"],
-    poster:
-      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=700&q=80",
-    backdrop:
-      "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1800&q=80",
-    sourceUrl: SAMPLE_VIDEO,
-    downloadUrl: SAMPLE_VIDEO,
-    imdbUrl: "https://www.imdb.com/",
-    description:
-      "A family-run hotel becomes the quiet center of every strange story in the neighborhood.",
-  },
-  {
-    id: "atlas-burn",
-    title: "Atlas Burn",
-    type: "movie",
-    year: 2020,
-    country: "Germany",
-    genres: ["War", "History"],
-    imdb: 8.0,
-    duration: "2h 01m",
-    subtitle: ["German", "English"],
-    qualities: ["1080p"],
-    poster:
-      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=700&q=80",
-    backdrop:
-      "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1800&q=80",
-    sourceUrl: SAMPLE_VIDEO,
-    downloadUrl: SAMPLE_VIDEO,
-    imdbUrl: "https://www.imdb.com/",
-    description:
-      "A cartographer hides a border-changing map while the world around him is being redrawn.",
-  },
-  {
-    id: "low-light",
-    title: "Low Light",
-    type: "movie",
-    year: 2019,
-    country: "Spain",
-    genres: ["Horror", "Thriller"],
-    imdb: 7.2,
-    duration: "1h 41m",
-    subtitle: ["Spanish", "English", "Persian"],
-    qualities: ["720p", "1080p"],
-    poster:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=700&q=80",
-    backdrop:
-      "https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?auto=format&fit=crop&w=1800&q=80",
-    sourceUrl: SAMPLE_VIDEO,
-    downloadUrl: SAMPLE_VIDEO,
-    imdbUrl: "https://www.imdb.com/",
-    description:
-      "A projectionist discovers that one missing frame can change what enters the room.",
-  },
-];
+type ArchivePayload = {
+  sourceUrl: string;
+  totalTitles: number;
+  totalLinks: number;
+  items: ArchiveItem[];
+};
 
 const typeOptions: { value: MediaType; label: string; icon: "film" | "tv" | "library" }[] = [
   { value: "all", label: "All", icon: "library" },
@@ -206,68 +43,97 @@ const typeOptions: { value: MediaType; label: string; icon: "film" | "tv" | "lib
   { value: "series", label: "Series", icon: "tv" },
 ];
 
+const HERO_BACKDROP =
+  "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1800&q=80";
+const EMPTY_ITEMS: ArchiveItem[] = [];
+
 export default function VodPage() {
   const [query, setQuery] = useState("");
   const [type, setType] = useState<MediaType>("all");
-  const [genre, setGenre] = useState("All");
-  const [country, setCountry] = useState("All");
+  const [version, setVersion] = useState("All");
   const [quality, setQuality] = useState("All");
-  const [subtitle, setSubtitle] = useState("All");
   const [minScore, setMinScore] = useState(7);
   const [year, setYear] = useState("All");
-  const [selected, setSelected] = useState<VodItem | null>(null);
+  const [selected, setSelected] = useState<ArchiveItem | null>(null);
+  const [archive, setArchive] = useState<ArchivePayload | null>(null);
+  const [loadError, setLoadError] = useState("");
 
-  const genres = useMemo(
-    () => ["All", ...Array.from(new Set(CATALOG.flatMap((item) => item.genres))).sort()],
-    []
-  );
-  const countries = useMemo(
-    () => ["All", ...Array.from(new Set(CATALOG.map((item) => item.country))).sort()],
-    []
+  useEffect(() => {
+    let alive = true;
+    fetch("/data/vod-archive.json")
+      .then((res) => {
+        if (!res.ok) throw new Error(`Archive fetch failed: ${res.status}`);
+        return res.json() as Promise<ArchivePayload>;
+      })
+      .then((data) => {
+        if (alive) setArchive(data);
+      })
+      .catch((error) => {
+        if (alive) setLoadError(error instanceof Error ? error.message : "Archive failed");
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const items = archive?.items ?? EMPTY_ITEMS;
+
+  const versions = useMemo(
+    () => ["All", ...Array.from(new Set(items.flatMap((item) => item.groups))).sort()],
+    [items]
   );
   const qualities = useMemo(
-    () => ["All", ...Array.from(new Set(CATALOG.flatMap((item) => item.qualities))).sort()],
-    []
-  );
-  const subtitles = useMemo(
-    () => ["All", ...Array.from(new Set(CATALOG.flatMap((item) => item.subtitle))).sort()],
-    []
+    () => ["All", ...Array.from(new Set(items.flatMap((item) => item.qualities))).sort(sortQuality)],
+    [items]
   );
   const years = useMemo(
-    () => ["All", ...Array.from(new Set(CATALOG.map((item) => String(item.year)))).sort().reverse()],
-    []
+    () =>
+      [
+        "All",
+        ...Array.from(new Set(items.map((item) => item.year).filter(Boolean).map(String)))
+          .sort()
+          .reverse(),
+      ],
+    [items]
   );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
 
-    return CATALOG.filter((item) => {
+    return items.filter((item) => {
+      const itemType = normalizeType(item.type);
+      const rating = item.imdbRating ?? 0;
       const matchesQuery =
         !needle ||
         item.title.toLowerCase().includes(needle) ||
-        item.genres.join(" ").toLowerCase().includes(needle) ||
-        item.country.toLowerCase().includes(needle);
+        item.imdbCode.toLowerCase().includes(needle) ||
+        item.links.some((link) => link.label.toLowerCase().includes(needle));
 
       return (
         matchesQuery &&
-        (type === "all" || item.type === type) &&
-        (genre === "All" || item.genres.includes(genre)) &&
-        (country === "All" || item.country === country) &&
+        (type === "all" || itemType === type) &&
+        (version === "All" || item.groups.includes(version)) &&
         (quality === "All" || item.qualities.includes(quality)) &&
-        (subtitle === "All" || item.subtitle.includes(subtitle)) &&
         (year === "All" || String(item.year) === year) &&
-        item.imdb >= minScore
+        rating >= minScore
       );
     });
-  }, [country, genre, minScore, quality, query, subtitle, type, year]);
+  }, [items, minScore, quality, query, type, version, year]);
 
-  const featured = filtered[0] ?? CATALOG[0];
-  const topRated = filtered.filter((item) => item.imdb >= 8);
-  const newest = [...filtered].sort((a, b) => b.year - a.year);
+  const featured = filtered[0] ?? items[0] ?? null;
+  const topRated = filtered
+    .filter((item) => (item.imdbRating ?? 0) >= 8.5)
+    .slice(0, 30);
+  const newest = [...filtered]
+    .sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
+    .slice(0, 30);
+  const visibleGrid = filtered.slice(0, 120);
+  const linkCount = archive?.totalLinks ?? items.reduce((sum, item) => sum + item.links.length, 0);
+  const filteredLinkCount = filtered.reduce((sum, item) => sum + item.links.length, 0);
 
   return (
     <div dir="ltr" className="min-h-dvh bg-[#050505] text-white">
-      <Hero item={featured} onPlay={() => setSelected(featured)} />
+      <Hero item={featured} totalTitles={archive?.totalTitles ?? 0} totalLinks={linkCount} />
 
       <main className="-mt-16 space-y-10 pb-20">
         <section className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -276,9 +142,9 @@ export default function VodPage() {
               <SearchBox value={query} onChange={setQuery} />
 
               <div className="grid gap-3 sm:grid-cols-3">
-                <Select label="Country" value={country} onChange={setCountry} options={countries} />
                 <Select label="Year" value={year} onChange={setYear} options={years} />
                 <Select label="Quality" value={quality} onChange={setQuality} options={qualities} />
+                <Select label="Version" value={version} onChange={setVersion} options={versions} />
               </div>
             </div>
 
@@ -302,57 +168,42 @@ export default function VodPage() {
                 ))}
               </div>
 
-              <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
-                <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                  {genres.map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => setGenre(item)}
-                      className={cn(
-                        "h-9 shrink-0 rounded-full px-3 text-xs font-bold transition",
-                        genre === item
-                          ? "bg-[#e5484d] text-white"
-                          : "bg-white/[0.08] text-white/65 ring-1 ring-white/10 hover:text-white"
-                      )}
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-
-                <label className="grid min-w-56 gap-1 text-xs font-bold uppercase tracking-[0.18em] text-white/45">
-                  IMDb {minScore.toFixed(1)}+
-                  <input
-                    type="range"
-                    min="0"
-                    max="10"
-                    step="0.1"
-                    value={minScore}
-                    onChange={(event) => setMinScore(Number(event.target.value))}
-                    className="accent-[#f5c542]"
-                  />
-                </label>
-              </div>
+              <label className="grid min-w-56 gap-1 text-xs font-bold uppercase tracking-[0.18em] text-white/45">
+                IMDb {minScore.toFixed(1)}+
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  value={minScore}
+                  onChange={(event) => setMinScore(Number(event.target.value))}
+                  className="accent-[#f5c542]"
+                />
+              </label>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-              <Select
-                label="Subtitle"
-                value={subtitle}
-                onChange={setSubtitle}
-                options={subtitles}
-                icon="subtitles"
-              />
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm font-semibold text-white/55">
-                {filtered.length} titles
+                {loadError
+                  ? loadError
+                  : archive
+                    ? `${filtered.length.toLocaleString()} titles / ${filteredLinkCount.toLocaleString()} links`
+                    : "Loading archive..."}
               </p>
+              <a
+                href={archive?.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-black uppercase tracking-[0.18em] text-[#f5c542]"
+              >
+                Source
+              </a>
             </div>
           </div>
         </section>
 
         <Rail title="Top IMDb" items={topRated} onSelect={setSelected} />
-        <Rail title="New Arrivals" items={newest} onSelect={setSelected} />
+        <Rail title="Newest In Archive" items={newest} onSelect={setSelected} />
 
         <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-4 flex items-end justify-between">
@@ -360,82 +211,86 @@ export default function VodPage() {
             <Icon name="filter" className="size-5 text-white/45" />
           </div>
 
-          {filtered.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {filtered.map((item) => (
-                <PosterCard key={item.id} item={item} onSelect={setSelected} />
-              ))}
-            </div>
+          {visibleGrid.length > 0 ? (
+            <>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {visibleGrid.map((item) => (
+                  <PosterCard key={item.id} item={item} onSelect={setSelected} />
+                ))}
+              </div>
+              {filtered.length > visibleGrid.length && (
+                <p className="mt-5 text-center text-sm font-semibold text-white/45">
+                  Showing first {visibleGrid.length} results. Use search or filters to narrow the archive.
+                </p>
+              )}
+            </>
           ) : (
             <div className="border-y border-white/10 bg-white/[0.03] py-12 text-center">
               <p className="text-lg font-black">No titles found</p>
-              <p className="mt-2 text-sm text-white/50">Try a wider IMDb score or another genre.</p>
+              <p className="mt-2 text-sm text-white/50">Try a wider IMDb score or another quality.</p>
             </div>
           )}
         </section>
       </main>
 
-      {selected && <PlayerModal item={selected} onClose={() => setSelected(null)} />}
+      {selected && <DetailModal item={selected} onClose={() => setSelected(null)} />}
     </div>
   );
 }
 
-function Hero({ item, onPlay }: { item: VodItem; onPlay: () => void }) {
+function normalizeType(type: string): Exclude<MediaType, "all"> {
+  return /series|tv|episode/i.test(type) ? "series" : "movie";
+}
+
+function sortQuality(a: string, b: string) {
+  if (a === "All") return -1;
+  if (b === "All") return 1;
+  return Number.parseInt(b, 10) - Number.parseInt(a, 10);
+}
+
+function Hero({
+  item,
+  totalTitles,
+  totalLinks,
+}: {
+  item: ArchiveItem | null;
+  totalTitles: number;
+  totalLinks: number;
+}) {
+  const imdb = item?.imdbRating?.toFixed(1) ?? "-";
+
   return (
     <section className="relative min-h-[78vh] overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${item.backdrop})` }}
+        style={{ backgroundImage: `url(${HERO_BACKDROP})` }}
       />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,#050505_0%,rgba(5,5,5,0.82)_34%,rgba(5,5,5,0.22)_74%),linear-gradient(0deg,#050505_0%,rgba(5,5,5,0)_34%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,#050505_0%,rgba(5,5,5,0.86)_34%,rgba(5,5,5,0.22)_74%),linear-gradient(0deg,#050505_0%,rgba(5,5,5,0)_34%)]" />
 
       <div className="relative z-10 mx-auto flex min-h-[78vh] w-full max-w-7xl flex-col justify-between px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between">
           <Link href="/" className="text-sm font-black uppercase tracking-[0.32em] text-white">
             VOD
           </Link>
-          <a
-            href={item.imdbUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-full bg-white/10 px-3 py-2 text-xs font-black text-[#f5c542] ring-1 ring-white/15 backdrop-blur"
-          >
-            IMDb {item.imdb.toFixed(1)}
-          </a>
+          <span className="rounded-full bg-white/10 px-3 py-2 text-xs font-black text-[#f5c542] ring-1 ring-white/15 backdrop-blur">
+            {totalTitles.toLocaleString()} titles
+          </span>
         </header>
 
-        <div className="max-w-2xl pb-20">
+        <div className="max-w-3xl pb-20">
           <div className="mb-4 flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-white/60">
-            <span>{item.type}</span>
+            <span>{item ? normalizeType(item.type) : "archive"}</span>
             <span className="size-1 rounded-full bg-[#e5484d]" />
-            <span>{item.year}</span>
+            <span>{item?.year ?? "loading"}</span>
             <span className="size-1 rounded-full bg-[#e5484d]" />
-            <span>{item.country}</span>
+            <span>{totalLinks.toLocaleString()} file links</span>
           </div>
-          <h1 className="max-w-[12ch] text-5xl font-black leading-[0.92] tracking-tight sm:text-7xl">
-            {item.title}
+          <h1 className="max-w-[13ch] text-5xl font-black leading-[0.92] tracking-tight sm:text-7xl">
+            {item?.title ?? "Loading Archive"}
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-white/72 sm:text-lg">
-            {item.description}
+            IMDb {imdb} catalog entry with {item?.links.length ?? 0} available files. The source archive includes title data, IMDb codes, scores, qualities, sizes, and direct file URLs.
           </p>
-
-          <div className="mt-7 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={onPlay}
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-5 text-sm font-black text-black transition hover:bg-[#f5c542] active:scale-95"
-            >
-              <Icon name="play" className="size-5" />
-              Play
-            </button>
-            <a
-              href={item.downloadUrl}
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-white/10 px-5 text-sm font-black text-white ring-1 ring-white/15 backdrop-blur transition hover:bg-white/[0.16]"
-            >
-              <Icon name="download" className="size-5" />
-              Download
-            </a>
-          </div>
         </div>
       </div>
     </section>
@@ -456,7 +311,7 @@ function SearchBox({
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Search films, series, genres..."
+        placeholder="Search title, IMDb code, quality..."
         className="h-12 w-full rounded-full border border-white/10 bg-white/[0.06] pl-12 pr-4 text-sm font-semibold text-white outline-none transition placeholder:text-white/35 focus:border-[#f5c542]/70"
       />
     </label>
@@ -468,20 +323,15 @@ function Select({
   value,
   onChange,
   options,
-  icon,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   options: string[];
-  icon?: "subtitles";
 }) {
   return (
     <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.18em] text-white/45">
-      <span className="inline-flex items-center gap-1.5">
-        {icon && <Icon name={icon} className="size-3.5" />}
-        {label}
-      </span>
+      {label}
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -503,8 +353,8 @@ function Rail({
   onSelect,
 }: {
   title: string;
-  items: VodItem[];
-  onSelect: (item: VodItem) => void;
+  items: ArchiveItem[];
+  onSelect: (item: ArchiveItem) => void;
 }) {
   if (items.length === 0) return null;
 
@@ -517,19 +367,17 @@ function Rail({
             key={item.id}
             type="button"
             onClick={() => onSelect(item)}
-            className="group relative h-72 w-52 shrink-0 overflow-hidden rounded-lg bg-white/5 text-left ring-1 ring-white/10"
+            className="group relative flex h-72 w-52 shrink-0 flex-col justify-between overflow-hidden rounded-lg bg-[linear-gradient(145deg,#1b1b1f,#09090a)] p-4 text-left ring-1 ring-white/10"
           >
-            <img
-              src={item.poster}
-              alt=""
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-            />
-            <span className="absolute inset-0 bg-gradient-to-t from-black via-black/15 to-transparent" />
-            <span className="absolute bottom-3 left-3 right-3">
-              <span className="block truncate text-sm font-black">{item.title}</span>
-              <span className="mt-1 flex items-center justify-between text-xs font-bold text-white/65">
-                <span>{item.year}</span>
-                <span className="text-[#f5c542]">{item.imdb.toFixed(1)}</span>
+            <span className="absolute inset-x-0 top-0 h-1 bg-[#e5484d]" />
+            <span className="text-xs font-black uppercase tracking-[0.18em] text-[#f5c542]">
+              IMDb {(item.imdbRating ?? 0).toFixed(1)}
+            </span>
+            <span>
+              <span className="line-clamp-3 text-xl font-black leading-tight">{item.title}</span>
+              <span className="mt-3 flex items-center justify-between text-xs font-bold text-white/55">
+                <span>{item.year ?? "-"}</span>
+                <span>{item.links.length} links</span>
               </span>
             </span>
           </button>
@@ -543,8 +391,8 @@ function PosterCard({
   item,
   onSelect,
 }: {
-  item: VodItem;
-  onSelect: (item: VodItem) => void;
+  item: ArchiveItem;
+  onSelect: (item: ArchiveItem) => void;
 }) {
   return (
     <button
@@ -552,26 +400,29 @@ function PosterCard({
       onClick={() => onSelect(item)}
       className="group overflow-hidden rounded-lg bg-white/[0.04] text-left ring-1 ring-white/10 transition hover:bg-white/[0.07] hover:ring-white/20"
     >
-      <div className="aspect-[2/3] overflow-hidden bg-white/5">
-        <img
-          src={item.poster}
-          alt=""
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-        />
+      <div className="flex aspect-[2/3] flex-col justify-between bg-[linear-gradient(150deg,#202026,#070708)] p-3">
+        <span className="self-start rounded-full bg-[#f5c542] px-2 py-1 text-[11px] font-black text-black">
+          IMDb {(item.imdbRating ?? 0).toFixed(1)}
+        </span>
+        <span className="line-clamp-5 text-2xl font-black leading-none tracking-tight text-white">
+          {item.title}
+        </span>
       </div>
       <div className="space-y-1 p-3">
         <p className="truncate text-sm font-black text-white">{item.title}</p>
         <div className="flex items-center justify-between gap-2 text-xs font-bold text-white/52">
-          <span>{item.year}</span>
-          <span className="text-[#f5c542]">IMDb {item.imdb.toFixed(1)}</span>
+          <span>{item.year ?? "-"}</span>
+          <span>{item.qualities.slice(0, 2).join(", ") || "files"}</span>
         </div>
-        <p className="truncate text-xs text-white/42">{item.genres.join(" / ")}</p>
+        <p className="truncate text-xs text-white/42">{item.groups.join(" / ")}</p>
       </div>
     </button>
   );
 }
 
-function PlayerModal({ item, onClose }: { item: VodItem; onClose: () => void }) {
+function DetailModal({ item, onClose }: { item: ArchiveItem; onClose: () => void }) {
+  const playable = item.links.find((link) => /\.(mp4|webm|ogg)(?:$|\?)/i.test(link.url));
+
   return (
     <div className="fixed inset-0 z-[90] overflow-y-auto bg-black/88 px-4 py-6 backdrop-blur-xl">
       <div className="mx-auto max-w-5xl">
@@ -579,48 +430,64 @@ function PlayerModal({ item, onClose }: { item: VodItem; onClose: () => void }) 
           <div className="min-w-0">
             <p className="truncate text-lg font-black">{item.title}</p>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">
-              {item.year} / {item.duration} / {item.qualities.join(", ")}
+              {item.year ?? "-"} / IMDb {(item.imdbRating ?? 0).toFixed(1)} / {item.links.length} files
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close player"
+            aria-label="Close details"
             className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15"
           >
             <Icon name="x" className="size-5" />
           </button>
         </div>
 
-        <video
-          controls
-          preload="metadata"
-          poster={item.backdrop}
-          className="aspect-video w-full bg-black"
-        >
-          <source src={item.sourceUrl} type="video/mp4" />
-          {item.subtitle.map((lang) => (
-            <track key={lang} kind="subtitles" label={lang} />
-          ))}
-          Your browser does not support the video tag.
-        </video>
+        {playable ? (
+          <video controls preload="metadata" className="aspect-video w-full bg-black">
+            <source src={playable.url} />
+            Your browser does not support the video tag.
+          </video>
+        ) : (
+          <div className="border-y border-white/10 bg-white/[0.03] p-5">
+            <p className="text-sm font-semibold text-white/60">
+              This archive mostly links MKV files, which browsers usually cannot play directly. Use the file links below for download/opening in a compatible player.
+            </p>
+          </div>
+        )}
 
         <div className="mt-4 flex flex-wrap gap-3">
-          <a
-            href={item.downloadUrl}
-            className="inline-flex h-11 items-center gap-2 rounded-full bg-[#f5c542] px-4 text-sm font-black text-black"
-          >
-            <Icon name="download" className="size-5" />
-            Download
-          </a>
-          <a
-            href={item.imdbUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex h-11 items-center rounded-full bg-white/10 px-4 text-sm font-black text-white ring-1 ring-white/15"
-          >
-            IMDb
-          </a>
+          {item.imdbUrl && (
+            <a
+              href={item.imdbUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-11 items-center rounded-full bg-white/10 px-4 text-sm font-black text-white ring-1 ring-white/15"
+            >
+              IMDb
+            </a>
+          )}
+        </div>
+
+        <div className="mt-5 overflow-hidden rounded-lg ring-1 ring-white/10">
+          {item.links.map((link, index) => (
+            <a
+              key={`${link.url}-${index}`}
+              href={link.url}
+              className="grid gap-2 border-b border-white/10 bg-white/[0.03] p-4 transition last:border-b-0 hover:bg-white/[0.07] sm:grid-cols-[1fr_auto] sm:items-center"
+            >
+              <span>
+                <span className="block font-black text-white">{link.label}</span>
+                <span className="mt-1 block text-xs font-semibold text-white/45">
+                  {link.group} / {link.release ?? "release"} / {link.size ?? "size unknown"}
+                </span>
+              </span>
+              <span className="inline-flex items-center gap-2 text-sm font-black text-[#f5c542]">
+                <Icon name="download" className="size-4" />
+                {link.quality ?? "File"}
+              </span>
+            </a>
+          ))}
         </div>
       </div>
     </div>
