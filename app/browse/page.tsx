@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PosterCard } from "@/components/poster-card";
+import { SearchSuggest } from "@/components/search-suggest";
 import { browseVodIndex, loadVodIndex, queryString, SECTION_LABELS } from "@/lib/vod-index";
 
 type Props = {
@@ -34,7 +35,7 @@ export default async function BrowsePage({ searchParams }: Props) {
 
           <form className="browse-filters" action="/browse">
             <input type="hidden" name="section" value={result.section === "all" ? "" : result.section} />
-            <input className="search" name="q" defaultValue={params.q ?? ""} placeholder="Search title, IMDb code, genre..." />
+            <SearchSuggest defaultValue={params.q ?? ""} placeholder="Search title, IMDb code, genre..." />
             <Select name="type" label="Type" value={params.type ?? "all"} options={["all", "movie", "series"]} />
             <Select name="genre" label="Genre" value={params.genre ?? "All"} options={["All", ...index.filters.genres]} />
             <Select name="year" label="Year" value={params.year ?? "All"} options={["All", ...index.filters.years]} />

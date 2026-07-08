@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
+import { episodeLabel } from "@/lib/link-labels";
+import { subzoneSearchUrl } from "@/lib/subtitles";
 import type { VodLink } from "@/lib/types";
 
 type Props = {
@@ -70,7 +72,18 @@ export default async function DetailPage({ params }: Props) {
               )}
               {item.overview && <p>{item.overview}</p>}
               <div className="chips" style={{ marginTop: 24 }}>
+                <Link className="play-glow" href={`/watch/${item.imdbCode}`}>
+                  <span className="play-dot" /> Play online
+                </Link>
                 {best && <a className="chip active" href={best.url}>Download best</a>}
+                <a
+                  className="chip"
+                  href={subzoneSearchUrl(item.title, item.year)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Subzone subtitles
+                </a>
                 <a
                   className="chip"
                   href={item.imdbUrl ?? `https://www.imdb.com/title/${item.imdbCode}/`}
@@ -188,7 +201,10 @@ export default async function DetailPage({ params }: Props) {
                 <a key={`${link.url}-${index}`} className="file-link" href={link.url}>
                   <span>
                     <strong>{link.label}</strong>
-                    <span className="muted">{link.release ?? "release"} / {link.size ?? "size unknown"}</span>
+                    <span className="muted">
+                      {episodeLabel(link) ? `${episodeLabel(link)} / ` : ""}
+                      {link.release ?? "release"} / {link.size ?? "size unknown"}
+                    </span>
                   </span>
                   <strong style={{ color: "var(--gold)" }}>{link.quality ?? "File"}</strong>
                 </a>

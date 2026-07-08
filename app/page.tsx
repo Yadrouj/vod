@@ -1,24 +1,25 @@
 import Link from "next/link";
+import { BannerCarousel, BannerStrip } from "@/components/banner-carousel";
 import { PosterCard } from "@/components/poster-card";
-import { loadVodIndex, pickHero } from "@/lib/vod-index";
-import type { VodHomeSection } from "@/lib/types";
+import { SearchSuggest } from "@/components/search-suggest";
+import { loadVodIndex } from "@/lib/vod-index";
+import type { VodCard, VodHomeSection } from "@/lib/types";
 
 export default async function HomePage() {
   const index = await loadVodIndex();
-  const hero = pickHero(index);
+  const heroBanners = uniqueCards([
+    ...(index.sections.find((section) => section.id === "recent-films")?.items ?? []).slice(0, 5),
+    ...(index.sections.find((section) => section.id === "best-movies")?.items ?? []).slice(0, 5),
+    ...(index.sections.find((section) => section.id === "top-imdb")?.items ?? []).slice(0, 5),
+  ]).slice(0, 10);
+  const midBanners = uniqueCards([
+    ...(index.sections.find((section) => section.id === "top-imdb")?.items ?? []).slice(5, 11),
+    ...(index.sections.find((section) => section.id === "animation")?.items ?? []).slice(0, 4),
+  ]).slice(0, 10);
 
   return (
     <main className="shell">
-      <section
-        className="hero home-hero"
-        style={
-          hero?.backdropUrl
-            ? {
-                backgroundImage: `linear-gradient(90deg, rgba(5,5,5,0.98), rgba(5,5,5,0.62), rgba(5,5,5,0.32)), url(${hero.backdropUrl})`,
-              }
-            : undefined
-        }
-      >
+      <section className="hero home-hero">
         <div className="wrap hero-inner">
           <header className="topbar">
             <Link className="brand" href="/">VOD</Link>
@@ -33,21 +34,11 @@ export default async function HomePage() {
             </Link>
           </header>
 
-          <div className="hero-copy">
-            <div className="meta">
-              <span>{hero?.type ?? "vod"}</span>
-              <i className="dot" />
-              <span>{hero?.year ?? "IMDb matched"}</span>
-              <i className="dot" />
-              <span>{index.totalLinks.toLocaleString()} download links</span>
-            </div>
-            <h1>{hero?.title ?? "VOD Archive"}</h1>
-            <p>
-              {hero?.overview ??
-                "A cinematic VOD catalog connected to DonyayeSerial links and enriched with IMDb posters, ratings, countries, genres, and release data."}
-            </p>
+          <BannerCarousel items={heroBanners} />
+
+          <div className="hero-tools">
             <form className="hero-search" action="/browse">
-              <input name="q" placeholder="Search films, series, IMDb ID..." />
+              <SearchSuggest />
               <button type="submit">Search</button>
             </form>
             <div className="quick-tabs">
@@ -63,12 +54,24 @@ export default async function HomePage() {
       </section>
 
       <section className="home-stack wrap">
-        {index.sections.map((section) => (
-          <HomeRail key={section.id} section={section} />
+        {index.sections.map((section, index) => (
+          <div key={section.id}>
+            <HomeRail section={section} />
+            {index === 0 && <BannerStrip items={midBanners} />}
+          </div>
         ))}
       </section>
     </main>
   );
+}
+
+function uniqueCards(items: VodCard[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.imdbCode)) return false;
+    seen.add(item.imdbCode);
+    return true;
+  });
 }
 
 function HomeRail({ section }: { section: VodHomeSection }) {

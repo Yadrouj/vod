@@ -10,6 +10,7 @@
     "harvest-vod": "node scripts/harvest-vod.mjs",
     "rip-html": "node scripts/rip-vod-html.mjs",
     "build-vod-index": "node scripts/build-vod-index.mjs",
+    "build-vod-title-files": "node scripts/build-vod-title-files.mjs",
     "enrich-vod-api": "node scripts/enrich-vod-api.mjs",
     "scrape-imdb-images": "node scripts/scrape-imdb-images.mjs",
     "scrape-vod": "node scripts/scrape-vod-archive.mjs",
