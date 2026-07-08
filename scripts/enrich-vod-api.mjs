@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { rename, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const API_BASE = process.env.IMDB_DATA_API_BASE || "http://185.203.118.87:8026";
@@ -11,7 +11,11 @@ const VIDEO_LIMIT = Number(process.env.IMDB_API_VIDEO_LIMIT || 8);
 const CREDIT_LIMIT = Number(process.env.IMDB_API_CREDIT_LIMIT || 24);
 const COMPANY_LIMIT = Number(process.env.IMDB_API_COMPANY_LIMIT || 24);
 const WRITE_EVERY = Number(process.env.IMDB_API_WRITE_EVERY || 100);
+const RETRIES = Number(process.env.IMDB_API_RETRIES || 3);
 const FORCE = process.env.IMDB_API_FORCE === "1";
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+let saveChain = Promise.resolve();
 
 function asTextList(items) {
   return Array.isArray(items)
@@ -73,23 +77,53 @@ function mapApiToItem(item, data) {
 }
 
 async function fetchTitle(imdbCode) {
-  const res = await fetch(`${API_BASE}/titles/${imdbCode}/fetch`, { method: "POST" });
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  return res.json();
+  let lastError;
+  for (let attempt = 1; attempt <= RETRIES + 1; attempt += 1) {
+    try {
+      const res = await fetch(`${API_BASE}/titles/${imdbCode}/fetch`, { method: "POST" });
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      return res.json();
+    } catch (error) {
+      lastError = error;
+      if (attempt <= RETRIES) {
+        await sleep(350 * attempt);
+      }
+    }
+  }
+  throw lastError;
+}
+
+async function replaceFileWithRetry(tmpFile, outFile) {
+  for (let attempt = 1; attempt <= 80; attempt += 1) {
+    try {
+      await rename(tmpFile, outFile);
+      return;
+    } catch (error) {
+      if (!["EBUSY", "EPERM", "EACCES"].includes(error.code) || attempt === 80) {
+        throw error;
+      }
+      await sleep(100 * attempt);
+    }
+  }
+}
+
+async function writeSnapshot(archive, items) {
+  const matched = items.filter((item) => item.apiFetchedAt).length;
+  const tmpFile = `${OUT_FILE}.${process.pid}.tmp`;
+  const data = JSON.stringify({
+    ...archive,
+    apiProvider: API_BASE,
+    apiMatchedTitles: matched,
+    apiEnrichedAt: new Date().toISOString(),
+    items,
+  });
+  await writeFile(tmpFile, data);
+  await replaceFileWithRetry(tmpFile, OUT_FILE);
 }
 
 async function save(archive, items) {
-  const matched = items.filter((item) => item.apiFetchedAt).length;
-  await writeFile(
-    OUT_FILE,
-    JSON.stringify({
-      ...archive,
-      apiProvider: API_BASE,
-      apiMatchedTitles: matched,
-      apiEnrichedAt: new Date().toISOString(),
-      items,
-    })
-  );
+  saveChain = saveChain.then(() => writeSnapshot(archive, items));
+  return saveChain;
 }
 
 async function mapPool(targets, worker) {
