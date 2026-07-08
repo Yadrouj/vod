@@ -8,7 +8,8 @@
     "start": "next start -p 3004",
     "lint": "eslint",
     "scrape-vod": "node scripts/scrape-vod-archive.mjs",
-    "enrich-vod-imdb": "node scripts/enrich-vod-imdb.mjs"
+    "enrich-vod-imdb": "node scripts/enrich-vod-imdb.mjs",
+    "enrich-vod-images": "node scripts/enrich-vod-images.mjs"
   },
   "dependencies": {
     "next": "16.2.9",

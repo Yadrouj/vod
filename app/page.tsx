@@ -28,7 +28,8 @@ export default function HomePage() {
 
   useEffect(() => {
     let alive = true;
-    fetch("/data/vod-archive-imdb.json")
+    fetch("/data/vod-catalog.json")
+      .catch(() => fetch("/data/vod-archive-imdb.json"))
       .then((res) => {
         if (!res.ok) throw new Error(`Archive fetch failed: ${res.status}`);
         return res.json() as Promise<VodArchive>;
@@ -100,7 +101,20 @@ export default function HomePage() {
 
   return (
     <div className="shell">
-      <section className="hero wrap">
+      <section
+        className="hero wrap"
+        style={
+          featured?.backdropUrl
+            ? {
+                backgroundImage: `linear-gradient(90deg, rgba(5,5,5,0.94), rgba(5,5,5,0.5)), url(${featured.backdropUrl})`,
+                backgroundPosition: "center",
+                backgroundSize: "cover",
+                borderRadius: 18,
+                paddingInline: 22,
+              }
+            : undefined
+        }
+      >
         <header className="topbar">
           <Link className="brand" href="/">VOD</Link>
           <span className="pill">{(archive?.totalTitles ?? 0).toLocaleString()} titles</span>
@@ -116,9 +130,8 @@ export default function HomePage() {
           </div>
           <h1>{featured?.title ?? "VOD Archive"}</h1>
           <p>
-            A standalone VOD catalog matched by IMDb ID and connected to DonyayeSerial
-            download links. Search by title, IMDb code, genre, quality, version, year,
-            and score.
+            {featured?.overview ||
+              "A standalone VOD catalog matched by IMDb ID and connected to DonyayeSerial download links. Search by title, IMDb code, genre, quality, version, year, and score."}
           </p>
         </div>
       </section>
@@ -262,7 +275,18 @@ function Rail({ title, items }: { title: string; items: VodItem[] }) {
 function Poster({ item }: { item: VodItem }) {
   return (
     <Link href={`/${item.imdbCode || item.id}`} className="poster">
-      <div className="poster-art">
+      <div
+        className="poster-art"
+        style={
+          item.posterUrl
+            ? {
+                backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.76)), url(${item.posterUrl})`,
+                backgroundPosition: "center",
+                backgroundSize: "cover",
+              }
+            : undefined
+        }
+      >
         <span className="rating">IMDb {(item.imdbRating ?? 0).toFixed(1)}</span>
         <span className="poster-title">{item.title}</span>
       </div>

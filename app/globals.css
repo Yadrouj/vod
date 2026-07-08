@@ -339,6 +339,17 @@ button {
   backdrop-filter: blur(18px);
 }
 
+.detail-poster {
+  aspect-ratio: 2 / 3;
+  width: 100%;
+  margin-bottom: 18px;
+  border-radius: 8px;
+  background-color: #111;
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+
 .stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

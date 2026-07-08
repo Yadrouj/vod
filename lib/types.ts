@@ -23,6 +23,16 @@ export type VodItem = {
   runtimeMinutes?: number | null;
   originalTitle?: string | null;
   endYear?: number | null;
+  overview?: string | null;
+  tagline?: string | null;
+  countries?: string[];
+  languages?: string[];
+  posterUrl?: string | null;
+  backdropUrl?: string | null;
+  logoUrl?: string | null;
+  tmdbId?: number | null;
+  tmdbType?: "movie" | "tv" | null;
+  tmdbPopularity?: number | null;
 };
 
 export type VodArchive = {
@@ -31,5 +41,7 @@ export type VodArchive = {
   totalLinks: number;
   imdbMatchedTitles?: number;
   imdbMatchedRatings?: number;
+  imageMatchedTitles?: number;
+  imageProvider?: string;
   items: VodItem[];
 };

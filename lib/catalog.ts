@@ -4,8 +4,13 @@ import path from "node:path";
 import type { VodArchive, VodItem } from "./types";
 
 export const loadVodArchive = cache(async (): Promise<VodArchive> => {
-  const file = path.join(process.cwd(), "public", "data", "vod-archive-imdb.json");
-  return JSON.parse(await readFile(file, "utf8")) as VodArchive;
+  const catalog = path.join(process.cwd(), "public", "data", "vod-catalog.json");
+  const fallback = path.join(process.cwd(), "public", "data", "vod-archive-imdb.json");
+  try {
+    return JSON.parse(await readFile(catalog, "utf8")) as VodArchive;
+  } catch {
+    return JSON.parse(await readFile(fallback, "utf8")) as VodArchive;
+  }
 });
 
 export async function findVodItem(id: string): Promise<VodItem | null> {

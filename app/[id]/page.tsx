@@ -28,7 +28,18 @@ export default async function DetailPage({ params }: Props) {
 
   return (
     <div className="shell">
-      <section className="detail-hero">
+      <section
+        className="detail-hero"
+        style={
+          item.backdropUrl
+            ? {
+                backgroundImage: `linear-gradient(90deg, rgba(5,5,5,0.96), rgba(5,5,5,0.56)), url(${item.backdropUrl})`,
+                backgroundPosition: "center",
+                backgroundSize: "cover",
+              }
+            : undefined
+        }
+      >
         <div className="wrap">
           <header className="topbar">
             <Link className="chip" href="/">Back to VOD</Link>
@@ -57,6 +68,7 @@ export default async function DetailPage({ params }: Props) {
               {item.originalTitle && item.originalTitle !== item.title && (
                 <p className="muted">Original title: {item.originalTitle}</p>
               )}
+              {item.overview && <p>{item.overview}</p>}
               <div className="chips" style={{ marginTop: 24 }}>
                 {best && <a className="chip active" href={best.url}>Download best</a>}
                 <a
@@ -71,6 +83,13 @@ export default async function DetailPage({ params }: Props) {
             </div>
 
             <aside className="detail-card">
+              {item.posterUrl && (
+                <div
+                  className="detail-poster"
+                  style={{ backgroundImage: `url(${item.posterUrl})` }}
+                  aria-label={`${item.title} poster`}
+                />
+              )}
               <p className="label">IMDb Data</p>
               <div className="stats" style={{ marginTop: 16 }}>
                 <Stat label="Rating" value={(item.imdbRating ?? 0).toFixed(1)} />
