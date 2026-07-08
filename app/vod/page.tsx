@@ -28,6 +28,10 @@ type ArchiveItem = {
   groups: string[];
   qualities: string[];
   links: ArchiveLink[];
+  genres?: string[];
+  runtimeMinutes?: number | null;
+  originalTitle?: string | null;
+  endYear?: number | null;
 };
 
 type ArchivePayload = {
@@ -50,6 +54,7 @@ const EMPTY_ITEMS: ArchiveItem[] = [];
 export default function VodPage() {
   const [query, setQuery] = useState("");
   const [type, setType] = useState<MediaType>("all");
+  const [genre, setGenre] = useState("All");
   const [version, setVersion] = useState("All");
   const [quality, setQuality] = useState("All");
   const [minScore, setMinScore] = useState(7);
@@ -60,7 +65,7 @@ export default function VodPage() {
 
   useEffect(() => {
     let alive = true;
-    fetch("/data/vod-archive.json")
+    fetch("/data/vod-archive-imdb.json")
       .then((res) => {
         if (!res.ok) throw new Error(`Archive fetch failed: ${res.status}`);
         return res.json() as Promise<ArchivePayload>;
@@ -96,6 +101,10 @@ export default function VodPage() {
       ],
     [items]
   );
+  const genres = useMemo(
+    () => ["All", ...Array.from(new Set(items.flatMap((item) => item.genres ?? []))).sort()],
+    [items]
+  );
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -107,18 +116,21 @@ export default function VodPage() {
         !needle ||
         item.title.toLowerCase().includes(needle) ||
         item.imdbCode.toLowerCase().includes(needle) ||
+        (item.originalTitle ?? "").toLowerCase().includes(needle) ||
+        (item.genres ?? []).join(" ").toLowerCase().includes(needle) ||
         item.links.some((link) => link.label.toLowerCase().includes(needle));
 
       return (
         matchesQuery &&
         (type === "all" || itemType === type) &&
+        (genre === "All" || (item.genres ?? []).includes(genre)) &&
         (version === "All" || item.groups.includes(version)) &&
         (quality === "All" || item.qualities.includes(quality)) &&
         (year === "All" || String(item.year) === year) &&
         rating >= minScore
       );
     });
-  }, [items, minScore, quality, query, type, version, year]);
+  }, [genre, items, minScore, quality, query, type, version, year]);
 
   const featured = filtered[0] ?? items[0] ?? null;
   const topRated = filtered
@@ -142,9 +154,9 @@ export default function VodPage() {
               <SearchBox value={query} onChange={setQuery} />
 
               <div className="grid gap-3 sm:grid-cols-3">
+                <Select label="Genre" value={genre} onChange={setGenre} options={genres} />
                 <Select label="Year" value={year} onChange={setYear} options={years} />
                 <Select label="Quality" value={quality} onChange={setQuality} options={qualities} />
-                <Select label="Version" value={version} onChange={setVersion} options={versions} />
               </div>
             </div>
 
@@ -180,6 +192,10 @@ export default function VodPage() {
                   className="accent-[#f5c542]"
                 />
               </label>
+            </div>
+
+            <div className="mt-4">
+              <Select label="Version" value={version} onChange={setVersion} options={versions} />
             </div>
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
@@ -289,7 +305,7 @@ function Hero({
             {item?.title ?? "Loading Archive"}
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-white/72 sm:text-lg">
-            IMDb {imdb} catalog entry with {item?.links.length ?? 0} available files. The source archive includes title data, IMDb codes, scores, qualities, sizes, and direct file URLs.
+            IMDb {imdb} catalog entry with {item?.runtimeMinutes ?? "-"} minutes, {(item?.genres ?? []).join(", ") || "IMDb metadata"}, and {item?.links.length ?? 0} available files.
           </p>
         </div>
       </div>
@@ -377,7 +393,7 @@ function Rail({
               <span className="line-clamp-3 text-xl font-black leading-tight">{item.title}</span>
               <span className="mt-3 flex items-center justify-between text-xs font-bold text-white/55">
                 <span>{item.year ?? "-"}</span>
-                <span>{item.links.length} links</span>
+                <span>{(item.genres ?? []).slice(0, 2).join(", ") || `${item.links.length} links`}</span>
               </span>
             </span>
           </button>
@@ -412,9 +428,9 @@ function PosterCard({
         <p className="truncate text-sm font-black text-white">{item.title}</p>
         <div className="flex items-center justify-between gap-2 text-xs font-bold text-white/52">
           <span>{item.year ?? "-"}</span>
-          <span>{item.qualities.slice(0, 2).join(", ") || "files"}</span>
+          <span>{item.runtimeMinutes ? `${item.runtimeMinutes}m` : item.qualities.slice(0, 2).join(", ") || "files"}</span>
         </div>
-        <p className="truncate text-xs text-white/42">{item.groups.join(" / ")}</p>
+        <p className="truncate text-xs text-white/42">{(item.genres ?? []).join(" / ") || item.groups.join(" / ")}</p>
       </div>
     </button>
   );
@@ -430,7 +446,7 @@ function DetailModal({ item, onClose }: { item: ArchiveItem; onClose: () => void
           <div className="min-w-0">
             <p className="truncate text-lg font-black">{item.title}</p>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">
-              {item.year ?? "-"} / IMDb {(item.imdbRating ?? 0).toFixed(1)} / {item.links.length} files
+              {item.year ?? "-"} / IMDb {(item.imdbRating ?? 0).toFixed(1)} / {item.runtimeMinutes ? `${item.runtimeMinutes}m` : `${item.links.length} files`}
             </p>
           </div>
           <button
@@ -457,6 +473,14 @@ function DetailModal({ item, onClose }: { item: ArchiveItem; onClose: () => void
         )}
 
         <div className="mt-4 flex flex-wrap gap-3">
+          {(item.genres ?? []).map((itemGenre) => (
+            <span
+              key={itemGenre}
+              className="inline-flex h-11 items-center rounded-full bg-white/10 px-4 text-sm font-black text-white ring-1 ring-white/15"
+            >
+              {itemGenre}
+            </span>
+          ))}
           {item.imdbUrl && (
             <a
               href={item.imdbUrl}

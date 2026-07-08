@@ -9,6 +9,7 @@
     "lint": "eslint",
     "build-dataset": "node scripts/build-dataset.mjs",
     "scrape-vod": "node scripts/scrape-vod-archive.mjs",
+    "enrich-vod-imdb": "node scripts/enrich-vod-imdb.mjs",
     "selfcheck": "node scripts/selfcheck.mjs",
     "e2e": "node scripts/e2e.mjs"
   },
