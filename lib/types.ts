@@ -33,6 +33,38 @@ export type VodItem = {
   tmdbId?: number | null;
   tmdbType?: "movie" | "tv" | null;
   tmdbPopularity?: number | null;
+  releaseDate?: string | null;
+  metascore?: number | null;
+  certificate?: string | null;
+  productionStage?: string | null;
+  keywords?: string[];
+  akas?: { text: string; country: string | null }[];
+  imdbImages?: {
+    image_id?: string;
+    url: string;
+    width?: number | null;
+    height?: number | null;
+    caption?: string | null;
+  }[];
+  imdbVideos?: {
+    video_id?: string;
+    name: string;
+    runtime_seconds?: number | null;
+    thumbnail_url?: string | null;
+    playback_urls?: { url: string; quality?: string | null; mime_type?: string | null }[];
+  }[];
+  credits?: {
+    category: string;
+    name_id?: string;
+    name_text: string;
+    name_image_url?: string | null;
+  }[];
+  companies?: {
+    company_id?: string;
+    company_name: string;
+    category: string;
+  }[];
+  apiFetchedAt?: string | null;
 };
 
 export type VodArchive = {
@@ -43,5 +75,7 @@ export type VodArchive = {
   imdbMatchedRatings?: number;
   imageMatchedTitles?: number;
   imageProvider?: string;
+  apiProvider?: string;
+  apiMatchedTitles?: number;
   items: VodItem[];
 };

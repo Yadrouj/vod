@@ -53,6 +53,25 @@ downloads visible image URLs into `public/media/imdb/`, and writes local image
 paths back to the catalog. It does not bypass IMDb WAF, login, CAPTCHA, or
 other access controls.
 
+Private IMDb data API enrichment:
+
+```powershell
+$env:IMDB_API_LIMIT="100"
+npm run enrich-vod-api
+```
+
+Full run:
+
+```powershell
+npm run enrich-vod-api
+```
+
+Default API base:
+
+```text
+http://185.203.118.87:8026
+```
+
 With poster/backdrop enrichment:
 
 ```powershell

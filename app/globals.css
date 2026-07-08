@@ -394,6 +394,30 @@ button {
   margin-bottom: 18px;
 }
 
+.image-strip {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  margin-bottom: 22px;
+  scrollbar-width: none;
+}
+
+.image-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.image-strip img {
+  height: 190px;
+  width: auto;
+  max-width: 340px;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  background: #111;
+}
+
 .link-head,
 .file-link {
   display: grid;

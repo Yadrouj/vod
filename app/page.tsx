@@ -20,6 +20,8 @@ export default function HomePage() {
   const [query, setQuery] = useState("");
   const [type, setType] = useState<MediaType>("all");
   const [genre, setGenre] = useState("All");
+  const [country, setCountry] = useState("All");
+  const [language, setLanguage] = useState("All");
   const [year, setYear] = useState("All");
   const [quality, setQuality] = useState("All");
   const [version, setVersion] = useState("All");
@@ -48,6 +50,14 @@ export default function HomePage() {
   const items = archive?.items ?? EMPTY_ITEMS;
   const genres = useMemo(
     () => ["All", ...Array.from(new Set(items.flatMap((item) => item.genres ?? []))).sort()],
+    [items]
+  );
+  const countries = useMemo(
+    () => ["All", ...Array.from(new Set(items.flatMap((item) => item.countries ?? []))).sort()],
+    [items]
+  );
+  const languages = useMemo(
+    () => ["All", ...Array.from(new Set(items.flatMap((item) => item.languages ?? []))).sort()],
     [items]
   );
   const years = useMemo(
@@ -79,19 +89,23 @@ export default function HomePage() {
         item.imdbCode.toLowerCase().includes(needle) ||
         (item.originalTitle ?? "").toLowerCase().includes(needle) ||
         (item.genres ?? []).join(" ").toLowerCase().includes(needle) ||
+        (item.countries ?? []).join(" ").toLowerCase().includes(needle) ||
+        (item.languages ?? []).join(" ").toLowerCase().includes(needle) ||
         item.links.some((link) => link.label.toLowerCase().includes(needle));
 
       return (
         matchesQuery &&
         (type === "all" || itemType === type) &&
         (genre === "All" || (item.genres ?? []).includes(genre)) &&
+        (country === "All" || (item.countries ?? []).includes(country)) &&
+        (language === "All" || (item.languages ?? []).includes(language)) &&
         (year === "All" || String(item.year) === year) &&
         (quality === "All" || item.qualities.includes(quality)) &&
         (version === "All" || item.groups.includes(version)) &&
         (item.imdbRating ?? 0) >= minScore
       );
     });
-  }, [genre, items, minScore, quality, query, type, version, year]);
+  }, [country, genre, items, language, minScore, quality, query, type, version, year]);
 
   const featured = filtered[0] ?? items[0] ?? null;
   const filteredLinks = filtered.reduce((sum, item) => sum + item.links.length, 0);
@@ -146,6 +160,8 @@ export default function HomePage() {
               placeholder="Search title, IMDb code, genre, quality..."
             />
             <Select label="Genre" value={genre} options={genres} onChange={setGenre} />
+            <Select label="Country" value={country} options={countries} onChange={setCountry} />
+            <Select label="Language" value={language} options={languages} onChange={setLanguage} />
             <Select label="Year" value={year} options={years} onChange={setYear} />
             <Select label="Quality" value={quality} options={qualities} onChange={setQuality} />
           </div>

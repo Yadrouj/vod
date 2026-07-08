@@ -95,7 +95,7 @@ export default async function DetailPage({ params }: Props) {
                 <Stat label="Rating" value={(item.imdbRating ?? 0).toFixed(1)} />
                 <Stat label="Votes" value={(item.imdbVotes ?? 0).toLocaleString()} />
                 <Stat label="Runtime" value={item.runtimeMinutes ? `${item.runtimeMinutes}m` : "-"} />
-                <Stat label="Files" value={item.links.length.toLocaleString()} />
+                <Stat label="Metascore" value={item.metascore ? String(item.metascore) : "-"} />
               </div>
               <div className="chips" style={{ marginTop: 18 }}>
                 {(item.genres ?? []).map((genre) => (
@@ -112,11 +112,66 @@ export default async function DetailPage({ params }: Props) {
           <Info label="Title type" value={item.type} />
           <Info label="Start year" value={String(item.year ?? "-")} />
           {item.endYear && <Info label="End year" value={String(item.endYear)} />}
+          {item.releaseDate && <Info label="Release date" value={item.releaseDate} />}
+          {item.certificate && <Info label="Certificate" value={item.certificate} />}
+          <Info label="Countries" value={(item.countries ?? []).join(", ") || "-"} />
+          <Info label="Languages" value={(item.languages ?? []).join(", ") || "-"} />
           <Info label="Qualities" value={item.qualities.join(", ") || "-"} />
           <Info label="Versions" value={item.groups.join(", ") || "-"} />
         </aside>
 
         <section>
+          {(item.imdbImages?.length ?? 0) > 0 && (
+            <div className="image-strip">
+              {item.imdbImages?.slice(0, 12).map((image) => (
+                <img key={image.url} src={image.url} alt={image.caption ?? item.title} />
+              ))}
+            </div>
+          )}
+
+          {(item.keywords?.length ?? 0) > 0 && (
+            <div className="chips" style={{ marginBottom: 24 }}>
+              {item.keywords?.slice(0, 18).map((keyword) => (
+                <span key={keyword} className="chip">{keyword}</span>
+              ))}
+            </div>
+          )}
+
+          {(item.credits?.length ?? 0) > 0 && (
+            <div className="link-group">
+              <div className="link-head">
+                <strong>Credits</strong>
+                <span className="muted">{item.credits?.length} people</span>
+              </div>
+              {item.credits?.slice(0, 12).map((credit, index) => (
+                <div key={`${credit.name_id}-${index}`} className="file-link">
+                  <span>
+                    <strong>{credit.name_text}</strong>
+                    <span className="muted">{credit.category}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {(item.imdbVideos?.length ?? 0) > 0 && (
+            <div className="link-group">
+              <div className="link-head">
+                <strong>IMDb Videos</strong>
+                <span className="muted">{item.imdbVideos?.length} videos</span>
+              </div>
+              {item.imdbVideos?.slice(0, 6).map((video) => (
+                <a key={video.video_id ?? video.name} className="file-link" href={video.playback_urls?.[0]?.url ?? "#"}>
+                  <span>
+                    <strong>{video.name}</strong>
+                    <span className="muted">{video.runtime_seconds ? `${video.runtime_seconds}s` : "video"}</span>
+                  </span>
+                  <strong style={{ color: "var(--gold)" }}>{video.playback_urls?.[0]?.quality ?? "Play"}</strong>
+                </a>
+              ))}
+            </div>
+          )}
+
           <div className="section-head">
             <div>
               <h2>DonyayeSerial Links</h2>
