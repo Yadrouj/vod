@@ -21,4 +21,25 @@ http://localhost:3004
 - DonyayeSerial links are matched by IMDb ID.
 - IMDb metadata is enriched from IMDb's official non-commercial datasets.
 
-IMDb datasets do not include poster/banner images. The app is ready to attach image URLs by IMDb ID from a licensed image provider or your own hosted assets.
+## Harvester
+
+Run the full scraper/enricher:
+
+```bash
+npm run harvest-vod
+```
+
+With poster/backdrop enrichment:
+
+```powershell
+$env:TMDB_API_KEY="your_tmdb_key"
+npm run harvest-vod
+```
+
+The final site file is:
+
+```text
+public/data/vod-catalog.json
+```
+
+IMDb datasets do not include poster/banner images. `TMDB_API_KEY` lets the harvester attach poster, backdrop, logo, overview, country, language, and tagline data by IMDb ID.
