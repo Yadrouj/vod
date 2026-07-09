@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 import type { VodCard } from "@/lib/types";
 
 type AiResult = {
@@ -10,24 +11,22 @@ type AiResult = {
   reasons: string[];
 };
 
-const PROMPTS = [
-  "dark crime series above IMDb 8",
-  "luxury slow drama with mystery",
-  "new animation for kids",
-  "short sci-fi movie after 2015",
-];
-
 export function AiSearchPanel({
-  initialQuery = PROMPTS[0],
+  locale = DEFAULT_LOCALE,
+  initialQuery,
   initialResults = [],
 }: {
+  locale?: Locale;
   initialQuery?: string;
   initialResults?: AiResult[];
 }) {
-  const [query, setQuery] = useState(initialQuery);
+  const t = getDictionary(locale);
+  const prompts = t.ai.prompts;
+  const firstQuery = initialQuery ?? prompts[0]?.query ?? "";
+  const [query, setQuery] = useState(firstQuery);
   const [results, setResults] = useState<AiResult[]>(initialResults);
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(initialQuery);
+  const [searched, setSearched] = useState(firstQuery);
 
   useEffect(() => {
     const value = query.trim();
@@ -70,19 +69,19 @@ export function AiSearchPanel({
           void runSearch();
         }}
       >
-        <span className="ai-kicker">AI Search</span>
+        <span className="ai-kicker">{t.ai.kicker}</span>
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Describe mood, genre, year, country, IMDb score..."
+          placeholder={t.ai.placeholder}
         />
-        <button type="submit">{loading ? "Thinking" : "Find"}</button>
+        <button type="submit">{loading ? t.common.thinking : t.common.find}</button>
       </form>
 
       <div className="ai-prompts">
-        {PROMPTS.map((prompt) => (
-          <button key={prompt} type="button" onClick={() => void runSearch(prompt)}>
-            {prompt}
+        {prompts.map((prompt) => (
+          <button key={prompt.query} type="button" onClick={() => void runSearch(prompt.query)}>
+            {prompt.label}
           </button>
         ))}
       </div>
@@ -100,7 +99,7 @@ export function AiSearchPanel({
                   : undefined
               }
             >
-              <span className="rating">Match {result.score}</span>
+              <span className="rating">{t.ai.match} {result.score}</span>
               <strong>{result.item.title}</strong>
               <small>{result.reasons.join(" / ")}</small>
             </Link>

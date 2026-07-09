@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 import { episodeLabel } from "@/lib/link-labels";
 import type { VodLink } from "@/lib/types";
 
@@ -15,10 +16,12 @@ export function VodPlayer({
   title,
   posterUrl,
   links,
+  locale = DEFAULT_LOCALE,
 }: {
   title: string;
   posterUrl: string | null | undefined;
   links: VodLink[];
+  locale?: Locale;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -31,6 +34,7 @@ export function VodPlayer({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [message, setMessage] = useState("");
   const active = links[activeIndex] ?? links[0];
+  const t = getDictionary(locale);
 
   const sources = useMemo(
     () =>
@@ -38,18 +42,18 @@ export function VodPlayer({
         ...link,
         label: [
           episodeLabel(link),
-          link.quality ?? `Source ${index + 1}`,
-          link.release ?? link.group ?? "file",
+          link.quality ?? `${t.player.source} ${index + 1}`,
+          link.release ?? link.group ?? t.common.file,
         ].filter(Boolean).join(" / "),
       })),
-    [links]
+    [links, t.common.file, t.player.source]
   );
 
   function togglePlay() {
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
-      video.play().catch(() => setMessage("Playback blocked by browser or source."));
+      video.play().catch(() => setMessage(t.player.playbackBlocked));
     } else {
       video.pause();
     }
@@ -98,13 +102,13 @@ export function VodPlayer({
   async function openPictureInPicture() {
     const video = videoRef.current;
     if (!video || !document.pictureInPictureEnabled) {
-      setMessage("Picture in Picture is not available.");
+      setMessage(t.player.pipUnavailable);
       return;
     }
     try {
       await video.requestPictureInPicture();
     } catch {
-      setMessage("Picture in Picture could not start.");
+      setMessage(t.player.pipFailed);
     }
   }
 
@@ -120,9 +124,9 @@ export function VodPlayer({
         video.webkitShowPlaybackTargetPicker();
         return;
       }
-      setMessage("Cast is not available in this browser.");
+      setMessage(t.player.castUnavailable);
     } catch {
-      setMessage("Cast could not start.");
+      setMessage(t.player.castFailed);
     }
   }
 
@@ -141,18 +145,18 @@ export function VodPlayer({
           onTimeUpdate={(event) => setTime(event.currentTarget.currentTime)}
           onPlay={() => setPaused(false)}
           onPause={() => setPaused(true)}
-          onError={() => setMessage("This source may need a compatible browser or direct stream file.")}
+          onError={() => setMessage(t.player.sourceError)}
         >
           {subtitleUrl && <track kind="subtitles" src={subtitleUrl} label="Subtitle" default />}
         </video>
 
-        <button className="player-center" type="button" onClick={togglePlay} aria-label={paused ? "Play" : "Pause"}>
+        <button className="player-center" type="button" onClick={togglePlay} aria-label={paused ? t.common.play : t.player.pause}>
           <span className={paused ? "player-play-icon" : "player-pause-icon"} />
         </button>
 
         <div className="player-top-glass">
           <strong>{title}</strong>
-          <span>{active?.quality ?? "Source"} / {active?.release ?? active?.group ?? "stream"}</span>
+          <span>{active?.quality ?? t.player.source} / {active?.release ?? active?.group ?? t.player.stream}</span>
         </div>
 
         <div className="player-osd">
@@ -172,12 +176,12 @@ export function VodPlayer({
           />
 
           <div className="player-actions">
-            <button type="button" className="player-btn" onClick={togglePlay}>{paused ? "Play" : "Pause"}</button>
+            <button type="button" className="player-btn" onClick={togglePlay}>{paused ? t.common.play : t.player.pause}</button>
             <button type="button" className="player-btn" onClick={() => skip(-10)}>-10</button>
             <button type="button" className="player-btn" onClick={() => skip(10)}>+10</button>
             <span className="player-time">{formatTime(time)} / {formatTime(duration)}</span>
             <label className="player-volume">
-              <span>Volume</span>
+              <span>{t.player.volume}</span>
               <input
                 type="range"
                 min="0"
@@ -187,11 +191,11 @@ export function VodPlayer({
                 onChange={(event) => updateVolume(event.target.value)}
               />
             </label>
-            <button type="button" className="player-btn" onClick={castVideo}>Cast</button>
+            <button type="button" className="player-btn" onClick={castVideo}>{t.player.cast}</button>
             <button type="button" className="player-btn" onClick={openPictureInPicture}>PiP</button>
-            <button type="button" className="player-btn" onClick={toggleFullscreen}>Full</button>
+            <button type="button" className="player-btn" onClick={toggleFullscreen}>{t.player.full}</button>
             <button type="button" className="player-btn active" onClick={() => setSettingsOpen((value) => !value)}>
-              Settings
+              {t.player.settings}
             </button>
           </div>
         </div>
@@ -199,7 +203,7 @@ export function VodPlayer({
         {settingsOpen && (
           <div className="player-settings">
             <label>
-              <span className="label">Quality</span>
+              <span className="label">{t.player.quality}</span>
               <select className="select" value={activeIndex} onChange={(event) => changeSource(event.target.value)}>
                 {sources.map((source, index) => (
                   <option key={`${source.url}-${index}`} value={index}>
@@ -209,7 +213,7 @@ export function VodPlayer({
               </select>
             </label>
             <label>
-              <span className="label">Speed</span>
+              <span className="label">{t.player.speed}</span>
               <select className="select" value={speed} onChange={(event) => updateSpeed(event.target.value)}>
                 {["0.5", "0.75", "1", "1.25", "1.5", "2"].map((value) => (
                   <option key={value} value={value}>
@@ -219,12 +223,12 @@ export function VodPlayer({
               </select>
             </label>
             <label className="settings-wide">
-              <span className="label">Subtitle URL</span>
+              <span className="label">{t.player.subtitleUrl}</span>
               <input
                 className="search"
                 value={subtitleUrl}
                 onChange={(event) => setSubtitleUrl(event.target.value)}
-                placeholder="Paste .vtt subtitle URL"
+                placeholder={t.player.subtitlePlaceholder}
               />
             </label>
           </div>

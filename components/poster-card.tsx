@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { DEFAULT_LOCALE, getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import type { VodCard } from "@/lib/types";
 
-export function PosterCard({ item }: { item: VodCard }) {
+export function PosterCard({ item, locale = DEFAULT_LOCALE }: { item: VodCard; locale?: Locale }) {
+  const t = getDictionary(locale);
+
   return (
     <Link href={`/${item.imdbCode || item.id}`} className={`poster ${item.type === "series" ? "series-poster" : ""}`}>
       <div
@@ -17,8 +20,8 @@ export function PosterCard({ item }: { item: VodCard }) {
         <span className="rating">IMDb {(item.imdbRating ?? 0).toFixed(1)}</span>
         <span className="poster-copy">
           <strong className="poster-title">{item.title}</strong>
-          <span>{item.year ?? "-"} / {item.type === "series" ? "Series" : "Movie"}</span>
-          <span>{item.genres.slice(0, 3).join(" / ") || `${item.linksCount} files`}</span>
+          <span>{item.year ?? "-"} / {typeLabel(item.type, locale)}</span>
+          <span>{item.genres.slice(0, 3).join(" / ") || `${item.linksCount} ${t.common.files}`}</span>
         </span>
       </div>
     </Link>

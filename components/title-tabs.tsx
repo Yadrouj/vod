@@ -5,6 +5,7 @@ import { useState } from "react";
 import { DownloadAction } from "@/components/download-action";
 import { DownloadBrowser } from "@/components/download-browser";
 import { PosterCard } from "@/components/poster-card";
+import { DEFAULT_LOCALE, getDictionary, interpolate, type Locale, typeLabel } from "@/lib/i18n";
 import type { DownloadSource, SeasonSummary } from "@/lib/downloads";
 import type { VodCard, VodItem } from "@/lib/types";
 
@@ -15,36 +16,46 @@ type TitleTabsProps = {
   movieFiles: DownloadSource[];
   suggestions: VodCard[];
   subtitlesUrl: string;
+  locale?: Locale;
 };
 
 const TABS = [
-  { id: "about", label: "About" },
-  { id: "episodes", label: "Episodes & Seasons" },
-  { id: "suggestions", label: "Suggestions" },
+  { id: "about", key: "about" },
+  { id: "episodes", key: "episodes" },
+  { id: "suggestions", key: "suggestions" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
 
-export function TitleTabs({ item, isSeries, seasons, movieFiles, suggestions, subtitlesUrl }: TitleTabsProps) {
+export function TitleTabs({
+  item,
+  isSeries,
+  seasons,
+  movieFiles,
+  suggestions,
+  subtitlesUrl,
+  locale = DEFAULT_LOCALE,
+}: TitleTabsProps) {
   const [active, setActive] = useState<TabId>(isSeries ? "episodes" : "about");
   const best = item.links[0];
+  const t = getDictionary(locale);
 
   return (
     <section className="title-tabs">
       <div className="title-action-row">
         <Link className="primary-watch" href={`/watch/${item.imdbCode}`}>
-          <span className="play-dot" /> Play
+          <span className="play-dot" /> {t.common.play}
         </Link>
         {best && (
           <a className="title-action" href={best.url}>
-            <DownloadAction label="Best file" />
+            <DownloadAction label={t.common.bestFile} />
           </a>
         )}
         <a className="title-action" href={subtitlesUrl} target="_blank" rel="noreferrer">
-          Subtitles
+          {t.common.subtitles}
         </a>
         <a className="title-action" href={item.imdbUrl ?? `https://www.imdb.com/title/${item.imdbCode}/`} target="_blank" rel="noreferrer">
-          IMDb
+          {t.common.imdb}
         </a>
       </div>
 
@@ -56,12 +67,12 @@ export function TitleTabs({ item, isSeries, seasons, movieFiles, suggestions, su
             type="button"
             onClick={() => setActive(tab.id)}
           >
-            {tab.label}
+            {t.title.tabs[tab.key]}
           </button>
         ))}
       </nav>
 
-      {active === "about" && <AboutTab item={item} />}
+      {active === "about" && <AboutTab item={item} locale={locale} />}
       {active === "episodes" && (
         <section className="title-tab-panel">
           <DownloadBrowser
@@ -71,6 +82,7 @@ export function TitleTabs({ item, isSeries, seasons, movieFiles, suggestions, su
             seasons={seasons}
             movieFiles={movieFiles}
             fallbackImage={item.backdropUrl ?? item.posterUrl ?? null}
+            locale={locale}
           />
         </section>
       )}
@@ -78,7 +90,7 @@ export function TitleTabs({ item, isSeries, seasons, movieFiles, suggestions, su
         <section className="title-tab-panel">
           <div className="suggestion-grid">
             {suggestions.map((suggestion) => (
-              <PosterCard key={`suggestion-${suggestion.imdbCode}`} item={suggestion} />
+              <PosterCard key={`suggestion-${suggestion.imdbCode}`} item={suggestion} locale={locale} />
             ))}
           </div>
         </section>
@@ -87,32 +99,40 @@ export function TitleTabs({ item, isSeries, seasons, movieFiles, suggestions, su
   );
 }
 
-function AboutTab({ item }: { item: VodItem }) {
+function AboutTab({ item, locale }: { item: VodItem; locale: Locale }) {
+  const t = getDictionary(locale);
+
   return (
     <section className="title-tab-panel about-tab">
       <div className="about-main">
-        <PanelHead title="Trailers & Pictures" note={`${item.imdbVideos?.length ?? 0} trailers / ${item.imdbImages?.length ?? 0} pictures`} />
-        <MediaCarousel item={item} />
+        <PanelHead
+          title={t.title.trailersPictures}
+          note={interpolate(t.title.trailersPicturesNote, {
+            trailers: item.imdbVideos?.length ?? 0,
+            pictures: item.imdbImages?.length ?? 0,
+          })}
+        />
+        <MediaCarousel item={item} locale={locale} />
 
         {(item.credits?.length ?? 0) > 0 && (
           <>
-            <PanelHead title="Cast & Crew" note={`${item.credits?.length} people`} />
+            <PanelHead title={t.title.castCrew} note={`${item.credits?.length} ${t.title.people}`} />
             <CastRail item={item} />
           </>
         )}
       </div>
 
       <aside className="about-data">
-        <PanelHead title="Data" note={item.imdbCode} />
+        <PanelHead title={t.title.data} note={item.imdbCode} />
         <div className="compact-facts">
-          <Info label="Type" value={item.type} />
-          <Info label="Year" value={String(item.year ?? "-")} />
-          {item.endYear && <Info label="End" value={String(item.endYear)} />}
-          {item.releaseDate && <Info label="Release" value={item.releaseDate} />}
-          {item.certificate && <Info label="Cert" value={item.certificate} />}
-          <Info label="Country" value={(item.countries ?? []).slice(0, 3).join(", ") || "-"} />
-          <Info label="Language" value={(item.languages ?? []).slice(0, 3).join(", ") || "-"} />
-          <Info label="Qualities" value={item.qualities.join(", ") || "-"} />
+          <Info label={t.title.type} value={typeLabel(item.type, locale)} />
+          <Info label={t.title.year} value={String(item.year ?? "-")} />
+          {item.endYear && <Info label={t.title.end} value={String(item.endYear)} />}
+          {item.releaseDate && <Info label={t.title.release} value={item.releaseDate} />}
+          {item.certificate && <Info label={t.title.certificate} value={item.certificate} />}
+          <Info label={t.title.country} value={(item.countries ?? []).slice(0, 3).join(", ") || "-"} />
+          <Info label={t.title.language} value={(item.languages ?? []).slice(0, 3).join(", ") || "-"} />
+          <Info label={t.title.qualities} value={item.qualities.join(", ") || "-"} />
         </div>
 
         {(item.keywords?.length ?? 0) > 0 && (
@@ -146,7 +166,8 @@ function PanelHead({ title, note }: { title: string; note: string }) {
   );
 }
 
-function MediaCarousel({ item }: { item: VodItem }) {
+function MediaCarousel({ item, locale }: { item: VodItem; locale: Locale }) {
+  const t = getDictionary(locale);
   const videos = item.imdbVideos?.slice(0, 10) ?? [];
   const images = item.imdbImages?.slice(0, 20) ?? [];
   const fallbackImage = images.length === 0 ? item.backdropUrl ?? item.posterUrl : null;
@@ -164,7 +185,7 @@ function MediaCarousel({ item }: { item: VodItem }) {
             )}
             <div className="media-card-foot">
               <strong>{video.name}</strong>
-              {source && <a className="hover-button" href={source} target="_blank" rel="noreferrer">Open</a>}
+              {source && <a className="hover-button" href={source} target="_blank" rel="noreferrer">{t.title.open}</a>}
             </div>
           </article>
         );
@@ -173,14 +194,14 @@ function MediaCarousel({ item }: { item: VodItem }) {
       {images.map((image) => (
         <a key={image.url} className="media-card image-card" href={image.url} target="_blank" rel="noreferrer">
           <img src={image.url} alt={image.caption ?? item.title} />
-          <span>{image.caption ?? "Open picture"}</span>
+          <span>{image.caption ?? t.title.openPicture}</span>
         </a>
       ))}
 
       {fallbackImage && (
         <a className="media-card image-card" href={fallbackImage} target="_blank" rel="noreferrer">
           <img src={fallbackImage} alt={`${item.title} poster`} />
-          <span>Open poster</span>
+          <span>{t.title.openPoster}</span>
         </a>
       )}
     </div>

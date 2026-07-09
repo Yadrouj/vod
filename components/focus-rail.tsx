@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 import type { VodCard } from "@/lib/types";
 
-export function FocusRail({ items }: { items: VodCard[] }) {
+export function FocusRail({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]; locale?: Locale }) {
   const [active, setActive] = useState(0);
   const current = items[active] ?? items[0];
+  const t = getDictionary(locale);
 
   useEffect(() => {
     if (items.length < 2) return;
@@ -22,16 +24,16 @@ export function FocusRail({ items }: { items: VodCard[] }) {
     <section className="focus-rail">
       <div className="focus-panel">
         <div>
-          <p className="label">Spotlight Rail</p>
+          <p className="label">{t.home.spotlight}</p>
           <h2>{current.title}</h2>
           <p className="muted">{current.overview ?? current.genres.slice(0, 3).join(" / ")}</p>
         </div>
         <div className="chips">
           <Link className="play-glow" href={`/watch/${current.imdbCode}`}>
-            <span className="play-dot" /> Play
+            <span className="play-dot" /> {t.common.play}
           </Link>
           <Link className="hover-button" href={`/${current.imdbCode}`}>
-            Details
+            {t.common.details}
           </Link>
         </div>
       </div>
@@ -47,9 +49,9 @@ export function FocusRail({ items }: { items: VodCard[] }) {
               type="button"
               className={`focus-card ${isActive ? "active" : ""}`}
               style={{
-                transform: `translate(-50%, -50%) translateX(${isActive ? "clamp(-80px, -6vw, -24px)" : `${-16 + visibleDepth * 88}px`}) translateY(${visibleDepth * 8}px) scale(${isActive ? 1.16 : Math.max(0.52, 0.94 - visibleDepth * 0.08)})`,
-                opacity: isActive ? 1 : Math.max(0.1, 0.68 - visibleDepth * 0.1),
-                filter: isActive ? "none" : `blur(${Math.min(50, visibleDepth * 7)}px) saturate(${Math.max(0.18, 0.82 - visibleDepth * 0.08)})`,
+                transform: `translate(-50%, -50%) translateX(${isActive ? "clamp(-42px, -3vw, 0px)" : `${visibleDepth * 96}px`}) translateY(${visibleDepth * 9}px) scale(${isActive ? 1.24 : Math.max(0.38, 0.88 - visibleDepth * 0.08)})`,
+                opacity: isActive ? 1 : Math.max(0.1, 0.55 - visibleDepth * 0.08),
+                filter: isActive ? "none" : `blur(${Math.min(50, visibleDepth * 8)}px) saturate(${Math.max(0.18, 0.76 - visibleDepth * 0.08)})`,
                 zIndex: items.length - visibleDepth,
               }}
               onClick={() => setActive(index)}
@@ -68,10 +70,10 @@ export function FocusRail({ items }: { items: VodCard[] }) {
 
       <div className="focus-controls">
         <button type="button" className="chip" onClick={() => setActive((value) => (value - 1 + items.length) % items.length)}>
-          Prev
+          {t.common.previous}
         </button>
         <button type="button" className="chip active" onClick={() => setActive((value) => (value + 1) % items.length)}>
-          Next
+          {t.common.next}
         </button>
       </div>
     </section>

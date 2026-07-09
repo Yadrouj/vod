@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { BaseUrlAdmin } from "@/components/base-url-admin";
+import { LanguageToggle } from "@/components/language-toggle";
+import { getDictionary } from "@/lib/i18n";
 import { loadDownloadSettings, rewriteDownloadUrl } from "@/lib/download-settings";
+import { getLocale } from "@/lib/server-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +11,8 @@ const SAMPLE_URL =
   "https://dls7.aparatchi-dlcenter.top/DonyayeSerial/series2/tt0903747/SoftSub/S01/720p.BluRay/Breaking.Bad.S01E01.720p.BluRay.SoftSub.Unknown.DonyayeSerial.mkv";
 
 export default async function AdminPage() {
+  const locale = await getLocale();
+  const t = getDictionary(locale);
   const settings = await loadDownloadSettings();
 
   return (
@@ -16,7 +21,10 @@ export default async function AdminPage() {
         <div className="wrap">
           <header className="topbar">
             <Link className="brand" href="/">VOD</Link>
-            <Link className="chip" href="/">Back home</Link>
+            <div className="topbar-actions">
+              <LanguageToggle locale={locale} />
+              <Link className="chip" href="/">{t.common.backHome}</Link>
+            </div>
           </header>
         </div>
       </section>
@@ -27,6 +35,7 @@ export default async function AdminPage() {
           updatedAt={settings.updatedAt}
           sampleBefore={SAMPLE_URL}
           sampleAfter={rewriteDownloadUrl(SAMPLE_URL, settings.baseUrl)}
+          locale={locale}
         />
       </section>
     </main>

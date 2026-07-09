@@ -1,19 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 
 type Props = {
   initialBaseUrl: string;
   updatedAt: string | null;
   sampleBefore: string;
   sampleAfter: string;
+  locale?: Locale;
 };
 
-export function BaseUrlAdmin({ initialBaseUrl, updatedAt, sampleBefore, sampleAfter }: Props) {
+export function BaseUrlAdmin({ initialBaseUrl, updatedAt, sampleBefore, sampleAfter, locale = DEFAULT_LOCALE }: Props) {
   const [baseUrl, setBaseUrl] = useState(initialBaseUrl);
   const [currentBaseUrl, setCurrentBaseUrl] = useState(initialBaseUrl);
   const [status, setStatus] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const t = getDictionary(locale);
 
   async function save() {
     setSaving(true);
@@ -28,9 +31,9 @@ export function BaseUrlAdmin({ initialBaseUrl, updatedAt, sampleBefore, sampleAf
       if (!response.ok) throw new Error(payload.error ?? "Update failed.");
       setCurrentBaseUrl(payload.baseUrl ?? baseUrl);
       setBaseUrl(payload.baseUrl ?? baseUrl);
-      setStatus("Base URL updated. All download links now use the new host.");
+      setStatus(t.admin.success);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Update failed.");
+      setStatus(error instanceof Error ? error.message : t.admin.failed);
     } finally {
       setSaving(false);
     }
@@ -39,31 +42,30 @@ export function BaseUrlAdmin({ initialBaseUrl, updatedAt, sampleBefore, sampleAf
   return (
     <section className="admin-panel">
       <div className="admin-copy">
-        <p className="label">Admin</p>
-        <h1>Download Base URL</h1>
+        <p className="label">{t.common.admin}</p>
+        <h1>{t.admin.title}</h1>
         <p className="muted">
-          Change the DonyayeSerial host once. Detail pages, player sources, movie downloads, and episode quality links
-          will use the new base immediately.
+          {t.admin.intro}
         </p>
       </div>
 
       <div className="admin-form">
         <label>
-          <span className="label">Current base</span>
+          <span className="label">{t.admin.currentBase}</span>
           <input className="search" value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} />
         </label>
         <button className="play-glow" type="button" onClick={save} disabled={saving}>
-          {saving ? "Updating" : "Update links"}
+          {saving ? t.admin.updating : t.admin.updateLinks}
         </button>
       </div>
 
       {status && <p className="admin-status">{status}</p>}
 
       <div className="admin-grid">
-        <Info label="Active base" value={currentBaseUrl} />
-        <Info label="Updated" value={updatedAt ? new Date(updatedAt).toLocaleString() : "Default"} />
-        <Info label="Original sample" value={sampleBefore} />
-        <Info label="After rewrite" value={sampleAfter.replace(initialBaseUrl, currentBaseUrl)} />
+        <Info label={t.admin.activeBase} value={currentBaseUrl} />
+        <Info label={t.admin.updated} value={updatedAt ? new Date(updatedAt).toLocaleString() : t.admin.defaultValue} />
+        <Info label={t.admin.originalSample} value={sampleBefore} />
+        <Info label={t.admin.afterRewrite} value={sampleAfter.replace(initialBaseUrl, currentBaseUrl)} />
       </div>
     </section>
   );

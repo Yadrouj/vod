@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { LanguageToggle } from "@/components/language-toggle";
 import { PosterCard } from "@/components/poster-card";
+import { formatNumber, getDictionary } from "@/lib/i18n";
 import { findPerson } from "@/lib/people";
+import { getLocale } from "@/lib/server-locale";
 
 type Props = {
   params: Promise<{ id: string }>;
 };
 
 export default async function PersonPage({ params }: Props) {
+  const locale = await getLocale();
+  const t = getDictionary(locale);
   const { id } = await params;
   const person = await findPerson(id);
   if (!person) notFound();
@@ -17,8 +22,11 @@ export default async function PersonPage({ params }: Props) {
       <section className="person-hero">
         <div className="wrap">
           <header className="topbar">
-            <Link className="chip" href="/">Back to VOD</Link>
-            <span className="pill">{person.items.length.toLocaleString()} titles</span>
+            <div className="topbar-actions">
+              <LanguageToggle locale={locale} />
+              <Link className="chip" href="/">{t.common.backToVod}</Link>
+            </div>
+            <span className="pill">{formatNumber(person.items.length, locale)} {t.common.titles}</span>
           </header>
 
           <div className="person-title">
@@ -38,7 +46,7 @@ export default async function PersonPage({ params }: Props) {
       <section className="section wrap">
         <div className="grid browse-grid">
           {person.items.map((item) => (
-            <PosterCard key={`${person.id}-${item.imdbCode}`} item={item} />
+            <PosterCard key={`${person.id}-${item.imdbCode}`} item={item} locale={locale} />
           ))}
         </div>
       </section>

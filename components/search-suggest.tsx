@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { DEFAULT_LOCALE, getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 
 type Suggestion = {
   title: string;
@@ -16,15 +17,18 @@ export function SearchSuggest({
   name = "q",
   defaultValue = "",
   placeholder = "Search films, series, IMDb ID...",
+  locale = DEFAULT_LOCALE,
 }: {
   name?: string;
   defaultValue?: string;
   placeholder?: string;
+  locale?: Locale;
 }) {
   const [query, setQuery] = useState(defaultValue);
   const [items, setItems] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+  const t = getDictionary(locale);
 
   useEffect(() => {
     if (query.trim().length < 2) {
@@ -84,7 +88,7 @@ export function SearchSuggest({
               <span>
                 <strong>{item.title}</strong>
                 <small>
-                  {item.year ?? "-"} / {item.type} / IMDb {(item.imdbRating ?? 0).toFixed(1)}
+                  {item.year ?? "-"} / {typeLabel(item.type, locale)} / {t.common.imdb} {(item.imdbRating ?? 0).toFixed(1)}
                 </small>
               </span>
             </Link>

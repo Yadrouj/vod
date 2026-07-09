@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { DownloadAction } from "@/components/download-action";
+import { DEFAULT_LOCALE, getDictionary, interpolate, type Locale } from "@/lib/i18n";
 import type { DownloadSource, EpisodeDownload, ExpandedSeasonDownloads, SeasonSummary } from "@/lib/downloads";
 
 type DownloadBrowserProps = {
@@ -11,6 +12,7 @@ type DownloadBrowserProps = {
   seasons: SeasonSummary[];
   movieFiles: DownloadSource[];
   fallbackImage: string | null;
+  locale?: Locale;
 };
 
 type SeasonResponse = ExpandedSeasonDownloads & {
@@ -25,10 +27,12 @@ export function DownloadBrowser({
   seasons,
   movieFiles,
   fallbackImage,
+  locale = DEFAULT_LOCALE,
 }: DownloadBrowserProps) {
   const [activeSeason, setActiveSeason] = useState(seasons[0]?.season ?? 1);
   const [cache, setCache] = useState<Record<number, SeasonResponse>>({});
   const [errors, setErrors] = useState<Record<number, string>>({});
+  const t = getDictionary(locale);
 
   useEffect(() => {
     if (!isSeries || !activeSeason || cache[activeSeason]) return;
@@ -45,11 +49,11 @@ export function DownloadBrowser({
       })
       .catch((reason: unknown) => {
         if (reason instanceof DOMException && reason.name === "AbortError") return;
-        setErrors((current) => ({ ...current, [activeSeason]: "Could not load episode files. Try another season." }));
+        setErrors((current) => ({ ...current, [activeSeason]: t.downloads.loadError }));
       });
 
     return () => controller.abort();
-  }, [activeSeason, cache, isSeries, itemId]);
+  }, [activeSeason, cache, isSeries, itemId, t.downloads.loadError]);
 
   const activeSummary = useMemo(
     () => seasons.find((season) => season.season === activeSeason),
@@ -69,7 +73,7 @@ export function DownloadBrowser({
                 <strong>{file.label}</strong>
                 <small>{[file.group, file.quality, file.release, file.size].filter(Boolean).join(" / ")}</small>
               </span>
-              <DownloadAction label={file.quality ?? "File"} />
+              <DownloadAction label={file.quality ?? t.common.file} />
             </a>
           ))}
         </div>
@@ -88,15 +92,15 @@ export function DownloadBrowser({
             onClick={() => setActiveSeason(season.season)}
           >
             <span>S{String(season.season).padStart(2, "0")}</span>
-            <small>{season.qualities.join(" / ") || `${season.sourceCount} files`}</small>
+            <small>{season.qualities.join(" / ") || `${season.sourceCount} ${t.common.files}`}</small>
           </button>
         ))}
       </div>
 
       {activeSummary && (
         <div className="season-meta-line">
-          <strong>{activeSummary.label}</strong>
-          <span>{activeSummary.groups.join(" / ") || "Files"} / {activeSummary.sourceCount} sources</span>
+          <strong>{locale === "fa" ? `${t.downloads.season} ${activeSummary.season}` : activeSummary.label}</strong>
+          <span>{activeSummary.groups.join(" / ") || t.downloads.files} / {interpolate(t.downloads.sourceCount, { count: activeSummary.sourceCount })}</span>
         </div>
       )}
 
@@ -105,7 +109,12 @@ export function DownloadBrowser({
       {!loading && !error && activeData && (
         <div className="episode-list">
           {activeData.episodes.map((episode) => (
-            <EpisodeRow key={`${episode.season}-${episode.episode ?? "pack"}`} episode={episode} fallbackImage={fallbackImage} />
+            <EpisodeRow
+              key={`${episode.season}-${episode.episode ?? "pack"}`}
+              episode={episode}
+              fallbackImage={fallbackImage}
+              locale={locale}
+            />
           ))}
         </div>
       )}
@@ -113,8 +122,15 @@ export function DownloadBrowser({
   );
 }
 
-function EpisodeRow({ episode, fallbackImage }: { episode: EpisodeDownload; fallbackImage: string | null }) {
+function EpisodeRow({ episode, fallbackImage, locale }: { episode: EpisodeDownload; fallbackImage: string | null; locale: Locale }) {
   const qualities = Array.from(new Set(episode.files.map((file) => file.quality).filter(Boolean))).join(" / ");
+  const t = getDictionary(locale);
+  const title =
+    locale === "fa" && episode.episode && episode.title === `Episode ${episode.episode}`
+      ? `${t.downloads.episode} ${episode.episode}`
+      : locale === "fa" && episode.title === "Season pack"
+        ? t.downloads.seasonPack
+        : episode.title;
 
   return (
     <article className="episode-row">
@@ -135,21 +151,21 @@ function EpisodeRow({ episode, fallbackImage }: { episode: EpisodeDownload; fall
       <div className="episode-copy">
         <div className="episode-title-line">
           <div>
-            <p className="label">{qualities || "Season file"}</p>
-            <h3>{episode.title}</h3>
+            <p className="label">{qualities || t.downloads.seasonFile}</p>
+            <h3>{title}</h3>
           </div>
           <span className="episode-code">{episode.code}</span>
         </div>
         <p className="episode-summary">
           {episode.summary ??
             (episode.episode
-              ? "Episode files are ready by quality. A short synopsis appears here when episode metadata is available."
-              : "This season is available as direct sources. Open a source to view or download its files.")}
+              ? t.downloads.episodeFallback
+              : t.downloads.seasonFallback)}
         </p>
         <div className="episode-quality-list">
           {episode.files.map((file, index) => (
             <a key={`${file.url}-${index}`} className="quality-download" href={file.url}>
-              <DownloadAction label={file.quality ?? "File"} />
+              <DownloadAction label={file.quality ?? t.common.file} />
               <small>{[file.group, file.release, file.size].filter(Boolean).join(" / ") || file.name}</small>
             </a>
           ))}

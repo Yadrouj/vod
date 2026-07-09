@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DownloadAction } from "@/components/download-action";
+import { LanguageToggle } from "@/components/language-toggle";
 import { TitleTabs } from "@/components/title-tabs";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { buildSeasonSummaries, movieDownloadSources } from "@/lib/downloads";
+import { formatNumber, getDictionary, typeLabel } from "@/lib/i18n";
+import { getLocale } from "@/lib/server-locale";
 import { subzoneSearchUrl } from "@/lib/subtitles";
 import { loadVodIndex } from "@/lib/vod-index";
 import type { VodCard, VodItem } from "@/lib/types";
@@ -24,6 +27,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function DetailPage({ params }: Props) {
+  const locale = await getLocale();
+  const t = getDictionary(locale);
   const { id } = await params;
   const item = await findVodItem(id);
   if (!item) notFound();
@@ -51,7 +56,10 @@ export default async function DetailPage({ params }: Props) {
       >
         <div className="wrap">
           <header className="topbar">
-            <Link className="chip" href="/">Back to VOD</Link>
+            <div className="topbar-actions">
+              <LanguageToggle locale={locale} />
+              <Link className="chip" href="/">{t.common.backToVod}</Link>
+            </div>
             <a
               className="pill"
               href={item.imdbUrl ?? `https://www.imdb.com/title/${item.imdbCode}/`}
@@ -65,31 +73,31 @@ export default async function DetailPage({ params }: Props) {
           <div className="detail-grid">
             <div className="detail-copy">
               <div className="meta">
-                <span>{normalizeVodType(item.type)}</span>
+                <span>{typeLabel(normalizeVodType(item.type), locale)}</span>
                 <i className="dot" />
                 <span>{item.year ?? "-"}</span>
                 <i className="dot" />
-            <span>{item.runtimeMinutes ? `${item.runtimeMinutes}m` : `${item.links.length} files`}</span>
+                <span>{item.runtimeMinutes ? `${item.runtimeMinutes}m` : `${item.links.length} ${t.common.files}`}</span>
                 <i className="dot" />
                 <span>{item.imdbCode}</span>
               </div>
               <h1>{item.title}</h1>
               {item.originalTitle && item.originalTitle !== item.title && (
-                <p className="muted">Original title: {item.originalTitle}</p>
+                <p className="muted">{t.title.originalTitle}: {item.originalTitle}</p>
               )}
               {item.overview && <p>{item.overview}</p>}
               <div className="chips" style={{ marginTop: 24 }}>
                 <Link className="play-glow" href={`/watch/${item.imdbCode}`}>
-                  <span className="play-dot" /> Play online
+                  <span className="play-dot" /> {t.common.playOnline}
                 </Link>
-                {best && <a className="hover-button" href={best.url}><DownloadAction label="Best file" /></a>}
+                {best && <a className="hover-button" href={best.url}><DownloadAction label={t.common.bestFile} /></a>}
                 <a
                   className="hover-button"
                   href={subzoneSearchUrl(item.title, item.year)}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Subzone subtitles
+                  {t.title.subzoneSubtitles}
                 </a>
                 <a
                   className="hover-button"
@@ -97,7 +105,7 @@ export default async function DetailPage({ params }: Props) {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  View IMDb
+                  {t.common.viewImdb}
                 </a>
               </div>
             </div>
@@ -110,12 +118,12 @@ export default async function DetailPage({ params }: Props) {
                   aria-label={`${item.title} poster`}
                 />
               )}
-              <p className="label">IMDb Data</p>
+              <p className="label">{t.title.imdbData}</p>
               <div className="stats" style={{ marginTop: 16 }}>
-                <Stat label="Rating" value={(item.imdbRating ?? 0).toFixed(1)} />
-                <Stat label="Votes" value={(item.imdbVotes ?? 0).toLocaleString()} />
-                <Stat label="Runtime" value={item.runtimeMinutes ? `${item.runtimeMinutes}m` : "-"} />
-                <Stat label="Metascore" value={item.metascore ? String(item.metascore) : "-"} />
+                <Stat label={t.title.rating} value={(item.imdbRating ?? 0).toFixed(1)} />
+                <Stat label={t.title.votes} value={formatNumber(item.imdbVotes ?? 0, locale)} />
+                <Stat label={t.title.runtime} value={item.runtimeMinutes ? `${item.runtimeMinutes}m` : "-"} />
+                <Stat label={t.title.metascore} value={item.metascore ? String(item.metascore) : "-"} />
               </div>
               <div className="chips" style={{ marginTop: 18 }}>
                 {(item.genres ?? []).map((genre) => (
@@ -135,6 +143,7 @@ export default async function DetailPage({ params }: Props) {
           movieFiles={movieFiles}
           suggestions={suggestions}
           subtitlesUrl={subzoneSearchUrl(item.title, item.year)}
+          locale={locale}
         />
       </main>
     </div>

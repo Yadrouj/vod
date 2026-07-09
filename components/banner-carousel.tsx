@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { DEFAULT_LOCALE, getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import type { VodCard } from "@/lib/types";
 
-export function BannerCarousel({ items }: { items: VodCard[] }) {
+export function BannerCarousel({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]; locale?: Locale }) {
   const [active, setActive] = useState(0);
   const current = items[active] ?? items[0];
+  const t = getDictionary(locale);
 
   useEffect(() => {
     if (items.length < 2) return;
@@ -39,7 +41,7 @@ export function BannerCarousel({ items }: { items: VodCard[] }) {
       </button>
       <div className="banner-copy">
         <div className="meta">
-          <span>{current.type}</span>
+          <span>{typeLabel(current.type, locale)}</span>
           <i className="dot" />
           <span>{current.year ?? "-"}</span>
           <i className="dot" />
@@ -49,10 +51,10 @@ export function BannerCarousel({ items }: { items: VodCard[] }) {
         {current.overview && <p>{current.overview}</p>}
         <div className="chips">
           <Link className="play-glow" href={`/watch/${current.imdbCode}`}>
-            <span className="play-dot" /> Play online
+            <span className="play-dot" /> {t.common.playOnline}
           </Link>
           <Link className="chip" href={`/${current.imdbCode}`}>
-            Details
+            {t.common.details}
           </Link>
         </div>
       </div>
