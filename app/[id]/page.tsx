@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DownloadBrowser } from "@/components/download-browser";
 import { DownloadAction } from "@/components/download-action";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
-import { episodeLabel } from "@/lib/link-labels";
+import { buildSeasonSummaries, movieDownloadSources } from "@/lib/downloads";
 import { subzoneSearchUrl } from "@/lib/subtitles";
-import type { VodItem, VodLink } from "@/lib/types";
+import type { VodItem } from "@/lib/types";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -26,8 +27,10 @@ export default async function DetailPage({ params }: Props) {
   const item = await findVodItem(id);
   if (!item) notFound();
 
-  const groups = groupLinks(item.links);
   const best = item.links[0];
+  const seasons = buildSeasonSummaries(item.links);
+  const isSeries = normalizeVodType(item.type) === "series" && seasons.length > 0;
+  const movieFiles = isSeries ? [] : movieDownloadSources(item.links);
 
   return (
     <div className="shell">
@@ -156,29 +159,18 @@ export default async function DetailPage({ params }: Props) {
         )}
 
         <section className="movie-download-panel">
-          <PanelHead title="DonyayeSerial Links" note={`${item.links.length} matched files`} />
-          <div className="download-scroll">
-            {groups.map(([group, links]) => (
-              <div key={group} className="compact-link-group">
-                <div className="link-head">
-                  <strong>{group}</strong>
-                  <span className="muted">{links.length} files</span>
-                </div>
-                {links.map((link, index) => (
-                  <a key={`${link.url}-${index}`} className="file-link compact-file-link" href={link.url}>
-                    <span>
-                      <strong>{link.label}</strong>
-                      <span className="muted">
-                        {episodeLabel(link) ? `${episodeLabel(link)} / ` : ""}
-                        {link.release ?? "release"} / {link.size ?? "size unknown"}
-                      </span>
-                    </span>
-                    <DownloadAction label={link.quality ?? "File"} />
-                  </a>
-                ))}
-              </div>
-            ))}
-          </div>
+          <PanelHead
+            title={isSeries ? "Episodes & Qualities" : "Download Files"}
+            note={isSeries ? `${seasons.length} seasons / ${item.links.length} quality folders` : `${item.links.length} matched files`}
+          />
+          <DownloadBrowser
+            itemId={item.imdbCode}
+            title={item.title}
+            isSeries={isSeries}
+            seasons={seasons}
+            movieFiles={movieFiles}
+            fallbackImage={item.backdropUrl ?? item.posterUrl ?? null}
+          />
         </section>
       </main>
     </div>
@@ -279,13 +271,4 @@ function Info({ label, value }: { label: string; value: string }) {
       <p className="value">{value}</p>
     </div>
   );
-}
-
-function groupLinks(links: VodLink[]): [string, VodLink[]][] {
-  const map = new Map<string, VodLink[]>();
-  for (const link of links) {
-    const group = link.group || "Files";
-    map.set(group, [...(map.get(group) ?? []), link]);
-  }
-  return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
 }
