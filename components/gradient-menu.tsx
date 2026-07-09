@@ -5,6 +5,7 @@ const MENU_ITEMS = [
   { href: "/browse?section=recent-films", label: "Films" },
   { href: "/browse?section=best-series", label: "Series" },
   { href: "/browse?section=animation", label: "Animation" },
+  { href: "/admin", label: "Admin" },
 ];
 
 export function GradientMenu({ totalTitles }: { totalTitles?: number }) {

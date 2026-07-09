@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { CSSProperties } from "react";
 import type { VodCard } from "@/lib/types";
 
 export function FocusRail({ items }: { items: VodCard[] }) {
@@ -39,15 +38,20 @@ export function FocusRail({ items }: { items: VodCard[] }) {
 
       <div className="focus-track" aria-label="Featured focus rail">
         {items.map((item, index) => {
-          const offset = index - active;
-          const abs = Math.abs(offset);
-          const isActive = index === active;
+          const depth = (index - active + items.length) % items.length;
+          const visibleDepth = Math.min(depth, 7);
+          const isActive = depth === 0;
           return (
             <button
               key={item.imdbCode}
               type="button"
               className={`focus-card ${isActive ? "active" : ""}`}
-              style={{ "--offset": String(offset), "--abs": String(abs) } as CSSProperties}
+              style={{
+                transform: `translate(-50%, -50%) translateX(${isActive ? "clamp(-80px, -6vw, -24px)" : `${-16 + visibleDepth * 88}px`}) translateY(${visibleDepth * 8}px) scale(${isActive ? 1.16 : Math.max(0.52, 0.94 - visibleDepth * 0.08)})`,
+                opacity: isActive ? 1 : Math.max(0.1, 0.68 - visibleDepth * 0.1),
+                filter: isActive ? "none" : `blur(${Math.min(50, visibleDepth * 7)}px) saturate(${Math.max(0.18, 0.82 - visibleDepth * 0.08)})`,
+                zIndex: items.length - visibleDepth,
+              }}
               onClick={() => setActive(index)}
               aria-label={`Focus ${item.title}`}
             >

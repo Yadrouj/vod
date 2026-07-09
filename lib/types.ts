@@ -5,6 +5,11 @@ export type VodLink = {
   group: string;
   quality: string | null;
   release: string | null;
+  season?: number | null;
+  episode?: number | null;
+  fileName?: string | null;
+  sourceUrl?: string | null;
+  modified?: string | null;
 };
 
 export type VodItem = {
@@ -65,6 +70,8 @@ export type VodItem = {
     category: string;
   }[];
   apiFetchedAt?: string | null;
+  seriesLinksExpandedAt?: string | null;
+  seriesLinksExpanded?: boolean;
 };
 
 export type VodArchive = {

@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { applyDownloadBaseToItem } from "./download-settings";
 import type { VodArchive, VodItem } from "./types";
 
 export const loadVodArchive = cache(async (): Promise<VodArchive> => {
@@ -15,17 +16,18 @@ export const loadVodArchive = cache(async (): Promise<VodArchive> => {
 
 export async function findVodItem(id: string): Promise<VodItem | null> {
   const item = await findVodTitleFile(id);
-  if (item) return item;
+  if (item) return applyDownloadBaseToItem(item);
 
   const archive = await loadVodArchive();
   const normalized = id.toLowerCase();
-  return (
+  const found =
     archive.items.find(
       (item) =>
         item.id.toLowerCase() === normalized ||
         item.imdbCode.toLowerCase() === normalized
-    ) ?? null
-  );
+    ) ?? null;
+
+  return found ? applyDownloadBaseToItem(found) : null;
 }
 
 export function normalizeVodType(type: string): "movie" | "series" {

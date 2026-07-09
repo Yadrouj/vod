@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DownloadBrowser } from "@/components/download-browser";
 import { DownloadAction } from "@/components/download-action";
+import { TitleTabs } from "@/components/title-tabs";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { buildSeasonSummaries, movieDownloadSources } from "@/lib/downloads";
 import { subzoneSearchUrl } from "@/lib/subtitles";
-import type { VodItem } from "@/lib/types";
+import { loadVodIndex } from "@/lib/vod-index";
+import type { VodCard, VodItem } from "@/lib/types";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -31,6 +32,8 @@ export default async function DetailPage({ params }: Props) {
   const seasons = buildSeasonSummaries(item.links);
   const isSeries = normalizeVodType(item.type) === "series" && seasons.length > 0;
   const movieFiles = isSeries ? [] : movieDownloadSources(item.links);
+  const index = await loadVodIndex();
+  const suggestions = similarTitles(item, index.items);
 
   return (
     <div className="shell">
@@ -66,7 +69,7 @@ export default async function DetailPage({ params }: Props) {
                 <i className="dot" />
                 <span>{item.year ?? "-"}</span>
                 <i className="dot" />
-                <span>{item.runtimeMinutes ? `${item.runtimeMinutes}m` : `${item.links.length} files`}</span>
+            <span>{item.runtimeMinutes ? `${item.runtimeMinutes}m` : `${item.links.length} files`}</span>
                 <i className="dot" />
                 <span>{item.imdbCode}</span>
               </div>
@@ -124,133 +127,16 @@ export default async function DetailPage({ params }: Props) {
         </div>
       </section>
 
-      <main className="movie-page wrap">
-        <section className="movie-media-panel">
-          <PanelHead title="Pictures & Clips" note={`${item.imdbImages?.length ?? 0} pictures / ${item.imdbVideos?.length ?? 0} clips`} />
-          <MediaCarousel item={item} />
-        </section>
-
-        <aside className="movie-facts-panel">
-          <PanelHead title="Data" note={item.imdbCode} />
-          <div className="compact-facts">
-            <Info label="Type" value={item.type} />
-            <Info label="Year" value={String(item.year ?? "-")} />
-            {item.endYear && <Info label="End" value={String(item.endYear)} />}
-            {item.releaseDate && <Info label="Release" value={item.releaseDate} />}
-            {item.certificate && <Info label="Cert" value={item.certificate} />}
-            <Info label="Country" value={(item.countries ?? []).slice(0, 2).join(", ") || "-"} />
-            <Info label="Language" value={(item.languages ?? []).slice(0, 2).join(", ") || "-"} />
-            <Info label="Qualities" value={item.qualities.join(", ") || "-"} />
-          </div>
-          {(item.keywords?.length ?? 0) > 0 && (
-            <div className="compact-keywords">
-              {item.keywords?.slice(0, 10).map((keyword) => (
-                <span key={keyword} className="chip">{keyword}</span>
-              ))}
-            </div>
-          )}
-        </aside>
-
-        {(item.credits?.length ?? 0) > 0 && (
-          <section className="movie-cast-panel">
-            <PanelHead title="Cast & Crew" note={`${item.credits?.length} people`} />
-            <CastRail item={item} />
-          </section>
-        )}
-
-        <section className="movie-download-panel">
-          <PanelHead
-            title={isSeries ? "Episodes & Qualities" : "Download Files"}
-            note={isSeries ? `${seasons.length} seasons / ${item.links.length} quality folders` : `${item.links.length} matched files`}
-          />
-          <DownloadBrowser
-            itemId={item.imdbCode}
-            title={item.title}
-            isSeries={isSeries}
-            seasons={seasons}
-            movieFiles={movieFiles}
-            fallbackImage={item.backdropUrl ?? item.posterUrl ?? null}
-          />
-        </section>
+      <main className="wrap">
+        <TitleTabs
+          item={item}
+          isSeries={isSeries}
+          seasons={seasons}
+          movieFiles={movieFiles}
+          suggestions={suggestions}
+          subtitlesUrl={subzoneSearchUrl(item.title, item.year)}
+        />
       </main>
-    </div>
-  );
-}
-
-function PanelHead({ title, note }: { title: string; note: string }) {
-  return (
-    <div className="panel-head">
-      <h2>{title}</h2>
-      <span className="muted">{note}</span>
-    </div>
-  );
-}
-
-function MediaCarousel({ item }: { item: VodItem }) {
-  const videos = item.imdbVideos?.slice(0, 8) ?? [];
-  const images = item.imdbImages?.slice(0, 18) ?? [];
-  const fallbackImage = images.length === 0 ? item.backdropUrl ?? item.posterUrl : null;
-
-  return (
-    <div className="media-carousel">
-      {videos.map((video) => {
-        const source = video.playback_urls?.[0]?.url;
-        return (
-          <article key={video.video_id ?? video.name} className="media-card clip-card">
-            {source ? (
-              <video src={source} poster={video.thumbnail_url ?? undefined} controls playsInline preload="metadata" />
-            ) : (
-              <div className="media-thumb" style={video.thumbnail_url ? { backgroundImage: `url(${video.thumbnail_url})` } : undefined} />
-            )}
-            <div className="media-card-foot">
-              <strong>{video.name}</strong>
-              {source && <a className="hover-button" href={source} target="_blank" rel="noreferrer">Open clip</a>}
-            </div>
-          </article>
-        );
-      })}
-
-      {images.map((image) => (
-        <a key={image.url} className="media-card image-card" href={image.url} target="_blank" rel="noreferrer">
-          <img src={image.url} alt={image.caption ?? item.title} />
-          <span>{image.caption ?? "Open picture"}</span>
-        </a>
-      ))}
-
-      {fallbackImage && (
-        <a className="media-card image-card" href={fallbackImage} target="_blank" rel="noreferrer">
-          <img src={fallbackImage} alt={`${item.title} poster`} />
-          <span>Open poster</span>
-        </a>
-      )}
-    </div>
-  );
-}
-
-function CastRail({ item }: { item: VodItem }) {
-  return (
-    <div className="cast-rail">
-      {item.credits?.slice(0, 24).map((credit, index) => {
-        const content = (
-          <>
-            {credit.name_image_url ? (
-              <img src={credit.name_image_url} alt={credit.name_text} />
-            ) : (
-              <span className="cast-fallback">{credit.name_text.slice(0, 1)}</span>
-            )}
-            <strong>{credit.name_text}</strong>
-            <span>{credit.category}</span>
-          </>
-        );
-
-        return credit.name_id ? (
-          <Link key={`${credit.name_id}-${index}`} className="cast-card" href={`/person/${credit.name_id}`}>
-            {content}
-          </Link>
-        ) : (
-          <div key={`${credit.name_text}-${index}`} className="cast-card">{content}</div>
-        );
-      })}
     </div>
   );
 }
@@ -264,11 +150,27 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="info-card">
-      <p className="label">{label}</p>
-      <p className="value">{value}</p>
-    </div>
-  );
+function similarTitles(item: VodItem, items: VodCard[]) {
+  const genres = new Set((item.genres ?? []).map((genre) => genre.toLowerCase()));
+  const countries = new Set((item.countries ?? []).map((country) => country.toLowerCase()));
+  const type = normalizeVodType(item.type);
+
+  return items
+    .filter((candidate) => candidate.imdbCode !== item.imdbCode)
+    .map((candidate) => {
+      const sharedGenres = candidate.genres.filter((genre) => genres.has(genre.toLowerCase())).length;
+      const sharedCountries = candidate.countries.filter((country) => countries.has(country.toLowerCase())).length;
+      const typeBoost = candidate.type === type ? 10 : 0;
+      const score =
+        sharedGenres * 24 +
+        sharedCountries * 6 +
+        typeBoost +
+        (candidate.imdbRating ?? 0) * 2 +
+        Math.min(8, Math.log10((candidate.imdbVotes ?? 0) + 1));
+      return { candidate, score };
+    })
+    .filter(({ score }) => score > 18)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 18)
+    .map(({ candidate }) => candidate);
 }

@@ -7,6 +7,9 @@ export type DownloadSource = {
   quality: string | null;
   release: string | null;
   size: string | null;
+  season?: number | null;
+  episode?: number | null;
+  fileName?: string | null;
 };
 
 export type SeasonSummary = {
@@ -77,7 +80,7 @@ export function buildSeasonSummaries(links: VodLink[]): SeasonSummary[] {
   const seasons = new Map<number, { sourceCount: number; qualities: Set<string>; groups: Set<string> }>();
 
   for (const link of links) {
-    const parsed = parseSeasonEpisode(`${link.label} ${link.url}`);
+    const parsed = link.season ? { season: link.season, episode: link.episode ?? null } : parseSeasonEpisode(`${link.label} ${link.url}`);
     if (!parsed.season) continue;
     const existing = seasons.get(parsed.season) ?? {
       sourceCount: 0,
@@ -109,6 +112,9 @@ export function toDownloadSource(link: VodLink): DownloadSource {
     quality: link.quality,
     release: link.release,
     size: link.size,
+    season: link.season ?? null,
+    episode: link.episode ?? null,
+    fileName: link.fileName ?? null,
   };
 }
 
@@ -122,7 +128,7 @@ export function movieDownloadSources(links: VodLink[]): DownloadSource[] {
 
 export async function expandSeasonDownloads(item: VodItem, season: number): Promise<ExpandedSeasonDownloads> {
   const sources = item.links
-    .filter((link) => parseSeasonEpisode(`${link.label} ${link.url}`).season === season)
+    .filter((link) => (link.season ?? parseSeasonEpisode(`${link.label} ${link.url}`).season) === season)
     .map(toDownloadSource);
   const metadataPromise = fetchEpisodeMetadata(item.imdbCode, season);
   const expandedPromise = Promise.allSettled(sources.map(expandSource));
@@ -168,8 +174,22 @@ export async function expandSeasonDownloads(item: VodItem, season: number): Prom
 
 async function expandSource(source: DownloadSource) {
   if (VIDEO_EXTENSIONS.test(source.url) || ARCHIVE_EXTENSIONS.test(source.url)) {
-    const parsed = parseSeasonEpisode(source.url);
-    return [{ episode: parsed.episode, file: { ...source, name: source.label, modified: null, sourceLabel: source.label } }];
+    const parsed = source.season ? { season: source.season, episode: source.episode ?? null } : parseSeasonEpisode(`${source.label} ${source.url}`);
+    return [
+      {
+        episode: parsed.episode,
+        file: {
+          name: source.fileName ?? source.label,
+          url: source.url,
+          quality: source.quality,
+          group: source.group,
+          release: source.release,
+          size: source.size,
+          modified: null,
+          sourceLabel: source.label,
+        },
+      },
+    ];
   }
 
   const response = await fetchWithTimeout(source.url, 10000);
@@ -183,11 +203,11 @@ async function expandSource(source: DownloadSource) {
 }
 
 function sourceAsFile(source: DownloadSource, season: number) {
-  const parsed = parseSeasonEpisode(`${source.label} ${source.url}`);
+  const parsed = source.season ? { season: source.season, episode: source.episode ?? null } : parseSeasonEpisode(`${source.label} ${source.url}`);
   return {
     episode: parsed.episode,
     file: {
-      name: source.label,
+      name: source.fileName ?? source.label,
       url: source.url,
       quality: source.quality,
       group: source.group,

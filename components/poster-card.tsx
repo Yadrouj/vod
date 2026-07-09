@@ -3,7 +3,7 @@ import type { VodCard } from "@/lib/types";
 
 export function PosterCard({ item }: { item: VodCard }) {
   return (
-    <Link href={`/${item.imdbCode || item.id}`} className="poster">
+    <Link href={`/${item.imdbCode || item.id}`} className={`poster ${item.type === "series" ? "series-poster" : ""}`}>
       <div
         className="poster-art"
         style={
@@ -15,14 +15,11 @@ export function PosterCard({ item }: { item: VodCard }) {
         }
       >
         <span className="rating">IMDb {(item.imdbRating ?? 0).toFixed(1)}</span>
-        <span className="poster-title">{item.title}</span>
-      </div>
-      <div className="poster-body">
-        <strong>{item.title}</strong>
-        <span className="muted">
-          {item.year ?? "-"} / {item.type === "series" ? "Series" : "Movie"}
+        <span className="poster-copy">
+          <strong className="poster-title">{item.title}</strong>
+          <span>{item.year ?? "-"} / {item.type === "series" ? "Series" : "Movie"}</span>
+          <span>{item.genres.slice(0, 3).join(" / ") || `${item.linksCount} files`}</span>
         </span>
-        <span className="muted">{item.genres.slice(0, 3).join(" / ") || `${item.linksCount} files`}</span>
       </div>
     </Link>
   );

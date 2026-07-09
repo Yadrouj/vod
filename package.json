@@ -13,6 +13,7 @@
     "build-vod-index": "node scripts/build-vod-index.mjs",
     "build-vod-title-files": "node scripts/build-vod-title-files.mjs",
     "build-vod-people-index": "node scripts/build-vod-people-index.mjs",
+    "expand-series-links": "node scripts/expand-series-episode-links.mjs",
     "enrich-vod-api": "node scripts/enrich-vod-api.mjs",
     "scrape-imdb-images": "node scripts/scrape-imdb-images.mjs",
     "scrape-vod": "node scripts/scrape-vod-archive.mjs",

@@ -14,3 +14,5 @@ public/data/title.*.tsv.gz
 public/data/titles/
 public/data/title-map.json
 public/data/vod-source-current.json
+data/vod-settings.json
+data/series-expansion-cache.json

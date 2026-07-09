@@ -46,7 +46,7 @@ export function DownloadBrowser({
       .catch((reason: unknown) => {
         if (reason instanceof DOMException && reason.name === "AbortError") return;
         setErrors((current) => ({ ...current, [activeSeason]: "Could not load episode files. Try another season." }));
-      })
+      });
 
     return () => controller.abort();
   }, [activeSeason, cache, isSeries, itemId]);
@@ -96,7 +96,7 @@ export function DownloadBrowser({
       {activeSummary && (
         <div className="season-meta-line">
           <strong>{activeSummary.label}</strong>
-          <span>{activeSummary.groups.join(" / ") || "Files"} / {activeSummary.sourceCount} quality folders</span>
+          <span>{activeSummary.groups.join(" / ") || "Files"} / {activeSummary.sourceCount} sources</span>
         </div>
       )}
 
@@ -141,7 +141,10 @@ function EpisodeRow({ episode, fallbackImage }: { episode: EpisodeDownload; fall
           <span className="episode-code">{episode.code}</span>
         </div>
         <p className="episode-summary">
-          {episode.summary ?? "Episode files are ready by quality. A short synopsis appears here when episode metadata is available."}
+          {episode.summary ??
+            (episode.episode
+              ? "Episode files are ready by quality. A short synopsis appears here when episode metadata is available."
+              : "This season is available as direct sources. Open a source to view or download its files.")}
         </p>
         <div className="episode-quality-list">
           {episode.files.map((file, index) => (
