@@ -24,7 +24,7 @@ export function BannerCarousel({ items }: { items: VodCard[] }) {
       style={
         current.backdropUrl
           ? {
-              backgroundImage: `linear-gradient(90deg, rgba(5,5,5,0.98), rgba(5,5,5,0.55), rgba(5,5,5,0.24)), url(${current.backdropUrl})`,
+              backgroundImage: `linear-gradient(90deg, rgba(5,5,5,0.72), rgba(5,5,5,0.35), rgba(5,5,5,0.12)), url(${current.backdropUrl})`,
             }
           : undefined
       }
