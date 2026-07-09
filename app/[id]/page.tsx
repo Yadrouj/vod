@@ -39,6 +39,7 @@ export default async function DetailPage({ params }: Props) {
   const movieFiles = isSeries ? [] : movieDownloadSources(item.links);
   const index = await loadVodIndex();
   const suggestions = similarTitles(item, index.items);
+  const heroVideo = detailHeroVideo(item);
 
   return (
     <div className="shell">
@@ -54,6 +55,20 @@ export default async function DetailPage({ params }: Props) {
             : undefined
         }
       >
+        {heroVideo && (
+          <video
+            className="detail-video-bg"
+            src={heroVideo}
+            poster={item.backdropUrl ?? item.posterUrl ?? undefined}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-hidden="true"
+            tabIndex={-1}
+          />
+        )}
         <div className="wrap">
           <header className="topbar">
             <div className="topbar-actions">
@@ -156,6 +171,20 @@ function Stat({ label, value }: { label: string; value: string }) {
       <p className="label">{label}</p>
       <p className="value">{value}</p>
     </div>
+  );
+}
+
+function detailHeroVideo(item: VodItem) {
+  const videos = item.imdbVideos ?? [];
+  const preferred =
+    videos.find((video) => /trailer|teaser|preview/i.test(video.name)) ??
+    videos[0];
+
+  return (
+    preferred?.playback_urls?.find((playback) => playback.mime_type === "MP4")?.url ??
+    preferred?.playback_urls?.find((playback) => /\.(mp4|m4v)(?:$|[?#])/i.test(playback.url))?.url ??
+    preferred?.playback_urls?.[0]?.url ??
+    null
   );
 }
 
