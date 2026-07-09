@@ -5,7 +5,7 @@ import { DownloadAction } from "@/components/download-action";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { episodeLabel } from "@/lib/link-labels";
 import { subzoneSearchUrl } from "@/lib/subtitles";
-import type { VodLink } from "@/lib/types";
+import type { VodItem, VodLink } from "@/lib/types";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -121,99 +121,144 @@ export default async function DetailPage({ params }: Props) {
         </div>
       </section>
 
-      <main className="detail-main wrap">
-        <aside className="side">
-          <Info label="Title type" value={item.type} />
-          <Info label="Start year" value={String(item.year ?? "-")} />
-          {item.endYear && <Info label="End year" value={String(item.endYear)} />}
-          {item.releaseDate && <Info label="Release date" value={item.releaseDate} />}
-          {item.certificate && <Info label="Certificate" value={item.certificate} />}
-          <Info label="Countries" value={(item.countries ?? []).join(", ") || "-"} />
-          <Info label="Languages" value={(item.languages ?? []).join(", ") || "-"} />
-          <Info label="Qualities" value={item.qualities.join(", ") || "-"} />
-          <Info label="Versions" value={item.groups.join(", ") || "-"} />
-        </aside>
+      <main className="movie-page wrap">
+        <section className="movie-media-panel">
+          <PanelHead title="Pictures & Clips" note={`${item.imdbImages?.length ?? 0} pictures / ${item.imdbVideos?.length ?? 0} clips`} />
+          <MediaCarousel item={item} />
+        </section>
 
-        <section>
-          {(item.imdbImages?.length ?? 0) > 0 && (
-            <div className="image-strip">
-              {item.imdbImages?.slice(0, 12).map((image) => (
-                <img key={image.url} src={image.url} alt={image.caption ?? item.title} />
-              ))}
-            </div>
-          )}
-
+        <aside className="movie-facts-panel">
+          <PanelHead title="Data" note={item.imdbCode} />
+          <div className="compact-facts">
+            <Info label="Type" value={item.type} />
+            <Info label="Year" value={String(item.year ?? "-")} />
+            {item.endYear && <Info label="End" value={String(item.endYear)} />}
+            {item.releaseDate && <Info label="Release" value={item.releaseDate} />}
+            {item.certificate && <Info label="Cert" value={item.certificate} />}
+            <Info label="Country" value={(item.countries ?? []).slice(0, 2).join(", ") || "-"} />
+            <Info label="Language" value={(item.languages ?? []).slice(0, 2).join(", ") || "-"} />
+            <Info label="Qualities" value={item.qualities.join(", ") || "-"} />
+          </div>
           {(item.keywords?.length ?? 0) > 0 && (
-            <div className="chips" style={{ marginBottom: 24 }}>
-              {item.keywords?.slice(0, 18).map((keyword) => (
+            <div className="compact-keywords">
+              {item.keywords?.slice(0, 10).map((keyword) => (
                 <span key={keyword} className="chip">{keyword}</span>
               ))}
             </div>
           )}
+        </aside>
 
-          {(item.credits?.length ?? 0) > 0 && (
-            <div className="link-group">
-              <div className="link-head">
-                <strong>Credits</strong>
-                <span className="muted">{item.credits?.length} people</span>
-              </div>
-              {item.credits?.slice(0, 12).map((credit, index) => (
-                <div key={`${credit.name_id}-${index}`} className="file-link">
-                  <span>
-                    <strong>{credit.name_text}</strong>
-                    <span className="muted">{credit.category}</span>
-                  </span>
+        {(item.credits?.length ?? 0) > 0 && (
+          <section className="movie-cast-panel">
+            <PanelHead title="Cast & Crew" note={`${item.credits?.length} people`} />
+            <CastRail item={item} />
+          </section>
+        )}
+
+        <section className="movie-download-panel">
+          <PanelHead title="DonyayeSerial Links" note={`${item.links.length} matched files`} />
+          <div className="download-scroll">
+            {groups.map(([group, links]) => (
+              <div key={group} className="compact-link-group">
+                <div className="link-head">
+                  <strong>{group}</strong>
+                  <span className="muted">{links.length} files</span>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {(item.imdbVideos?.length ?? 0) > 0 && (
-            <div className="link-group">
-              <div className="link-head">
-                <strong>IMDb Videos</strong>
-                <span className="muted">{item.imdbVideos?.length} videos</span>
-              </div>
-              {item.imdbVideos?.slice(0, 6).map((video) => (
-                <a key={video.video_id ?? video.name} className="file-link" href={video.playback_urls?.[0]?.url ?? "#"}>
-                  <span>
-                    <strong>{video.name}</strong>
-                    <span className="muted">{video.runtime_seconds ? `${video.runtime_seconds}s` : "video"}</span>
-                  </span>
-                  <strong style={{ color: "var(--gold)" }}>{video.playback_urls?.[0]?.quality ?? "Play"}</strong>
-                </a>
-              ))}
-            </div>
-          )}
-
-          <div className="section-head">
-            <div>
-              <h2>DonyayeSerial Links</h2>
-              <p className="muted">Matched by IMDb ID: {item.imdbCode}</p>
-            </div>
-          </div>
-          {groups.map(([group, links]) => (
-            <div key={group} className="link-group">
-              <div className="link-head">
-                <strong>{group}</strong>
-                <span className="muted">{links.length} files</span>
-              </div>
-              {links.map((link, index) => (
-                <a key={`${link.url}-${index}`} className="file-link" href={link.url}>
-                  <span>
-                    <strong>{link.label}</strong>
-                    <span className="muted">
-                      {episodeLabel(link) ? `${episodeLabel(link)} / ` : ""}
-                      {link.release ?? "release"} / {link.size ?? "size unknown"}
+                {links.map((link, index) => (
+                  <a key={`${link.url}-${index}`} className="file-link compact-file-link" href={link.url}>
+                    <span>
+                      <strong>{link.label}</strong>
+                      <span className="muted">
+                        {episodeLabel(link) ? `${episodeLabel(link)} / ` : ""}
+                        {link.release ?? "release"} / {link.size ?? "size unknown"}
+                      </span>
                     </span>
-                  </span>
-                  <DownloadAction label={link.quality ?? "File"} />
-                </a>
-              ))}
-            </div>
-          ))}
+                    <DownloadAction label={link.quality ?? "File"} />
+                  </a>
+                ))}
+              </div>
+            ))}
+          </div>
         </section>
       </main>
+    </div>
+  );
+}
+
+function PanelHead({ title, note }: { title: string; note: string }) {
+  return (
+    <div className="panel-head">
+      <h2>{title}</h2>
+      <span className="muted">{note}</span>
+    </div>
+  );
+}
+
+function MediaCarousel({ item }: { item: VodItem }) {
+  const videos = item.imdbVideos?.slice(0, 8) ?? [];
+  const images = item.imdbImages?.slice(0, 18) ?? [];
+  const fallbackImage = images.length === 0 ? item.backdropUrl ?? item.posterUrl : null;
+
+  return (
+    <div className="media-carousel">
+      {videos.map((video) => {
+        const source = video.playback_urls?.[0]?.url;
+        return (
+          <article key={video.video_id ?? video.name} className="media-card clip-card">
+            {source ? (
+              <video src={source} poster={video.thumbnail_url ?? undefined} controls playsInline preload="metadata" />
+            ) : (
+              <div className="media-thumb" style={video.thumbnail_url ? { backgroundImage: `url(${video.thumbnail_url})` } : undefined} />
+            )}
+            <div className="media-card-foot">
+              <strong>{video.name}</strong>
+              {source && <a className="hover-button" href={source} target="_blank" rel="noreferrer">Open clip</a>}
+            </div>
+          </article>
+        );
+      })}
+
+      {images.map((image) => (
+        <a key={image.url} className="media-card image-card" href={image.url} target="_blank" rel="noreferrer">
+          <img src={image.url} alt={image.caption ?? item.title} />
+          <span>{image.caption ?? "Open picture"}</span>
+        </a>
+      ))}
+
+      {fallbackImage && (
+        <a className="media-card image-card" href={fallbackImage} target="_blank" rel="noreferrer">
+          <img src={fallbackImage} alt={`${item.title} poster`} />
+          <span>Open poster</span>
+        </a>
+      )}
+    </div>
+  );
+}
+
+function CastRail({ item }: { item: VodItem }) {
+  return (
+    <div className="cast-rail">
+      {item.credits?.slice(0, 24).map((credit, index) => {
+        const content = (
+          <>
+            {credit.name_image_url ? (
+              <img src={credit.name_image_url} alt={credit.name_text} />
+            ) : (
+              <span className="cast-fallback">{credit.name_text.slice(0, 1)}</span>
+            )}
+            <strong>{credit.name_text}</strong>
+            <span>{credit.category}</span>
+          </>
+        );
+
+        return credit.name_id ? (
+          <Link key={`${credit.name_id}-${index}`} className="cast-card" href={`/person/${credit.name_id}`}>
+            {content}
+          </Link>
+        ) : (
+          <div key={`${credit.name_text}-${index}`} className="cast-card">{content}</div>
+        );
+      })}
     </div>
   );
 }

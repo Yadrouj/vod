@@ -124,3 +124,17 @@ export type VodCatalogIndex = {
   sections: VodHomeSection[];
   items: VodCard[];
 };
+
+export type VodPerson = {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  categories: string[];
+  items: VodCard[];
+};
+
+export type VodPeopleIndex = {
+  generatedAt: string;
+  totalPeople: number;
+  people: Record<string, VodPerson>;
+};
