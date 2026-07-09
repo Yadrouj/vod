@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { DownloadAction } from "@/components/download-action";
 import { DownloadBrowser } from "@/components/download-browser";
 import { PosterCard } from "@/components/poster-card";
 import { DEFAULT_LOCALE, getDictionary, interpolate, type Locale, typeLabel } from "@/lib/i18n";
@@ -15,7 +14,6 @@ type TitleTabsProps = {
   seasons: SeasonSummary[];
   movieFiles: DownloadSource[];
   suggestions: VodCard[];
-  subtitlesUrl: string;
   locale?: Locale;
 };
 
@@ -33,32 +31,13 @@ export function TitleTabs({
   seasons,
   movieFiles,
   suggestions,
-  subtitlesUrl,
   locale = DEFAULT_LOCALE,
 }: TitleTabsProps) {
   const [active, setActive] = useState<TabId>(isSeries ? "episodes" : "about");
-  const best = item.links[0];
   const t = getDictionary(locale);
 
   return (
     <section className="title-tabs">
-      <div className="title-action-row">
-        <Link className="primary-watch" href={`/watch/${item.imdbCode}`}>
-          <span className="play-dot" /> {t.common.play}
-        </Link>
-        {best && (
-          <a className="title-action" href={best.url}>
-            <DownloadAction label={t.common.bestFile} />
-          </a>
-        )}
-        <a className="title-action" href={subtitlesUrl} target="_blank" rel="noreferrer">
-          {t.common.subtitles}
-        </a>
-        <a className="title-action" href={item.imdbUrl ?? `https://www.imdb.com/title/${item.imdbCode}/`} target="_blank" rel="noreferrer">
-          {t.common.imdb}
-        </a>
-      </div>
-
       <nav className="title-tab-nav" aria-label={`${item.title} sections`}>
         {TABS.map((tab) => (
           <button

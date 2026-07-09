@@ -65,7 +65,7 @@ export function DownloadBrowser({
 
   if (!isSeries || seasons.length === 0) {
     return (
-      <div className="download-browser">
+      <div className="download-browser movie-download-browser">
         <div className="movie-file-list">
           {movieFiles.map((file, index) => (
             <a key={`${file.url}-${index}`} className="movie-file-row" href={file.url}>
@@ -82,7 +82,7 @@ export function DownloadBrowser({
   }
 
   return (
-    <div className="download-browser">
+    <div className="download-browser series-download-browser">
       <div className="season-tabs" aria-label={`${title} seasons`}>
         {seasons.map((season) => (
           <button

@@ -157,7 +157,6 @@ export default async function DetailPage({ params }: Props) {
           seasons={seasons}
           movieFiles={movieFiles}
           suggestions={suggestions}
-          subtitlesUrl={subzoneSearchUrl(item.title, item.year)}
           locale={locale}
         />
       </main>

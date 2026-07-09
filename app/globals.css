@@ -2164,14 +2164,11 @@ button {
 }
 
 .title-tabs {
-  padding: 20px 0 64px;
+  padding: 0 0 48px;
 }
 
 .title-action-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-bottom: 38px;
+  display: none;
 }
 
 .primary-watch,
@@ -2188,11 +2185,11 @@ button {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   border-bottom: 1px solid rgba(255, 255, 255, 0.18);
-  margin-bottom: 26px;
+  margin-bottom: 12px;
 }
 
 .title-tab-nav button {
-  height: 68px;
+  height: 56px;
   border: 0;
   border-bottom: 3px solid transparent;
   background: transparent;
@@ -2239,12 +2236,27 @@ button {
 
 .title-tab-panel > .download-browser {
   background: rgba(255, 255, 255, 0.028);
-  padding: 16px;
+  padding: 12px;
   box-shadow: var(--ios-soft-shadow);
 }
 
+.title-tab-panel > .series-download-browser {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
 .title-tab-panel .season-tabs {
-  justify-content: flex-end;
+  justify-content: flex-start;
+}
+
+.title-tab-panel .series-download-browser .season-tabs {
+  grid-row: 1 / span 2;
+  max-height: 650px;
+  flex-direction: column;
+  padding: 0 2px 0 0;
+  overflow-y: auto;
 }
 
 .title-tab-panel .season-tab {
@@ -2253,19 +2265,32 @@ button {
   background: rgba(255, 255, 255, 0.035);
 }
 
+.title-tab-panel .series-download-browser .season-tab {
+  width: 100%;
+  flex: 0 0 58px;
+}
+
+.title-tab-panel .series-download-browser .season-meta-line {
+  margin-bottom: 0;
+}
+
+.title-tab-panel .series-download-browser .episode-list {
+  max-height: 650px;
+}
+
 .title-tab-panel .season-tab.active {
   border-color: rgba(255, 255, 255, 0.62);
   background: rgba(255, 255, 255, 0.08);
 }
 
 .title-tab-panel .episode-row {
-  grid-template-columns: 172px minmax(0, 1fr);
-  min-height: 134px;
+  grid-template-columns: 148px minmax(0, 1fr);
+  min-height: 118px;
   background: rgba(255, 255, 255, 0.035);
 }
 
 .title-tab-panel .episode-thumb {
-  min-height: 114px;
+  min-height: 98px;
 }
 
 .company-list {
@@ -2980,5 +3005,25 @@ html[dir="rtl"] .episode-title-line {
   html[lang="en"] .poster-title,
   html[lang="en"] .grid .poster-title {
     font-size: 17px;
+  }
+
+  .title-tab-panel > .series-download-browser {
+    grid-template-columns: 1fr;
+  }
+
+  .title-tab-panel .series-download-browser .season-tabs {
+    grid-row: auto;
+    max-height: none;
+    flex-direction: row;
+    padding: 2px 2px 10px;
+  }
+
+  .title-tab-panel .series-download-browser .season-tab {
+    width: auto;
+    flex: 0 0 112px;
+  }
+
+  .title-tab-panel .series-download-browser .episode-list {
+    max-height: 620px;
   }
 }
