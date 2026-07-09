@@ -57,7 +57,7 @@ export default async function DetailPage({ params }: Props) {
           </header>
 
           <div className="detail-grid">
-            <div>
+            <div className="detail-copy">
               <div className="meta">
                 <span>{normalizeVodType(item.type)}</span>
                 <i className="dot" />
