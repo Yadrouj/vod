@@ -16,6 +16,7 @@ const HIDDEN_PREFIXES = [
   "/login",
   "/admin",
   "/vod",
+  "/mag",
 ];
 
 export default function CoachFab() {

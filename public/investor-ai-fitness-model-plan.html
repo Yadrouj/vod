@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>طرح سرمایه گذاری مدل هوش مصنوعی فیتنس رمق</title>
+    <style>
+      :root {
+        --bg: #07090d;
+        --panel: #10141d;
+        --panel2: #171d29;
+        --ink: #f4f7fb;
+        --muted: #a4adbd;
+        --line: rgba(255, 255, 255, 0.1);
+        --brand: #b8f24a;
+        --brand2: #54d6ff;
+        --warn: #ffd166;
+        --danger: #ff6b6b;
+        --ok: #8ef6bd;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Tahoma, Arial, sans-serif;
+        background:
+          radial-gradient(circle at 15% 0%, rgba(84, 214, 255, 0.18), transparent 28rem),
+          radial-gradient(circle at 84% 8%, rgba(184, 242, 74, 0.2), transparent 24rem),
+          var(--bg);
+        color: var(--ink);
+        line-height: 1.8;
+      }
+
+      a { color: var(--brand2); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .wrap { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+      .hero { min-height: 92vh; display: grid; align-items: center; padding: 56px 0 32px; }
+      .hero-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 28px; align-items: center; }
+      .eyebrow { color: var(--brand); font-size: 13px; font-weight: 900; letter-spacing: 0; }
+      h1, h2, h3 { margin: 0; line-height: 1.35; letter-spacing: 0; }
+      h1 { margin-top: 16px; font-size: clamp(38px, 7vw, 84px); }
+      h2 { font-size: clamp(26px, 4vw, 42px); margin-bottom: 16px; }
+      h3 { font-size: 20px; margin-bottom: 8px; }
+      p { margin: 0; color: var(--muted); }
+      .lead { margin-top: 20px; font-size: clamp(16px, 2vw, 21px); color: #d8dfeb; max-width: 780px; }
+      .hero-card, .card, .metric, .step, .source-list {
+        background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025));
+        border: 1px solid var(--line);
+        box-shadow: 0 28px 90px rgba(0, 0, 0, 0.26);
+      }
+      .hero-card { border-radius: 28px; padding: 26px; }
+      .logo-mark {
+        width: 86px; height: 86px; border-radius: 24px;
+        display: grid; place-items: center;
+        background: conic-gradient(from 210deg, var(--brand), var(--brand2), #fff, var(--brand));
+        color: #061006; font-size: 42px; font-weight: 1000;
+        margin-bottom: 22px;
+      }
+      .ask {
+        margin-top: 24px;
+        display: grid;
+        gap: 10px;
+      }
+      .ask strong { color: var(--ink); font-size: 28px; }
+      .pill-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+      .pill {
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.06);
+        color: #eaf0f8;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 800;
+      }
+      .pill.green { background: rgba(184,242,74,0.16); color: var(--brand); border-color: rgba(184,242,74,0.3); }
+      .section { padding: 64px 0; }
+      .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+      .card { border-radius: 22px; padding: 22px; }
+      .metric { border-radius: 20px; padding: 20px; }
+      .metric .num { color: var(--brand); font-size: 32px; font-weight: 1000; line-height: 1.2; }
+      .metric .label { color: #dfe7f2; font-weight: 900; }
+      .small { font-size: 13px; color: var(--muted); }
+      .tag { color: var(--brand); font-weight: 900; font-size: 12px; }
+      table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 18px; background: rgba(255,255,255,0.035); }
+      th, td { padding: 14px; border-bottom: 1px solid var(--line); vertical-align: top; text-align: right; }
+      th { color: var(--brand); font-size: 13px; background: rgba(184,242,74,0.08); }
+      td { color: #dce4ef; }
+      tr:last-child td { border-bottom: 0; }
+      .ltr { direction: ltr; text-align: left; font-family: Consolas, Monaco, monospace; }
+      .notice { border-color: rgba(255,209,102,0.35); background: rgba(255,209,102,0.08); }
+      .ok { color: var(--ok); }
+      .warn { color: var(--warn); }
+      .danger { color: var(--danger); }
+      .roadmap { display: grid; gap: 14px; counter-reset: step; }
+      .step { border-radius: 20px; padding: 20px; display: grid; gap: 6px; position: relative; }
+      .step:before {
+        counter-increment: step;
+        content: counter(step);
+        position: absolute; inset-inline-start: 18px; top: 18px;
+        width: 32px; height: 32px; border-radius: 50%;
+        display: grid; place-items: center;
+        background: var(--brand); color: #091006; font-weight: 1000;
+      }
+      .step h3, .step p { padding-inline-start: 44px; }
+      .source-list { border-radius: 22px; padding: 22px; }
+      .source-list li { margin: 8px 0; color: #dce4ef; }
+      .footer { padding: 42px 0 72px; color: var(--muted); border-top: 1px solid var(--line); }
+      .print-note { margin-top: 18px; color: var(--brand); font-weight: 900; }
+
+      @media (max-width: 860px) {
+        .hero-grid, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+        .hero { min-height: auto; padding-top: 36px; }
+        th, td { display: block; width: 100%; }
+        th { border-bottom: 0; }
+        tr { display: block; border-bottom: 1px solid var(--line); }
+        tr:last-child { border-bottom: 0; }
+      }
+
+      @media print {
+        body { background: #fff; color: #111; }
+        .hero-card, .card, .metric, .step, .source-list { box-shadow: none; background: #fff; border-color: #ddd; }
+        p, td, .small, .footer { color: #333; }
+        h1, h2, h3, .metric .label { color: #111; }
+        .pill { color: #111; border-color: #ccc; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <div class="wrap hero-grid">
+          <div>
+            <div class="eyebrow">Investor memo | Ramagh AI Fitness Intelligence</div>
+            <h1>اولین مدل فیتنس فارسی ایران، ساخته شده برای متن، صدا و تصویر بدن</h1>
+            <p class="lead">
+              رمق می تواند از یک اپ تمرین به یک زیرساخت هوش مصنوعی فارسی برای فیتنس، تغذیه، مربی گری، تحلیل بدن، باشگاه ها، مکمل ها و بازار سلامت تبدیل شود. سرمایه ۱۰ میلیارد تومانی باید صرف ساخت دیتاست اختصاصی، فاین تیون مدل محلی، اعتبارسنجی ایمنی و رشد بازار شود؛ نه صرفا توسعه چند صفحه اپلیکیشن.
+            </p>
+            <div class="pill-row">
+              <span class="pill green">سرمایه پیشنهادی: ۱۰ میلیارد تومان</span>
+              <span class="pill">مدل محلی و قابل استقرار روی سرور ایران</span>
+              <span class="pill">Persian-first fitness AI</span>
+              <span class="pill">Text + Voice + Body Image</span>
+            </div>
+          </div>
+          <aside class="hero-card">
+            <div class="logo-mark">ر</div>
+            <h2>چرا الان؟</h2>
+            <p>
+              بازار جهانی اپ های فیتنس در ۲۰۲۵ حدود ۱۲.۱ میلیارد دلار بوده و برای ۲۰۲۶ حدود ۱۳.۹ میلیارد دلار برآورد شده است. در ایران نیز نفوذ اینترنت، موبایل و علاقه به سلامت و ورزش یک فرصت محلی می سازد؛ اما مدل های عمومی، فارسی ورزشی، غذاهای ایرانی، فرهنگ مربی گری و بازار مکمل ایران را عمیق نمی فهمند.
+            </p>
+            <div class="ask">
+              <span class="small">Investment ask</span>
+              <strong>۱۰ میلیارد تومان برای ۱۲ ماه</strong>
+              <p>هدف: نسخه بتای پولی با مدل اختصاصی رمق، دیتاست مالکیتی، داشبورد مربی و تحلیل چندوجهی بدن.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>تز سرمایه گذاری</h2>
+          <div class="grid-3">
+            <div class="metric">
+              <div class="num">73M+</div>
+              <div class="label">کاربر اینترنت در ایران</div>
+              <p class="small">DataReportal برای ابتدای ۲۰۲۴ عدد ۷۳.۱۴ میلیون کاربر اینترنت و نفوذ ۸۱.۷٪ را گزارش کرده است.</p>
+            </div>
+            <div class="metric">
+              <div class="num">$12.1B</div>
+              <div class="label">بازار جهانی اپ فیتنس در ۲۰۲۵</div>
+              <p class="small">Grand View Research بازار اپ های فیتنس را در ۲۰۲۵ حدود ۱۲.۱ میلیارد دلار و CAGR ۲۰۲۶ تا ۲۰۳۳ را ۱۳.۴٪ اعلام کرده است.</p>
+            </div>
+            <div class="metric">
+              <div class="num">$15.8B</div>
+              <div class="label">سلامت و ولنس ایران در ۲۰۲۵</div>
+              <p class="small">IMARC بازار سلامت و ولنس ایران را در ۲۰۲۵ حدود ۱۵.۸ میلیارد دلار و ۲۰۳۴ را ۲۲.۹ میلیارد دلار برآورد می کند.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>محصولی که سرمایه گذار باید ببیند</h2>
+          <div class="grid-2">
+            <div class="card">
+              <span class="tag">Core AI</span>
+              <h3>Ramagh Fitness Intelligence</h3>
+              <p>
+                یک مدل فارسی فیتنس با RAG، فاین تیون LoRA، ارزیابی ایمنی و داده اختصاصی مربی ها. پاسخ ها باید با سطح کاربر، جنسیت، سن، هدف، آسیب، برنامه تمرین، غذاهای ایرانی و قیمت مکمل ها شخصی سازی شوند.
+              </p>
+            </div>
+            <div class="card">
+              <span class="tag">Multimodal</span>
+              <h3>تحلیل متن، صدا و تصویر بدن</h3>
+              <p>
+                کاربر با متن یا صدا سوال می پرسد، تصویر بدن یا حرکت تمرینی می فرستد، مدل کیفیت تصویر را بررسی می کند، تخمین اولیه بدن و ریسک ها را می دهد و برای موارد پزشکی یا خطرناک به متخصص ارجاع می دهد.
+              </p>
+            </div>
+            <div class="card">
+              <span class="tag">Coach economy</span>
+              <h3>داشبورد مربی و دیتاست انسانی</h3>
+              <p>
+                مربی ها پاسخ مدل را اصلاح می کنند، برنامه اختصاصی می فروشند، چت خصوصی دارند و همین اصلاحات به دیتاست ممتاز فارسی تبدیل می شود. این حلقه داده، مزیت رقابتی اصلی رمق است.
+              </p>
+            </div>
+            <div class="card">
+              <span class="tag">Local moat</span>
+              <h3>ایران، نه ترجمه ساده انگلیسی</h3>
+              <p>
+                غذاهای ایرانی، باشگاه ها، داروخانه ها، مکمل ها، قیمت های بازار، ادبیات فارسی ورزشی، سطح اقتصادی کاربر، فرهنگ مربی گری و محدودیت های اینترنت باید در خود محصول و مدل دیده شوند.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>پیشنهاد فنی مدل محلی</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>لایه</th>
+                <th>انتخاب پیشنهادی</th>
+                <th>چرا</th>
+                <th>نقش در MVP</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>مدل اصلی چندوجهی</td>
+                <td class="ltr">Qwen3-Omni-30B-A3B-Instruct / Thinking</td>
+                <td>طبق گزارش Qwen، ورودی متن، تصویر، صوت و ویدیو را پشتیبانی می کند و خروجی متن و گفتار می دهد؛ برای یک دستیار فیتنس فارسی چندوجهی بهترین گزینه متن باز عملی است.</td>
+                <td>پاسخ هوشمند، فهم تصویر، تحلیل صدای کاربر، توضیح حرکت و گزارش بدن.</td>
+              </tr>
+              <tr>
+                <td>مدل سبک موبایل/لبه</td>
+                <td class="ltr">Gemma 3n</td>
+                <td>Google آن را برای اجرای کم مصرف و ورودی متن، تصویر، صدا و ویدیو معرفی کرده است. برای نسخه آفلاین سبک یا تشخیص کیفیت تصویر مناسب است.</td>
+                <td>تشخیص اولیه کیفیت عکس، چت سریع، fallback روی دستگاه یا سرور ارزان.</td>
+              </tr>
+              <tr>
+                <td>لایه سلامت و احتیاط پزشکی</td>
+                <td class="ltr">MedGemma 1.5 4B / 27B</td>
+                <td>برای فهم متن و تصویر پزشکی آموزش دیده، اما باید فقط پس از اعتبارسنجی و با محدودیت ایمنی استفاده شود.</td>
+                <td>تشخیص red flag، ارجاع به پزشک، جلوگیری از توصیه خطرناک درباره دارو، آسیب، درد قفسه سینه، بارداری و بیماری زمینه ای.</td>
+              </tr>
+              <tr>
+                <td>مدل چت سریع فارسی</td>
+                <td class="ltr">Qwen3 14B / 32B LoRA + RAG</td>
+                <td>برای هزینه پایین تر، پاسخ سریع تر و فاین تیون اختصاصی روی دیتاست فارسی فیتنس.</td>
+                <td>۹۰٪ سوال های روزمره: تمرین، تغذیه، مکمل، برنامه هفتگی، FAQ و مقالات.</td>
+              </tr>
+              <tr>
+                <td>صدا</td>
+                <td class="ltr">Persian ASR + TTS, then Qwen Omni speech</td>
+                <td>برای MVP کم ریسک تر است که صدا به متن، سپس مدل متنی، سپس گفتار فارسی تولید شود. بعدا Qwen Omni می تواند مستقیم تر شود.</td>
+                <td>مربی صوتی، پرسش سریع در تمرین، پاسخ خواندنی و شنیدنی.</td>
+              </tr>
+              <tr>
+                <td>تحلیل بدن از عکس</td>
+                <td class="ltr">BodyM/SMPL pipeline + VLM review</td>
+                <td>برای تخمین بدن نباید فقط به VLM عمومی تکیه کرد. باید از pose، segmentation، silhouette، قد/وزن و مدل اندازه گیری استفاده شود.</td>
+                <td>کیفیت عکس، تخمین دورها، روند تغییر بدن، توصیه تمرین و تغذیه؛ نه تشخیص پزشکی قطعی.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>VGA و سخت افزار فاین تیون</h2>
+          <div class="card notice">
+            <h3>اصل تصمیم</h3>
+            <p>
+              برای MVP نباید از صفر pretrain کنیم. مسیر اقتصادی و قابل دفاع: RAG + LoRA/QLoRA + ارزیابی اختصاصی + داده مالکیتی. QLoRA در مقاله اصلی نشان داده که می توان مدل ۶۵B را با ۴ بیت روی یک GPU ۴۸GB فاین تیون کرد؛ اما برای مدل های چندوجهی، batch، طول کانتکست و تصویر، حافظه بیشتری لازم می شود.
+            </p>
+          </div>
+          <table style="margin-top:16px">
+            <thead>
+              <tr>
+                <th>سناریو</th>
+                <th>GPU پیشنهادی</th>
+                <th>قابل انجام</th>
+                <th>محدودیت</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>شروع اقتصادی</td>
+                <td class="ltr">1x RTX 5090 32GB</td>
+                <td>LoRA مدل های 4B تا 14B، inference مدل های quantized، ساخت دیتاست و eval.</td>
+                <td>برای فاین تیون جدی Qwen3-Omni 30B چندوجهی کم حافظه است.</td>
+              </tr>
+              <tr>
+                <td>MVP جدی پیشنهادی</td>
+                <td class="ltr">1x RTX PRO 6000 Blackwell 96GB</td>
+                <td>QLoRA مدل های 27B/30B، تست multimodal، inference پایدار، batch بهتر.</td>
+                <td>قیمت وارداتی و تامین در ایران باید روزانه استعلام شود.</td>
+              </tr>
+              <tr>
+                <td>جایگزین در دسترس تر</td>
+                <td class="ltr">2x RTX 6000 Ada 48GB</td>
+                <td>تقسیم inference، LoRA مدل های 30B/70B quantized، پایداری workstation.</td>
+                <td>نسل Ada قدیمی تر از Blackwell است؛ سرعت/حافظه هر کارت کمتر از 96GB است.</td>
+              </tr>
+              <tr>
+                <td>لابراتوار سرمایه گذار</td>
+                <td class="ltr">4x RTX PRO 6000 Blackwell 96GB</td>
+                <td>فاین تیون های موازی، دیتاست بزرگ تر، experiment سریع، چند سرویس inference.</td>
+                <td>نیازمند کیس، پاور، کولینگ، برق پایدار و MLOps جدی.</td>
+              </tr>
+              <tr>
+                <td>تحقیق سنگین/Full fine-tune</td>
+                <td class="ltr">Cloud H100/H200 cluster</td>
+                <td>Full fine-tune یا pretraining محدود، jobهای چندروزه، مقیاس صنعتی.</td>
+                <td>برای ۱۰ میلیارد تومان فقط باید اجاره هدفمند و کوتاه مدت باشد، نه هزینه دائمی.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>دیتایی که باید جمع شود</h2>
+          <div class="grid-2">
+            <div class="card">
+              <h3>دیتاست عمومی و قانونی</h3>
+              <p>
+                USDA FoodData Central برای مواد غذایی و ارزش تغذیه ای، PMC Open Access برای مقالات علمی قابل استفاده با مجوز، Common Voice Persian برای گفتار فارسی، BodyM برای اندازه گیری بدن، دیتاست های human activity recognition برای حرکت، و منابع آزاد پزشکی/ورزشی با کنترل مجوز.
+              </p>
+            </div>
+            <div class="card">
+              <h3>دیتاست اختصاصی رمق</h3>
+              <p>
+                پرسش و پاسخ مربیان ایرانی، برنامه های تمرینی تایید شده، غذاهای ایرانی با واحدهای خانگی، قیمت و برند مکمل، پروفایل باشگاه ها و فروشگاه ها، چت مربی با مشتری، عکس های بدن با رضایت صریح، و نتیجه واقعی کاربران در بازه ۴ تا ۱۲ هفته.
+              </p>
+            </div>
+            <div class="card">
+              <h3>دیتاست ارزیابی</h3>
+              <p>
+                حداقل ۳۰۰۰ سوال فارسی با جواب طلایی، ۱۰۰۰ سناریوی خطر پزشکی، ۱۰۰۰ تست مکمل/دارو، ۱۰۰۰ تصویر بدن با کیفیت های مختلف، ۵۰۰ برنامه غذایی، ۵۰۰ برنامه تمرین و ۲۰۰ تست bias برای جنسیت، سن، اضافه وزن و آسیب.
+              </p>
+            </div>
+            <div class="card">
+              <h3>حریم خصوصی</h3>
+              <p>
+                تصویر بدن و صدا PII حساس هستند. ذخیره سازی باید با رضایت روشن، حذف آسان، رمزنگاری، جداسازی شناسه کاربر از داده تمرینی و سیاست retention انجام شود. برای سرمایه گذار، این موضوع ریسک نیست؛ یک دارایی اعتمادساز است.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>بودجه پیشنهادی برای ۱۰ میلیارد تومان</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>بخش</th>
+                <th>بودجه</th>
+                <th>خروجی قابل اندازه گیری</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>سخت افزار، ذخیره سازی و سرور</td>
+                <td>۲.۲ تا ۳.۰ میلیارد</td>
+                <td>حداقل یک workstation مناسب AI، NAS/backup، GPU monitoring و محیط training.</td>
+              </tr>
+              <tr>
+                <td>داده، لیبلینگ و قرارداد متخصص</td>
+                <td>۱.۷ تا ۲.۲ میلیارد</td>
+                <td>دیتاست فارسی مالکیتی، پاسخ های تاییدشده مربی/تغذیه، benchmark داخلی.</td>
+              </tr>
+              <tr>
+                <td>ML engineering و MLOps</td>
+                <td>۲.۰ تا ۲.۵ میلیارد</td>
+                <td>RAG، LoRA، eval، guardrail، inference server، مدل نسخه بندی شده.</td>
+              </tr>
+              <tr>
+                <td>Product، Android، coach panel</td>
+                <td>۱.۱ تا ۱.۵ میلیارد</td>
+                <td>VIP AI، چت مربی، پرداخت، آنبوردینگ، گزارش بدن، voice UX.</td>
+              </tr>
+              <tr>
+                <td>ایمنی، حقوقی، اعتبارسنجی</td>
+                <td>۰.۵ تا ۰.۸ میلیارد</td>
+                <td>سیاست پزشکی، رضایت نامه، red-flag triage، تست hallucination.</td>
+              </tr>
+              <tr>
+                <td>GTM و رشد</td>
+                <td>۱.۰ تا ۱.۵ میلیارد</td>
+                <td>باشگاه های پایلوت، مربی های شناخته شده، content engine، referral و فروش VIP.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>نقشه راه ۱۲ ماهه</h2>
+          <div class="roadmap">
+            <div class="step">
+              <h3>ماه ۱ تا ۲: ستون داده و RAG</h3>
+              <p>ساخت ontology فیتنس فارسی، ingest منابع مجاز، ساخت vector search، طراحی eval و تولید ۱۰ هزار نمونه Q&A تایید شده.</p>
+            </div>
+            <div class="step">
+              <h3>ماه ۳ تا ۴: فاین تیون متنی</h3>
+              <p>LoRA/QLoRA روی مدل ۱۴B یا ۳۲B، تست پاسخ فارسی، guardrail پزشکی، تولید برنامه تمرین و تغذیه با citation داخلی.</p>
+            </div>
+            <div class="step">
+              <h3>ماه ۵ تا ۶: صدا و تصویر بدن</h3>
+              <p>ASR فارسی، TTS فارسی، کیفیت سنجی عکس، pose/segmentation، گزارش بدن غیرتشخیصی و مسیر upgrade VIP.</p>
+            </div>
+            <div class="step">
+              <h3>ماه ۷ تا ۹: داشبورد مربی و beta پولی</h3>
+              <p>مربی ها پاسخ مدل را اصلاح می کنند، چت خصوصی، برنامه فروشی، دیتاست feedback و چرخه بهبود هفتگی.</p>
+            </div>
+            <div class="step">
+              <h3>ماه ۱۰ تا ۱۲: مقیاس و دفاع سرمایه گذاری بعدی</h3>
+              <p>پایلوت با باشگاه ها، گزارش KPI، benchmark عمومی فارسی، انتشار whitepaper و آماده سازی seed/Series A داخلی.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>شاخص هایی که سرمایه گذار باید مطالبه کند</h2>
+          <div class="grid-3">
+            <div class="card"><h3 class="ok">کیفیت مدل</h3><p>امتیاز eval فارسی، نرخ hallucination، red-flag recall بالای ۹۵٪، رضایت مربی و کاربر.</p></div>
+            <div class="card"><h3 class="ok">دیتاست مالکیتی</h3><p>تعداد نمونه تایید شده، تنوع جنسیت/سن/هدف، درصد داده با رضایت، نرخ اصلاح مربی.</p></div>
+            <div class="card"><h3 class="ok">اقتصاد محصول</h3><p>نرخ تبدیل VIP، ARPU، retention هفته ۴، تعداد مربی فعال، درآمد برنامه اختصاصی.</p></div>
+            <div class="card"><h3 class="warn">ایمنی</h3><p>گزارش موارد خطر، ارجاع به پزشک، کنترل مکمل/دارو، audit log و حذف داده کاربر.</p></div>
+            <div class="card"><h3 class="warn">زیرساخت</h3><p>هزینه هر پاسخ، latency، uptime، ظرفیت GPU، هزینه inference برای هر کاربر VIP.</p></div>
+            <div class="card"><h3 class="warn">قابلیت دفاع</h3><p>whitepaper، benchmark داخلی، قرارداد باشگاه و مربی، دیتاست فارسی غیرقابل کپی.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>ریسک ها و پاسخ ما</h2>
+          <table>
+            <thead>
+              <tr><th>ریسک</th><th>پاسخ سرمایه پذیر</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>اشتباه پزشکی یا توصیه خطرناک</td>
+                <td>رمق نباید پزشک باشد. مدل باید red flag را تشخیص دهد، هشدار دهد و ارجاع بدهد. توصیه دارو، آسیب، بیماری و بارداری باید تحت guardrail سخت باشد.</td>
+              </tr>
+              <tr>
+                <td>ادعای «اولین» بدون دفاع</td>
+                <td>ادعا را دقیق کنیم: «اولین پلتفرم فارسی فیتنس با دیتاست مالکیتی، فاین تیون محلی و تحلیل متن/صدا/تصویر بدن در ایران»؛ سپس benchmark و whitepaper منتشر شود.</td>
+              </tr>
+              <tr>
+                <td>گران بودن GPU و تحریم/تامین</td>
+                <td>خرید حداقلی workstation + اجاره کوتاه مدت cloud برای jobهای سنگین + مدل کوچک distilled برای production.</td>
+              </tr>
+              <tr>
+                <td>کپی شدن اپلیکیشن</td>
+                <td>UI کپی می شود؛ دیتاست مربی، eval فارسی، feedback کاربران، روابط باشگاه ها و مدل fine-tuned به سختی کپی می شود.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>نتیجه برای سرمایه گذار</h2>
+          <div class="card">
+            <h3>رمق یک اپ تمرین نیست؛ یک موتور داده فیتنس فارسی است.</h3>
+            <p>
+              سرمایه ۱۰ میلیارد تومانی اگر درست خرج شود، رمق را به دارایی قابل دفاع تبدیل می کند: مدل محلی، دیتاست فارسی اختصاصی، شبکه مربی، تحلیل بدن، voice UX و بازار محلی مکمل/باشگاه. خروجی ۱۲ ماهه باید نه فقط «کاربر بیشتر»، بلکه یک asset هوش مصنوعی قابل ارزش گذاری باشد.
+            </p>
+            <p class="print-note">نسخه پیشنهادی برای ارائه: این فایل را به PDF چاپ کنید و کنار دموی زنده اپ، داشبورد مربی و یک نمونه تحلیل بدن نشان دهید.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>منابع تحقیق</h2>
+          <ol class="source-list">
+            <li><a href="https://www.grandviewresearch.com/industry-analysis/fitness-app-market">Grand View Research - Fitness Apps Market 2026-2033</a></li>
+            <li><a href="https://www.businessofapps.com/data/health-fitness-app-report/">Business of Apps - Health & Fitness App Report 2026</a></li>
+            <li><a href="https://datareportal.com/reports/digital-2024-iran">DataReportal - Digital 2024 Iran</a></li>
+            <li><a href="https://www.imarcgroup.com/iran-health-wellness-market">IMARC - Iran Health and Wellness Market</a></li>
+            <li><a href="https://arxiv.org/abs/2509.17765">Qwen3-Omni Technical Report</a></li>
+            <li><a href="https://huggingface.co/Qwen/Qwen3-Omni-30B-A3B-Instruct">Qwen3-Omni-30B-A3B-Instruct model card</a></li>
+            <li><a href="https://ai.google.dev/gemma/docs/gemma-3n/model_card">Google Gemma 3n model card</a></li>
+            <li><a href="https://developers.google.com/health-ai-developer-foundations/medgemma/model-card">Google MedGemma 1.5 model card</a></li>
+            <li><a href="https://www.nvidia.com/en-us/products/workstations/professional-desktop-gpus/rtx-pro-6000/">NVIDIA RTX PRO 6000 Blackwell</a></li>
+            <li><a href="https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5090/">NVIDIA GeForce RTX 5090</a></li>
+            <li><a href="https://www.nvidia.com/en-us/data-center/h200/">NVIDIA H200 Tensor Core GPU</a></li>
+            <li><a href="https://arxiv.org/abs/2305.14314">QLoRA: Efficient Finetuning of Quantized LLMs</a></li>
+            <li><a href="https://fdc.nal.usda.gov/api-guide">USDA FoodData Central API</a></li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/tools/openftlist/">NIH PMC Open Access Subset</a></li>
+            <li><a href="https://registry.opendata.aws/bodym/">BodyM public body measurement dataset</a></li>
+            <li><a href="https://mozilladatacollective.com/datasets/cmqinhw5100v8nr07gyg5gi4v">Mozilla Common Voice Persian 26.0</a></li>
+          </ol>
+        </div>
+      </section>
+    </main>
+    <footer class="footer">
+      <div class="wrap">
+        Prepared for Ramagh. This memo is a product and technology investment plan, not medical, legal, or financial advice. Hardware prices and model availability must be re-quoted before purchase.
+      </div>
+    </footer>
+  </body>
+</html>

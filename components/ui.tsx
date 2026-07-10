@@ -4,6 +4,7 @@
 
 import type { ReactNode } from "react";
 import { useLang } from "./LangProvider";
+import { LogoMark } from "./Logo";
 
 export function cn(...parts: (string | false | null | undefined)[]): string {
   return parts.filter(Boolean).join(" ");
@@ -188,8 +189,14 @@ export function Spinner({ label }: { label?: string }) {
   const text = label ?? t("common.loading");
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-10 text-muted">
-      <div className="size-8 animate-spin rounded-full border-2 border-line border-t-brand" />
-      {text && <p className="text-sm">{text}</p>}
+      <div className="relative">
+        <span className="absolute -inset-2 animate-pulse rounded-2xl bg-brand/15 blur-lg" />
+        <LogoMark className="relative size-11 drop-shadow-[0_0_16px_rgb(184_242_74/0.35)]" />
+      </div>
+      <span className="h-1 w-20 overflow-hidden rounded-full bg-card2 ring-1 ring-line">
+        <span className="block h-full w-1/2 animate-[ramagh-load_1.1s_ease-in-out_infinite] rounded-full bg-brand" />
+      </span>
+      {text && <p className="text-sm font-semibold">{text}</p>}
     </div>
   );
 }

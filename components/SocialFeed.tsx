@@ -25,7 +25,7 @@ const TABS: { type: PostType; icon: IconName; key: string }[] = [
   { type: "program", icon: "calendar", key: "feed.tab.program" },
 ];
 
-export default function SocialFeed() {
+export default function SocialFeed({ onPosted }: { onPosted?: () => void }) {
   const { t } = useLang();
   const social = useSocial();
   const [posts, setPosts] = useState<Post[] | null>(null);
@@ -34,7 +34,10 @@ export default function SocialFeed() {
     fetchFeed().then(setPosts).catch(() => setPosts([]));
   }, []);
 
-  const prepend = (p: Post) => setPosts((cur) => [p, ...(cur ?? [])]);
+  const prepend = (p: Post) => {
+    setPosts((cur) => [p, ...(cur ?? [])]);
+    onPosted?.();
+  };
 
   return (
     <div>
@@ -247,12 +250,9 @@ function likedSet(): Set<string> {
 function PostCard({ post }: { post: Post }) {
   const { t, lang, n } = useLang();
   const [likes, setLikes] = useState(post.likes);
-  const [liked, setLiked] = useState(false);
-
-  // Restore "already liked" across reloads so one user can't inflate the count.
-  useEffect(() => {
-    setLiked(likedSet().has(post.id));
-  }, [post.id]);
+  const [liked, setLiked] = useState(() =>
+    typeof window !== "undefined" ? likedSet().has(post.id) : false
+  );
 
   async function like() {
     if (liked) return;

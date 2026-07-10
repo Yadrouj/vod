@@ -6,10 +6,12 @@ export type Level = "beginner" | "advanced";
 export type ViewMode = "strength" | "mobility";
 /** Primary training adaptation — drives set/rep/rest prescription. */
 export type TrainingGoal = "strength" | "hypertrophy" | "endurance";
+export type AppTheme = "classic" | "minimal";
 
 export interface VideoClip {
   angle: string; // "front" | "side" | ...
   url: string;
+  localUrl?: string;
   poster: string | null;
 }
 
@@ -47,6 +49,7 @@ export interface Settings {
   angle: string; // preferred camera angle
   sound: boolean;
   vibrate: boolean;
+  theme: AppTheme;
   onboarded: boolean;
 }
 
@@ -132,10 +135,23 @@ export interface AnalysisMsg {
 export interface Account {
   id: string; // always ACCOUNT_ID
   provider: "google" | "local";
+  userId?: string;
+  token?: string;
+  role?: "user" | "admin";
   email: string;
   name: string;
   picture: string | null;
+  restricted?: boolean;
+  adminMessage?: string | null;
+  adminMessageAt?: number | null;
   createdAt: number;
+}
+
+export interface Subscription {
+  id: string;
+  status: "none" | "pending" | "vip";
+  vipUntil: number | null;
+  receiptSentAt: number | null;
 }
 
 /** Free-usage meter — when `count` passes the free limit without an account, the app asks to sign in. */

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { Icon, type IconName } from "./icons";
 
@@ -37,32 +38,55 @@ export default function PlaceHeader({
   name,
   kind,
   image,
+  subtitle,
+  meta,
+  top,
+  children,
 }: {
   name: string;
   kind: string;
   image?: string | null;
+  subtitle?: string | null;
+  meta?: ReactNode;
+  top?: ReactNode;
+  children?: ReactNode;
 }) {
   const [imgOk, setImgOk] = useState(true);
   const [a, b] = PALETTES[seed(name) % PALETTES.length];
   const icon = KIND_ICON[kind] ?? "pin";
 
   return (
-    <div className="relative h-28 w-full overflow-hidden rounded-3xl ring-1 ring-line">
+    <section className="relative -mx-4 -mt-6 overflow-hidden bg-black px-4 pb-7 pt-6">
       {image && imgOk ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={image} alt="" className="h-full w-full object-cover" onError={() => setImgOk(false)} />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <img src={image} alt="" className="absolute inset-0 h-full w-full scale-105 object-cover" onError={() => setImgOk(false)} />
         </>
       ) : (
-        <div className="relative h-full w-full" style={{ background: `linear-gradient(135deg, ${a}, ${b})` }}>
+        <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${a}, ${b})` }}>
           <Icon name={icon} className="absolute -right-4 -top-3 size-32 text-white/10" />
-          <Icon name={icon} className="absolute bottom-2 left-4 size-10 text-white/25" />
+          <Icon name={icon} className="absolute bottom-8 left-4 size-20 text-white/15" />
         </div>
       )}
-      <p className="absolute bottom-2 right-3 max-w-[80%] truncate text-lg font-extrabold text-white drop-shadow">
-        {name}
-      </p>
-    </div>
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.86)_0%,rgba(0,0,0,0.62)_18%,rgba(0,0,0,0.2)_42%,rgba(0,0,0,0.9)_72%,rgba(0,0,0,0.98)_100%),linear-gradient(90deg,rgba(0,0,0,0.82)_0%,rgba(0,0,0,0.2)_50%,rgba(0,0,0,0.72)_100%)]" />
+      <div className="absolute inset-x-0 bottom-0 h-[58%] bg-[radial-gradient(ellipse_at_bottom,rgba(0,0,0,0.98)_0%,rgba(0,0,0,0.76)_42%,rgba(0,0,0,0)_76%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[linear-gradient(180deg,rgba(0,0,0,0.98)_0%,rgba(0,0,0,0)_100%)]" />
+      <div className="relative z-10 text-white">
+        {top && <div className="mb-10 flex items-center justify-end">{top}</div>}
+        <div className="flex min-h-[410px] flex-col justify-end pb-5">
+          <div className="max-w-[92%] pb-1">
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-brand">
+              {kind}
+            </p>
+            <h1 className="mt-1 line-clamp-2 text-4xl font-black leading-tight drop-shadow-[0_10px_24px_rgba(0,0,0,0.98)]">
+              {name}
+            </h1>
+            {subtitle && <p className="mt-2 line-clamp-2 text-xs font-semibold leading-5 text-white/72">{subtitle}</p>}
+            {meta && <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold text-white/80">{meta}</div>}
+          </div>
+        </div>
+        {children}
+      </div>
+    </section>
   );
 }

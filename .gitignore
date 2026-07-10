@@ -29,6 +29,14 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
+
+# local visual smoke outputs
+/*smoke*.png
+/mag-real-banners-*.png
+/mag-real-gym-banner-*.png
+/profile-redesign-*.png
+/logo-*-smoke.png
 
 # env files (can opt-in for committing if needed)
 .env*
@@ -51,3 +59,16 @@ next-env.d.ts
 # playwright test artifacts
 /scripts/e2e-failure.png
 /scripts/shots/
+
+# android build outputs
+/android/.gradle/
+/android/**/build/
+/android/local.properties
+
+# local runtime state
+/.social-data/coach-chats.json
+/.social-data/coach-private-requests.json
+/.social-data/messages.json
+/.social-data/social-cron-state.json
+/.social-data/uploads/
+/.social-data/users.json

@@ -1,10 +1,12 @@
 import { addPost, listFeed } from "@/lib/socialStore";
+import { seedSocialFeed } from "@/lib/socialMock.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const posts = await listFeed(60);
+  await seedSocialFeed(72);
+  const posts = await listFeed(80);
   return Response.json({ posts });
 }
 

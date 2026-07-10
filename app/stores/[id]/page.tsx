@@ -10,6 +10,7 @@ import PlaceHeader from "@/components/PlaceHeader";
 import { AuthorRow, SocialGate, Stars } from "@/components/Social";
 import { useLang } from "@/components/LangProvider";
 import { useSocial } from "@/lib/hooks";
+import { storeGalleryFor } from "@/lib/gymGallery";
 import { loadStores, type Store } from "@/lib/gyms";
 import {
   authorOf,
@@ -55,25 +56,51 @@ export default function StoreProfilePage({ params }: { params: Promise<{ id: str
       </div>
     );
 
+  const gallery = storeGalleryFor(store.id, store.name);
+
   return (
     <div className="px-4 pb-24 pt-6">
-      <BackLink label={t("store.title")} />
-
-      {/* header */}
-      <div className="mt-2">
-        <PlaceHeader name={store.name} kind={store.kind} image={store.image} />
-      </div>
-      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-        <span>{t(`store.kind.${store.kind}`)}</span>
-        {store.women && <span className="rounded-full bg-pink-500/15 px-2 font-bold text-pink-300">{t("gym.women")}</span>}
-        {count > 0 && (
-          <span className="inline-flex items-center gap-1 font-bold text-amber-400">
-            <Icon name="star" className="size-3.5" /> {n(avg.toFixed(1))}
-            <span className="text-faint">({n(count)})</span>
-          </span>
-        )}
-      </div>
-      {store.address && <p className="mt-1 text-sm text-muted">{store.address}</p>}
+      <PlaceHeader
+        name={store.name}
+        kind={store.kind}
+        image={store.image || gallery[0]?.src}
+        subtitle={store.address}
+        top={<BackLink label={t("store.title")} />}
+        meta={
+          <>
+            <span className="rounded-full bg-white/12 px-3 py-1.5 ring-1 ring-white/18 backdrop-blur-md">{t(`store.kind.${store.kind}`)}</span>
+            {store.women && <span className="rounded-full bg-pink-500/20 px-3 py-1.5 text-pink-100 ring-1 ring-pink-300/20 backdrop-blur-md">{t("gym.women")}</span>}
+            {count > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-3 py-1.5 text-amber-200 ring-1 ring-amber-300/20 backdrop-blur-md">
+                <Icon name="star" className="size-3.5" /> {n(avg.toFixed(1))}
+                <span className="text-white/45">({n(count)})</span>
+              </span>
+            )}
+          </>
+        }
+      >
+        <section className="mt-3">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-black text-white">
+              <Icon name="library" className="size-4 text-brand" />
+              گالری فروشگاه
+            </h2>
+            <span className="text-[10px] font-bold text-white/48">Real photos</span>
+          </div>
+          <div className="no-scrollbar -mx-4 flex snap-x scroll-smooth gap-3 overflow-x-auto px-4 pb-2">
+            {gallery.map((image) => (
+              <figure key={image.src} className="w-[78vw] max-w-80 flex-shrink-0 snap-start overflow-hidden rounded-2xl bg-white/8 ring-1 ring-white/12 backdrop-blur-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={image.src} alt={image.alt} loading="lazy" className="h-44 w-full object-cover" />
+                <figcaption className="flex items-center justify-between gap-2 px-3 py-2 text-[10px] font-bold text-white/58">
+                  <span className="truncate">{image.alt}</span>
+                  <span className="flex-shrink-0 text-brand">{image.credit}</span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      </PlaceHeader>
 
       {/* map */}
       <div className="isolate relative mt-3 h-44 overflow-hidden rounded-3xl ring-1 ring-line">
@@ -82,7 +109,7 @@ export default function StoreProfilePage({ params }: { params: Promise<{ id: str
 
       {/* actions */}
       <div className="mt-3">
-        <PlaceActions place={store} size="md" />
+        <PlaceActions place={store} size="md" source={store.kind === "pharmacy" ? "pharmacy" : "store"} />
       </div>
 
       {/* reviews */}

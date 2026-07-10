@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button, PageHeader, cn } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { useLang } from "@/components/LangProvider";
-import { addAnalysisMsg } from "@/lib/db";
-import { useAnalysisThread } from "@/lib/hooks";
+import { addAnalysisMsg, isVipActive } from "@/lib/db";
+import { useAccount, useAnalysisThread, useDietProfile, useSettings, useSubscription } from "@/lib/hooks";
 
 /** Downscale + encode a photo as a JPEG data URL (keeps IndexedDB small). */
 function fileToDataUrl(file: File, maxSide = 1280): Promise<string> {
@@ -28,10 +30,17 @@ function fileToDataUrl(file: File, maxSide = 1280): Promise<string> {
 
 export default function AnalysisPage() {
   const { t, lang } = useLang();
+  const router = useRouter();
   const thread = useAnalysisThread();
+  const account = useAccount();
+  const settings = useSettings();
+  const dietProfile = useDietProfile();
+  const subscription = useSubscription();
   const [photos, setPhotos] = useState<string[]>([]);
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [now] = useState(() => Date.now());
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -47,27 +56,94 @@ export default function AnalysisPage() {
     }
   }
 
+  function analysisContext(): string {
+    const parts: string[] = [];
+    if (settings) {
+      parts.push(
+        `training gender=${settings.gender}, level=${settings.level}, goal=${settings.goal}, focus=${settings.view}`
+      );
+    }
+    if (dietProfile) {
+      parts.push(
+        `body age=${dietProfile.age}, height=${dietProfile.heightCm}cm, weight=${dietProfile.weightKg}kg, sex=${dietProfile.sex}, activity=${dietProfile.activity}, nutritionGoal=${dietProfile.goal}`
+      );
+    }
+    return parts.join(" | ");
+  }
+
   async function submit() {
+    if (busy) return;
     if (photos.length === 0) {
       setError(t("an.needPhoto"));
       return;
     }
+    if (!account?.token) {
+      router.push("/login?next=/analysis");
+      return;
+    }
+    if (!(await isVipActive())) {
+      router.push("/upgrade?feature=analysis");
+      return;
+    }
     setError(null);
+    setBusy(true);
+    const pendingPhotos = photos;
+    const pendingNote = note.trim();
     await addAnalysisMsg({
       from: "user",
-      text: note.trim(),
-      images: photos,
+      text: pendingNote,
+      images: pendingPhotos,
       pdf: null,
       pdfName: null,
     });
-    setPhotos([]);
-    setNote("");
+    try {
+      const res = await fetch("/api/analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lang,
+          note: pendingNote,
+          images: pendingPhotos,
+          context: analysisContext(),
+        }),
+      });
+      const json = await res.json();
+      if (res.status === 503 && json.error === "no_key") {
+        setError(t("coach.needsKey"));
+      } else if (json.error === "need_photo") {
+        setError(t("an.needPhoto"));
+      } else if (!res.ok || !json.content) {
+        setError(t("coach.error"));
+      } else {
+        await addAnalysisMsg({
+          from: "team",
+          text: json.content,
+          images: [],
+          pdf: null,
+          pdfName: null,
+        });
+        setPhotos([]);
+        setNote("");
+      }
+    } catch {
+      setError(t("coach.error"));
+    } finally {
+      setBusy(false);
+    }
   }
 
   const lastUser = [...(thread ?? [])].reverse().find((m) => m.from === "user");
   const answered =
     lastUser &&
     (thread ?? []).some((m) => m.from === "team" && m.createdAt > lastUser.createdAt);
+  const activeVip =
+    subscription?.status === "vip" &&
+    typeof subscription.vipUntil === "number" &&
+    subscription.vipUntil > now;
+  const intro =
+    lang === "fa"
+      ? "یک یا چند عکس واضح بفرست. سه زاویه اجباری نیست؛ اگر عکس برای ارزیابی کافی نباشد، دقیق می‌گوییم چه چیزی را دوباره آپلود کنی. اگر قد و وزن را می‌دانی در توضیح بنویس."
+      : "Send one or more clear photos. Three angles are not required; if a photo is not useful enough, we will ask for the exact re-upload needed. Add height and weight in the note if you know them.";
 
   return (
     <div className="px-4 pt-6 pb-10">
@@ -92,7 +168,7 @@ export default function AnalysisPage() {
 
       {/* thread */}
       <div className="mt-4 space-y-3">
-        <TeamBubble text={t("an.intro")} />
+        <TeamBubble text={intro} />
         {(thread ?? []).map((m) => (
           <div key={m.id} className={cn("flex", m.from === "user" ? "justify-end" : "justify-start")}>
             <div
@@ -132,6 +208,19 @@ export default function AnalysisPage() {
 
       {/* composer */}
       <div className="mt-5 space-y-3 rounded-3xl bg-card p-4 ring-1 ring-line">
+        {!activeVip && (
+          <Link
+            href="/upgrade?feature=analysis"
+            className="flex items-center justify-between gap-3 rounded-2xl bg-brand/10 p-3 text-sm font-extrabold text-brand ring-1 ring-brand/25"
+          >
+            <span>
+              {lang === "fa"
+                ? "آنالیز بدن با AI برای اعضای VIP فعال می‌شود."
+                : "AI body analysis is available with VIP."}
+            </span>
+            <Icon name="chevronRight" className="size-4 flex-shrink-0 flip-rtl" />
+          </Link>
+        )}
         {photos.length > 0 && (
           <div className="flex gap-2">
             {photos.map((p, i) => (
@@ -168,13 +257,18 @@ export default function AnalysisPage() {
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder={t("an.note")}
+            placeholder={
+              lang === "fa"
+                ? "توضیح اختیاری: قد، وزن، هدف یا محدودیت"
+                : "Optional: height, weight, goal, or limits"
+            }
             className="h-11 flex-1 rounded-xl bg-base2 px-3 text-sm text-ink outline-none ring-1 ring-line placeholder:text-faint focus:ring-2 focus:ring-brand"
           />
         </div>
         {error && <p className="text-xs font-semibold text-danger">{error}</p>}
-        <Button className="w-full" onClick={submit}>
-          <Icon name="sparkles" className="size-4" /> {t("an.send")}
+        <Button className="w-full" onClick={submit} disabled={busy}>
+          <Icon name="sparkles" className="size-4" />
+          {busy ? (lang === "fa" ? "در حال آنالیز..." : "Analyzing...") : t("an.send")}
         </Button>
         <p className="text-center text-[10px] text-faint">
           {lang === "fa"

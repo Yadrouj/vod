@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { PageHeader, Spinner, cn } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { LogoMark } from "@/components/Logo";
 import { useLang } from "@/components/LangProvider";
-import { useDietProfile, useProgram, useSessions, useSettings, gateAction } from "@/lib/hooks";
+import { useDietProfile, useProgram, useSessions, useSettings, gateAiFeature } from "@/lib/hooks";
 import { macroTargets } from "@/lib/nutrition";
 import { computePRs } from "@/lib/records";
 
@@ -14,6 +15,8 @@ interface Msg {
   role: "user" | "assistant";
   content: string;
 }
+
+const CHAT_KEY = "ramagh-coach-chat";
 
 // Staged quick replies — the user can run the whole conversation without typing.
 // start: opening intents · intake: canned answers to the coach's health questions ·
@@ -102,16 +105,17 @@ export default function CoachPage() {
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
-  // Persist the conversation so it survives leaving/returning to the page.
-  const CHAT_KEY = "ramagh-coach-chat";
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(CHAT_KEY);
-      if (raw) setMsgs(JSON.parse(raw));
-    } catch {
-      /* ignore */
-    }
-    setLoaded(true);
+    const id = window.setTimeout(() => {
+      try {
+        const raw = localStorage.getItem(CHAT_KEY);
+        if (raw) setMsgs(JSON.parse(raw));
+      } catch {
+        /* ignore */
+      }
+      setLoaded(true);
+    }, 0);
+    return () => window.clearTimeout(id);
   }, []);
   useEffect(() => {
     if (!loaded) return;
@@ -135,7 +139,7 @@ export default function CoachPage() {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs, busy]);
 
-  function systemPrompt(): string {
+  function systemPrompt(now: number): string {
     const parts: string[] = [
       "You are «مربی رمق», a board-level sports nutritionist (MSc/PhD-level, ISSN-informed) and strength & conditioning coach inside the Ramagh fitness app. Hold yourself to the standard of a professional consultation.",
       lang === "fa"
@@ -166,7 +170,7 @@ export default function CoachPage() {
       known.push(`weekly program: ${split}`);
     }
     if (sessions?.length) {
-      const weekAgo = Date.now() - 7 * 864e5;
+      const weekAgo = now - 7 * 864e5;
       const thisWeek = sessions.filter((s) => s.startedAt >= weekAgo).length;
       const prs = computePRs(sessions).slice(0, 5);
       known.push(
@@ -191,8 +195,8 @@ export default function CoachPage() {
     if (!text || busy) return;
     setError(null);
 
-    // AI calls count toward the free-usage quota; past the limit → login.
-    if (!(await gateAction((url) => router.push(url)))) return;
+    // AI calls count toward the free-usage quota; past the limit users upgrade.
+    if (!(await gateAiFeature((url) => router.push(url)))) return;
 
     const nextMsgs: Msg[] = [...msgs, { role: "user", content: text }];
     setMsgs(nextMsgs);
@@ -203,7 +207,8 @@ export default function CoachPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [{ role: "system", content: systemPrompt() }, ...nextMsgs],
+          // eslint-disable-next-line react-hooks/purity
+          messages: [{ role: "system", content: systemPrompt(Date.now()) }, ...nextMsgs],
         }),
       });
       const json = await res.json();
@@ -263,7 +268,7 @@ export default function CoachPage() {
         {busy && (
           <Bubble role="assistant">
             <span className="inline-flex items-center gap-2 text-muted">
-              <span className="size-4 animate-spin rounded-full border-2 border-line border-t-brand" />
+              <LogoMark className="size-5 drop-shadow-[0_0_10px_rgb(184_242_74/0.35)]" />
               {t("coach.thinking")}
             </span>
           </Bubble>

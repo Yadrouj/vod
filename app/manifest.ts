@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "رمق — تمرین و تغذیه",
     short_name: "رمق",
-    description: "برنامه‌ی تمرین و تغذیه‌ی شخصی با تایمر و رژیم ایرانی.",
+    description: "برنامه تمرین و تغذیه شخصی با تایمر، مربی و رژیم ایرانی.",
     lang: "fa",
     dir: "rtl",
     start_url: "/",

@@ -3,13 +3,14 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { use, useEffect, useRef, useState } from "react";
-import { Spinner, cn } from "@/components/ui";
+import { Spinner } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { AuthorRow, SocialGate, Stars } from "@/components/Social";
 import PlaceActions from "@/components/PlaceActions";
 import PlaceHeader from "@/components/PlaceHeader";
 import { useLang } from "@/components/LangProvider";
 import { useSocial } from "@/lib/hooks";
+import { gymGalleryFor } from "@/lib/gymGallery";
 import { loadGyms, type Gym } from "@/lib/gyms";
 import {
   authorOf,
@@ -24,7 +25,7 @@ const GymMap = dynamic(() => import("@/components/GymMap"), { ssr: false });
 
 export default function GymProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { t, lang, n } = useLang();
+  const { t, n } = useLang();
   const social = useSocial();
   const [gym, setGym] = useState<Gym | null | undefined>(undefined);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -54,26 +55,54 @@ export default function GymProfilePage({ params }: { params: Promise<{ id: strin
         <p className="mt-10 text-center text-muted">{t("common.notFound")}</p>
       </div>
     );
+  const gallery = gymGalleryFor(gym.id, gym.name);
 
   return (
     <div className="px-4 pb-24 pt-6">
-      <BackLink label={t("gym.title")} />
-
-      {/* header */}
-      <div className="mt-2">
-        <PlaceHeader name={gym.name} kind={gym.kind} image={gym.image} />
-      </div>
-      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-        <span>{t(`gym.kind.${gym.kind}`)}</span>
-        {gym.women && <span className="rounded-full bg-pink-500/15 px-2 font-bold text-pink-300">{t("gym.women")}</span>}
-        {count > 0 && (
-          <span className="inline-flex items-center gap-1 font-bold text-amber-400">
-            <Icon name="star" className="size-3.5" /> {n(avg.toFixed(1))}
-            <span className="text-faint">({n(count)})</span>
-          </span>
-        )}
-      </div>
-      {gym.address && <p className="mt-1 text-sm text-muted">{gym.address}</p>}
+      <PlaceHeader
+        name={gym.name}
+        kind={gym.kind}
+        image={gym.image || gallery[0]?.src}
+        subtitle={gym.address}
+        top={<BackLink label={t("gym.title")} />}
+        meta={
+          <>
+            <span className="rounded-full bg-white/12 px-3 py-1.5 ring-1 ring-white/18 backdrop-blur-md">{t(`gym.kind.${gym.kind}`)}</span>
+            {gym.women && <span className="rounded-full bg-pink-500/20 px-3 py-1.5 text-pink-100 ring-1 ring-pink-300/20 backdrop-blur-md">{t("gym.women")}</span>}
+            {count > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-3 py-1.5 text-amber-200 ring-1 ring-amber-300/20 backdrop-blur-md">
+                <Icon name="star" className="size-3.5" /> {n(avg.toFixed(1))}
+                <span className="text-white/45">({n(count)})</span>
+              </span>
+            )}
+          </>
+        }
+      >
+        <section className="mt-3">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-black text-white">
+              <Icon name="library" className="size-4 text-brand" />
+              گالری واقعی باشگاه
+            </h2>
+            <span className="text-[10px] font-bold text-white/48">Real web photos</span>
+          </div>
+          <div className="no-scrollbar -mx-4 flex snap-x scroll-smooth gap-3 overflow-x-auto px-4 pb-2">
+            {gallery.map((image) => (
+              <figure key={image.src} className="w-[78vw] max-w-80 flex-shrink-0 snap-start overflow-hidden rounded-2xl bg-white/8 ring-1 ring-white/12 backdrop-blur-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={image.src} alt={image.alt} loading="lazy" className="h-44 w-full object-cover" />
+                <figcaption className="flex items-center justify-between gap-2 px-3 py-2 text-[10px] font-bold text-white/58">
+                  <span className="truncate">{image.alt}</span>
+                  <span className="flex-shrink-0 text-brand">{image.credit}</span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+          <p className="mt-1 text-[11px] leading-5 text-white/45">
+            این گالری از عکس‌های واقعی وب برای نمایش فضای تمرین استفاده می‌کند. عکس اختصاصی هر باشگاه با ارسال کاربران و مالک باشگاه تکمیل می‌شود.
+          </p>
+        </section>
+      </PlaceHeader>
 
       {/* map */}
       <div className="isolate relative mt-3 h-44 overflow-hidden rounded-3xl ring-1 ring-line">
@@ -82,7 +111,7 @@ export default function GymProfilePage({ params }: { params: Promise<{ id: strin
 
       {/* actions */}
       <div className="mt-3">
-        <PlaceActions place={gym} size="md" />
+        <PlaceActions place={gym} size="md" source="gym" />
       </div>
 
       {/* reviews */}

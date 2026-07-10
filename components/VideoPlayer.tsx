@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Exercise, Gender, VideoClip } from "@/lib/types";
-import { proxiedVideo } from "@/lib/media";
+import { proxiedVideo, videoSrc } from "@/lib/media";
 import { cn } from "./ui";
+import { LogoMark } from "./Logo";
 
 /** Prefer the requested gender's clips; fall back to the other gender if empty. */
 export function pickClips(exercise: Exercise, gender: Gender): VideoClip[] {
@@ -28,27 +29,40 @@ export default function VideoPlayer({
   className?: string;
 }) {
   const clips = pickClips(exercise, gender);
+
+  return (
+    <VideoPlayerInner
+      key={`${exercise.id}-${gender}-${angle}`}
+      clips={clips}
+      angle={angle}
+      loopAutoplay={loopAutoplay}
+      showAngles={showAngles}
+      className={className}
+    />
+  );
+}
+
+function VideoPlayerInner({
+  clips,
+  angle,
+  loopAutoplay,
+  showAngles,
+  className,
+}: {
+  clips: VideoClip[];
+  angle: string;
+  loopAutoplay: boolean;
+  showAngles: boolean;
+  className?: string;
+}) {
   const initial = Math.max(
     0,
     clips.findIndex((c) => c.angle === angle)
   );
   const [idx, setIdx] = useState(initial);
-  const [loading, setLoading] = useState(true);
-
-  // Reset when the exercise or gender changes (different clip set).
-  useEffect(() => {
-    const i = clips.findIndex((c) => c.angle === angle);
-    setIdx(i >= 0 ? i : 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [exercise.id, gender]);
-
   const clip = clips[idx] ?? clips[0];
-
-  // Show a spinner while the current clip buffers (first play streams via the
-  // proxy). Reset on clip change so it never looks frozen.
-  useEffect(() => {
-    setLoading(true);
-  }, [clip?.url]);
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+  const [failedLocalUrl, setFailedLocalUrl] = useState<string | null>(null);
 
   if (!clip) {
     return (
@@ -63,12 +77,15 @@ export default function VideoPlayer({
     );
   }
 
+  const useRemoteFallback = failedLocalUrl === clip.url;
+  const loading = loadedUrl !== clip.url;
+
   return (
     <div className={cn("space-y-2", className)}>
       <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black ring-1 ring-line">
         <video
-          key={clip.url}
-          src={proxiedVideo(clip.url)}
+          key={`${clip.url}-${useRemoteFallback ? "remote" : "local"}`}
+          src={useRemoteFallback ? proxiedVideo(clip.url) : videoSrc(clip)}
           poster={clip.poster ?? undefined}
           controls={!loopAutoplay}
           loop
@@ -76,14 +93,20 @@ export default function VideoPlayer({
           autoPlay={loopAutoplay}
           playsInline
           preload="metadata"
-          onLoadedData={() => setLoading(false)}
-          onCanPlay={() => setLoading(false)}
-          onError={() => setLoading(false)}
+          onLoadedData={() => setLoadedUrl(clip.url)}
+          onCanPlay={() => setLoadedUrl(clip.url)}
+          onError={() => {
+            if (clip.localUrl && !useRemoteFallback) {
+              setFailedLocalUrl(clip.url);
+              return;
+            }
+            setLoadedUrl(clip.url);
+          }}
           className="h-full w-full object-contain"
         />
         {loading && !clip.poster && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40">
-            <span className="size-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            <LogoMark className="size-10 drop-shadow-[0_0_16px_rgb(184_242_74/0.45)]" />
           </div>
         )}
       </div>

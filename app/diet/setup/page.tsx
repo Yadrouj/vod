@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Button, Segmented, cn } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { useLang } from "@/components/LangProvider";
-import { clearDietPlan, saveDietProfile } from "@/lib/db";
+import { clearDietPlan, dietRegenerateStatus, getDietPlan, saveDietProfile } from "@/lib/db";
 import { useDietProfile, useSettings } from "@/lib/hooks";
 import {
   ACTIVITY_OPTIONS,
@@ -75,8 +75,10 @@ export default function DietSetupPage() {
       mealsPerDay: meals,
     };
     await saveDietProfile(profile);
-    // Clear any old plan so /diet regenerates it fresh — with the "designing…" animation.
-    await clearDietPlan();
+    const [plan, status] = await Promise.all([getDietPlan(), dietRegenerateStatus()]);
+    if (!plan || status.allowed) {
+      await clearDietPlan();
+    }
     router.push("/diet");
   }
 

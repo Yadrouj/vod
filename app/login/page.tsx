@@ -1,237 +1,165 @@
 "use client";
 
-import Script from "next/script";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { Button, Segmented } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { LogoMark } from "@/components/Logo";
 import { useLang } from "@/components/LangProvider";
-import { saveAccount } from "@/lib/db";
-import { useUsage } from "@/lib/hooks";
-import { FREE_USAGE_LIMIT } from "@/lib/db";
-
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-
-interface GoogleCredentialResponse {
-  credential: string;
-}
-
-/** Decode the payload of a Google ID token (JWT) without verification —
- * fine for a local-first app where the token is used only to read profile info. */
-function decodeJwtPayload(jwt: string): Record<string, unknown> | null {
-  try {
-    const base64 = jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-    return JSON.parse(decodeURIComponent(escape(atob(base64))));
-  } catch {
-    return null;
-  }
-}
+import { applyAuthPayload } from "@/lib/authClient";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { t, lang } = useLang();
-  const usage = useUsage();
-  const gsiRef = useRef<HTMLDivElement>(null);
-  const [gsiReady, setGsiReady] = useState(false);
-  const [gsiSlow, setGsiSlow] = useState(false);
+  const params = useSearchParams();
+  const { lang } = useLang();
+  const fa = lang === "fa";
+  const [mode, setMode] = useState<"signin" | "signup">(
+    params.get("mode") === "signup" ? "signup" : "signin"
+  );
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // null = user hasn't chosen yet → default follows the limit banner.
-  const [modeChoice, setModeChoice] = useState<"signin" | "signup" | null>(null);
 
-  // The GSI script/button can be slow or blocked (or the origin not yet
-  // authorized in Google Console) — if nothing rendered after 8s, say so
-  // instead of leaving a blank area.
-  useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) return;
-    const timer = setTimeout(() => {
-      if (!gsiRef.current || gsiRef.current.childElementCount === 0) {
-        setGsiSlow(true);
+  async function submit() {
+    const cleanEmail = email.trim().toLowerCase();
+    const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail);
+    if (!okEmail || password.length < 6 || (mode === "signup" && name.trim().length < 2)) {
+      setError(fa ? "نام، ایمیل و رمز عبور حداقل ۶ کاراکتر را کامل کن." : "Complete name, email, and a password of at least 6 characters.");
+      return;
+    }
+    if (mode === "signup" && password !== confirm) {
+      setError(fa ? "تکرار رمز عبور یکسان نیست." : "Password confirmation does not match.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: mode,
+          name: name.trim(),
+          email: cleanEmail,
+          password,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        if (json.error === "exists") {
+          setError(fa ? "این ایمیل قبلا ثبت شده است. وارد حساب شو." : "This email is already registered. Sign in instead.");
+        } else if (json.error === "restricted") {
+          setError(json.user?.adminMessage || (fa ? "حساب شما محدود شده است." : "Your account has been restricted."));
+        } else {
+          setError(fa ? "ایمیل یا رمز عبور درست نیست." : "Email or password is incorrect.");
+        }
+        return;
       }
-    }, 8000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const limitReached = (usage?.count ?? 0) >= FREE_USAGE_LIMIT;
-  const mode: "signin" | "signup" =
-    modeChoice ?? (limitReached ? "signup" : "signin");
-
-  useEffect(() => {
-    if (!gsiReady || !GOOGLE_CLIENT_ID || !gsiRef.current) return;
-    type GsiWindow = typeof window & {
-      google?: {
-        accounts: {
-          id: {
-            initialize: (o: object) => void;
-            renderButton: (el: HTMLElement, o: object) => void;
-          };
-        };
-      };
-    };
-    const g = (window as GsiWindow).google;
-    if (!g) return;
-    g.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: async (res: GoogleCredentialResponse) => {
-        const p = decodeJwtPayload(res.credential);
-        if (!p?.email) return;
-        await saveAccount({
-          provider: "google",
-          email: String(p.email),
-          name: String(p.name ?? p.email),
-          picture: typeof p.picture === "string" ? p.picture : null,
-        });
-        router.push("/profile");
-      },
-    });
-    g.accounts.id.renderButton(gsiRef.current, {
-      theme: "filled_black",
-      size: "large",
-      shape: "pill",
-      width: 320,
-      text: "continue_with",
-      locale: lang === "fa" ? "fa" : "en",
-    });
-  }, [gsiReady, lang, router]);
-
-  async function createLocal() {
-    const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-    if (!name.trim() || !okEmail) {
-      setError(t("login.invalid"));
-      return;
+      await applyAuthPayload(json);
+      router.push(params.get("next") || "/profile");
+    } catch {
+      setError(fa ? "اتصال برقرار نشد. دوباره تلاش کن." : "Could not connect. Try again.");
+    } finally {
+      setBusy(false);
     }
-    await saveAccount({
-      provider: "local",
-      email: email.trim(),
-      name: name.trim(),
-      picture: null,
-    });
-    router.push("/profile");
-  }
-
-  async function signInLocal() {
-    const trimmed = email.trim();
-    const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
-    if (!okEmail) {
-      setError(t("login.invalid"));
-      return;
-    }
-    await saveAccount({
-      provider: "local",
-      email: trimmed,
-      name: trimmed.split("@")[0],
-      picture: null,
-    });
-    router.push("/profile");
   }
 
   return (
     <div className="min-h-dvh px-6 pb-10 pt-14">
-      {GOOGLE_CLIENT_ID && (
-        <Script
-          src="https://accounts.google.com/gsi/client"
-          strategy="afterInteractive"
-          onLoad={() => setGsiReady(true)}
-        />
-      )}
-
       <div className="mx-auto max-w-md">
         <div className="flex items-center gap-3">
-          <span className="flex size-14 items-center justify-center rounded-2xl bg-brand text-brandink shadow-lg shadow-brand/30">
-            <Icon name="dumbbell" className="size-8" />
-          </span>
+          <LogoMark className="size-14 drop-shadow-[0_0_18px_rgb(184_242_74/0.35)]" />
           <div>
-            <p className="text-2xl font-extrabold text-ink">{t("app.name")}</p>
-            <p className="text-xs text-muted">{t("app.tagline")}</p>
+            <p className="text-2xl font-extrabold text-ink">{fa ? "رمق" : "Ramagh"}</p>
+            <p className="text-xs text-muted">
+              {fa ? "حساب کاربری، VIP و برنامه‌های شخصی" : "Account, VIP, and personal plans"}
+            </p>
           </div>
         </div>
 
-        <h1 className="mt-6 text-2xl font-extrabold text-ink">{t("login.title")}</h1>
-        <p className="mt-2 text-sm text-muted">{t("login.subtitle")}</p>
-
-        {limitReached && (
-          <div className="mt-4 rounded-2xl bg-warn-dim p-4 text-sm font-semibold text-warn ring-1 ring-warn/25">
-            {t("login.limitBanner")}
-          </div>
-        )}
+        <h1 className="mt-6 text-2xl font-extrabold text-ink">
+          {mode === "signup" ? (fa ? "ساخت حساب" : "Create Account") : fa ? "ورود به حساب" : "Sign In"}
+        </h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted">
+          {fa
+            ? "برای استفاده از قابلیت‌های VIP، چت خصوصی و مدیریت برنامه‌ها با ایمیل و رمز عبور وارد شو."
+            : "Use email and password to access VIP features, private chat, and saved plans."}
+        </p>
 
         <div className="mt-6 space-y-5 rounded-3xl bg-card p-5 ring-1 ring-line">
-          {/* Sign-in / sign-up mode */}
           <Segmented
             value={mode}
             onChange={(v) => {
-              setModeChoice(v);
+              setMode(v);
               setError(null);
             }}
             options={[
-              { value: "signin", label: t("login.signin") },
-              { value: "signup", label: t("login.signup") },
+              { value: "signin", label: fa ? "ورود" : "Sign in" },
+              { value: "signup", label: fa ? "ثبت نام" : "Sign up" },
             ]}
           />
 
-          {/* Google */}
-          {GOOGLE_CLIENT_ID ? (
-            <div>
-              <div ref={gsiRef} className="flex min-h-11 justify-center" />
-              {gsiSlow && (
-                <p className="mt-2 text-center text-xs text-faint">
-                  {t("login.gsiSlow")}
-                </p>
-              )}
-            </div>
-          ) : (
-            <p className="rounded-xl bg-base2 p-3 text-xs text-faint ring-1 ring-line">
-              {t("login.googleUnavailable")}
-            </p>
-          )}
-
-          <div className="flex items-center gap-3">
-            <span className="h-px flex-1 bg-line" />
-            <span className="text-xs font-bold text-faint">{t("login.or")}</span>
-            <span className="h-px flex-1 bg-line" />
-          </div>
-
-          {/* Local account */}
-          <div className="space-y-3">
-            {mode === "signup" && (
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t("login.name")}
-                className="h-12 w-full rounded-xl bg-base2 px-4 text-sm font-semibold text-ink ring-1 ring-line placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-brand"
-              />
-            )}
+          {mode === "signup" && (
             <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t("login.email")}
-              type="email"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={fa ? "نام کامل" : "Full name"}
+              className="h-12 w-full rounded-xl bg-base2 px-4 text-sm font-semibold text-ink ring-1 ring-line placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-brand"
+            />
+          )}
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={fa ? "ایمیل" : "Email"}
+            type="email"
+            dir="ltr"
+            className="h-12 w-full rounded-xl bg-base2 px-4 text-sm font-semibold text-ink ring-1 ring-line placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-brand"
+          />
+          <input
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={fa ? "رمز عبور" : "Password"}
+            type="password"
+            dir="ltr"
+            className="h-12 w-full rounded-xl bg-base2 px-4 text-sm font-semibold text-ink ring-1 ring-line placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-brand"
+          />
+          {mode === "signup" && (
+            <input
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder={fa ? "تکرار رمز عبور" : "Confirm password"}
+              type="password"
               dir="ltr"
               className="h-12 w-full rounded-xl bg-base2 px-4 text-sm font-semibold text-ink ring-1 ring-line placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-brand"
             />
-            {error && <p className="text-xs font-semibold text-danger">{error}</p>}
-            {mode === "signup" ? (
-              <Button className="w-full" onClick={createLocal}>
-                {t("login.create")}
-              </Button>
-            ) : (
-              <Button className="w-full" onClick={signInLocal}>
-                {t("login.signin")}
-              </Button>
-            )}
-          </div>
-        </div>
+          )}
 
-        {!limitReached && (
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="mt-4 w-full py-2 text-center text-sm font-semibold text-faint"
-          >
-            {t("login.later")}
-          </button>
-        )}
+          {error && <p className="rounded-xl bg-danger-dim p-3 text-xs font-bold text-danger ring-1 ring-danger/25">{error}</p>}
+
+          <Button className="w-full" onClick={submit} disabled={busy}>
+            <Icon name={mode === "signup" ? "plus" : "user"} className="size-4" />
+            {busy
+              ? fa
+                ? "در حال انجام..."
+                : "Working..."
+              : mode === "signup"
+              ? fa
+                ? "ساخت حساب"
+                : "Create account"
+              : fa
+              ? "ورود"
+              : "Sign in"}
+          </Button>
+
+          <p className="text-center text-[11px] leading-relaxed text-faint">
+            {fa
+              ? "اولین حسابی که در این نصب ساخته شود، نقش مدیر می‌گیرد و می‌تواند از پنل ادمین کاربران را مدیریت کند."
+              : "The first account created on this install becomes admin and can manage users from the admin panel."}
+          </p>
+        </div>
       </div>
     </div>
   );

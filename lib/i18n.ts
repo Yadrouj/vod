@@ -628,6 +628,7 @@ export const DICT: Record<string, Entry> = {
   "coachreg.progDesc": ["توضیح کامل برنامه…", "Full program description…"],
   "coachreg.progSubmit": ["ارسال برنامه", "Submit program"],
   "coachreg.progSent": ["برنامه‌ات ارسال شد ✓ در انتظار تأیید.", "Program submitted ✓ pending review."],
+  "coachreg.privateChat": ["چت خصوصی و برنامه مشتری", "Private customer chat & plan"],
   "coachreg.needName": ["نام و مدرک را وارد کن.", "Enter your name and credential."],
   "coachreg.needTitle": ["عنوان و توضیح برنامه را وارد کن.", "Enter a program title and description."],
   "coachreg.gymKind": ["تمرینی", "Training"],

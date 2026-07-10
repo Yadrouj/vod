@@ -5,3 +5,7 @@
 export function proxiedVideo(url: string): string {
   return `/api/media?u=${encodeURIComponent(url)}`;
 }
+
+export function videoSrc(clip: { url: string; localUrl?: string }): string {
+  return clip.localUrl || proxiedVideo(clip.url);
+}

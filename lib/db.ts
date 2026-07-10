@@ -12,6 +12,7 @@ import type {
   Session,
   Settings,
   SocialProfile,
+  Subscription,
   Usage,
 } from "./types";
 import { WEEKDAYS } from "./taxonomy";
@@ -22,6 +23,13 @@ import { DIET_PLAN_ID } from "./foods";
 
 export const SETTINGS_ID = "me";
 export const PROGRAM_ID = "current";
+export const DIET_META_ID = "cooldown";
+export const DIET_REGEN_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+
+export interface DietMeta {
+  id: string;
+  lastGeneratedAt: number;
+}
 
 class GymDB extends Dexie {
   settings!: Table<Settings, string>;
@@ -29,12 +37,14 @@ class GymDB extends Dexie {
   sessions!: Table<Session, number>;
   dietProfile!: Table<DietProfile, string>;
   dietPlan!: Table<DietPlan, string>;
+  dietMeta!: Table<DietMeta, string>;
   account!: Table<Account, string>;
   usage!: Table<Usage, string>;
   sectionStats!: Table<SectionStat, string>;
   feedback!: Table<Feedback, number>;
   analysis!: Table<AnalysisMsg, number>;
   social!: Table<SocialProfile, string>;
+  subscription!: Table<Subscription, string>;
 
   constructor() {
     super("gym-trainer");
@@ -59,6 +69,12 @@ class GymDB extends Dexie {
     this.version(5).stores({
       social: "id",
     });
+    this.version(6).stores({
+      dietMeta: "id",
+    });
+    this.version(7).stores({
+      subscription: "id",
+    });
   }
 }
 
@@ -80,6 +96,7 @@ export const DEFAULT_SETTINGS: Settings = {
   angle: "front",
   sound: true,
   vibrate: true,
+  theme: "classic",
   onboarded: false,
 };
 
@@ -145,6 +162,30 @@ export async function saveDietPlan(plan: DietPlan): Promise<void> {
   await db.dietPlan.put({ ...plan, id: DIET_PLAN_ID });
 }
 
+export function getDietMeta(): Promise<DietMeta | undefined> {
+  return db.dietMeta.get(DIET_META_ID);
+}
+
+export async function markDietPlanGenerated(at = Date.now()): Promise<void> {
+  await db.dietMeta.put({ id: DIET_META_ID, lastGeneratedAt: at });
+}
+
+export async function dietRegenerateStatus(now = Date.now()): Promise<{
+  allowed: boolean;
+  lastGeneratedAt: number | null;
+  nextAt: number | null;
+  remainingMs: number;
+}> {
+  const [meta, plan] = await Promise.all([getDietMeta(), getDietPlan()]);
+  const lastGeneratedAt = meta?.lastGeneratedAt ?? plan?.createdAt ?? null;
+  if (!lastGeneratedAt) {
+    return { allowed: true, lastGeneratedAt: null, nextAt: null, remainingMs: 0 };
+  }
+  const nextAt = lastGeneratedAt + DIET_REGEN_COOLDOWN_MS;
+  const remainingMs = Math.max(0, nextAt - now);
+  return { allowed: remainingMs === 0, lastGeneratedAt, nextAt, remainingMs };
+}
+
 /** Drop the saved plan so the diet page regenerates a fresh one (with the "designing…" animation). */
 export async function clearDietPlan(): Promise<void> {
   await db.dietPlan.delete(DIET_PLAN_ID);
@@ -154,6 +195,11 @@ export async function clearDietPlan(): Promise<void> {
 
 export const ACCOUNT_ID = "me";
 export const USAGE_ID = "meter";
+export const SUBSCRIPTION_ID = "vip";
+export const VIP_PLAN_PRICE_TOMAN = 100_000;
+export const VIP_CARD_NUMBER = "6219861970108964";
+export const VIP_CARD_NAME = "Vahid Yadrouj";
+export const VIP_TELEGRAM_USERNAME = "Yadrouj";
 
 /** Free significant actions (workout saves, plan generations, AI messages) before sign-in is required. */
 export const FREE_USAGE_LIMIT = 12;
@@ -165,15 +211,121 @@ export function getAccount(): Promise<Account | undefined> {
 export async function saveAccount(
   a: Omit<Account, "id" | "createdAt">
 ): Promise<void> {
-  await db.account.put({ ...a, id: ACCOUNT_ID, createdAt: Date.now() });
+  const current = await getAccount();
+  await db.account.put({ ...current, ...a, id: ACCOUNT_ID, createdAt: current?.createdAt ?? Date.now() });
+}
+
+export async function saveSignedInUser(input: {
+  token: string;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: "user" | "admin";
+    restricted: boolean;
+    adminMessage: string | null;
+    adminMessageAt: number | null;
+    vipStatus: "none" | "pending" | "vip";
+    vipUntil: number | null;
+    receiptSentAt: number | null;
+  };
+}): Promise<void> {
+  const current = await getAccount();
+  await db.account.put({
+    id: ACCOUNT_ID,
+    provider: "local",
+    userId: input.user.id,
+    token: input.token,
+    role: input.user.role,
+    email: input.user.email,
+    name: input.user.name,
+    picture: current?.picture ?? null,
+    restricted: input.user.restricted,
+    adminMessage: input.user.adminMessage,
+    adminMessageAt: input.user.adminMessageAt,
+    createdAt: current?.createdAt ?? Date.now(),
+  });
+  await db.subscription.put({
+    id: SUBSCRIPTION_ID,
+    status: input.user.vipStatus,
+    vipUntil: input.user.vipUntil,
+    receiptSentAt: input.user.receiptSentAt,
+  });
+}
+
+export async function syncSignedInUser(input: {
+  id: string;
+  email: string;
+  name: string;
+  role: "user" | "admin";
+  restricted: boolean;
+  adminMessage: string | null;
+  adminMessageAt: number | null;
+  vipStatus: "none" | "pending" | "vip";
+  vipUntil: number | null;
+  receiptSentAt: number | null;
+}): Promise<void> {
+  const current = await getAccount();
+  if (current) {
+    await db.account.put({
+      ...current,
+      userId: input.id,
+      role: input.role,
+      email: input.email,
+      name: input.name,
+      restricted: input.restricted,
+      adminMessage: input.adminMessage,
+      adminMessageAt: input.adminMessageAt,
+    });
+  }
+  await db.subscription.put({
+    id: SUBSCRIPTION_ID,
+    status: input.vipStatus,
+    vipUntil: input.vipUntil,
+    receiptSentAt: input.receiptSentAt,
+  });
 }
 
 export async function signOut(): Promise<void> {
   await db.account.delete(ACCOUNT_ID);
+  await db.subscription.delete(SUBSCRIPTION_ID);
 }
 
 export function getUsage(): Promise<Usage | undefined> {
   return db.usage.get(USAGE_ID);
+}
+
+export function getSubscription(): Promise<Subscription | undefined> {
+  return db.subscription.get(SUBSCRIPTION_ID);
+}
+
+export async function isVipActive(now = Date.now()): Promise<boolean> {
+  const sub = await getSubscription();
+  return sub?.status === "vip" && typeof sub.vipUntil === "number" && sub.vipUntil > now;
+}
+
+export async function markVipReceiptSent(): Promise<void> {
+  const current = await getSubscription();
+  await db.subscription.put({
+    id: SUBSCRIPTION_ID,
+    status: current?.status === "vip" ? "vip" : "pending",
+    vipUntil: current?.vipUntil ?? null,
+    receiptSentAt: Date.now(),
+  });
+}
+
+export async function activateVipSubscription(months = 1, now = Date.now()): Promise<void> {
+  const current = await getSubscription();
+  const base =
+    current?.status === "vip" && typeof current.vipUntil === "number" && current.vipUntil > now
+      ? current.vipUntil
+      : now;
+  await db.subscription.put({
+    id: SUBSCRIPTION_ID,
+    status: "vip",
+    vipUntil: base + months * 30 * 24 * 60 * 60 * 1000,
+    receiptSentAt: current?.receiptSentAt ?? null,
+  });
 }
 
 /** Count one significant action. Returns the updated total. */
@@ -195,6 +347,12 @@ export async function bumpUsage(): Promise<number> {
 export async function needsLogin(): Promise<boolean> {
   const account = await getAccount();
   if (account) return false;
+  const u = await getUsage();
+  return (u?.count ?? 0) >= FREE_USAGE_LIMIT;
+}
+
+export async function needsAiUpgrade(): Promise<boolean> {
+  if (await isVipActive()) return false;
   const u = await getUsage();
   return (u?.count ?? 0) >= FREE_USAGE_LIMIT;
 }

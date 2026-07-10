@@ -3,6 +3,7 @@
 import { Icon } from "./icons";
 import { useLang } from "./LangProvider";
 import { googleUrl, neshanUrl, type LatLng } from "@/lib/gyms";
+import ContactMessageModal from "./ContactMessageModal";
 
 /** Neshan brand mark — teal rounded tile with a white compass pin (approx). */
 export function NeshanLogo({ className = "size-4" }: { className?: string }) {
@@ -23,10 +24,20 @@ export default function PlaceActions({
   place,
   userPos,
   size = "sm",
+  source,
 }: {
-  place: { lat: number; lng: number; phone?: string | null; website?: string | null };
+  place: {
+    id?: string;
+    name?: string;
+    kind?: string;
+    lat: number;
+    lng: number;
+    phone?: string | null;
+    website?: string | null;
+  };
   userPos?: LatLng | null;
   size?: "sm" | "md";
+  source?: "gym" | "store" | "pharmacy" | "drugstore";
 }) {
   const { t } = useLang();
   const pad = size === "md" ? "px-3 py-2 text-sm" : "px-2.5 py-1 text-[11px]";
@@ -74,6 +85,16 @@ export default function PlaceActions({
           <Icon name="globe" className="size-3.5" /> {t("gym.site")}
         </a>
       )}
+
+      <ContactMessageModal
+        place={{
+          source: source ?? (place.kind === "pharmacy" ? "pharmacy" : "gym"),
+          id: place.id ?? null,
+          name: place.name ?? null,
+          phone: place.phone ?? null,
+        }}
+        size={size}
+      />
     </div>
   );
 }

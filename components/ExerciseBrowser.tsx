@@ -96,7 +96,7 @@ export default function ExerciseBrowser({
     const muscles = muscleFilter && muscleFilter.length > 0 ? muscleFilter : null;
     const groupMuscles =
       muscles || group === "All" ? null : musclesForFocus([group]);
-    return index.all.filter((ex) => {
+    const filtered = index.all.filter((ex) => {
       if (!matchesView(ex.category, view)) return false;
       if (!levelAllows(settings.level, ex.difficulty)) return false;
       if (place === "home" && !HOME_EQUIP.has(ex.category)) return false;
@@ -109,9 +109,18 @@ export default function ExerciseBrowser({
       if (query && !ex.name.toLowerCase().includes(query)) return false;
       return true;
     });
-  }, [index, q, view, equip, place, group, muscleFilter, settings.level]);
+    return filtered.sort((a, b) => {
+      const av = a.videos[gender].length ? 0 : 1;
+      const bv = b.videos[gender].length ? 0 : 1;
+      if (av !== bv) return av - bv;
+      return a.name.localeCompare(b.name);
+    });
+  }, [index, q, view, equip, place, group, muscleFilter, settings.level, gender]);
 
-  useEffect(() => setLimit(PAGE), [q, view, equip, place, group, muscleFilter]);
+  useEffect(() => {
+    const id = window.setTimeout(() => setLimit(PAGE), 0);
+    return () => window.clearTimeout(id);
+  }, [q, view, equip, place, group, muscleFilter]);
 
   function changeGender(g: Gender) {
     setGender(g);

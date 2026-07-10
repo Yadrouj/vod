@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">رمق</string>
+    <string name="loading_app">در حال آماده‌سازی برنامه...</string>
+    <string name="loading_error">ارتباط برقرار نشد. اینترنت یا آدرس سرور را بررسی کنید.</string>
+    <string name="pick_file">انتخاب فایل</string>
+</resources>

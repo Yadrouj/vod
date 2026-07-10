@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Icon, type IconName } from "./icons";
+import { LogoMark } from "./Logo";
 
 /**
  * A staged "designing your plan…" overlay. Cycles through steps with a progress
@@ -40,8 +41,14 @@ export default function GeneratingOverlay({
       <div className="relative flex size-24 items-center justify-center">
         <span className="absolute inset-0 animate-ping rounded-full bg-brand/30" />
         <span className="absolute inset-2 animate-pulse rounded-full bg-brand/20" />
-        <span className="relative flex size-16 items-center justify-center rounded-full bg-brand text-brandink shadow-[0_0_40px_-4px_rgb(184_242_74/0.7)]">
-          <Icon name={icon} className="size-8" />
+        <span className="relative flex size-16 items-center justify-center">
+          {icon === "sparkles" ? (
+            <LogoMark className="size-16 drop-shadow-[0_0_28px_rgb(184_242_74/0.5)]" />
+          ) : (
+            <span className="flex size-16 items-center justify-center rounded-2xl bg-brand text-brandink shadow-[0_0_40px_-4px_rgb(184_242_74/0.7)]">
+              <Icon name={icon} className="size-8" />
+            </span>
+          )}
         </span>
       </div>
 

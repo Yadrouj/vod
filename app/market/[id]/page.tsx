@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { Button, Spinner } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import AppConfirmDialog from "@/components/AppConfirmDialog";
+import { showInAppMessage } from "@/components/InAppMessages";
 import { useLang } from "@/components/LangProvider";
 import { tFocus, tTag, tWeekday } from "@/lib/i18n";
 import { useExercises } from "@/lib/exercises";
@@ -30,6 +32,10 @@ function seedFromId(s: string): number {
   return Math.abs(h) % 2147483647 || 1;
 }
 
+function createdAtNow() {
+  return Date.now();
+}
+
 function mealName(t: (k: string) => string, name: string) {
   if (name.startsWith("Snack")) {
     const n = name.split(" ")[1];
@@ -51,6 +57,7 @@ export default function PlanDetailPage({
   const existingDiet = useDietProfile();
   const settings = useSettings();
   const [applying, setApplying] = useState(false);
+  const [confirmApply, setConfirmApply] = useState<"gym" | "diet" | null>(null);
 
   if (!plan) {
     return (
@@ -68,14 +75,32 @@ export default function PlanDetailPage({
     const gymPlan = plan;
     async function apply() {
       if (!index) return;
-      if (!confirm(t("mkt.replaceConfirm", { name }))) return;
       if (!(await gateAction((url) => router.push(url)))) return;
       setApplying(true);
       await saveProgram(applyGymPlan(gymPlan, index));
+      showInAppMessage({
+        tone: "success",
+        body: lang === "fa" ? "دینگ! برنامه تمرین روی ریل عضله‌ها نشست." : "Ding. Training plan locked onto the muscle rails.",
+        durationMs: 2800,
+      });
       router.push("/program");
     }
     return (
-      <GymView plan={gymPlan} name={name} desc={desc} index={index} applying={applying} onApply={apply} />
+      <>
+        <AppConfirmDialog
+          open={confirmApply === "gym"}
+          tone="warn"
+          icon="dumbbell"
+          title={lang === "fa" ? "برنامه تمرین جایگزین شود؟" : "Replace training plan?"}
+          body={t("mkt.replaceConfirm", { name })}
+          confirmLabel={t("mkt.use")}
+          cancelLabel={t("common.cancel")}
+          busy={applying}
+          onCancel={() => setConfirmApply(null)}
+          onConfirm={apply}
+        />
+        <GymView plan={gymPlan} name={name} desc={desc} index={index} applying={applying} onApply={() => setConfirmApply("gym")} />
+      </>
     );
   }
 
@@ -88,19 +113,35 @@ export default function PlanDetailPage({
   const supps = recommendSupplements(profile).slice(0, 3);
 
   async function applyDiet() {
-    if (!confirm(t("mkt.useDietConfirm", { name }))) return;
     if (!(await gateAction((url) => router.push(url)))) return;
     setApplying(true);
     await saveDietProfile(profile);
     await saveDietPlan({
       ...generatePlan(profile, targets, 7, seedFromId(dietPlan.id)),
-      createdAt: Date.now(),
+      createdAt: createdAtNow(),
+    });
+    showInAppMessage({
+      tone: "success",
+      body: lang === "fa" ? "دینگ! برنامه تغذیه آماده سوخت‌رسانی شد." : "Ding. Nutrition plan is fueled and ready.",
+      durationMs: 2800,
     });
     router.push("/diet");
   }
 
   return (
     <div className="px-4 pb-24 pt-6">
+      <AppConfirmDialog
+        open={confirmApply === "diet"}
+        tone="warn"
+        icon="diet"
+        title={lang === "fa" ? "برنامه تغذیه فعال شود؟" : "Apply nutrition plan?"}
+        body={t("mkt.useDietConfirm", { name })}
+        confirmLabel={t("mkt.use")}
+        cancelLabel={t("common.cancel")}
+        busy={applying}
+        onCancel={() => setConfirmApply(null)}
+        onConfirm={applyDiet}
+      />
       <BackLink label={t("mkt.title")} />
       <h1 className="mt-2 text-2xl font-extrabold text-ink">{name}</h1>
       <p className="mt-1 text-sm text-muted">{desc}</p>
@@ -165,7 +206,7 @@ export default function PlanDetailPage({
 
       <p className="mt-4 text-xs text-faint">{t("mkt.statsNote")}</p>
 
-      <Button className="mt-5 w-full" onClick={applyDiet} disabled={applying}>
+      <Button className="mt-5 w-full" onClick={() => setConfirmApply("diet")} disabled={applying}>
         {applying ? t("mkt.applying") : t("mkt.use")}
       </Button>
     </div>
@@ -278,6 +319,13 @@ function Stat({ label, value }: { label: string; value: string }) {
 function TrainerCard({ plan }: { plan: MarketPlan }) {
   const { t, lang } = useLang();
   const trainer = trainerOf(plan);
+  const trainerName = lang === "fa" ? trainer.nameFa : trainer.name;
+  const byline =
+    trainer.isPartner === true
+      ? t("mkt.by", { name: trainerName })
+      : lang === "fa"
+        ? `پروفایل عمومی مرتبط: ${trainerName}`
+        : `Related public profile: ${trainerName}`;
   return (
     <Link
       href={`/market/trainer/${trainer.id}`}
@@ -286,12 +334,23 @@ function TrainerCard({ plan }: { plan: MarketPlan }) {
       <TrainerAvatar trainer={trainer} size="size-11" />
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-1 truncate text-sm font-extrabold text-ink">
-          {t("mkt.by", { name: lang === "fa" ? trainer.nameFa : trainer.name })}
-          <Icon name="verified" className="size-4 flex-shrink-0 text-brand" />
+          {byline}
+          {trainer.isPartner === true ? (
+            <Icon name="verified" className="size-4 flex-shrink-0 text-brand" />
+          ) : (
+            <span className="rounded-full bg-card2 px-2 py-0.5 text-[10px] text-faint ring-1 ring-line">
+              {lang === "fa" ? "عمومی" : "Public"}
+            </span>
+          )}
         </p>
         <p className="truncate text-xs text-muted">
           {lang === "fa" ? trainer.credFa : trainer.cred}
         </p>
+        {trainer.isPartner !== true && (
+          <p className="mt-0.5 truncate text-[11px] text-faint">
+            {lang === "fa" ? "اطلاعات از منابع باز و لینک‌های رسمی است." : "Open-source directory information."}
+          </p>
+        )}
         <p className="mt-0.5 text-[11px] font-bold text-brand">{t("trn.viewProfile")}</p>
       </div>
       <Icon name="chevronRight" className="size-5 flex-shrink-0 text-faint flip-rtl" />

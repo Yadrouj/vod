@@ -10,12 +10,44 @@ import type { Exercise, Filters } from "./types";
 let exercisesPromise: Promise<Exercise[]> | null = null;
 let filtersPromise: Promise<Filters> | null = null;
 
+interface VideoManifestItem {
+  url: string;
+  localUrl?: string;
+}
+
+function applyLocalVideoUrls(exercises: Exercise[], manifest: VideoManifestItem[]): Exercise[] {
+  const localByUrl = new Map(
+    manifest
+      .map((item) => [item.url, item.localUrl])
+      .filter((x): x is [string, string] => Boolean(x[1]))
+  );
+  if (!localByUrl.size) return exercises;
+  return exercises.map((exercise) => ({
+    ...exercise,
+    videos: {
+      male: exercise.videos.male.map((clip) => ({
+        ...clip,
+        localUrl: localByUrl.get(clip.url),
+      })),
+      female: exercise.videos.female.map((clip) => ({
+        ...clip,
+        localUrl: localByUrl.get(clip.url),
+      })),
+    },
+  }));
+}
+
 export function loadExercises(): Promise<Exercise[]> {
   if (!exercisesPromise) {
-    exercisesPromise = fetch("/data/exercises.json").then((r) => {
-      if (!r.ok) throw new Error("Failed to load exercises dataset");
-      return r.json();
-    });
+    exercisesPromise = Promise.all([
+      fetch("/data/exercises.json").then((r) => {
+        if (!r.ok) throw new Error("Failed to load exercises dataset");
+        return r.json() as Promise<Exercise[]>;
+      }),
+      fetch("/data/musclewiki-video-manifest.json")
+        .then((r) => (r.ok ? (r.json() as Promise<VideoManifestItem[]>) : []))
+        .catch(() => []),
+    ]).then(([exercises, manifest]) => applyLocalVideoUrls(exercises, manifest));
   }
   return exercisesPromise;
 }
@@ -62,10 +94,7 @@ export function useExercises(): { index: ExerciseIndex | null; error: string | n
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (indexCache) {
-      setIndex(indexCache);
-      return;
-    }
+    if (indexCache) return;
     let alive = true;
     loadExercises()
       .then((all) => {

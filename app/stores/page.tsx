@@ -39,8 +39,11 @@ export default function StoresPage() {
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadStores().then(setStores).catch(() => setStores([]));
-    if (localStorage.getItem("ramagh-map-offline") === "1") setDlDone(true);
+    const id = window.setTimeout(() => {
+      loadStores().then(setStores).catch(() => setStores([]));
+      if (localStorage.getItem("ramagh-map-offline") === "1") setDlDone(true);
+    }, 0);
+    return () => window.clearTimeout(id);
   }, []);
 
   function locate() {
@@ -247,7 +250,7 @@ function StoreRow({
       </Link>
 
       <div className="flex flex-wrap items-center gap-1.5 border-t border-line/60 px-3 py-2">
-        <PlaceActions place={store} userPos={userPos} />
+        <PlaceActions place={store} userPos={userPos} source={store.kind === "pharmacy" ? "pharmacy" : "store"} />
       </div>
     </div>
   );

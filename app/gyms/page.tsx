@@ -33,11 +33,15 @@ export default function GymsPage() {
   const [query, setQuery] = useState("");
   const [dlPct, setDlPct] = useState<number | null>(null);
   const [dlDone, setDlDone] = useState(false);
+  const [adSeed] = useState(() => Math.floor(Math.random() * 1_000_000));
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadGyms().then(setGyms).catch(() => setGyms([]));
-    if (localStorage.getItem("ramagh-map-offline") === "1") setDlDone(true);
+    const id = window.setTimeout(() => {
+      loadGyms().then(setGyms).catch(() => setGyms([]));
+      if (localStorage.getItem("ramagh-map-offline") === "1") setDlDone(true);
+    }, 0);
+    return () => window.clearTimeout(id);
   }, []);
 
   function locate() {
@@ -89,14 +93,17 @@ export default function GymsPage() {
     return arr;
   }, [gyms, query, userPos]);
 
-  const shown = list.slice(0, LIST_CAP);
+  const promotedGym = useMemo(() => pickPromoted(list, adSeed), [list, adSeed]);
+  const organicList = promotedGym ? list.filter((g) => g.id !== promotedGym.id) : list;
+  const shown = organicList.slice(0, LIST_CAP);
   const mapPlaces = useMemo(() => list.slice(0, 250), [list]);
 
   const [stats, setStats] = useState<Record<string, { avg: number; count: number }>>({});
-  const shownKey = shown.map((g) => g.id).join(",");
+  const statTargets = promotedGym ? [promotedGym, ...shown] : shown;
+  const shownKey = statTargets.map((g) => g.id).join(",");
   useEffect(() => {
-    if (!shown.length) return;
-    fetchStats(shown.map((g) => g.id)).then((s) => setStats((prev) => ({ ...prev, ...s })));
+    if (!statTargets.length) return;
+    fetchStats(statTargets.map((g) => g.id)).then((s) => setStats((prev) => ({ ...prev, ...s })));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shownKey]);
 
@@ -153,6 +160,15 @@ export default function GymsPage() {
       <p className="mt-3 text-xs font-bold text-faint">{t("gym.countN", { n: n(list.length) })}</p>
 
       <div ref={listRef} className="mt-2 space-y-2">
+        {promotedGym && (
+          <GymRow
+            gym={promotedGym}
+            dist={userPos ? distanceM(userPos, promotedGym) : null}
+            userPos={userPos}
+            stat={stats[promotedGym.id]}
+            sponsored
+          />
+        )}
         {shown.map((g) => (
           <GymRow
             key={g.id}
@@ -180,11 +196,13 @@ function GymRow({
   dist,
   userPos,
   stat,
+  sponsored = false,
 }: {
   gym: Gym;
   dist: number | null;
   userPos: LatLng | null;
   stat?: { avg: number; count: number };
+  sponsored?: boolean;
 }) {
   const { t, n } = useLang();
   const kindLabel = t(`gym.kind.${gym.kind}`);
@@ -196,7 +214,12 @@ function GymRow({
       : t("gym.km", { n: n((dist / 1000).toFixed(1)) });
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-card ring-1 ring-line transition-colors">
+    <div
+      className={cn(
+        "overflow-hidden rounded-2xl bg-card ring-1 transition-colors",
+        sponsored ? "ring-2 ring-brand/70 shadow-[0_0_34px_-18px_rgb(184_242_74/0.95)]" : "ring-line"
+      )}
+    >
       <Link href={`/gyms/${gym.id}`} className="flex items-center gap-3 px-3.5 py-4 transition-colors hover:bg-card2">
         <span
           className={cn(
@@ -207,9 +230,17 @@ function GymRow({
           <Icon name={gym.kind === "pool" ? "diet" : "dumbbell"} className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold text-ink">{gym.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="truncate text-sm font-bold text-ink">{gym.name}</p>
+            {sponsored && (
+              <span className="flex-shrink-0 rounded-full bg-brand px-2 py-0.5 text-[9px] font-black text-brandink">
+                تبلیغات
+              </span>
+            )}
+          </div>
           <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-faint">
             <span>{kindLabel}</span>
+            {sponsored && <span className="font-black text-brand">اسپانسر شده برای دیده‌شدن بیشتر</span>}
             {gym.women && <span className="rounded-full bg-pink-500/15 px-1.5 font-bold text-pink-300">{t("gym.women")}</span>}
             {stat && stat.count > 0 && (
               <span className="inline-flex items-center gap-0.5 font-bold text-amber-400">
@@ -230,8 +261,14 @@ function GymRow({
       </Link>
 
       <div className="flex flex-wrap items-center gap-1.5 border-t border-line/60 px-3 py-2">
-        <PlaceActions place={gym} userPos={userPos} />
+        <PlaceActions place={gym} userPos={userPos} source="gym" />
       </div>
     </div>
   );
+}
+
+function pickPromoted<T extends { id: string }>(items: T[], seedValue: number): T | null {
+  if (!items.length) return null;
+  const pool = items.slice(0, Math.min(items.length, 30));
+  return pool[seedValue % pool.length] ?? null;
 }

@@ -171,6 +171,8 @@ export interface TrainerContacts {
   phone?: string; // tel: number
   email?: string;
   website?: string;
+  youtube?: string;
+  x?: string;
 }
 
 export interface Specialty {
@@ -199,6 +201,8 @@ export interface Trainer {
   avatar: AvatarSpec;
   contacts: TrainerContacts;
   news: TrainerNews[];
+  isPartner?: boolean;
+  sourceUrl?: string;
 }
 
 const SP = {
@@ -329,15 +333,150 @@ const RAW_TRAINERS: Trainer[] = [
   },
 ];
 
-// Each coach shows a real photo from public/trainers/<id>.jpg; the illustrated
-// portrait in <TrainerAvatar> stays as a graceful fallback if the file is missing.
-export const TRAINERS: Trainer[] = RAW_TRAINERS.map((t) => ({
+const REAL_PUBLIC_TRAINERS: Trainer[] = [
+  {
+    id: "t1", name: "Masoud Zatparvar", nameFa: "جاویدنام مسعود ذات‌پرور", gender: "male",
+    cred: "late bodybuilding champion · memorial AI profile", credFa: "قهرمان فقید پرورش‌اندام · صفحه یادبود هوش مصنوعی",
+    color: "#7bd93a", photo: "/trainers/t1.jpg", city: "Rasht", cityFa: "رشت", years: 25, rating: 5, clients: 1404,
+    bio: "Memorial public profile for Masoud (Mehdi) Zatparvar, a Rasht-born bodybuilding champion and coach with a master's degree in sports physiology. According to public reports, he was killed in Rasht on January 8, 2026 / 18 Dey 1404 after being shot during protests. This page is managed by AI in his memory and is not an official family or coaching account.",
+    bioFa: "پروفایل یادبود جاویدنام مسعود (مهدی) ذات‌پرور؛ قهرمان پرورش‌اندام اهل رشت، مربی بدنسازی و دانش‌آموخته کارشناسی ارشد فیزیولوژی ورزشی. بر اساس گزارش‌های عمومی، او پنج‌شنبه ۱۸ دی ۱۴۰۴ در جریان اعتراضات شهر رشت بر اثر اصابت گلوله جنگی جان باخت. این صفحه توسط هوش مصنوعی رمق به یاد جاویدنام مسعود ذات‌پرور اداره می‌شود و حساب رسمی خانواده یا همکاری مربیگری نیست.",
+    specialties: [SP.hypertrophy, SP.contest, SP.strength, SP.programming],
+    avatar: { skin: "#d69a6c", hair: "#1f1712", hairStyle: "quiff", beard: "beard", top: "#2e7d32" },
+    contacts: { website: "fa.wikipedia.org/wiki/مسعود_ذات‌پرور" },
+    news: [
+      { date: "2026-07-10", title: "Memorial AI profile", titleFa: "پروفایل یادبود جاویدنام", body: "This AI-managed page preserves Masoud Zatparvar's public sports legacy with source links.", bodyFa: "این صفحه با هوش مصنوعی و با لینک به منابع عمومی، برای زنده نگه داشتن یاد و میراث ورزشی جاویدنام مسعود ذات‌پرور ساخته شده است." },
+      { date: "2026-01-10", title: "Reported killed in Rasht protests", titleFa: "گزارش جان‌باختن در اعتراضات رشت", body: "Public reports say he was killed by gunfire during protests in Rasht.", bodyFa: "منابع عمومی گزارش کرده‌اند که او در اعتراضات رشت با اصابت گلوله جان باخت." },
+    ],
+    isPartner: false,
+    sourceUrl: "https://fa.wikipedia.org/wiki/مسعود_ذات‌پرور",
+  },
+  {
+    id: "t2", name: "Mahsa Akbarimehr", nameFa: "مهسا اکبری‌مهر", gender: "female",
+    cred: "First Iranian IFBB Bikini Pro · online fitness coach", credFa: "اولین بانوی ایرانی IFBB Bikini Pro · مربی آنلاین فیتنس",
+    color: "#56b8ff", photo: "https://www.girlswithmuscle.com/images/full/820229.jpg", city: "United States", cityFa: "آمریکا", years: 10, rating: 4.8, clients: 115000,
+    bio: "Public profile for Mahsa Akbarimehr, an Iranian IFBB Bikini Pro and online fitness, fat-loss, and posing coach. Official social links are shown for contact.",
+    bioFa: "پروفایل عمومی مهسا اکبری‌مهر، IFBB Bikini Pro ایرانی و مربی آنلاین فیتنس، کاهش چربی و پوزینگ. برای ارتباط از لینک‌های رسمی استفاده کنید.",
+    specialties: [SP.women, SP.fatloss, SP.hypertrophy, SP.contest],
+    avatar: { skin: "#e8b48c", hair: "#2a2018", hairStyle: "pony", top: "#1e88e5" },
+    contacts: { instagram: "mahsa_ifbbpro" },
+    news: [{ date: "2026-07-10", title: "IFBB Bikini Pro profile", titleFa: "پروفایل IFBB Bikini Pro", body: "Public directory entry with official Instagram.", bodyFa: "معرفی عمومی با لینک اینستاگرام رسمی." }],
+    isPartner: false,
+    sourceUrl: "https://www.instagram.com/mahsa_ifbbpro/",
+  },
+  {
+    id: "t3", name: "Hany Rambod", nameFa: "هانی رامبد", gender: "male",
+    cred: "25x Olympia-winning coach · FST-7 creator", credFa: "مربی قهرمانان المپیا · خالق سیستم FST-7",
+    color: "#a78bfa", photo: "https://www.hanyrambod.com/wp-content/uploads/2025/07/Hany-TheTruthPodcast.png", city: "Dallas", cityFa: "دالاس", years: 20, rating: 4.9, clients: 3000000,
+    bio: "Public profile for Hany Rambod, the Iranian-rooted bodybuilding coach known as The Pro Creator, with official FST-7 and social links.",
+    bioFa: "پروفایل عمومی هانی رامبد، مربی بدنسازی ایرانی‌تبار معروف به Pro Creator و خالق FST-7، همراه با لینک‌های رسمی.",
+    specialties: [SP.contest, SP.hypertrophy, SP.strength, SP.programming],
+    avatar: { skin: "#d69a6c", hair: "#2a2018", hairStyle: "short", beard: "stubble", top: "#5e35b1" },
+    contacts: { instagram: "hanyrambod", website: "hanyrambod.com", youtube: "@hanyrambod" },
+    news: [{ date: "2026-07-10", title: "FST-7 public profile", titleFa: "پروفایل عمومی FST-7", body: "Official website and Instagram are linked.", bodyFa: "سایت رسمی و اینستاگرام در بخش ارتباط قرار گرفت." }],
+    isPartner: false,
+    sourceUrl: "https://www.hanyrambod.com/",
+  },
+  {
+    id: "t4", name: "Damoon Ashtary", nameFa: "دامون اشتری", gender: "male",
+    cred: "sports nutrition specialist · Fitamoon founder", credFa: "متخصص تغذیه ورزشی · بنیان‌گذار فیتامون",
+    color: "#ff8fb0", photo: "/trainers/t4.png", city: "Dubai", cityFa: "دبی", years: 15, rating: 4.8, clients: 30000,
+    bio: "Public profile for Damoon Ashtary, a sports nutrition specialist and fitness coach associated with Fitamoon. Official website and Instagram are shown.",
+    bioFa: "پروفایل عمومی دامون اشتری، متخصص تغذیه ورزشی و مربی بدنسازی مرتبط با فیتامون. لینک رسمی سایت و اینستاگرام در صفحه آمده است.",
+    specialties: [SP.nutrition, SP.fatloss, SP.hypertrophy, SP.performance],
+    avatar: { skin: "#d9a273", hair: "#211a13", hairStyle: "quiff", beard: "stubble", top: "#ec407a" },
+    contacts: { instagram: "damoon_ashtary", website: "fitamoon.com" },
+    news: [{ date: "2026-07-10", title: "Fitamoon public profile", titleFa: "پروفایل عمومی فیتامون", body: "Official Fitamoon website is linked.", bodyFa: "سایت رسمی فیتامون در بخش ارتباط اضافه شد." }],
+    isPartner: false,
+    sourceUrl: "https://fitamoon.com/",
+  },
+  {
+    id: "t5", name: "Dr. Omid Salehian", nameFa: "دکتر امید صالحیان", gender: "male",
+    cred: "sports nutrition and fitness specialist", credFa: "متخصص تغذیه ورزشی و تناسب اندام",
+    color: "#ffc94d", photo: "https://drsalehian.ir/wp-content/uploads/2025/02/%D8%AF%DA%A9%D8%AA%D8%B1-%D8%A7%D9%85%DB%8C%D8%AF-%D8%B5%D8%A7%D9%84%D8%AD%DB%8C%D8%A7%D9%86-%D9%85%D8%AA%D8%AE%D8%B5%D8%B5-%D8%AA%D8%BA%D8%B0%DB%8C%D9%87-%D9%88%D8%B1%D8%B2%D8%B4%DB%8C.jpg", city: "Tehran", cityFa: "تهران", years: 20, rating: 4.8, clients: 50000,
+    bio: "Public profile for Dr. Omid Salehian, sports nutrition and fitness specialist, author, translator, and educator with official website links.",
+    bioFa: "پروفایل عمومی دکتر امید صالحیان، متخصص تغذیه ورزشی و تناسب اندام، مدرس و مولف/مترجم، همراه با لینک‌های رسمی.",
+    specialties: [SP.nutrition, SP.clinical, SP.performance, SP.programming],
+    avatar: { skin: "#c98a5e", hair: "#17130f", hairStyle: "short", beard: "stubble", top: "#f9a825" },
+    contacts: { instagram: "dr.salehian", website: "drsalehian.ir" },
+    news: [{ date: "2026-07-10", title: "Sports nutrition profile", titleFa: "پروفایل تغذیه ورزشی", body: "Official website and Instagram are linked.", bodyFa: "سایت و اینستاگرام رسمی در صفحه قرار گرفت." }],
+    isPartner: false,
+    sourceUrl: "https://drsalehian.ir/",
+  },
+  {
+    id: "t6", name: "Dr. Mohammad Sadegh Kermany", nameFa: "دکتر محمد صادق کرمانی", gender: "male",
+    cred: "weight management and online diet brand", credFa: "رژیم درمانی و مدیریت وزن آنلاین",
+    color: "#3ee08f", photo: "/trainers/t6.jpg", city: "Iran", cityFa: "ایران", years: 25, rating: 4.8, clients: 1000000,
+    bio: "Public profile for Dr. Kermany and the Behandam/Kermany online diet ecosystem. This page links to the official Kermany website and Instagram.",
+    bioFa: "پروفایل عمومی دکتر کرمانی و مجموعه رژیم آنلاین به‌اندام/کرمانی. لینک سایت رسمی و اینستاگرام در صفحه قرار دارد.",
+    specialties: [SP.clinical, SP.nutrition, SP.fatloss, SP.gut],
+    avatar: { skin: "#ecc2a0", hair: "#241c17", hairStyle: "short", top: "#43a047" },
+    contacts: { instagram: "drkermany", website: "kermany.com", phone: "02532143", email: "info@kermany.com" },
+    news: [{ date: "2026-07-10", title: "Official diet ecosystem", titleFa: "اکوسیستم رسمی رژیم آنلاین", body: "Official Kermany website and app links are used.", bodyFa: "لینک رسمی سایت کرمانی و اطلاعات عمومی آن استفاده شده است." }],
+    isPartner: false,
+    sourceUrl: "https://kermany.com/",
+  },
+  {
+    id: "t7", name: "Sattar Mirlohi", nameFa: "ستار میرلوحی", gender: "male",
+    cred: "personal trainer · exercise physiologist", credFa: "مربی خصوصی · فیزیولوژیست ورزشی",
+    color: "#b8f24a", photo: "https://ipanel.istgah.com/images/2022/11/21/-2592458_7ce4Df_r.jpg", city: "Tehran", cityFa: "تهران", years: 12, rating: 4.7, clients: 700000,
+    bio: "Public profile for Sattar Mirlohi, a Tehran-based personal and online fitness trainer known publicly as Sattar Fit.",
+    bioFa: "پروفایل عمومی ستار میرلوحی، مربی خصوصی و آنلاین فیتنس در تهران که با نام ستار فیت شناخته می‌شود.",
+    specialties: [SP.fatloss, SP.hypertrophy, SP.programming, SP.strength],
+    avatar: { skin: "#d9a273", hair: "#211a13", hairStyle: "quiff", top: "#9ccc2b" },
+    contacts: { instagram: "sattar.fit" },
+    news: [{ date: "2026-07-10", title: "Sattar Fit profile", titleFa: "پروفایل ستار فیت", body: "Official Instagram is linked for updates.", bodyFa: "اینستاگرام رسمی برای پیگیری قرار گرفت." }],
+    isPartner: false,
+    sourceUrl: "https://www.instagram.com/sattar.fit/",
+  },
+  {
+    id: "t8", name: "Reza Eftekhar", nameFa: "رضا افتخار", gender: "male",
+    cred: "nutrition and diet therapy specialist", credFa: "متخصص تغذیه و رژیم‌درمانی",
+    color: "#ee5f7b", photo: "/trainers/t8.jpg", city: "Mashhad", cityFa: "مشهد", years: 10, rating: 4.7, clients: 5000,
+    bio: "Public profile for Reza Eftekhar, nutrition and diet therapy specialist in Mashhad, with public booking and Instagram references.",
+    bioFa: "پروفایل عمومی رضا افتخار، متخصص تغذیه و رژیم‌درمانی در مشهد، با ارجاع به منابع نوبت‌دهی و اینستاگرام عمومی.",
+    specialties: [SP.clinical, SP.nutrition, SP.fatloss, SP.gut],
+    avatar: { skin: "#eabf9c", hair: "#2b211a", hairStyle: "short", top: "#e91e63" },
+    contacts: { instagram: "eftekhar_diet", website: "eftekhardiet.ir" },
+    news: [{ date: "2026-07-10", title: "Nutrition directory profile", titleFa: "پروفایل عمومی تغذیه", body: "Public booking sources list the Instagram handle.", bodyFa: "منابع نوبت‌دهی عمومی آیدی اینستاگرام را ذکر کرده‌اند." }],
+    isPartner: false,
+    sourceUrl: "https://drdr.ir/dr/73822/%D8%B1%D8%B6%D8%A7-%D8%A7%D9%81%D8%AA%D8%AE%D8%A7%D8%B1/",
+  },
+  {
+    id: "t9", name: "Arash Rahbar", nameFa: "آرش رهبر", gender: "male",
+    cred: "IFBB Classic Physique Pro · 4x Olympian", credFa: "بدنساز حرفه‌ای IFBB Classic Physique · چهار بار حضور در Olympia",
+    color: "#4fd1c5", photo: "https://www.greatestphysiques.com/wp-content/uploads/2017/06/Arash-Rahbar.09.jpg", city: "United States", cityFa: "آمریکا", years: 15, rating: 4.8, clients: 614000,
+    bio: "Public profile for Arash Rahbar, an Iranian IFBB Classic Physique Pro and Olympia athlete known for training, physique education, and the Arash Method app.",
+    bioFa: "پروفایل عمومی آرش رهبر، بدنساز ایرانی IFBB Classic Physique Pro و ورزشکار المپیا که برای آموزش تمرین، فیزیک کلاسیک و Arash Method شناخته می‌شود. این صفحه معرفی عمومی است و به معنی همکاری رسمی با رمق نیست.",
+    specialties: [SP.hypertrophy, SP.contest, SP.strength, SP.programming],
+    avatar: { skin: "#d69a6c", hair: "#17130f", hairStyle: "short", beard: "beard", top: "#00897b" },
+    contacts: { instagram: "arashrahbar", website: "arashrahbar.com", youtube: "@ArashRahbar" },
+    news: [{ date: "2026-07-10", title: "Classic Physique public profile", titleFa: "پروفایل عمومی Classic Physique", body: "Official Instagram and public sources identify him as an IFBB Classic Physique Pro and Olympia athlete.", bodyFa: "اینستاگرام رسمی و منابع عمومی او را به عنوان IFBB Classic Physique Pro و ورزشکار Olympia معرفی می‌کنند." }],
+    isPartner: false,
+    sourceUrl: "https://www.instagram.com/arashrahbar/",
+  },
+];
+
+// Public figures use real public photos from official or directory sources; the
+// illustrated portrait in <TrainerAvatar> stays only as an error fallback.
+const ACTIVE_TRAINERS = REAL_PUBLIC_TRAINERS.length > 0 ? REAL_PUBLIC_TRAINERS : RAW_TRAINERS;
+
+export const TRAINERS: Trainer[] = ACTIVE_TRAINERS.map((t) => ({
   ...t,
   photo: t.photo ?? `/trainers/${t.id}.jpg`,
 }));
 
-const GYM_POOL = ["t1", "t2", "t3", "t5", "t7", "t8"];
-const DIET_POOL = ["t4", "t6", "t2", "t8"];
+export const GYM_TRAINER_IDS = ["t1", "t2", "t3", "t9"] as const;
+export const DIET_TRAINER_IDS = ["t4", "t5", "t6", "t8"] as const;
+
+const GYM_POOL = [...GYM_TRAINER_IDS];
+const DIET_POOL = [...DIET_TRAINER_IDS];
+
+export function trainersForPlanKind(kind: MarketPlan["kind"]): Trainer[] {
+  const ids = kind === "gym" ? GYM_TRAINER_IDS : DIET_TRAINER_IDS;
+  return ids
+    .map((id) => TRAINERS.find((trainer) => trainer.id === id))
+    .filter((trainer): trainer is Trainer => Boolean(trainer));
+}
 
 function hash(s: string): number {
   let h = 0;

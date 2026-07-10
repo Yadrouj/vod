@@ -8,10 +8,15 @@ import { Icon } from "@/components/icons";
 import GeneratingOverlay from "@/components/GeneratingOverlay";
 import { useLang } from "@/components/LangProvider";
 import { downloadDietPdf } from "@/lib/pdf";
-import { gateAction } from "@/lib/hooks";
-import { getDietPlan, getDietProfile, saveDietPlan } from "@/lib/db";
+import { gateAiFeature } from "@/lib/hooks";
 import {
-  GOAL_OPTIONS,
+  dietRegenerateStatus,
+  getDietPlan,
+  getDietProfile,
+  markDietPlanGenerated,
+  saveDietPlan,
+} from "@/lib/db";
+import {
   macroTargets,
   nutritionExtras,
   periWorkout,
@@ -41,6 +46,13 @@ function mealLabel(t: (k: string) => string, name: string): string {
   return t(`meal.${name}`);
 }
 
+function cooldownLabel(ms: number, lang: "fa" | "en", n: (v: string | number) => string): string {
+  const days = Math.floor(ms / 86_400_000);
+  const hours = Math.ceil((ms % 86_400_000) / 3_600_000);
+  if (days > 0) return lang === "fa" ? `${n(days)} روز و ${n(hours)} ساعت` : `${days}d ${hours}h`;
+  return lang === "fa" ? `${n(Math.max(1, hours))} ساعت` : `${Math.max(1, hours)}h`;
+}
+
 export default function DietPage() {
   const { t, lang, n } = useLang();
   const router = useRouter();
@@ -49,6 +61,10 @@ export default function DietPage() {
   const [plan, setPlan] = useState<DietPlan | null>(null);
   const [pending, setPending] = useState<DietPlan | null>(null);
   const [view, setView] = useState<"day" | "week">("day");
+  const [cooldown, setCooldown] = useState<{ remainingMs: number; nextAt: number | null }>({
+    remainingMs: 0,
+    nextAt: null,
+  });
 
   useEffect(() => {
     (async () => {
@@ -61,11 +77,17 @@ export default function DietPage() {
       const existing = await getDietPlan();
       if (existing) {
         setPlan(existing);
+        const status = await dietRegenerateStatus();
+        setCooldown({ remainingMs: status.remainingMs, nextAt: status.nextAt });
         setState("ready");
       } else {
         // First plan — show the "designing…" animation.
-        const pl = { ...generatePlan(p, macroTargets(p, p.bias), 7, newSeed()), createdAt: Date.now() };
+        const createdAt = Date.now();
+        const pl = { ...generatePlan(p, macroTargets(p, p.bias), 7, newSeed()), createdAt };
         await saveDietPlan(pl);
+        await markDietPlanGenerated(createdAt);
+        const status = await dietRegenerateStatus();
+        setCooldown({ remainingMs: status.remainingMs, nextAt: status.nextAt });
         setPending(pl);
         setState("generating");
       }
@@ -74,13 +96,22 @@ export default function DietPage() {
 
   async function regenerate() {
     if (!profile) return;
-    // Regenerating a plan counts toward the free quota.
-    if (!(await gateAction((url) => router.push(url)))) return;
+    const status = await dietRegenerateStatus();
+    if (!status.allowed) {
+      setCooldown({ remainingMs: status.remainingMs, nextAt: status.nextAt });
+      return;
+    }
+    // Regenerating a plan counts toward the free AI-feature quota.
+    if (!(await gateAiFeature((url) => router.push(url)))) return;
+    const createdAt = Date.now();
     const pl = {
       ...generatePlan(profile, macroTargets(profile, profile.bias), 7, newSeed()),
-      createdAt: Date.now(),
+      createdAt,
     };
     await saveDietPlan(pl);
+    await markDietPlanGenerated(createdAt);
+    const nextStatus = await dietRegenerateStatus();
+    setCooldown({ remainingMs: nextStatus.remainingMs, nextAt: nextStatus.nextAt });
     setPending(pl);
     setState("generating");
   }
@@ -148,6 +179,7 @@ export default function DietPage() {
   const days = view === "day" ? plan!.days.slice(0, 1) : plan!.days;
   const supplements = recommendSupplements(profile!);
   const peri = periWorkout(profile!);
+  const isCooldown = cooldown.remainingMs > 0;
 
   return (
     <div className="px-4 pt-6">
@@ -201,10 +233,17 @@ export default function DietPage() {
             ]}
           />
         </div>
-        <Button variant="secondary" onClick={regenerate}>
+        <Button variant="secondary" onClick={regenerate} disabled={isCooldown}>
           <Icon name="refresh" className="size-4" /> {t("diet.regenerate")}
         </Button>
       </div>
+      {isCooldown && (
+        <p className="mt-2 rounded-2xl bg-warn-dim px-3 py-2 text-xs font-bold text-warn ring-1 ring-warn/25">
+          {lang === "fa"
+            ? `برای تولید دوباره برنامه تغذیه باید ${cooldownLabel(cooldown.remainingMs, lang, n)} صبر کنی.`
+            : `You can regenerate this nutrition plan again in ${cooldownLabel(cooldown.remainingMs, lang, n)}.`}
+        </p>
+      )}
 
       <div className="mt-5 space-y-5">
         {days.map((meals, dayIdx) => (
@@ -339,7 +378,7 @@ function PeriCard({
   accent: "brand" | "orange";
   meal: PeriMeal;
 }) {
-  const { t, lang, n } = useLang();
+  const { lang, n } = useLang();
   const tone =
     accent === "brand"
       ? "bg-brand/15 text-brand ring-brand/25"

@@ -8,8 +8,10 @@ import VideoPlayer from "@/components/VideoPlayer";
 import { Button, Spinner, cn } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { useLang } from "@/components/LangProvider";
+import { showInAppMessage } from "@/components/InAppMessages";
 import { tWeekday } from "@/lib/i18n";
 import { addSession, DEFAULT_SETTINGS } from "@/lib/db";
+import { exitWorkoutCopy, hoursLeftInDay, workoutDing, workoutNudge } from "@/lib/personalization";
 import { useExercises } from "@/lib/exercises";
 import { estimateSessionKcal } from "@/lib/calories";
 import { gateAction, useDietProfile, useProgram, useSettings } from "@/lib/hooks";
@@ -53,6 +55,8 @@ export default function WorkoutPage({
   const [weight, setWeight] = useState(0);
   const [reps, setReps] = useState(0);
   const [startedAt] = useState(() => Date.now());
+  const [openedAt] = useState(() => new Date());
+  const [showExit, setShowExit] = useState(false);
   const timer = useCountdown();
   useWakeLock(phase !== "done");
 
@@ -60,30 +64,56 @@ export default function WorkoutPage({
 
   useEffect(() => {
     if (queue.length && !logs) {
-      setLogs(
-        queue.map((q) => ({
-          exerciseId: q.ex.id,
-          name: q.ex.name,
-          sets: Array.from({ length: q.pe.sets }, () => ({
-            reps: q.pe.reps,
-            weight: 0,
-            durationSec: q.pe.timed ? q.pe.reps : undefined,
-            done: false,
-          })),
-        }))
-      );
+      const id = window.setTimeout(() => {
+        setLogs(
+          queue.map((q) => ({
+            exerciseId: q.ex.id,
+            name: q.ex.name,
+            sets: Array.from({ length: q.pe.sets }, () => ({
+              reps: q.pe.reps,
+              weight: 0,
+              durationSec: q.pe.timed ? q.pe.reps : undefined,
+              done: false,
+            })),
+          }))
+        );
+      }, 0);
+      return () => window.clearTimeout(id);
     }
   }, [queue, logs]);
 
   useEffect(() => {
     if (!current) return;
-    setReps(current.pe.reps);
-    setWeight((prevW) => {
-      const prevSet = logs?.[exIndex]?.sets?.[setIndex - 1];
-      return prevSet?.weight ?? prevW ?? 0;
-    });
+    const id = window.setTimeout(() => {
+      setReps(current.pe.reps);
+      setWeight((prevW) => {
+        const prevSet = logs?.[exIndex]?.sets?.[setIndex - 1];
+        return prevSet?.weight ?? prevW ?? 0;
+      });
+    }, 0);
+    return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exIndex, setIndex, current?.ex.id]);
+
+  useEffect(() => {
+    if (!day) return;
+    const today = openedAt.toLocaleDateString("en-US", { weekday: "long" });
+    if (day.label !== today) return;
+    const key = `ramagh-workout-nudge-${dayId}-${openedAt.toDateString()}`;
+    if (sessionStorage.getItem(key) === "1") return;
+    sessionStorage.setItem(key, "1");
+    const msg = workoutNudge({
+      lang,
+      gender: settings.gender,
+      level: settings.level,
+      goal: settings.goal,
+      hoursLeft: hoursLeftInDay(openedAt),
+    });
+    const id = window.setTimeout(() => {
+      showInAppMessage({ tone: "info", title: msg.title, body: msg.body });
+    }, 650);
+    return () => window.clearTimeout(id);
+  }, [day, dayId, lang, openedAt, settings.gender, settings.goal, settings.level]);
 
   if (program === undefined || !index) return <Spinner />;
   if (!day)
@@ -141,6 +171,7 @@ export default function WorkoutPage({
       s.done = true;
       return next;
     });
+    showInAppMessage({ tone: "success", body: workoutDing("setDone", lang), durationMs: 2600 });
     const isFinal = !nextPos(exIndex, setIndex);
     if (isFinal) {
       timer.stop();
@@ -165,10 +196,12 @@ export default function WorkoutPage({
   }
   function skipRest() {
     timer.stop();
+    showInAppMessage({ tone: "info", body: workoutDing("skipRest", lang), durationMs: 2400 });
     advance();
   }
   function skipExercise() {
     timer.stop();
+    showInAppMessage({ tone: "warn", body: workoutDing("skipExercise", lang), durationMs: 2600 });
     if (exIndex + 1 < queue.length) {
       setExIndex(exIndex + 1);
       setSetIndex(0);
@@ -192,7 +225,7 @@ export default function WorkoutPage({
     router.push("/history");
   }
   function exit() {
-    if (confirm(t("wo.leaveConfirm"))) router.push("/");
+    setShowExit(true);
   }
 
   if (phase === "done") {
@@ -254,6 +287,16 @@ export default function WorkoutPage({
   }
 
   const nxt = nextPos(exIndex, setIndex);
+  const doneSetsSoFar = logs.reduce((sum, le) => sum + le.sets.filter((s) => s.done).length, 0);
+  const todayEn = openedAt.toLocaleDateString("en-US", { weekday: "long" });
+  const isToday = day.label === todayEn;
+  const nudge = workoutNudge({
+    lang,
+    gender: settings.gender,
+    level: settings.level,
+    goal: settings.goal,
+    hoursLeft: hoursLeftInDay(openedAt),
+  });
   const nextLabel = !nxt
     ? t("wo.finish")
     : nxt.ei === exIndex
@@ -262,6 +305,15 @@ export default function WorkoutPage({
 
   return (
     <div className="flex min-h-dvh flex-col bg-base px-4 pb-8 pt-4">
+      {showExit && (
+        <WorkoutExitModal
+          lang={lang}
+          hoursLeft={hoursLeftInDay(openedAt)}
+          doneSets={doneSetsSoFar}
+          onStay={() => setShowExit(false)}
+          onLeave={() => router.push("/")}
+        />
+      )}
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -278,6 +330,13 @@ export default function WorkoutPage({
           {t("wo.skip")} <Icon name="skip" className="size-4 flip-rtl" />
         </button>
       </div>
+
+      {isToday && (
+        <div className="mt-3 rounded-2xl bg-brand/10 p-3 text-sm ring-1 ring-brand/20">
+          <p className="font-extrabold text-brand">{nudge.title}</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted">{nudge.body}</p>
+        </div>
+      )}
 
       {phase === "rest" ? (
         <RestView timer={timer} ringTotal={ringTotal} nextLabel={nextLabel} nextIsNewExercise={Boolean(nxt) && nxt!.ei !== exIndex} onAdd={() => timer.addTime(15)} onSub={() => timer.addTime(-15)} onSkip={skipRest} onTogglePause={() => (timer.running ? timer.pause() : timer.resume())} />
@@ -469,6 +528,53 @@ function RestView({
       >
         {nextIsNewExercise ? t("wo.startNext") : t("wo.skipRest")}
       </Button>
+    </div>
+  );
+}
+
+function WorkoutExitModal({
+  lang,
+  hoursLeft,
+  doneSets,
+  onStay,
+  onLeave,
+}: {
+  lang: "fa" | "en";
+  hoursLeft: number;
+  doneSets: number;
+  onStay: () => void;
+  onLeave: () => void;
+}) {
+  const copy = exitWorkoutCopy({ lang, hoursLeft, doneSets });
+  return (
+    <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/75 px-4 pb-4 pt-16 sm:items-center">
+      <div className="w-full max-w-md rounded-3xl bg-card p-5 shadow-2xl shadow-black/60 ring-1 ring-line">
+        <div className="flex items-start gap-3">
+          <span className="flex size-11 flex-shrink-0 items-center justify-center rounded-2xl bg-warn-dim text-warn ring-1 ring-warn/25">
+            <Icon name="bell" className="size-6" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-lg font-black text-ink">{copy.title}</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted">{copy.body}</p>
+            {doneSets > 0 && (
+              <p className="mt-3 rounded-xl bg-brand/10 p-2 text-xs font-bold text-brand ring-1 ring-brand/20">
+                {lang === "fa"
+                  ? `${doneSets} ست انجام شده. حیفه همین‌جا خاموشش کنیم.`
+                  : `${doneSets} set${doneSets === 1 ? "" : "s"} already done. Too alive to vanish now.`}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <Button variant="secondary" onClick={onLeave} className="w-full">
+            {copy.leave}
+          </Button>
+          <Button onClick={onStay} className="w-full">
+            <Icon name="play" className="size-4 flip-rtl" />
+            {copy.stay}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

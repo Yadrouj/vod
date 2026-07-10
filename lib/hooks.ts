@@ -13,11 +13,13 @@ import {
   getSessions,
   getSettings,
   getSocial,
+  getSubscription,
   getUsage,
   needsLogin,
+  needsAiUpgrade,
   bumpUsage,
 } from "./db";
-import type { Account, Program, Session, Settings, SocialProfile, Usage } from "./types";
+import type { Account, Program, Session, Settings, SocialProfile, Subscription, Usage } from "./types";
 import type { DietProfile } from "./nutrition";
 import type { DietPlan } from "./foods";
 
@@ -65,6 +67,10 @@ export function useUsage(): Usage | undefined {
   return useLiveQuery(getUsage, []);
 }
 
+export function useSubscription(): Subscription | null | undefined {
+  return useLiveQuery(async () => (await getSubscription()) ?? null, []);
+}
+
 export function useSocial(): SocialProfile | null | undefined {
   // undefined = loading, null = not set up yet
   return useLiveQuery(async () => (await getSocial()) ?? null, []);
@@ -79,6 +85,15 @@ export function useSocial(): SocialProfile | null | undefined {
 export async function gateAction(navigate: (url: string) => void): Promise<boolean> {
   if (await needsLogin()) {
     navigate("/login");
+    return false;
+  }
+  await bumpUsage();
+  return true;
+}
+
+export async function gateAiFeature(navigate: (url: string) => void): Promise<boolean> {
+  if (await needsAiUpgrade()) {
+    navigate("/upgrade?feature=ai");
     return false;
   }
   await bumpUsage();

@@ -4,8 +4,11 @@ import "./globals.css";
 import AppShell from "@/components/AppShell";
 import BottomNav from "@/components/BottomNav";
 import CoachFab from "@/components/CoachFab";
+import AccountStatusSync from "@/components/AccountStatusSync";
+import InAppMessages from "@/components/InAppMessages";
 import SectionTracker from "@/components/SectionTracker";
 import { LangProvider } from "@/components/LangProvider";
+import ThemeProvider from "@/components/ThemeProvider";
 
 const vazir = Vazirmatn({
   variable: "--font-vazir",
@@ -40,10 +43,14 @@ export default function RootLayout({
     <html lang="fa" dir="rtl" className={`${vazir.variable} h-full antialiased`}>
       <body className="min-h-full">
         <LangProvider>
-          <AppShell>{children}</AppShell>
-          <SectionTracker />
-          <CoachFab />
-          <BottomNav />
+          <ThemeProvider>
+            <AppShell>{children}</AppShell>
+            <InAppMessages />
+            <AccountStatusSync />
+            <SectionTracker />
+            <CoachFab />
+            <BottomNav />
+          </ThemeProvider>
         </LangProvider>
       </body>
     </html>
