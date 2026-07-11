@@ -6,13 +6,12 @@ import { cn } from "@/components/ui";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const cinematic = pathname.startsWith("/vod");
   const admin = pathname.startsWith("/admin");
   const magazine = pathname.startsWith("/mag");
 
-  if (cinematic || admin) {
+  if (admin) {
     return (
-      <div className={cn("min-h-dvh text-ink", admin ? "bg-[#090b10]" : "bg-[#050505]")}>
+      <div className={cn("min-h-dvh text-ink bg-[#090b10]")}>
         {children}
       </div>
     );

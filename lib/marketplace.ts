@@ -353,7 +353,7 @@ const REAL_PUBLIC_TRAINERS: Trainer[] = [
   {
     id: "t2", name: "Mahsa Akbarimehr", nameFa: "مهسا اکبری‌مهر", gender: "female",
     cred: "First Iranian IFBB Bikini Pro · online fitness coach", credFa: "اولین بانوی ایرانی IFBB Bikini Pro · مربی آنلاین فیتنس",
-    color: "#56b8ff", photo: "https://www.girlswithmuscle.com/images/full/820229.jpg", city: "United States", cityFa: "آمریکا", years: 10, rating: 4.8, clients: 115000,
+    color: "#56b8ff", photo: "/trainers/t2.jpg", city: "United States", cityFa: "آمریکا", years: 10, rating: 4.8, clients: 115000,
     bio: "Public profile for Mahsa Akbarimehr, an Iranian IFBB Bikini Pro and online fitness, fat-loss, and posing coach. Official social links are shown for contact.",
     bioFa: "پروفایل عمومی مهسا اکبری‌مهر، IFBB Bikini Pro ایرانی و مربی آنلاین فیتنس، کاهش چربی و پوزینگ. برای ارتباط از لینک‌های رسمی استفاده کنید.",
     specialties: [SP.women, SP.fatloss, SP.hypertrophy, SP.contest],
@@ -366,7 +366,7 @@ const REAL_PUBLIC_TRAINERS: Trainer[] = [
   {
     id: "t3", name: "Hany Rambod", nameFa: "هانی رامبد", gender: "male",
     cred: "25x Olympia-winning coach · FST-7 creator", credFa: "مربی قهرمانان المپیا · خالق سیستم FST-7",
-    color: "#a78bfa", photo: "https://www.hanyrambod.com/wp-content/uploads/2025/07/Hany-TheTruthPodcast.png", city: "Dallas", cityFa: "دالاس", years: 20, rating: 4.9, clients: 3000000,
+    color: "#a78bfa", photo: "/trainers/t3.jpg", city: "Dallas", cityFa: "دالاس", years: 20, rating: 4.9, clients: 3000000,
     bio: "Public profile for Hany Rambod, the Iranian-rooted bodybuilding coach known as The Pro Creator, with official FST-7 and social links.",
     bioFa: "پروفایل عمومی هانی رامبد، مربی بدنسازی ایرانی‌تبار معروف به Pro Creator و خالق FST-7، همراه با لینک‌های رسمی.",
     specialties: [SP.contest, SP.hypertrophy, SP.strength, SP.programming],
@@ -392,7 +392,7 @@ const REAL_PUBLIC_TRAINERS: Trainer[] = [
   {
     id: "t5", name: "Dr. Omid Salehian", nameFa: "دکتر امید صالحیان", gender: "male",
     cred: "sports nutrition and fitness specialist", credFa: "متخصص تغذیه ورزشی و تناسب اندام",
-    color: "#ffc94d", photo: "https://drsalehian.ir/wp-content/uploads/2025/02/%D8%AF%DA%A9%D8%AA%D8%B1-%D8%A7%D9%85%DB%8C%D8%AF-%D8%B5%D8%A7%D9%84%D8%AD%DB%8C%D8%A7%D9%86-%D9%85%D8%AA%D8%AE%D8%B5%D8%B5-%D8%AA%D8%BA%D8%B0%DB%8C%D9%87-%D9%88%D8%B1%D8%B2%D8%B4%DB%8C.jpg", city: "Tehran", cityFa: "تهران", years: 20, rating: 4.8, clients: 50000,
+    color: "#ffc94d", photo: "/trainers/t5.webp", city: "Tehran", cityFa: "تهران", years: 20, rating: 4.8, clients: 50000,
     bio: "Public profile for Dr. Omid Salehian, sports nutrition and fitness specialist, author, translator, and educator with official website links.",
     bioFa: "پروفایل عمومی دکتر امید صالحیان، متخصص تغذیه ورزشی و تناسب اندام، مدرس و مولف/مترجم، همراه با لینک‌های رسمی.",
     specialties: [SP.nutrition, SP.clinical, SP.performance, SP.programming],
@@ -405,7 +405,7 @@ const REAL_PUBLIC_TRAINERS: Trainer[] = [
   {
     id: "t6", name: "Dr. Mohammad Sadegh Kermany", nameFa: "دکتر محمد صادق کرمانی", gender: "male",
     cred: "weight management and online diet brand", credFa: "رژیم درمانی و مدیریت وزن آنلاین",
-    color: "#3ee08f", photo: "/trainers/t6.jpg", city: "Iran", cityFa: "ایران", years: 25, rating: 4.8, clients: 1000000,
+    color: "#3ee08f", photo: "/trainers/t6.webp", city: "Iran", cityFa: "ایران", years: 25, rating: 4.8, clients: 1000000,
     bio: "Public profile for Dr. Kermany and the Behandam/Kermany online diet ecosystem. This page links to the official Kermany website and Instagram.",
     bioFa: "پروفایل عمومی دکتر کرمانی و مجموعه رژیم آنلاین به‌اندام/کرمانی. لینک سایت رسمی و اینستاگرام در صفحه قرار دارد.",
     specialties: [SP.clinical, SP.nutrition, SP.fatloss, SP.gut],
@@ -418,7 +418,7 @@ const REAL_PUBLIC_TRAINERS: Trainer[] = [
   {
     id: "t7", name: "Sattar Mirlohi", nameFa: "ستار میرلوحی", gender: "male",
     cred: "personal trainer · exercise physiologist", credFa: "مربی خصوصی · فیزیولوژیست ورزشی",
-    color: "#b8f24a", photo: "https://ipanel.istgah.com/images/2022/11/21/-2592458_7ce4Df_r.jpg", city: "Tehran", cityFa: "تهران", years: 12, rating: 4.7, clients: 700000,
+    color: "#b8f24a", photo: "/trainers/t7.jpg", city: "Tehran", cityFa: "تهران", years: 12, rating: 4.7, clients: 700000,
     bio: "Public profile for Sattar Mirlohi, a Tehran-based personal and online fitness trainer known publicly as Sattar Fit.",
     bioFa: "پروفایل عمومی ستار میرلوحی، مربی خصوصی و آنلاین فیتنس در تهران که با نام ستار فیت شناخته می‌شود.",
     specialties: [SP.fatloss, SP.hypertrophy, SP.programming, SP.strength],
@@ -444,7 +444,7 @@ const REAL_PUBLIC_TRAINERS: Trainer[] = [
   {
     id: "t9", name: "Arash Rahbar", nameFa: "آرش رهبر", gender: "male",
     cred: "IFBB Classic Physique Pro · 4x Olympian", credFa: "بدنساز حرفه‌ای IFBB Classic Physique · چهار بار حضور در Olympia",
-    color: "#4fd1c5", photo: "https://www.greatestphysiques.com/wp-content/uploads/2017/06/Arash-Rahbar.09.jpg", city: "United States", cityFa: "آمریکا", years: 15, rating: 4.8, clients: 614000,
+    color: "#4fd1c5", photo: "/trainers/t9.jpg", city: "United States", cityFa: "آمریکا", years: 15, rating: 4.8, clients: 614000,
     bio: "Public profile for Arash Rahbar, an Iranian IFBB Classic Physique Pro and Olympia athlete known for training, physique education, and the Arash Method app.",
     bioFa: "پروفایل عمومی آرش رهبر، بدنساز ایرانی IFBB Classic Physique Pro و ورزشکار المپیا که برای آموزش تمرین، فیزیک کلاسیک و Arash Method شناخته می‌شود. این صفحه معرفی عمومی است و به معنی همکاری رسمی با رمق نیست.",
     specialties: [SP.hypertrophy, SP.contest, SP.strength, SP.programming],

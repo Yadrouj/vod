@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import MagBrowser from "@/components/MagBrowser";
+import MagBrowser, { type MagBrowserArticle } from "@/components/MagBrowser";
 import { listAllMagArticles } from "@/lib/magStore.server";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ramagh.app";
@@ -65,6 +65,17 @@ export const metadata: Metadata = {
 export default async function MagPage() {
   const articles = await listAllMagArticles();
   const latest = articles.slice(0, 12);
+  const browserArticles: MagBrowserArticle[] = articles.map((article) => ({
+    id: article.id,
+    slug: article.slug,
+    title: article.title,
+    excerpt: article.excerpt,
+    category: article.category,
+    keywords: article.keywords,
+    tags: article.tags,
+    image: article.image,
+    publishedAt: article.publishedAt,
+  }));
   const jsonLd = magJsonLd(latest);
 
   return (
@@ -82,7 +93,7 @@ export default async function MagPage() {
           خانه
         </Link>
       </div>
-      <MagBrowser articles={articles} />
+      <MagBrowser articles={browserArticles} />
       <section className="px-4 pb-28">
         <div className="rounded-3xl bg-card p-5 ring-1 ring-line">
           <p className="text-xs font-black text-brand">راهنمای سریع مجله رمق</p>

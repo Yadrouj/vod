@@ -8,6 +8,11 @@ import { Icon } from "./icons";
 import { cn } from "./ui";
 import { type MagArticle } from "@/lib/mag";
 
+export type MagBrowserArticle = Pick<
+  MagArticle,
+  "id" | "slug" | "title" | "excerpt" | "category" | "keywords" | "tags" | "image" | "publishedAt"
+>;
+
 const CATEGORY_ORDER: MagArticle["category"][] = [
   "باشگاه",
   "برنامه تمرین",
@@ -19,7 +24,7 @@ const CATEGORY_ORDER: MagArticle["category"][] = [
   "اخبار",
 ];
 
-export default function MagBrowser({ articles }: { articles: MagArticle[] }) {
+export default function MagBrowser({ articles }: { articles: MagBrowserArticle[] }) {
   const [query, setQuery] = useState(() => {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("search") ?? "";
@@ -133,7 +138,7 @@ function ArticleCard({
   className,
   imageHeight = "h-32",
 }: {
-  article: MagArticle;
+  article: MagBrowserArticle;
   className?: string;
   imageHeight?: string;
 }) {
@@ -159,7 +164,7 @@ function ArticleCard({
   );
 }
 
-function BannerImage({ article, soft = false }: { article: MagArticle; soft?: boolean }) {
+function BannerImage({ article, soft = false }: { article: MagBrowserArticle; soft?: boolean }) {
   return (
     <>
       <img

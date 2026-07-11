@@ -15,7 +15,6 @@ const HIDDEN_PREFIXES = [
   "/onboarding",
   "/login",
   "/admin",
-  "/vod",
   "/mag",
 ];
 

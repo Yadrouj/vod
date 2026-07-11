@@ -24,7 +24,6 @@ export default function BottomNav() {
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/workout") ||
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/vod") ||
     pathname.startsWith("/mag")
   ) {
     return null;

@@ -13,6 +13,11 @@ interface MagStore {
 const DATA_DIR = path.join(process.cwd(), ".social-data");
 const FILE = path.join(DATA_DIR, "mag-articles.json");
 const DAY_MS = 24 * 60 * 60 * 1000;
+const MAG_CACHE_TTL_MS = 10 * 60 * 1000;
+
+type MagCacheKey = "published" | "drafts";
+
+const articleCache: Partial<Record<MagCacheKey, { expiresAt: number; promise: Promise<MagArticle[]> }>> = {};
 
 function uid(): string {
   return `mag_${randomBytes(10).toString("hex")}`;
@@ -49,6 +54,28 @@ export async function listCustomMagArticles() {
 }
 
 export async function listAllMagArticles({ includeDrafts = false } = {}) {
+  const key: MagCacheKey = includeDrafts ? "drafts" : "published";
+  const cached = articleCache[key];
+  const now = Date.now();
+  if (cached && cached.expiresAt > now) return cached.promise;
+
+  const promise = buildAllMagArticles(includeDrafts);
+  articleCache[key] = { expiresAt: now + MAG_CACHE_TTL_MS, promise };
+
+  try {
+    return await promise;
+  } catch (error) {
+    delete articleCache[key];
+    throw error;
+  }
+}
+
+function clearMagArticleCache() {
+  delete articleCache.published;
+  delete articleCache.drafts;
+}
+
+async function buildAllMagArticles(includeDrafts: boolean) {
   const [custom, daily, generated, muscleWiki] = await Promise.all([
     listCustomMagArticles(),
     dailySeoMagArticles(),
@@ -83,6 +110,7 @@ export async function upsertMagArticles(articles: MagArticle[]) {
 
   store.articles = [...bySlug.values()].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
   await writeStore(store);
+  clearMagArticleCache();
   return { created, updated, total: articles.length };
 }
 
@@ -129,6 +157,7 @@ export async function addMagArticle(input: {
   };
   store.articles.push(article);
   await writeStore(store);
+  clearMagArticleCache();
   return article;
 }
 
