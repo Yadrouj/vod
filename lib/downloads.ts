@@ -291,7 +291,7 @@ async function fetchWithTimeout(url: string, timeoutMs: number) {
     return await fetch(url, {
       signal: controller.signal,
       headers: {
-        "user-agent": "Mozilla/5.0 VOD Episode Browser",
+        "user-agent": "Mozilla/5.0 SarvNema Episode Browser",
         accept: "text/html,application/json;q=0.9,*/*;q=0.8",
       },
       cache: "no-store",

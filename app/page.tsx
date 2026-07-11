@@ -3,12 +3,17 @@ import { AiSearchPanel } from "@/components/ai-search-panel";
 import { BannerCarousel } from "@/components/banner-carousel";
 import { FocusRail } from "@/components/focus-rail";
 import { GradientMenu } from "@/components/gradient-menu";
+import { HomeLoadingOverlay } from "@/components/home-loading-overlay";
+import { NewsRail } from "@/components/news-rail";
+import { PeopleRail } from "@/components/people-rail";
 import { PosterCard } from "@/components/poster-card";
 import { SearchSuggest } from "@/components/search-suggest";
 import { aiSearch } from "@/lib/ai-search";
 import { getDictionary, type Locale } from "@/lib/i18n";
+import { loadVodNews } from "@/lib/news";
 import { getLocale } from "@/lib/server-locale";
-import { loadVodIndex } from "@/lib/vod-index";
+import { loadTopPeople } from "@/lib/top-people";
+import { loadVodHomeIndex } from "@/lib/vod-index";
 import type { VodCard, VodHomeSection } from "@/lib/types";
 
 type HomeRailSection = VodHomeSection & {
@@ -18,7 +23,9 @@ type HomeRailSection = VodHomeSection & {
 export default async function HomePage() {
   const locale = await getLocale();
   const t = getDictionary(locale);
-  const index = await loadVodIndex();
+  const index = await loadVodHomeIndex();
+  const news = await loadVodNews();
+  const topPeople = await loadTopPeople();
   const heroBanners = uniqueCards([
     ...(index.sections.find((section) => section.id === "recent-films")?.items ?? []).slice(0, 5),
     ...(index.sections.find((section) => section.id === "best-movies")?.items ?? []).slice(0, 5),
@@ -30,6 +37,15 @@ export default async function HomePage() {
   ]).slice(0, 10);
   const aiPrompt = t.home.aiPrompt;
   const initialAiResults = aiSearch(index.items, aiPrompt, 10);
+  const persianSection = index.sections.find((section) => section.id === "persian-movies");
+  const megaSections = [
+    menuSection(index.sections.find((section) => section.id === "persian-movies"), locale, "/browse?section=persian-movies"),
+    menuSection(index.sections.find((section) => section.id === "top-imdb"), locale, "/browse?section=top-imdb"),
+    menuSection(index.sections.find((section) => section.id === "recent-films"), locale, "/browse?section=recent-films"),
+    menuSection(index.sections.find((section) => section.id === "best-series"), locale, "/browse?section=best-series"),
+    menuSection(index.sections.find((section) => section.id === "kids"), locale, "/browse?section=kids"),
+    menuSection(index.sections.find((section) => section.id === "animation"), locale, "/browse?section=animation"),
+  ].filter((section): section is NonNullable<typeof section> => Boolean(section));
   const wideItems = uniqueCards(
     index.items
       .filter((item) => item.backdropUrl && item.overview && (item.imdbRating ?? 0) >= 7.2)
@@ -69,8 +85,9 @@ export default async function HomePage() {
 
   return (
     <main className="shell">
+      <HomeLoadingOverlay label={t.common.loading} />
       <section className="hero home-hero">
-        <GradientMenu totalTitles={index.totalTitles} locale={locale} />
+        <GradientMenu totalTitles={index.totalTitles} locale={locale} menuSections={megaSections} />
 
         <BannerCarousel items={heroBanners} locale={locale} />
 
@@ -89,13 +106,16 @@ export default async function HomePage() {
 
       <section className="home-stack wrap">
         <HomeRail section={localizeSection(index.sections[0], locale)} locale={locale} />
+        {persianSection && <HomeRail section={localizeSection(persianSection, locale)} locale={locale} />}
         <FocusRail items={midBanners} locale={locale} />
         <WideRail items={wideItems} locale={locale} />
         <AiSearchPanel locale={locale} initialQuery={aiPrompt} initialResults={initialAiResults} />
         {extraSections.map((section) => (
           <HomeRail key={section.id} section={section} locale={locale} />
         ))}
-        {index.sections.slice(1).map((section) => (
+        <PeopleRail people={topPeople.people} locale={locale} />
+        <NewsRail items={news.items} locale={locale} />
+        {index.sections.filter((section) => section.id !== "top-imdb" && section.id !== "persian-movies").map((section) => (
           <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />
         ))}
       </section>
@@ -123,6 +143,17 @@ function makeSection(id: string, title: string, subtitle: string, items: VodCard
   };
 }
 
+function menuSection(section: VodHomeSection | undefined, locale: Locale, href: string) {
+  if (!section) return null;
+  const localized = localizeSection(section, locale);
+  return {
+    id: localized.id,
+    title: localized.title,
+    href,
+    items: localized.items,
+  };
+}
+
 function yearSort(a: VodCard, b: VodCard) {
   return (b.year ?? 0) - (a.year ?? 0) || (b.imdbRating ?? 0) - (a.imdbRating ?? 0);
 }
@@ -131,6 +162,7 @@ function quickLinks(locale: Locale) {
   const t = getDictionary(locale);
   return [
     { href: "/browse?section=top-imdb", label: t.common.topImdb },
+    { href: "/browse?section=persian-movies", label: t.common.persianMovies },
     { href: "/browse?section=recent-films", label: t.common.recentFilm },
     { href: "/browse?section=best-movies", label: t.common.bestMovies },
     { href: "/browse?section=best-series", label: t.common.bestSeries },
@@ -161,7 +193,7 @@ function HomeRail({ section, locale }: { section: HomeRailSection; locale: Local
         </Link>
       </div>
       <div className="poster-rail">
-        {section.items.map((item) => (
+        {section.items.slice(0, 12).map((item) => (
           <PosterCard key={`${section.id}-${item.imdbCode}`} item={item} locale={locale} />
         ))}
       </div>
@@ -192,7 +224,7 @@ function WideRail({ items, locale }: { items: VodCard[]; locale: Locale }) {
             href={`/${item.imdbCode}`}
             style={item.backdropUrl ? { backgroundImage: `url(${item.backdropUrl})` } : undefined}
           >
-            <span className="rating">IMDb {(item.imdbRating ?? 0).toFixed(1)}</span>
+            <span className="rating">{item.imdbRating ? `IMDb ${item.imdbRating.toFixed(1)}` : item.year ?? t.common.movie}</span>
             <span className="wide-copy">
               <strong>{item.title}</strong>
               <small>{[item.year, item.genres.slice(0, 2).join(" / ")].filter(Boolean).join(" / ")}</small>

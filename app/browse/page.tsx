@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { PosterCard } from "@/components/poster-card";
 import { SearchSuggest } from "@/components/search-suggest";
@@ -24,7 +25,7 @@ export default async function BrowsePage({ searchParams }: Props) {
       <section className="browse-hero">
         <div className="wrap">
           <header className="topbar">
-            <Link className="brand" href="/">VOD</Link>
+            <BrandLogo locale={locale} compact />
             <div className="topbar-actions">
               <LanguageToggle locale={locale} />
               <Link className="pill" href="/">{t.common.home}</Link>
@@ -70,6 +71,7 @@ export default async function BrowsePage({ searchParams }: Props) {
 
           <div className="quick-tabs">
             <Link href="/browse?section=top-imdb">{t.common.topImdb}</Link>
+            <Link href="/browse?section=persian-movies">{t.common.persianMovies}</Link>
             <Link href="/browse?section=recent-films">{t.common.recentFilm}</Link>
             <Link href="/browse?section=best-movies">{t.common.bestMovies}</Link>
             <Link href="/browse?section=best-series">{t.common.bestSeries}</Link>

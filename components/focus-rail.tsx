@@ -62,7 +62,7 @@ export function FocusRail({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]
                 style={item.backdropUrl ? { backgroundImage: `url(${item.backdropUrl})` } : undefined}
               />
               <span className="focus-card-title">{item.title}</span>
-              <span className="rating">IMDb {(item.imdbRating ?? 0).toFixed(1)}</span>
+              <span className="rating">{item.imdbRating ? `IMDb ${item.imdbRating.toFixed(1)}` : item.year ?? t.common.movie}</span>
             </button>
           );
         })}

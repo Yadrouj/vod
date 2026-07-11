@@ -102,7 +102,7 @@ function AboutTab({ item, locale }: { item: VodItem; locale: Locale }) {
       </div>
 
       <aside className="about-data">
-        <PanelHead title={t.title.data} note={item.imdbCode} />
+        <PanelHead title={t.title.data} note={item.source === "mihandownload" ? "MihanDownload" : item.imdbCode} />
         <div className="compact-facts">
           <Info label={t.title.type} value={typeLabel(item.type, locale)} />
           <Info label={t.title.year} value={String(item.year ?? "-")} />

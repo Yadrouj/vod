@@ -13,6 +13,7 @@ export const HOME_SECTIONS = [
 
 export const SECTION_LABELS: Record<string, string> = {
   "top-imdb": "Top 250 IMDb",
+  "persian-movies": "Persian Movies",
   "recent-films": "Recent Films",
   "best-series": "Best Series",
   "best-movies": "Best Movies",
@@ -34,12 +35,20 @@ export type BrowseParams = {
 };
 
 let indexPromise: Promise<VodCatalogIndex> | null = null;
+let homeIndexPromise: Promise<VodCatalogIndex> | null = null;
 
 export function loadVodIndex(): Promise<VodCatalogIndex> {
   indexPromise ??= readFile(path.join(process.cwd(), "public", "data", "vod-index.json"), "utf8").then(
     (data) => JSON.parse(data) as VodCatalogIndex
   );
   return indexPromise;
+}
+
+export function loadVodHomeIndex(): Promise<VodCatalogIndex> {
+  homeIndexPromise ??= readFile(path.join(process.cwd(), "public", "data", "vod-home.json"), "utf8")
+    .then((data) => JSON.parse(data) as VodCatalogIndex)
+    .catch(() => loadVodIndex());
+  return homeIndexPromise;
 }
 
 export function pickHero(index: VodCatalogIndex): VodCard | null {
@@ -118,6 +127,9 @@ function selectSection(items: VodCard[], section: string) {
   if (section === "recent-films") {
     return [...items].filter((item) => item.type === "movie").sort(yearSort);
   }
+  if (section === "persian-movies") {
+    return [...items].filter(isPersianMovie).sort(yearSort);
+  }
   if (section === "best-series") {
     return [...items].filter((item) => item.type === "series").sort(ratingSort);
   }
@@ -131,6 +143,15 @@ function selectSection(items: VodCard[], section: string) {
     return [...items].filter((item) => hasGenre(item, ["animation"])).sort(ratingSort);
   }
   return [...items].sort(ratingSort);
+}
+
+function isPersianMovie(item: VodCard) {
+  if (item.source === "mihandownload") return true;
+  const countries = item.countries.map((country) => country.toLowerCase());
+  return item.type === "movie" && (
+    countries.includes("iran") ||
+    countries.includes("ایران")
+  );
 }
 
 function ratingSort(a: VodCard, b: VodCard) {

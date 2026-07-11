@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BrandLogo } from "@/components/brand-logo";
 import { DownloadAction } from "@/components/download-action";
 import { LanguageToggle } from "@/components/language-toggle";
 import { TitleTabs } from "@/components/title-tabs";
@@ -10,6 +11,7 @@ import { formatNumber, getDictionary, typeLabel } from "@/lib/i18n";
 import { getLocale } from "@/lib/server-locale";
 import { subzoneSearchUrl } from "@/lib/subtitles";
 import { loadVodIndex } from "@/lib/vod-index";
+import { BRAND_NAME } from "@/lib/brand";
 import type { VodCard, VodItem } from "@/lib/types";
 
 type Props = {
@@ -19,10 +21,10 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const item = await findVodItem(id);
-  if (!item) return { title: "Title not found | VOD" };
+  if (!item) return { title: "Title not found" };
   return {
-    title: `${item.title} | VOD`,
-    description: `${item.title} IMDb metadata and DonyayeSerial file links.`
+    title: item.title,
+    description: `${item.title} metadata and direct file links on ${BRAND_NAME}.`
   };
 }
 
@@ -39,7 +41,7 @@ export default async function DetailPage({ params }: Props) {
   const movieFiles = isSeries ? [] : movieDownloadSources(item.links);
   const index = await loadVodIndex();
   const suggestions = similarTitles(item, index.items);
-  const heroVideo = detailHeroVideo(item);
+  const heroVideo = await detailHeroVideo(item);
 
   return (
     <div className="shell">
@@ -70,19 +72,34 @@ export default async function DetailPage({ params }: Props) {
           />
         )}
         <div className="wrap">
-          <header className="topbar">
-            <div className="topbar-actions">
+          <header className="topbar detail-topbar">
+            <BrandLogo locale={locale} compact />
+            <nav className="detail-breadcrumb" aria-label="Breadcrumb">
+              <Link href="/">{t.common.home}</Link>
+              <span aria-hidden="true">/</span>
+              <Link href={`/browse?type=${normalizeVodType(item.type)}`}>
+                {normalizeVodType(item.type) === "series" ? t.common.series : t.common.films}
+              </Link>
+              <span aria-hidden="true">/</span>
+              <span className="breadcrumb-current" aria-current="page">{item.title}</span>
+            </nav>
+            <div className="detail-topbar-tools">
+              {item.imdbRating ? (
+                <a
+                  className="pill"
+                  href={item.imdbUrl ?? `https://www.imdb.com/title/${item.imdbCode}/`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  IMDb {item.imdbRating.toFixed(1)}
+                </a>
+              ) : item.sourcePageUrl ? (
+                <a className="pill" href={item.sourcePageUrl} target="_blank" rel="noreferrer">
+                  {t.common.source}
+                </a>
+              ) : null}
               <LanguageToggle locale={locale} />
-              <Link className="chip" href="/">{t.common.backToVod}</Link>
             </div>
-            <a
-              className="pill"
-              href={item.imdbUrl ?? `https://www.imdb.com/title/${item.imdbCode}/`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              IMDb {(item.imdbRating ?? 0).toFixed(1)}
-            </a>
           </header>
 
           <div className="detail-grid">
@@ -94,7 +111,7 @@ export default async function DetailPage({ params }: Props) {
                 <i className="dot" />
                 <span>{item.runtimeMinutes ? `${item.runtimeMinutes}m` : `${item.links.length} ${t.common.files}`}</span>
                 <i className="dot" />
-                <span>{item.imdbCode}</span>
+                <span>{item.source === "mihandownload" ? t.common.persianMovies : item.imdbCode}</span>
               </div>
               <h1>{item.title}</h1>
               {item.originalTitle && item.originalTitle !== item.title && (
@@ -114,14 +131,15 @@ export default async function DetailPage({ params }: Props) {
                 >
                   {t.title.subzoneSubtitles}
                 </a>
-                <a
-                  className="hover-button"
-                  href={item.imdbUrl ?? `https://www.imdb.com/title/${item.imdbCode}/`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {t.common.viewImdb}
-                </a>
+                {item.imdbUrl ? (
+                  <a className="hover-button" href={item.imdbUrl} target="_blank" rel="noreferrer">
+                    {t.common.viewImdb}
+                  </a>
+                ) : item.sourcePageUrl ? (
+                  <a className="hover-button" href={item.sourcePageUrl} target="_blank" rel="noreferrer">
+                    {t.common.source}
+                  </a>
+                ) : null}
               </div>
             </div>
 
@@ -135,7 +153,7 @@ export default async function DetailPage({ params }: Props) {
               )}
               <p className="label">{t.title.imdbData}</p>
               <div className="stats" style={{ marginTop: 16 }}>
-                <Stat label={t.title.rating} value={(item.imdbRating ?? 0).toFixed(1)} />
+                <Stat label={t.title.rating} value={item.imdbRating ? item.imdbRating.toFixed(1) : "-"} />
                 <Stat label={t.title.votes} value={formatNumber(item.imdbVotes ?? 0, locale)} />
                 <Stat label={t.title.runtime} value={item.runtimeMinutes ? `${item.runtimeMinutes}m` : "-"} />
                 <Stat label={t.title.metascore} value={item.metascore ? String(item.metascore) : "-"} />
@@ -173,18 +191,47 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function detailHeroVideo(item: VodItem) {
-  const videos = item.imdbVideos ?? [];
+async function detailHeroVideo(item: VodItem) {
+  const storedUrl = pickHeroVideoUrl(item.imdbVideos ?? []);
+  if (storedUrl && !videoUrlExpired(storedUrl)) return storedUrl;
+
+  if (!/^tt\d+$/.test(item.imdbCode)) return storedUrl;
+
+  try {
+    const response = await fetch(`http://185.203.118.87:8026/titles/${item.imdbCode}/fetch`, {
+      method: "POST",
+      body: "",
+      cache: "no-store",
+      signal: AbortSignal.timeout(7000),
+    });
+    if (!response.ok) return storedUrl;
+    const data = (await response.json()) as { videos?: VodItem["imdbVideos"] };
+    return pickHeroVideoUrl(data.videos ?? []) ?? storedUrl;
+  } catch {
+    return storedUrl;
+  }
+}
+
+function pickHeroVideoUrl(videos: NonNullable<VodItem["imdbVideos"]>) {
   const preferred =
     videos.find((video) => /trailer|teaser|preview/i.test(video.name)) ??
     videos[0];
+  const playbacks = preferred?.playback_urls ?? [];
 
   return (
-    preferred?.playback_urls?.find((playback) => playback.mime_type === "MP4")?.url ??
-    preferred?.playback_urls?.find((playback) => /\.(mp4|m4v)(?:$|[?#])/i.test(playback.url))?.url ??
-    preferred?.playback_urls?.[0]?.url ??
+    playbacks.find((playback) => /\.(mp4|m4v)(?:$|[?#])/i.test(playback.url))?.url ??
+    playbacks.find((playback) => playback.mime_type?.toLowerCase() === "video/mp4")?.url ??
     null
   );
+}
+
+function videoUrlExpired(url: string) {
+  try {
+    const expires = Number(new URL(url).searchParams.get("Expires"));
+    return Number.isFinite(expires) && expires <= Math.floor(Date.now() / 1000) + 60;
+  } catch {
+    return false;
+  }
 }
 
 function similarTitles(item: VodItem, items: VodCard[]) {

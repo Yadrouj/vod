@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand-logo";
 import { BaseUrlAdmin } from "@/components/base-url-admin";
 import { LanguageToggle } from "@/components/language-toggle";
 import { getDictionary } from "@/lib/i18n";
@@ -20,7 +21,7 @@ export default async function AdminPage() {
       <section className="browse-hero">
         <div className="wrap">
           <header className="topbar">
-            <Link className="brand" href="/">VOD</Link>
+            <BrandLogo locale={locale} compact />
             <div className="topbar-actions">
               <LanguageToggle locale={locale} />
               <Link className="chip" href="/">{t.common.backHome}</Link>

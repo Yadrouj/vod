@@ -88,7 +88,9 @@ export function SearchSuggest({
               <span>
                 <strong>{item.title}</strong>
                 <small>
-                  {item.year ?? "-"} / {typeLabel(item.type, locale)} / {t.common.imdb} {(item.imdbRating ?? 0).toFixed(1)}
+                  {[item.year ?? "-", typeLabel(item.type, locale), item.imdbRating ? `${t.common.imdb} ${item.imdbRating.toFixed(1)}` : null]
+                    .filter(Boolean)
+                    .join(" / ")}
                 </small>
               </span>
             </Link>

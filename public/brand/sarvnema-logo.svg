@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 160" role="img" aria-labelledby="title desc">
+  <title id="title">SarvNema logo</title>
+  <desc id="desc">SarvNema wordmark with cypress play symbol.</desc>
+  <rect width="520" height="160" fill="#050505"/>
+  <g transform="translate(32 28)">
+    <path fill="#f4f4f4" d="M52 0c31 28.4 48 59.4 48 91.1 0 32.4-20.2 53.9-48 58.4-27.8-4.5-48-26-48-58.4C4 59.4 21 28.4 52 0Z"/>
+    <path fill="#050505" d="M46.7 56.4 82.4 74.5 46.7 92.6V56.4Z"/>
+    <path fill="#050505" fill-opacity=".22" d="M51.5 18.2c13.1 22.2 20 45.7 20 70.5 0 20.3-6.4 36.8-19.5 49.4 22.9-5.3 36.3-22.7 36.3-46.7 0-25.7-12.8-50.2-36.8-73.2Z"/>
+  </g>
+  <text x="164" y="74" fill="#f4f4f4" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="900" letter-spacing="1.6">SarvNema</text>
+  <text x="164" y="112" fill="#a8a8a8" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="3">EVERY STORY, IN ONE CLEAR FRAME</text>
+</svg>

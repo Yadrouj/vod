@@ -47,7 +47,8 @@ async function main() {
   );
   const payload = {
     ...existing,
-    sourceUrl: source.sourceUrl ?? existing.sourceUrl,
+    sourceUrl: existing.sourceUrl ?? source.sourceUrl,
+    sourceUrls: Array.from(new Set([existing.sourceUrl, ...(existing.sourceUrls ?? []), source.sourceUrl].filter(Boolean))),
     mergedAt: new Date().toISOString(),
     totalTitles: items.length,
     totalLinks: items.reduce((sum, item) => sum + (item.links?.length ?? 0), 0),

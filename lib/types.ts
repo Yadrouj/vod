@@ -69,6 +69,9 @@ export type VodItem = {
     company_name: string;
     category: string;
   }[];
+  source?: string | null;
+  sourcePageUrl?: string | null;
+  persianYear?: number | null;
   apiFetchedAt?: string | null;
   seriesLinksExpandedAt?: string | null;
   seriesLinksExpanded?: boolean;
@@ -105,6 +108,8 @@ export type VodCard = {
   qualities: string[];
   groups: string[];
   linksCount: number;
+  source?: string | null;
+  sourcePageUrl?: string | null;
 };
 
 export type VodHomeSection = {

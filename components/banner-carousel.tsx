@@ -44,8 +44,12 @@ export function BannerCarousel({ items, locale = DEFAULT_LOCALE }: { items: VodC
           <span>{typeLabel(current.type, locale)}</span>
           <i className="dot" />
           <span>{current.year ?? "-"}</span>
-          <i className="dot" />
-          <span>IMDb {(current.imdbRating ?? 0).toFixed(1)}</span>
+          {current.imdbRating && (
+            <>
+              <i className="dot" />
+              <span>IMDb {current.imdbRating.toFixed(1)}</span>
+            </>
+          )}
         </div>
         <h1>{current.title}</h1>
         {current.overview && <p>{current.overview}</p>}
@@ -99,7 +103,7 @@ export function BannerStrip({ items }: { items: VodCard[] }) {
               : undefined
           }
         >
-          <span className="rating">IMDb {(item.imdbRating ?? 0).toFixed(1)}</span>
+          <span className="rating">{item.imdbRating ? `IMDb ${item.imdbRating.toFixed(1)}` : item.year ?? "Movie"}</span>
           <strong>{item.title}</strong>
         </Link>
       ))}

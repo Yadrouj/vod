@@ -3,6 +3,7 @@ import path from "node:path";
 
 const IN_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
 const OUT_FILE = process.argv[3] || path.join("public", "data", "vod-index.json");
+const HOME_OUT_FILE = path.join("public", "data", "vod-home.json");
 const SECTION_LIMIT = Number(process.env.VOD_INDEX_SECTION_LIMIT || 15);
 
 const SECTIONS = [
@@ -10,6 +11,11 @@ const SECTIONS = [
     id: "top-imdb",
     title: "Top 250 IMDb",
     subtitle: "Highest rated films and series with strong vote counts",
+  },
+  {
+    id: "persian-movies",
+    title: "Persian Movies",
+    subtitle: "Iranian cinema from MihanDownload with Persian metadata",
   },
   {
     id: "recent-films",
@@ -61,6 +67,8 @@ function toCard(item) {
     qualities: item.qualities ?? [],
     groups: item.groups ?? [],
     linksCount: Array.isArray(item.links) ? item.links.length : 0,
+    source: item.source ?? null,
+    sourcePageUrl: item.sourcePageUrl ?? null,
   };
 }
 
@@ -84,6 +92,9 @@ function sectionItems(items, id) {
   if (id === "recent-films") {
     return [...items].filter((item) => item.type === "movie").sort(yearSort);
   }
+  if (id === "persian-movies") {
+    return [...items].filter(isPersianMovie).sort(yearSort);
+  }
   if (id === "best-series") {
     return [...items].filter((item) => item.type === "series").sort(ratingSort);
   }
@@ -97,6 +108,15 @@ function sectionItems(items, id) {
     return [...items].filter((item) => hasGenre(item, ["animation"])).sort(ratingSort);
   }
   return items;
+}
+
+function isPersianMovie(item) {
+  if (item.source === "mihandownload") return true;
+  const countries = item.countries.map((country) => country.toLowerCase());
+  return item.type === "movie" && (
+    countries.includes("iran") ||
+    countries.includes("ایران")
+  );
 }
 
 function uniqueSorted(items) {
@@ -134,14 +154,30 @@ async function main() {
     items,
   };
 
-  await writeFile(OUT_FILE, JSON.stringify(index));
+  const homeItems = Array.from(new Map(index.sections.flatMap((section) => section.items).map((item) => [item.imdbCode, item])).values());
+  const homeIndex = {
+    sourceUrl: index.sourceUrl,
+    totalTitles: index.totalTitles,
+    totalLinks: index.totalLinks,
+    generatedAt: index.generatedAt,
+    filters: index.filters,
+    sections: index.sections,
+    items: homeItems,
+  };
+
+  await Promise.all([
+    writeFile(OUT_FILE, JSON.stringify(index)),
+    writeFile(HOME_OUT_FILE, JSON.stringify(homeIndex)),
+  ]);
   console.log(
     JSON.stringify(
       {
         outFile: OUT_FILE,
+        homeFile: HOME_OUT_FILE,
         totalTitles: index.totalTitles,
         totalLinks: index.totalLinks,
         indexBytes: Buffer.byteLength(JSON.stringify(index)),
+        homeBytes: Buffer.byteLength(JSON.stringify(homeIndex)),
       },
       null,
       2

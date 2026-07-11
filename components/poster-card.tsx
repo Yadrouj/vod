@@ -4,9 +4,10 @@ import type { VodCard } from "@/lib/types";
 
 export function PosterCard({ item, locale = DEFAULT_LOCALE }: { item: VodCard; locale?: Locale }) {
   const t = getDictionary(locale);
+  const hasPoster = Boolean(item.posterUrl);
 
   return (
-    <Link href={`/${item.imdbCode || item.id}`} className={`poster ${item.type === "series" ? "series-poster" : ""}`}>
+    <Link href={`/${item.imdbCode || item.id}`} className={["poster", item.type === "series" ? "series-poster" : "", hasPoster ? "poster-has-image" : "poster-no-image"].filter(Boolean).join(" ")}>
       <div
         className="poster-art"
         style={
@@ -17,7 +18,8 @@ export function PosterCard({ item, locale = DEFAULT_LOCALE }: { item: VodCard; l
             : undefined
         }
       >
-        <span className="rating">IMDb {(item.imdbRating ?? 0).toFixed(1)}</span>
+        <span className="poster-skeleton-layer" aria-hidden="true" />
+        <span className="rating">{item.imdbRating ? `IMDb ${item.imdbRating.toFixed(1)}` : item.source === "mihandownload" ? t.common.persianMovies : item.year ?? typeLabel(item.type, locale)}</span>
         <span className="poster-copy">
           <strong className="poster-title">{item.title}</strong>
           <span>{item.year ?? "-"} / {typeLabel(item.type, locale)}</span>

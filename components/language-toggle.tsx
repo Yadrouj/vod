@@ -23,23 +23,22 @@ export function LanguageToggle({ locale }: { locale: Locale }) {
   }
 
   return (
-    <div className="language-toggle" aria-label={t.localeName}>
-      <button
-        type="button"
-        className={locale === "en" ? "active" : ""}
-        onClick={() => changeLocale("en")}
+    <div
+      className="language-toggle"
+      data-active={locale}
+    >
+      <label htmlFor="language-select" className="sr-only">
+        {t.title.language}
+      </label>
+      <select
+        id="language-select"
+        value={locale}
+        onChange={(event) => changeLocale(event.target.value as Locale)}
         disabled={pending}
       >
-        EN
-      </button>
-      <button
-        type="button"
-        className={locale === "fa" ? "active" : ""}
-        onClick={() => changeLocale("fa")}
-        disabled={pending}
-      >
-        FA
-      </button>
+        <option value="en">EN</option>
+        <option value="fa">FA</option>
+      </select>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { BrandLoader } from "@/components/brand-loader";
 import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 import { episodeLabel } from "@/lib/link-labels";
 import type { VodLink } from "@/lib/types";
@@ -33,6 +34,7 @@ export function VodPlayer({
   const [time, setTime] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [buffering, setBuffering] = useState(true);
   const active = links[activeIndex] ?? links[0];
   const t = getDictionary(locale);
 
@@ -53,7 +55,11 @@ export function VodPlayer({
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
-      video.play().catch(() => setMessage(t.player.playbackBlocked));
+      setBuffering(true);
+      video.play().catch(() => {
+        setBuffering(false);
+        setMessage(t.player.playbackBlocked);
+      });
     } else {
       video.pause();
     }
@@ -86,6 +92,7 @@ export function VodPlayer({
   function changeSource(value: string) {
     setActiveIndex(Number(value));
     setPaused(true);
+    setBuffering(true);
     setTime(0);
   }
 
@@ -141,14 +148,30 @@ export function VodPlayer({
           poster={posterUrl ?? undefined}
           playsInline
           preload="metadata"
-          onLoadedMetadata={(event) => setDuration(event.currentTarget.duration || 0)}
+          onLoadStart={() => setBuffering(true)}
+          onLoadedMetadata={(event) => {
+            setDuration(event.currentTarget.duration || 0);
+            setBuffering(false);
+          }}
+          onCanPlay={() => setBuffering(false)}
+          onWaiting={() => setBuffering(true)}
           onTimeUpdate={(event) => setTime(event.currentTarget.currentTime)}
+          onPlaying={() => setBuffering(false)}
           onPlay={() => setPaused(false)}
           onPause={() => setPaused(true)}
-          onError={() => setMessage(t.player.sourceError)}
+          onError={() => {
+            setBuffering(false);
+            setMessage(t.player.sourceError);
+          }}
         >
           {subtitleUrl && <track kind="subtitles" src={subtitleUrl} label="Subtitle" default />}
         </video>
+
+        {buffering && (
+          <div className="player-loading">
+            <BrandLoader label={t.common.loading} compact />
+          </div>
+        )}
 
         <button className="player-center" type="button" onClick={togglePlay} aria-label={paused ? t.common.play : t.player.pause}>
           <span className={paused ? "player-play-icon" : "player-pause-icon"} />

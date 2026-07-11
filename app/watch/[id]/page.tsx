@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { VodPlayer } from "@/components/vod-player";
 import { findVodItem } from "@/lib/catalog";
@@ -26,7 +27,7 @@ export default async function WatchPage({ params }: Props) {
       <section className="browse-hero">
         <div className="wrap">
           <header className="topbar">
-            <Link className="brand" href="/">VOD</Link>
+            <BrandLogo locale={locale} compact />
             <div className="chips">
               <LanguageToggle locale={locale} />
               <Link className="chip" href={`/${item.imdbCode}`}>{t.common.details}</Link>
@@ -38,8 +39,12 @@ export default async function WatchPage({ params }: Props) {
           <div className="browse-title">
             <div className="meta">
               <span>{item.year ?? "-"}</span>
-              <i className="dot" />
-              <span>IMDb {(item.imdbRating ?? 0).toFixed(1)}</span>
+              {item.imdbRating && (
+                <>
+                  <i className="dot" />
+                  <span>IMDb {item.imdbRating.toFixed(1)}</span>
+                </>
+              )}
               <i className="dot" />
               <span>{links.length} {t.player.sources}</span>
             </div>

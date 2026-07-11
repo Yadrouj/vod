@@ -27,6 +27,8 @@ function toCard(item) {
     qualities: item.qualities ?? [],
     groups: item.groups ?? [],
     linksCount: Array.isArray(item.links) ? item.links.length : 0,
+    source: item.source ?? null,
+    sourcePageUrl: item.sourcePageUrl ?? null,
   };
 }
 
