@@ -1,0 +1,14 @@
+.git
+.gitignore
+node_modules
+.next
+out
+build
+*.tsbuildinfo
+dev-server.log
+dev-server.err.log
+dev-server.pid
+npm-debug.log*
+.DS_Store
+# NOTE: public/ (the LFS-backed catalog) and .env.local are intentionally kept —
+# the catalog is served at runtime and .env.local is needed at build for NEXT_PUBLIC_*.
