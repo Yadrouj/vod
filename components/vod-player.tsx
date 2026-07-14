@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Captions, Settings } from "lucide-react";
 import { BrandLoader } from "@/components/brand-loader";
 import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 import { episodeLabel } from "@/lib/link-labels";
@@ -15,16 +16,19 @@ type CastableVideo = HTMLVideoElement & {
 
 export function VodPlayer({
   title,
+  itemId,
   posterUrl,
   links,
   locale = DEFAULT_LOCALE,
 }: {
   title: string;
+  itemId?: string;
   posterUrl: string | null | undefined;
   links: VodLink[];
   locale?: Locale;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const previewRef = useRef<HTMLVideoElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [speed, setSpeed] = useState("1");
   const [volume, setVolume] = useState("0.85");
@@ -32,11 +36,42 @@ export function VodPlayer({
   const [paused, setPaused] = useState(true);
   const [duration, setDuration] = useState(0);
   const [time, setTime] = useState(0);
+  const [buffered, setBuffered] = useState(0);
+  const [preview, setPreview] = useState<{ x: number; time: number } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [selectionOpen, setSelectionOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [buffering, setBuffering] = useState(true);
+  const lastSavedAt = useRef(0);
   const active = links[activeIndex] ?? links[0];
   const t = getDictionary(locale);
+
+  useEffect(() => {
+    try {
+      const saved = readProgress();
+      const match = links.findIndex((link) => Boolean(saved[link.url]));
+      if (match >= 0) {
+        setActiveIndex(match);
+        setSelectionOpen(false);
+      } else if (links.length > 1) {
+        setSelectionOpen(true);
+      }
+    } catch { if (links.length > 1) setSelectionOpen(true); }
+  }, [links]);
+
+  function readProgress(): Record<string, { title: string; itemId?: string; url: string; time: number; at: number } | number> {
+    try {
+      const raw = document.cookie.split("; ").find((cookie) => cookie.startsWith("sarvnema_progress="))?.split("=")[1];
+      return raw ? JSON.parse(decodeURIComponent(raw)) : {};
+    } catch { return {}; }
+  }
+
+  function saveProgress(value: number) {
+    if (!active?.url || !Number.isFinite(value) || value < 3) return;
+    const progress = { ...readProgress(), [active.url]: { title, itemId, url: active.url, time: Math.floor(value), at: Date.now() } };
+    document.cookie = `sarvnema_progress=${encodeURIComponent(JSON.stringify(progress))}; path=/; max-age=2592000; SameSite=Lax`;
+    window.dispatchEvent(new CustomEvent("sarvnema-progress"));
+  }
 
   const sources = useMemo(
     () =>
@@ -151,11 +186,28 @@ export function VodPlayer({
           onLoadStart={() => setBuffering(true)}
           onLoadedMetadata={(event) => {
             setDuration(event.currentTarget.duration || 0);
+            const saved = readProgress()[active?.url ?? ""];
+            const resumeAt = typeof saved === "number" ? saved : saved?.time;
+            if (resumeAt && resumeAt < event.currentTarget.duration - 8) {
+              event.currentTarget.currentTime = resumeAt;
+              setTime(resumeAt);
+              setMessage(`ادامه پخش از ${formatTime(resumeAt)}`);
+            }
             setBuffering(false);
+            setBuffered(0);
           }}
           onCanPlay={() => setBuffering(false)}
           onWaiting={() => setBuffering(true)}
-          onTimeUpdate={(event) => setTime(event.currentTarget.currentTime)}
+          onTimeUpdate={(event) => {
+            const current = event.currentTarget.currentTime;
+            setTime(current);
+            if (Date.now() - lastSavedAt.current > 5000) { lastSavedAt.current = Date.now(); saveProgress(current); }
+          }}
+          onProgress={(event) => {
+            const video = event.currentTarget;
+            if (video.duration && video.buffered.length) setBuffered((video.buffered.end(video.buffered.length - 1) / video.duration) * 100);
+          }}
+          onEnded={() => { if (active?.url) { const progress = readProgress(); delete progress[active.url]; document.cookie = `sarvnema_progress=${encodeURIComponent(JSON.stringify(progress))}; path=/; max-age=2592000; SameSite=Lax`; } }}
           onPlaying={() => setBuffering(false)}
           onPlay={() => setPaused(false)}
           onPause={() => setPaused(true)}
@@ -187,16 +239,23 @@ export function VodPlayer({
         </div>
 
         <div className="player-bar">
-          <input
-            className="player-timeline"
-            type="range"
-            min="0"
-            max={duration || 0}
-            step="0.1"
-            value={Math.min(time, duration || 0)}
-            onChange={(event) => seek(event.target.value)}
-            aria-label="Seek"
-          />
+          <div className="player-timeline-wrap" onMouseMove={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)); const next = ratio * duration; setPreview({ x: ratio * 100, time: next }); if (previewRef.current && Number.isFinite(next)) previewRef.current.currentTime = next; }} onMouseLeave={() => setPreview(null)}>
+            {preview && duration > 0 && <div className="player-frame-preview" style={{ left: `${preview.x}%` }}><video ref={previewRef} src={active?.url} muted preload="metadata" /><span>{formatTime(preview.time)}</span></div>}
+            <span className="player-timeline-track" aria-hidden="true">
+              <span className="player-buffer-progress" style={{ width: `${buffered}%` }} />
+              <span className="player-played-progress" style={{ width: `${duration > 0 ? Math.min(100, (time / duration) * 100) : 0}%` }} />
+            </span>
+            <input
+              className="player-timeline"
+              type="range"
+              min="0"
+              max={duration || 0}
+              step="0.1"
+              value={Math.min(time, duration || 0)}
+              onChange={(event) => seek(event.target.value)}
+              aria-label="Seek"
+            />
+          </div>
 
           <div className="player-actions">
             <button type="button" className="player-btn" onClick={togglePlay}>{paused ? t.common.play : t.player.pause}</button>
@@ -217,8 +276,11 @@ export function VodPlayer({
             <button type="button" className="player-btn" onClick={castVideo}>{t.player.cast}</button>
             <button type="button" className="player-btn" onClick={openPictureInPicture}>PiP</button>
             <button type="button" className="player-btn" onClick={toggleFullscreen}>{t.player.full}</button>
-            <button type="button" className="player-btn active" onClick={() => setSettingsOpen((value) => !value)}>
-              {t.player.settings}
+            <button type="button" className="player-icon-btn" onClick={() => setSettingsOpen((value) => !value)} aria-label="Subtitles" title="Subtitles">
+              <Captions size={17} />
+            </button>
+            <button type="button" className="player-icon-btn" onClick={() => setSettingsOpen((value) => !value)} aria-label={t.player.settings} title={t.player.settings}>
+              <Settings size={17} />
             </button>
           </div>
         </div>
@@ -253,7 +315,30 @@ export function VodPlayer({
                 onChange={(event) => setSubtitleUrl(event.target.value)}
                 placeholder={t.player.subtitlePlaceholder}
               />
+              <input
+                className="search subtitle-file-input"
+                type="file"
+                accept=".vtt,.srt,text/vtt,application/x-subrip"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) setSubtitleUrl(URL.createObjectURL(file));
+                }}
+                aria-label="Add subtitle file"
+              />
             </label>
+          </div>
+        )}
+        {selectionOpen && sources.length > 1 && (
+          <div className="player-choice-overlay">
+            <div className="player-choice-card">
+              <span className="label">Choose playback</span>
+              <h3>{title}</h3>
+              <p>Select episode, quality or source before starting.</p>
+              <select className="select" value={activeIndex} onChange={(event) => changeSource(event.target.value)}>
+                {sources.map((source, index) => <option key={`${source.url}-${index}`} value={index}>{source.label}</option>)}
+              </select>
+              <button type="button" className="play-glow" onClick={() => setSelectionOpen(false)}>▶ Start playback</button>
+            </div>
           </div>
         )}
       </div>

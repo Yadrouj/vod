@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { VodPlayer } from "@/components/vod-player";
+import { WatchTogetherInvite } from "@/components/watch-together-invite";
+import { SubtitleList } from "@/components/subtitle-list";
 import { findVodItem } from "@/lib/catalog";
 import { getDictionary } from "@/lib/i18n";
-import { playableLinks } from "@/lib/link-labels";
+import { episodeLabel, playableLinks } from "@/lib/link-labels";
 import { getLocale } from "@/lib/server-locale";
 import { subzoneSearchUrl } from "@/lib/subtitles";
 
@@ -21,6 +23,7 @@ export default async function WatchPage({ params }: Props) {
   if (!item) notFound();
 
   const links = playableLinks(item.links);
+  const partySources = links.map((link, index) => ({ url: link.url, label: [episodeLabel(link), link.quality, link.release ?? link.group].filter(Boolean).join(" / ") || `Source ${index + 1}`, quality: link.quality, season: link.season ?? null, episode: link.episode ?? null }));
 
   return (
     <main className="shell">
@@ -29,6 +32,7 @@ export default async function WatchPage({ params }: Props) {
           <header className="topbar">
             <BrandLogo locale={locale} compact />
             <div className="chips">
+              {partySources[0] && <WatchTogetherInvite media={{ itemId: item.imdbCode, title: item.title, posterUrl: item.backdropUrl ?? item.posterUrl ?? null, source: partySources[0], sources: partySources }} />}
               <LanguageToggle locale={locale} />
               <Link className="chip" href={`/${item.imdbCode}`}>{t.common.details}</Link>
               <a className="pill" href={subzoneSearchUrl(item.title, item.year)} target="_blank" rel="noreferrer">
@@ -37,6 +41,7 @@ export default async function WatchPage({ params }: Props) {
             </div>
           </header>
           <div className="browse-title">
+            <Link className="watch-back" href={`/${item.imdbCode}`}>← {t.common.details}</Link>
             <div className="meta">
               <span>{item.year ?? "-"}</span>
               {item.imdbRating && (
@@ -54,7 +59,8 @@ export default async function WatchPage({ params }: Props) {
       </section>
 
       <section className="section wrap">
-        <VodPlayer title={item.title} posterUrl={item.backdropUrl ?? item.posterUrl} links={links} locale={locale} />
+        <VodPlayer itemId={item.imdbCode} title={item.title} posterUrl={item.backdropUrl ?? item.posterUrl} links={links} locale={locale} />
+        <SubtitleList imdbCode={item.imdbCode} title={item.title} />
       </section>
     </main>
   );

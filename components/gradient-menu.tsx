@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { formatNumber, getDictionary, type Locale } from "@/lib/i18n";
@@ -9,6 +12,7 @@ export type MegaMenuSection = {
   title: string;
   href: string;
   items: VodCard[];
+  artUrl?: string | null;
 };
 
 export function GradientMenu({
@@ -20,6 +24,7 @@ export function GradientMenu({
   locale: Locale;
   menuSections?: MegaMenuSection[];
 }) {
+  const [activeSectionId, setActiveSectionId] = useState(menuSections[0]?.id ?? "");
   const t = getDictionary(locale);
   const menuItems = [
     { href: "/browse?section=persian-movies", label: t.common.persianMovies },
@@ -28,7 +33,11 @@ export function GradientMenu({
     { href: "/browse?section=best-series", label: t.nav.series },
     { href: "/browse?section=animation", label: t.nav.animation },
   ];
-  const posterBadges = uniqueCards(menuSections.flatMap((section) => section.items)).slice(0, 8);
+  const menuItemsForGallery = menuSections.flatMap((section) => section.items.slice(0, 10));
+  const usedGalleryImages = new Set(menuItemsForGallery.map((item) => item.backdropUrl ?? item.posterUrl).filter(Boolean));
+  const posterBadges = uniqueGalleryCards(menuSections.flatMap((section) => section.items.slice(10)))
+    .filter((item) => !usedGalleryImages.has(item.backdropUrl ?? item.posterUrl))
+    .slice(0, 8);
 
   return (
     <header className="gradient-menu wrap">
@@ -46,16 +55,27 @@ export function GradientMenu({
         <div className="mega-panel">
           <aside className="mega-rail" aria-label={t.common.categories}>
             {menuSections.map((section) => (
-              <a key={`rail-${section.id}`} href={`#mega-${section.id}`}>
+              <button
+                key={`rail-${section.id}`}
+                type="button"
+                className={activeSectionId === section.id ? "active" : ""}
+                onMouseEnter={() => setActiveSectionId(section.id)}
+                onFocus={() => setActiveSectionId(section.id)}
+                onClick={() => setActiveSectionId(section.id)}
+              >
                 {section.title}
                 <span>{formatNumber(section.items.length, locale)}</span>
-              </a>
+              </button>
             ))}
           </aside>
 
           <div className="mega-groups">
-            {menuSections.map((section) => (
+            {menuSections.filter((section) => section.id === activeSectionId).map((section) => (
               <section key={section.id} id={`mega-${section.id}`} className="mega-group">
+                {(() => {
+                  const visibleItems = section.items;
+                  return (
+                    <>
                 <div className="mega-group-head">
                   <Link href={section.href}>{section.title}</Link>
                   <span>{formatNumber(section.items.length, locale)}</span>
@@ -63,15 +83,15 @@ export function GradientMenu({
                 <div className="mega-category-content">
                   <Link
                     className="mega-category-art"
-                    href={section.items[0] ? `/${section.items[0].imdbCode}` : section.href}
-                    style={section.items[0]?.backdropUrl || section.items[0]?.posterUrl
-                      ? { backgroundImage: `url(${section.items[0].backdropUrl ?? section.items[0].posterUrl})` }
+                    href={visibleItems[0] ? `/${visibleItems[0].imdbCode}` : section.href}
+                    style={section.artUrl
+                      ? { backgroundImage: `url(${section.artUrl})` }
                       : undefined}
                   >
-                    <span>{section.items[0]?.title ?? section.title}</span>
+                    <span>{visibleItems[0]?.title ?? section.title}</span>
                   </Link>
                   <div className="mega-title-list">
-                    {section.items.slice(0, 8).map((item) => (
+                    {visibleItems.slice(0, 10).map((item) => (
                       <Link key={`${section.id}-${item.imdbCode}`} href={`/${item.imdbCode}`}>
                         <strong>{item.title}</strong>
                         <small>{item.year ?? "-"}</small>
@@ -79,6 +99,9 @@ export function GradientMenu({
                     ))}
                   </div>
                 </div>
+                    </>
+                  );
+                })()}
               </section>
             ))}
           </div>
@@ -116,6 +139,18 @@ function uniqueCards(items: VodCard[]) {
   return items.filter((item) => {
     if (seen.has(item.imdbCode)) return false;
     seen.add(item.imdbCode);
+    return true;
+  });
+}
+
+function uniqueGalleryCards(items: VodCard[]) {
+  const ids = new Set<string>();
+  const images = new Set<string>();
+  return items.filter((item) => {
+    const image = item.backdropUrl ?? item.posterUrl;
+    if (ids.has(item.imdbCode) || !image || images.has(image)) return false;
+    ids.add(item.imdbCode);
+    images.add(image);
     return true;
   });
 }

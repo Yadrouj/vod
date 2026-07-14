@@ -6,7 +6,11 @@ import { DEFAULT_LOCALE, getDictionary, type Locale, typeLabel } from "@/lib/i18
 import type { VodCard } from "@/lib/types";
 
 export function BannerCarousel({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]; locale?: Locale }) {
-  const [active, setActive] = useState(0);
+  const [active, setActive] = useState(() => {
+    if (!items.length) return 0;
+    const day = Math.floor(Date.now() / 86400000);
+    return day % items.length;
+  });
   const current = items[active] ?? items[0];
   const t = getDictionary(locale);
 

@@ -38,20 +38,32 @@ export function FocusRail({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]
         </div>
       </div>
 
-      <div className="focus-track" aria-label="Featured focus rail">
+      <div
+        className="focus-track"
+        aria-label="Featured focus rail"
+        style={current.backdropUrl || current.posterUrl ? {
+          backgroundImage: `linear-gradient(90deg, rgba(5,5,7,0.04), rgba(5,5,7,0.32)), url(${current.backdropUrl ?? current.posterUrl})`,
+        } : undefined}
+      >
+        <div className="focus-gallery-copy">{current.title}</div>
+        <div className="focus-gallery-thumbs">
         {items.map((item, index) => {
           const depth = (index - active + items.length) % items.length;
           const visibleDepth = Math.min(depth, 7);
           const isActive = depth === 0;
+          const angle = (index / items.length) * 360 - 90;
           return (
             <button
               key={item.imdbCode}
               type="button"
               className={`focus-card ${isActive ? "active" : ""}`}
               style={{
-                transform: `translate(-50%, -50%) translateX(${isActive ? "clamp(-42px, -3vw, 0px)" : `${visibleDepth * 96}px`}) translateY(${visibleDepth * 9}px) scale(${isActive ? 1.24 : Math.max(0.38, 0.88 - visibleDepth * 0.08)})`,
-                opacity: isActive ? 1 : Math.max(0.1, 0.55 - visibleDepth * 0.08),
-                filter: isActive ? "none" : `blur(${Math.min(50, visibleDepth * 8)}px) saturate(${Math.max(0.18, 0.76 - visibleDepth * 0.08)})`,
+                backgroundImage: item.backdropUrl || item.posterUrl
+                  ? `linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.82)), url(${item.backdropUrl ?? item.posterUrl})`
+                  : "linear-gradient(135deg, #303038, #09090b)",
+                transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(clamp(-210px, -14vw, -130px)) rotate(${-angle}deg) scale(${isActive ? 1.18 : 0.82})`,
+                opacity: isActive ? 1 : 0.72,
+                filter: isActive ? "none" : "saturate(0.72)",
                 zIndex: items.length - visibleDepth,
               }}
               onClick={() => setActive(index)}
@@ -59,22 +71,20 @@ export function FocusRail({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]
             >
               <span
                 className="focus-card-art"
-                style={item.backdropUrl ? { backgroundImage: `url(${item.backdropUrl})` } : undefined}
+                style={item.backdropUrl || item.posterUrl
+                  ? { backgroundImage: `url(${item.backdropUrl ?? item.posterUrl})` }
+                  : undefined}
               />
               <span className="focus-card-title">{item.title}</span>
               <span className="rating">{item.imdbRating ? `IMDb ${item.imdbRating.toFixed(1)}` : item.year ?? t.common.movie}</span>
             </button>
           );
         })}
-      </div>
-
-      <div className="focus-controls">
-        <button type="button" className="chip" onClick={() => setActive((value) => (value - 1 + items.length) % items.length)}>
-          {t.common.previous}
-        </button>
-        <button type="button" className="chip active" onClick={() => setActive((value) => (value + 1) % items.length)}>
-          {t.common.next}
-        </button>
+        </div>
+        <div className="focus-controls">
+          <button type="button" className="chip" onClick={() => setActive((value) => (value - 1 + items.length) % items.length)} aria-label="Previous">‹</button>
+          <button type="button" className="chip active" onClick={() => setActive((value) => (value + 1) % items.length)} aria-label="Next">›</button>
+        </div>
       </div>
     </section>
   );

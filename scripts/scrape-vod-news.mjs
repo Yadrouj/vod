@@ -46,7 +46,8 @@ async function main() {
     .slice(0, LIMIT);
   const enrichedItems = await Promise.all(selectedItems.map(async (item) => ({
     ...item,
-    imageUrl: item.imageUrl ?? await findOpenGraphImage(item.url),
+    url: await resolveFinalUrl(item.url),
+    imageUrl: await findOpenGraphImage(await resolveFinalUrl(item.url)) ?? item.imageUrl,
   })));
 
   const payload = {
@@ -83,6 +84,15 @@ async function findOpenGraphImage(url) {
     return match?.[1] ? new URL(cleanXml(match[1]), url).toString() : null;
   } catch {
     return null;
+  }
+}
+
+async function resolveFinalUrl(url) {
+  try {
+    const response = await fetch(url, { redirect: "follow", headers: { "user-agent": USER_AGENT } });
+    return response.url || url;
+  } catch {
+    return url;
   }
 }
 

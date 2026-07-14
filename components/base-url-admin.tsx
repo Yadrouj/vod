@@ -5,15 +5,17 @@ import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 
 type Props = {
   initialBaseUrl: string;
+  initialArchiveUrl: string;
   updatedAt: string | null;
   sampleBefore: string;
   sampleAfter: string;
   locale?: Locale;
 };
 
-export function BaseUrlAdmin({ initialBaseUrl, updatedAt, sampleBefore, sampleAfter, locale = DEFAULT_LOCALE }: Props) {
+export function BaseUrlAdmin({ initialBaseUrl, initialArchiveUrl, updatedAt, sampleBefore, sampleAfter, locale = DEFAULT_LOCALE }: Props) {
   const [baseUrl, setBaseUrl] = useState(initialBaseUrl);
   const [currentBaseUrl, setCurrentBaseUrl] = useState(initialBaseUrl);
+  const [archiveUrl, setArchiveUrl] = useState(initialArchiveUrl);
   const [status, setStatus] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const t = getDictionary(locale);
@@ -25,7 +27,7 @@ export function BaseUrlAdmin({ initialBaseUrl, updatedAt, sampleBefore, sampleAf
       const response = await fetch("/api/admin/base-url", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ baseUrl }),
+        body: JSON.stringify({ baseUrl, archiveUrl }),
       });
       const payload = (await response.json()) as { baseUrl?: string; error?: string };
       if (!response.ok) throw new Error(payload.error ?? "Update failed.");
@@ -34,6 +36,25 @@ export function BaseUrlAdmin({ initialBaseUrl, updatedAt, sampleBefore, sampleAf
       setStatus(t.admin.success);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : t.admin.failed);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function syncArchive() {
+    setSaving(true);
+    setStatus(null);
+    try {
+      const response = await fetch("/api/admin/archive-sync", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ archiveUrl, baseUrl }),
+      });
+      const payload = (await response.json()) as { message?: string; error?: string };
+      if (!response.ok) throw new Error(payload.error ?? "Archive sync failed.");
+      setStatus(payload.message ?? "Archive synced successfully.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Archive sync failed.");
     } finally {
       setSaving(false);
     }
@@ -51,11 +72,18 @@ export function BaseUrlAdmin({ initialBaseUrl, updatedAt, sampleBefore, sampleAf
 
       <div className="admin-form">
         <label>
+          <span className="label">Archive source URL</span>
+          <input className="search" value={archiveUrl} onChange={(event) => setArchiveUrl(event.target.value)} />
+        </label>
+        <label>
           <span className="label">{t.admin.currentBase}</span>
           <input className="search" value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} />
         </label>
         <button className="play-glow" type="button" onClick={save} disabled={saving}>
           {saving ? t.admin.updating : t.admin.updateLinks}
+        </button>
+        <button className="chip" type="button" onClick={syncArchive} disabled={saving}>
+          {saving ? "Syncing archive…" : "Sync archive links"}
         </button>
       </div>
 

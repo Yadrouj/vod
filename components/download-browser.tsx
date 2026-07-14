@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { DownloadAction } from "@/components/download-action";
+import { DownloadButton } from "@/components/ui/download-animation";
 import { DEFAULT_LOCALE, getDictionary, interpolate, type Locale } from "@/lib/i18n";
 import type { DownloadSource, EpisodeDownload, ExpandedSeasonDownloads, SeasonSummary } from "@/lib/downloads";
 
@@ -12,6 +12,7 @@ type DownloadBrowserProps = {
   seasons: SeasonSummary[];
   movieFiles: DownloadSource[];
   fallbackImage: string | null;
+  fallbackImages?: string[];
   locale?: Locale;
 };
 
@@ -27,11 +28,13 @@ export function DownloadBrowser({
   seasons,
   movieFiles,
   fallbackImage,
+  fallbackImages = [],
   locale = DEFAULT_LOCALE,
 }: DownloadBrowserProps) {
   const [activeSeason, setActiveSeason] = useState(seasons[0]?.season ?? 1);
   const [cache, setCache] = useState<Record<number, SeasonResponse>>({});
   const [errors, setErrors] = useState<Record<number, string>>({});
+  const [bundleQuality, setBundleQuality] = useState("");
   const t = getDictionary(locale);
 
   useEffect(() => {
@@ -60,21 +63,50 @@ export function DownloadBrowser({
     [activeSeason, seasons]
   );
   const activeData = cache[activeSeason];
+  const seasonQualities = useMemo(
+    () => Array.from(new Set((activeData?.episodes ?? []).flatMap((episode) =>
+      episode.files.map((file) => file.quality).filter((quality): quality is string => Boolean(quality))
+    ))),
+    [activeData]
+  );
   const error = errors[activeSeason] ?? null;
   const loading = isSeries && !activeData && !error;
+
+  useEffect(() => {
+    setBundleQuality((current) => seasonQualities.includes(current) ? current : seasonQualities[0] ?? "");
+  }, [activeSeason, seasonQualities]);
+
+  function downloadSeasonLinks() {
+    if (!activeData || !bundleQuality) return;
+    const urls = Array.from(new Set(
+      activeData.episodes.flatMap((episode) => episode.files)
+        .filter((file) => file.quality === bundleQuality)
+        .map((file) => file.url)
+    ));
+    if (!urls.length) return;
+    const blob = new Blob([`${urls.join("\r\n")}\r\n`], { type: "text/plain;charset=utf-8" });
+    const blobUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = blobUrl;
+    anchor.download = `${safeFileName(title)}-S${String(activeSeason).padStart(2, "0")}-${safeFileName(bundleQuality)}-links.txt`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(blobUrl);
+  }
 
   if (!isSeries || seasons.length === 0) {
     return (
       <div className="download-browser movie-download-browser">
         <div className="movie-file-list">
           {movieFiles.map((file, index) => (
-            <a key={`${file.url}-${index}`} className="movie-file-row" href={file.url}>
+            <div key={`${file.url}-${index}`} className="movie-file-row">
               <span>
                 <strong>{file.label}</strong>
                 <small>{[file.group, file.quality, file.release, file.size].filter(Boolean).join(" / ")}</small>
               </span>
-              <DownloadAction label={file.quality ?? t.common.file} />
-            </a>
+              <DownloadButton href={file.url} title={title} label={file.quality ?? t.common.file} />
+            </div>
           ))}
         </div>
       </div>
@@ -107,22 +139,39 @@ export function DownloadBrowser({
       {loading && <EpisodeSkeleton />}
       {error && <p className="download-error">{error}</p>}
       {!loading && !error && activeData && (
-        <div className="episode-list">
-          {activeData.episodes.map((episode) => (
-            <EpisodeRow
-              key={`${episode.season}-${episode.episode ?? "pack"}`}
-              episode={episode}
-              fallbackImage={fallbackImage}
-              locale={locale}
-            />
-          ))}
-        </div>
+        <>
+          {seasonQualities.length > 0 && (
+            <div className="season-link-bundle">
+              <div>
+                <strong>{locale === "fa" ? "دانلود لینک‌های کامل فصل" : "Download season link list"}</strong>
+                <small>{locale === "fa" ? "کیفیت را انتخاب کنید؛ تمام لینک‌های این فصل داخل یک فایل متنی قرار می‌گیرند." : "Choose a quality to save every episode URL in one text file."}</small>
+              </div>
+              <select className="select" value={bundleQuality} onChange={(event) => setBundleQuality(event.target.value)}>
+                {seasonQualities.map((quality) => <option key={quality} value={quality}>{quality}</option>)}
+              </select>
+              <button type="button" className="season-bundle-download" onClick={downloadSeasonLinks}>
+                ↓ {locale === "fa" ? "دانلود فایل TXT" : "Download TXT"}
+              </button>
+            </div>
+          )}
+          <div className="episode-list">
+            {activeData.episodes.map((episode) => (
+              <EpisodeRow
+                key={`${episode.season}-${episode.episode ?? "pack"}`}
+                episode={episode}
+                fallbackImage={fallbackImage}
+                fallbackImages={fallbackImages}
+                locale={locale}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-function EpisodeRow({ episode, fallbackImage, locale }: { episode: EpisodeDownload; fallbackImage: string | null; locale: Locale }) {
+function EpisodeRow({ episode, fallbackImage, fallbackImages, locale }: { episode: EpisodeDownload; fallbackImage: string | null; fallbackImages: string[]; locale: Locale }) {
   const qualities = Array.from(new Set(episode.files.map((file) => file.quality).filter(Boolean))).join(" / ");
   const t = getDictionary(locale);
   const title =
@@ -132,16 +181,17 @@ function EpisodeRow({ episode, fallbackImage, locale }: { episode: EpisodeDownlo
         ? t.downloads.seasonPack
         : episode.title;
 
+  const episodeImage = episode.imageUrl ?? fallbackImages[(Math.max(1, episode.episode ?? 1) - 1) % fallbackImages.length] ?? fallbackImage;
   return (
     <article className="episode-row">
       <a
         className="episode-thumb"
-        href={episode.imageUrl ?? fallbackImage ?? episode.files[0]?.url ?? "#"}
+        href={episodeImage ?? episode.files[0]?.url ?? "#"}
         target="_blank"
         rel="noreferrer"
         style={
-          episode.imageUrl || fallbackImage
-            ? { backgroundImage: `url(${episode.imageUrl ?? fallbackImage})` }
+          episodeImage
+            ? { backgroundImage: `url(${episodeImage})` }
             : undefined
         }
       >
@@ -164,10 +214,10 @@ function EpisodeRow({ episode, fallbackImage, locale }: { episode: EpisodeDownlo
         </p>
         <div className="episode-quality-list">
           {episode.files.map((file, index) => (
-            <a key={`${file.url}-${index}`} className="quality-download" href={file.url}>
-              <DownloadAction label={file.quality ?? t.common.file} />
+            <div key={`${file.url}-${index}`} className="quality-download">
+              <DownloadButton href={file.url} title={`${title} · ${episode.code}`} label={file.quality ?? t.common.file} />
               <small>{[file.group, file.release, file.size].filter(Boolean).join(" / ") || file.name}</small>
-            </a>
+            </div>
           ))}
         </div>
       </div>
@@ -186,4 +236,8 @@ function EpisodeSkeleton() {
       ))}
     </div>
   );
+}
+
+function safeFileName(value: string) {
+  return value.trim().replace(/[<>:"/\\|?*]+/g, "-").replace(/\s+/g, "-").slice(0, 80) || "season";
 }

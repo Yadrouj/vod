@@ -88,7 +88,7 @@ export function AiSearchPanel({
 
       {results.length > 0 && (
         <div className="ai-results">
-          {results.slice(0, 5).map((result) => (
+          {results.slice(0, 15).map((result) => (
             <Link
               key={result.item.imdbCode}
               className="ai-result"
@@ -99,9 +99,7 @@ export function AiSearchPanel({
                   : undefined
               }
             >
-              <span className="rating">{t.ai.match} {result.score}</span>
               <strong>{result.item.title}</strong>
-              <small>{result.reasons.join(" / ")}</small>
             </Link>
           ))}
         </div>

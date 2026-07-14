@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
-import { DownloadAction } from "@/components/download-action";
+import { DownloadButton } from "@/components/ui/download-animation";
 import { LanguageToggle } from "@/components/language-toggle";
 import { TitleTabs } from "@/components/title-tabs";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
@@ -119,10 +119,10 @@ export default async function DetailPage({ params }: Props) {
               )}
               {item.overview && <p>{item.overview}</p>}
               <div className="chips" style={{ marginTop: 24 }}>
-                <Link className="play-glow" href={`/watch/${item.imdbCode}`}>
+                <Link className="play-glow detail-play-button" href={`/watch/${item.imdbCode}`}>
                   <span className="play-dot" /> {t.common.playOnline}
                 </Link>
-                {best && <a className="hover-button" href={best.url}><DownloadAction label={t.common.bestFile} /></a>}
+                {best && <DownloadButton href={best.url} label={t.common.bestFile} />}
                 <a
                   className="hover-button"
                   href={subzoneSearchUrl(item.title, item.year)}
@@ -238,14 +238,21 @@ function similarTitles(item: VodItem, items: VodCard[]) {
   const genres = new Set((item.genres ?? []).map((genre) => genre.toLowerCase()));
   const countries = new Set((item.countries ?? []).map((country) => country.toLowerCase()));
   const type = normalizeVodType(item.type);
+  const sourceTitle = `${item.title} ${item.originalTitle ?? ""}`.toLowerCase();
+  const franchiseTokens = franchiseFamily(sourceTitle);
 
   return items
     .filter((candidate) => candidate.imdbCode !== item.imdbCode)
     .map((candidate) => {
       const sharedGenres = candidate.genres.filter((genre) => genres.has(genre.toLowerCase())).length;
       const sharedCountries = candidate.countries.filter((country) => countries.has(country.toLowerCase())).length;
+      const candidateTitle = candidate.title.toLowerCase();
+      const sharedTitleTokens = titleTokens(sourceTitle).filter((token) => candidateTitle.includes(token)).length;
+      const franchiseBoost = franchiseTokens.some((token) => candidateTitle.includes(token)) ? 90 : 0;
+      const sequelBoost = sequelRelation(sourceTitle, candidateTitle) ? 54 : 0;
       const typeBoost = candidate.type === type ? 10 : 0;
       const score =
+        franchiseBoost + sequelBoost + sharedTitleTokens * 28 +
         sharedGenres * 24 +
         sharedCountries * 6 +
         typeBoost +
@@ -257,4 +264,26 @@ function similarTitles(item: VodItem, items: VodCard[]) {
     .sort((a, b) => b.score - a.score)
     .slice(0, 18)
     .map(({ candidate }) => candidate);
+}
+
+function titleTokens(value: string) {
+  return value.split(/[^a-z0-9]+/i).filter((token) => token.length > 3 && !["the", "and", "film", "movie", "series"].includes(token));
+}
+
+function franchiseFamily(title: string) {
+  const families = [
+    ["breaking bad", "better call saul", "el camino"],
+    ["avengers", "iron man", "thor", "captain america", "hulk", "guardians of the galaxy"],
+    ["star wars", "mandalorian", "andor", "obi-wan"],
+    ["game of thrones", "house of the dragon"],
+    ["lord of the rings", "hobbit"],
+    ["harry potter", "fantastic beasts"],
+  ];
+  return families.find((family) => family.some((entry) => title.includes(entry))) ?? [];
+}
+
+function sequelRelation(source: string, candidate: string) {
+  const sourceWords = titleTokens(source);
+  const candidateWords = titleTokens(candidate);
+  return sourceWords.length > 0 && candidateWords.some((word) => sourceWords.includes(word));
 }

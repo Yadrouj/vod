@@ -19,7 +19,7 @@ export function PeopleRail({ people, locale = DEFAULT_LOCALE }: { people: TopPer
         </Link>
       </div>
       <div className="people-rail">
-        {people.slice(0, 12).map((person, index) => (
+        {people.slice(0, 10).map((person, index) => (
           <PersonCard key={person.id} person={person} locale={locale} rank={index + 1} />
         ))}
       </div>

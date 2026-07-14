@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { DownloadBrowser } from "@/components/download-browser";
+import { InteractiveMediaGallery, type GalleryMedia } from "@/components/ui/interactive-media-gallery";
 import { PosterCard } from "@/components/poster-card";
 import { DEFAULT_LOCALE, getDictionary, interpolate, type Locale, typeLabel } from "@/lib/i18n";
 import type { DownloadSource, SeasonSummary } from "@/lib/downloads";
@@ -61,6 +62,7 @@ export function TitleTabs({
             seasons={seasons}
             movieFiles={movieFiles}
             fallbackImage={item.backdropUrl ?? item.posterUrl ?? null}
+            fallbackImages={(item.imdbImages ?? []).map((image) => image.url)}
             locale={locale}
           />
         </section>
@@ -84,6 +86,12 @@ function AboutTab({ item, locale }: { item: VodItem; locale: Locale }) {
   return (
     <section className="title-tab-panel about-tab">
       <div className="about-main">
+        {(item.credits?.length ?? 0) > 0 && (
+          <>
+            <PanelHead title={t.title.castCrew} note={`${item.credits?.length} ${t.title.people}`} />
+            <CastRail item={item} />
+          </>
+        )}
         <PanelHead
           title={t.title.trailersPictures}
           note={interpolate(t.title.trailersPicturesNote, {
@@ -92,13 +100,6 @@ function AboutTab({ item, locale }: { item: VodItem; locale: Locale }) {
           })}
         />
         <MediaCarousel item={item} locale={locale} />
-
-        {(item.credits?.length ?? 0) > 0 && (
-          <>
-            <PanelHead title={t.title.castCrew} note={`${item.credits?.length} ${t.title.people}`} />
-            <CastRail item={item} />
-          </>
-        )}
       </div>
 
       <aside className="about-data">
@@ -146,45 +147,14 @@ function PanelHead({ title, note }: { title: string; note: string }) {
 }
 
 function MediaCarousel({ item, locale }: { item: VodItem; locale: Locale }) {
-  const t = getDictionary(locale);
   const videos = item.imdbVideos?.slice(0, 10) ?? [];
   const images = item.imdbImages?.slice(0, 20) ?? [];
-  const fallbackImage = images.length === 0 ? item.backdropUrl ?? item.posterUrl : null;
-
-  return (
-    <div className="media-carousel">
-      {videos.map((video) => {
-        const source = video.playback_urls?.find((playback) => playback.mime_type === "MP4")?.url ?? video.playback_urls?.[0]?.url;
-        return (
-          <article key={video.video_id ?? video.name} className="media-card clip-card">
-            {source ? (
-              <video src={source} poster={video.thumbnail_url ?? undefined} controls playsInline preload="metadata" />
-            ) : (
-              <div className="media-thumb" style={video.thumbnail_url ? { backgroundImage: `url(${video.thumbnail_url})` } : undefined} />
-            )}
-            <div className="media-card-foot">
-              <strong>{video.name}</strong>
-              {source && <a className="hover-button" href={source} target="_blank" rel="noreferrer">{t.title.open}</a>}
-            </div>
-          </article>
-        );
-      })}
-
-      {images.map((image) => (
-        <a key={image.url} className="media-card image-card" href={image.url} target="_blank" rel="noreferrer">
-          <img src={image.url} alt={image.caption ?? item.title} />
-          <span>{image.caption ?? t.title.openPicture}</span>
-        </a>
-      ))}
-
-      {fallbackImage && (
-        <a className="media-card image-card" href={fallbackImage} target="_blank" rel="noreferrer">
-          <img src={fallbackImage} alt={`${item.title} poster`} />
-          <span>{t.title.openPoster}</span>
-        </a>
-      )}
-    </div>
-  );
+  const media: GalleryMedia[] = [
+    ...videos.flatMap((video, index) => { const source = video.playback_urls?.find((playback) => playback.mime_type === "MP4")?.url ?? video.playback_urls?.[0]?.url; return source ? [{ id: `video-${video.video_id ?? index}`, type: "video" as const, title: video.name, url: source, poster: video.thumbnail_url ?? undefined }] : []; }),
+    ...images.map((image, index) => ({ id: `image-${index}-${image.url}`, type: "image" as const, title: image.caption ?? item.title, url: image.url })),
+  ];
+  if (!media.length && (item.backdropUrl ?? item.posterUrl)) media.push({ id: "fallback", type: "image", title: item.title, url: item.backdropUrl ?? item.posterUrl! });
+  return <InteractiveMediaGallery items={media} />;
 }
 
 function CastRail({ item }: { item: VodItem }) {

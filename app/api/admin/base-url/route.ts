@@ -6,8 +6,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { baseUrl?: string };
-    const settings = await saveDownloadBaseUrl(body.baseUrl ?? "");
+    const body = (await request.json()) as { baseUrl?: string; archiveUrl?: string };
+    const settings = await saveDownloadBaseUrl(body.baseUrl ?? "", body.archiveUrl);
     return Response.json(settings);
   } catch (error) {
     return Response.json(

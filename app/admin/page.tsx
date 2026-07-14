@@ -33,6 +33,7 @@ export default async function AdminPage() {
       <section className="section wrap">
         <BaseUrlAdmin
           initialBaseUrl={settings.baseUrl}
+          initialArchiveUrl={settings.archiveUrl}
           updatedAt={settings.updatedAt}
           sampleBefore={SAMPLE_URL}
           sampleAfter={rewriteDownloadUrl(SAMPLE_URL, settings.baseUrl)}

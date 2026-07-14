@@ -4,10 +4,12 @@ import type { VodItem, VodLink } from "./types";
 
 export type DownloadSettings = {
   baseUrl: string;
+  archiveUrl: string;
   updatedAt: string | null;
 };
 
 const DEFAULT_BASE_URL = "https://dls3.aparatchi-dlcenter.top/DonyayeSerial/";
+export const DEFAULT_ARCHIVE_URL = "https://dls2.aparatchi-dlcenter.top/DonyayeSerial/donyaye_serial_all_archive.html";
 const SETTINGS_FILE = path.join(process.cwd(), "data", "vod-settings.json");
 const DONYAYE_SERIAL_RE = /\/DonyayeSerial\/(.+)$/i;
 
@@ -16,19 +18,22 @@ export async function loadDownloadSettings(): Promise<DownloadSettings> {
     const settings = JSON.parse(await readFile(SETTINGS_FILE, "utf8")) as Partial<DownloadSettings>;
     return {
       baseUrl: normalizeDownloadBaseUrl(settings.baseUrl ?? DEFAULT_BASE_URL),
+      archiveUrl: settings.archiveUrl ?? DEFAULT_ARCHIVE_URL,
       updatedAt: settings.updatedAt ?? null,
     };
   } catch {
     return {
       baseUrl: DEFAULT_BASE_URL,
+      archiveUrl: DEFAULT_ARCHIVE_URL,
       updatedAt: null,
     };
   }
 }
 
-export async function saveDownloadBaseUrl(baseUrl: string): Promise<DownloadSettings> {
+export async function saveDownloadBaseUrl(baseUrl: string, archiveUrl?: string): Promise<DownloadSettings> {
   const settings = {
     baseUrl: normalizeDownloadBaseUrl(baseUrl),
+    archiveUrl: archiveUrl?.trim() || DEFAULT_ARCHIVE_URL,
     updatedAt: new Date().toISOString(),
   };
   await mkdir(path.dirname(SETTINGS_FILE), { recursive: true });
@@ -70,6 +75,12 @@ export async function applyDownloadBaseToItem(item: VodItem): Promise<VodItem> {
 }
 
 function rewriteLink(link: VodLink, baseUrl: string): VodLink {
+  // The archive intentionally distributes files across several dls hosts.
+  // Preserve the host recorded on each source instead of flattening every
+  // working link to the admin's single fallback base URL.
+  if (/^https?:\/\/dls\d*\.aparatchi-dlcenter\.top\//i.test(link.url)) {
+    return { ...link };
+  }
   return {
     ...link,
     url: rewriteDownloadUrl(link.url, baseUrl),

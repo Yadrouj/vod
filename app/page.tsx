@@ -5,8 +5,12 @@ import { FocusRail } from "@/components/focus-rail";
 import { GradientMenu } from "@/components/gradient-menu";
 import { HomeLoadingOverlay } from "@/components/home-loading-overlay";
 import { NewsRail } from "@/components/news-rail";
+import { DownloadHistory } from "@/components/download-history";
+import { ContinueWatching } from "@/components/continue-watching";
 import { PeopleRail } from "@/components/people-rail";
 import { PosterCard } from "@/components/poster-card";
+import { PosterRail } from "@/components/poster-rail";
+import { WideRail as WideRailComponent } from "@/components/wide-rail";
 import { SearchSuggest } from "@/components/search-suggest";
 import { aiSearch } from "@/lib/ai-search";
 import { getDictionary, type Locale } from "@/lib/i18n";
@@ -26,26 +30,19 @@ export default async function HomePage() {
   const index = await loadVodHomeIndex();
   const news = await loadVodNews();
   const topPeople = await loadTopPeople();
-  const heroBanners = uniqueCards([
+  const heroBanners = uniqueBackdropCards([
     ...(index.sections.find((section) => section.id === "recent-films")?.items ?? []).slice(0, 5),
     ...(index.sections.find((section) => section.id === "best-movies")?.items ?? []).slice(0, 5),
     ...(index.sections.find((section) => section.id === "top-imdb")?.items ?? []).slice(0, 5),
   ]).slice(0, 10);
-  const midBanners = uniqueCards([
+  const midBanners = uniqueVisualCards([
     ...(index.sections.find((section) => section.id === "top-imdb")?.items ?? []).slice(5, 11),
     ...(index.sections.find((section) => section.id === "animation")?.items ?? []).slice(0, 4),
   ]).slice(0, 10);
   const aiPrompt = t.home.aiPrompt;
   const initialAiResults = aiSearch(index.items, aiPrompt, 10);
   const persianSection = index.sections.find((section) => section.id === "persian-movies");
-  const megaSections = [
-    menuSection(index.sections.find((section) => section.id === "persian-movies"), locale, "/browse?section=persian-movies"),
-    menuSection(index.sections.find((section) => section.id === "top-imdb"), locale, "/browse?section=top-imdb"),
-    menuSection(index.sections.find((section) => section.id === "recent-films"), locale, "/browse?section=recent-films"),
-    menuSection(index.sections.find((section) => section.id === "best-series"), locale, "/browse?section=best-series"),
-    menuSection(index.sections.find((section) => section.id === "kids"), locale, "/browse?section=kids"),
-    menuSection(index.sections.find((section) => section.id === "animation"), locale, "/browse?section=animation"),
-  ].filter((section): section is NonNullable<typeof section> => Boolean(section));
+  const megaSections = buildGenreMenu(index.items);
   const wideItems = uniqueCards(
     index.items
       .filter((item) => item.backdropUrl && item.overview && (item.imdbRating ?? 0) >= 7.2)
@@ -60,7 +57,7 @@ export default async function HomePage() {
         index.items
           .filter((item) => item.backdropUrl && (item.year ?? 0) >= 2020)
           .sort(yearSort)
-      ).slice(0, 15),
+      ).slice(0, 10),
       "/browse?section=recent-films"
     ),
     makeSection(
@@ -71,14 +68,14 @@ export default async function HomePage() {
         index.items
           .filter((item) => item.type === "series")
           .sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || b.linksCount - a.linksCount)
-      ).slice(0, 15),
+      ).slice(0, 10),
       "/browse?type=series"
     ),
     makeSection(
       "ai-curated",
       t.home.sections["ai-curated"].title,
       t.home.sections["ai-curated"].subtitle,
-      aiSearch(index.items, "dark luxury crime drama thriller above 8", 15).map((result) => result.item),
+      aiSearch(index.items, "dark luxury crime drama thriller above 8", 10).map((result) => result.item),
       "/browse?minScore=8&genre=Crime"
     ),
   ];
@@ -105,10 +102,12 @@ export default async function HomePage() {
       </section>
 
       <section className="home-stack wrap">
+        <DownloadHistory />
+        <ContinueWatching />
         <HomeRail section={localizeSection(index.sections[0], locale)} locale={locale} />
         {persianSection && <HomeRail section={localizeSection(persianSection, locale)} locale={locale} />}
         <FocusRail items={midBanners} locale={locale} />
-        <WideRail items={wideItems} locale={locale} />
+        <WideRailComponent items={wideItems} locale={locale} />
         <AiSearchPanel locale={locale} initialQuery={aiPrompt} initialResults={initialAiResults} />
         {extraSections.map((section) => (
           <HomeRail key={section.id} section={section} locale={locale} />
@@ -128,6 +127,26 @@ function uniqueCards(items: VodCard[]) {
   return items.filter((item) => {
     if (seen.has(item.imdbCode)) return false;
     seen.add(item.imdbCode);
+    return true;
+  });
+}
+
+function uniqueBackdropCards(items: VodCard[]) {
+  const seen = new Set<string>();
+  return uniqueCards(items).filter((item) => {
+    const image = item.backdropUrl ?? item.posterUrl;
+    if (!image || seen.has(image)) return false;
+    seen.add(image);
+    return true;
+  });
+}
+
+function uniqueVisualCards(items: VodCard[]) {
+  const seen = new Set<string>();
+  return uniqueCards(items).filter((item) => {
+    const image = item.backdropUrl ?? item.posterUrl;
+    if (!image || seen.has(image)) return false;
+    seen.add(image);
     return true;
   });
 }
@@ -152,6 +171,39 @@ function menuSection(section: VodHomeSection | undefined, locale: Locale, href: 
     href,
     items: localized.items,
   };
+}
+
+function buildGenreMenu(items: VodCard[]) {
+  const counts = new Map<string, number>();
+  const usedImages = new Set<string>();
+  const usedIds = new Set<string>();
+  for (const item of items) for (const genre of item.genres ?? []) counts.set(genre, (counts.get(genre) ?? 0) + 1);
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 7)
+    .map(([genre, total], genreIndex) => {
+      const candidates = uniqueCards(items.filter((item) =>
+        (item.genres ?? []).some((itemGenre) => itemGenre.toLowerCase() === genre.toLowerCase())
+      ));
+      const rotated = candidates.slice((genreIndex * 2) % Math.max(candidates.length, 1))
+        .concat(candidates.slice(0, (genreIndex * 2) % Math.max(candidates.length, 1)));
+      const artItem = rotated.find((item) => {
+        const image = item.backdropUrl ?? item.posterUrl;
+        if (!image || usedImages.has(image) || usedIds.has(item.imdbCode)) return false;
+        usedImages.add(image);
+        usedIds.add(item.imdbCode);
+        return true;
+      });
+      const selected = rotated.filter((item) => item.imdbCode !== artItem?.imdbCode);
+      return {
+        id: `genre-${genre.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+        title: genre,
+        href: `/browse?genre=${encodeURIComponent(genre)}`,
+        items: (selected.length ? selected : candidates).slice(0, 16),
+        artUrl: artItem?.backdropUrl ?? artItem?.posterUrl ?? null,
+        total,
+      };
+    });
 }
 
 function yearSort(a: VodCard, b: VodCard) {
@@ -192,11 +244,7 @@ function HomeRail({ section, locale }: { section: HomeRailSection; locale: Local
           {t.common.viewAll}
         </Link>
       </div>
-      <div className="poster-rail">
-        {section.items.slice(0, 12).map((item) => (
-          <PosterCard key={`${section.id}-${item.imdbCode}`} item={item} locale={locale} />
-        ))}
-      </div>
+      <PosterRail items={section.items} locale={locale} href={section.href ?? `/browse?section=${section.id}`} />
     </section>
   );
 }
