@@ -129,44 +129,46 @@ export function DownloadBrowser({
         ))}
       </div>
 
-      {activeSummary && (
-        <div className="season-meta-line">
-          <strong>{locale === "fa" ? `${t.downloads.season} ${activeSummary.season}` : activeSummary.label}</strong>
-          <span>{activeSummary.groups.join(" / ") || t.downloads.files} / {interpolate(t.downloads.sourceCount, { count: activeSummary.sourceCount })}</span>
-        </div>
-      )}
-
-      {loading && <EpisodeSkeleton />}
-      {error && <p className="download-error">{error}</p>}
-      {!loading && !error && activeData && (
-        <>
-          {seasonQualities.length > 0 && (
-            <div className="season-link-bundle">
-              <div>
-                <strong>{locale === "fa" ? "دانلود لینک‌های کامل فصل" : "Download season link list"}</strong>
-                <small>{locale === "fa" ? "کیفیت را انتخاب کنید؛ تمام لینک‌های این فصل داخل یک فایل متنی قرار می‌گیرند." : "Choose a quality to save every episode URL in one text file."}</small>
-              </div>
-              <select className="select" value={bundleQuality} onChange={(event) => setBundleQuality(event.target.value)}>
-                {seasonQualities.map((quality) => <option key={quality} value={quality}>{quality}</option>)}
-              </select>
-              <button type="button" className="season-bundle-download" onClick={downloadSeasonLinks}>
-                ↓ {locale === "fa" ? "دانلود فایل TXT" : "Download TXT"}
-              </button>
-            </div>
-          )}
-          <div className="episode-list">
-            {activeData.episodes.map((episode) => (
-              <EpisodeRow
-                key={`${episode.season}-${episode.episode ?? "pack"}`}
-                episode={episode}
-                fallbackImage={fallbackImage}
-                fallbackImages={fallbackImages}
-                locale={locale}
-              />
-            ))}
+      <div className="series-download-content">
+        {activeSummary && (
+          <div className="season-meta-line">
+            <strong>{locale === "fa" ? `${t.downloads.season} ${activeSummary.season}` : activeSummary.label}</strong>
+            <span>{activeSummary.groups.join(" / ") || t.downloads.files} / {interpolate(t.downloads.sourceCount, { count: activeSummary.sourceCount })}</span>
           </div>
-        </>
-      )}
+        )}
+
+        {loading && <EpisodeSkeleton />}
+        {error && <p className="download-error">{error}</p>}
+        {!loading && !error && activeData && (
+          <>
+            {seasonQualities.length > 0 && (
+              <div className="season-link-bundle">
+                <div>
+                  <strong>{locale === "fa" ? "دانلود لینک‌های کامل فصل" : "Download season link list"}</strong>
+                  <small>{locale === "fa" ? "کیفیت را انتخاب کنید؛ تمام لینک‌های این فصل داخل یک فایل متنی قرار می‌گیرند." : "Choose a quality to save every episode URL in one text file."}</small>
+                </div>
+                <select className="select" value={bundleQuality} onChange={(event) => setBundleQuality(event.target.value)}>
+                  {seasonQualities.map((quality) => <option key={quality} value={quality}>{quality}</option>)}
+                </select>
+                <button type="button" className="season-bundle-download" onClick={downloadSeasonLinks}>
+                  ↓ {locale === "fa" ? "دانلود فایل TXT" : "Download TXT"}
+                </button>
+              </div>
+            )}
+            <div className="episode-list">
+              {activeData.episodes.map((episode) => (
+                <EpisodeRow
+                  key={`${episode.season}-${episode.episode ?? "pack"}`}
+                  episode={episode}
+                  fallbackImage={fallbackImage}
+                  fallbackImages={fallbackImages}
+                  locale={locale}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

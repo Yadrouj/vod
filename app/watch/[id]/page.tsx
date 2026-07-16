@@ -32,7 +32,6 @@ export default async function WatchPage({ params }: Props) {
           <header className="topbar">
             <BrandLogo locale={locale} compact />
             <div className="chips">
-              {partySources[0] && <WatchTogetherInvite media={{ itemId: item.imdbCode, title: item.title, posterUrl: item.backdropUrl ?? item.posterUrl ?? null, source: partySources[0], sources: partySources }} />}
               <LanguageToggle locale={locale} />
               <Link className="chip" href={`/${item.imdbCode}`}>{t.common.details}</Link>
               <a className="pill" href={subzoneSearchUrl(item.title, item.year)} target="_blank" rel="noreferrer">
@@ -59,6 +58,22 @@ export default async function WatchPage({ params }: Props) {
       </section>
 
       <section className="section wrap">
+        {partySources[0] && (
+          <div className="watch-together-player-entry">
+            <div className="watch-together-player-symbol" aria-hidden="true"><span /></div>
+            <div className="watch-together-player-copy">
+              <span className="label">WATCH TOGETHER</span>
+              <strong>{locale === "fa" ? "این فیلم را با دوستانت همزمان ببین" : "Watch this title in sync with friends"}</strong>
+              <p>{locale === "fa" ? "اتاق بساز، لینک را بفرست و کنترل پخش، چت و ری‌اکشن را یک‌جا داشته باش." : "Create a room, share its private link, and keep playback, chat, and reactions together."}</p>
+            </div>
+            <WatchTogetherInvite
+              locale={locale}
+              placement="player"
+              label={locale === "fa" ? "ساخت اتاق و دعوت" : "Create room & invite"}
+              media={{ itemId: item.imdbCode, title: item.title, posterUrl: item.backdropUrl ?? item.posterUrl ?? null, source: partySources[0], sources: partySources }}
+            />
+          </div>
+        )}
         <VodPlayer itemId={item.imdbCode} title={item.title} posterUrl={item.backdropUrl ?? item.posterUrl} links={links} locale={locale} />
         <SubtitleList imdbCode={item.imdbCode} title={item.title} />
       </section>

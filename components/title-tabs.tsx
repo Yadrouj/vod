@@ -1,20 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DownloadBrowser } from "@/components/download-browser";
 import { InteractiveMediaGallery, type GalleryMedia } from "@/components/ui/interactive-media-gallery";
-import { PosterCard } from "@/components/poster-card";
+import { PosterCard, type PosterCardData } from "@/components/poster-card";
 import { DEFAULT_LOCALE, getDictionary, interpolate, type Locale, typeLabel } from "@/lib/i18n";
 import type { DownloadSource, SeasonSummary } from "@/lib/downloads";
-import type { VodCard, VodItem } from "@/lib/types";
+import type { VodItem } from "@/lib/types";
+
+export type TitleTabsItem = Pick<VodItem,
+  | "title"
+  | "imdbCode"
+  | "type"
+  | "year"
+  | "endYear"
+  | "releaseDate"
+  | "certificate"
+  | "countries"
+  | "languages"
+  | "qualities"
+  | "keywords"
+  | "companies"
+  | "credits"
+  | "imdbVideos"
+  | "imdbImages"
+  | "backdropUrl"
+  | "posterUrl"
+  | "source"
+>;
 
 type TitleTabsProps = {
-  item: VodItem;
+  item: TitleTabsItem;
   isSeries: boolean;
   seasons: SeasonSummary[];
   movieFiles: DownloadSource[];
-  suggestions: VodCard[];
   locale?: Locale;
 };
 
@@ -31,11 +51,26 @@ export function TitleTabs({
   isSeries,
   seasons,
   movieFiles,
-  suggestions,
   locale = DEFAULT_LOCALE,
 }: TitleTabsProps) {
   const [active, setActive] = useState<TabId>(isSeries ? "episodes" : "about");
+  const [suggestions, setSuggestions] = useState<PosterCardData[]>([]);
+  const [suggestionsState, setSuggestionsState] = useState<"idle" | "loading" | "loaded">("idle");
+  const suggestionsRequested = useRef(false);
   const t = getDictionary(locale);
+
+  useEffect(() => {
+    if (active !== "suggestions" || suggestionsRequested.current) return;
+    suggestionsRequested.current = true;
+    setSuggestionsState("loading");
+    fetch(`/api/suggestions/${encodeURIComponent(item.imdbCode)}`)
+      .then((response) => response.json() as Promise<{ items?: PosterCardData[] }>)
+      .then((payload) => {
+        setSuggestions(payload.items ?? []);
+        setSuggestionsState("loaded");
+      })
+      .catch(() => setSuggestionsState("loaded"));
+  }, [active, item.imdbCode]);
 
   return (
     <section className="title-tabs">
@@ -69,6 +104,7 @@ export function TitleTabs({
       )}
       {active === "suggestions" && (
         <section className="title-tab-panel">
+          {suggestionsState === "loading" && <p className="muted">{t.common.loading}</p>}
           <div className="suggestion-grid">
             {suggestions.map((suggestion) => (
               <PosterCard key={`suggestion-${suggestion.imdbCode}`} item={suggestion} locale={locale} />
@@ -80,7 +116,7 @@ export function TitleTabs({
   );
 }
 
-function AboutTab({ item, locale }: { item: VodItem; locale: Locale }) {
+function AboutTab({ item, locale }: { item: TitleTabsItem; locale: Locale }) {
   const t = getDictionary(locale);
 
   return (
@@ -146,7 +182,7 @@ function PanelHead({ title, note }: { title: string; note: string }) {
   );
 }
 
-function MediaCarousel({ item, locale }: { item: VodItem; locale: Locale }) {
+function MediaCarousel({ item }: { item: TitleTabsItem; locale: Locale }) {
   const videos = item.imdbVideos?.slice(0, 10) ?? [];
   const images = item.imdbImages?.slice(0, 20) ?? [];
   const media: GalleryMedia[] = [
@@ -157,14 +193,14 @@ function MediaCarousel({ item, locale }: { item: VodItem; locale: Locale }) {
   return <InteractiveMediaGallery items={media} />;
 }
 
-function CastRail({ item }: { item: VodItem }) {
+function CastRail({ item }: { item: TitleTabsItem }) {
   return (
     <div className="cast-rail">
       {item.credits?.slice(0, 30).map((credit, index) => {
         const content = (
           <>
             {credit.name_image_url ? (
-              <img src={credit.name_image_url} alt={credit.name_text} />
+              <img src={credit.name_image_url} alt={credit.name_text} loading="lazy" decoding="async" />
             ) : (
               <span className="cast-fallback">{credit.name_text.slice(0, 1)}</span>
             )}

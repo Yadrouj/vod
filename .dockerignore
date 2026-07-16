@@ -1,0 +1,15 @@
+.git
+.next
+node_modules
+artifacts
+dev-server*.log
+dev-server*.err.log
+*.tsbuildinfo
+.env*
+npm-debug.log*
+
+# These source archives are build-time material. Runtime uses the compact
+# 13 MB search index and per-title JSON files instead of the 360 MB catalog.
+public/data/vod-catalog.json
+public/data/vod-archive-imdb.json
+public/data/vod-source-current.json

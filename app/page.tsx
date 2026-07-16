@@ -2,13 +2,11 @@ import Link from "next/link";
 import { AiSearchPanel } from "@/components/ai-search-panel";
 import { BannerCarousel } from "@/components/banner-carousel";
 import { FocusRail } from "@/components/focus-rail";
-import { GradientMenu } from "@/components/gradient-menu";
-import { HomeLoadingOverlay } from "@/components/home-loading-overlay";
+import { GradientMenu, type MegaMenuItem } from "@/components/gradient-menu";
 import { NewsRail } from "@/components/news-rail";
 import { DownloadHistory } from "@/components/download-history";
 import { ContinueWatching } from "@/components/continue-watching";
 import { PeopleRail } from "@/components/people-rail";
-import { PosterCard } from "@/components/poster-card";
 import { PosterRail } from "@/components/poster-rail";
 import { WideRail as WideRailComponent } from "@/components/wide-rail";
 import { SearchSuggest } from "@/components/search-suggest";
@@ -27,9 +25,86 @@ type HomeRailSection = VodHomeSection & {
 export default async function HomePage() {
   const locale = await getLocale();
   const t = getDictionary(locale);
-  const index = await loadVodHomeIndex();
-  const news = await loadVodNews();
-  const topPeople = await loadTopPeople();
+  const {
+    index,
+    news,
+    topPeople,
+    heroBanners,
+    midBanners,
+    initialAiResults,
+    persianSection,
+    megaSections,
+    megaFeaturedItems,
+    wideItems,
+    extraSections,
+  } = await loadHomePageData(locale);
+
+  const aiPrompt = t.home.aiPrompt;
+
+  return (
+    <main className="shell">
+      <section className="hero home-hero">
+        <GradientMenu
+          totalTitles={index.totalTitles}
+          locale={locale}
+          menuSections={megaSections}
+          featuredItems={megaFeaturedItems}
+        />
+
+        <BannerCarousel items={heroBanners} locale={locale} />
+
+        <div className="hero-tools wrap">
+          <form className="hero-search" action="/browse">
+            <SearchSuggest placeholder={t.home.searchPlaceholder} locale={locale} />
+            <button type="submit">{t.common.search}</button>
+          </form>
+          <div className="quick-tabs">
+            {quickLinks(locale).map((item) => (
+              <Link key={item.href} href={item.href}>{item.label}</Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="home-stack wrap">
+        <DownloadHistory />
+        <ContinueWatching />
+        <HomeRail section={localizeSection(index.sections[0], locale)} locale={locale} />
+        {persianSection && <HomeRail section={localizeSection(persianSection, locale)} locale={locale} />}
+        <FocusRail items={midBanners} locale={locale} />
+        <WideRailComponent items={wideItems} locale={locale} />
+        <AiSearchPanel locale={locale} initialQuery={aiPrompt} initialResults={initialAiResults} />
+        {extraSections.map((section) => (
+          <HomeRail key={section.id} section={section} locale={locale} />
+        ))}
+        <PeopleRail people={topPeople.people} locale={locale} />
+        <NewsRail items={news.items} locale={locale} />
+        {index.sections.filter((section) => section.id !== "top-imdb" && section.id !== "persian-movies").map((section) => (
+          <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />
+        ))}
+      </section>
+    </main>
+  );
+}
+
+const homePageDataPromises = new Map<Locale, Promise<Awaited<ReturnType<typeof buildHomePageData>>>>();
+
+function loadHomePageData(locale: Locale) {
+  let promise = homePageDataPromises.get(locale);
+  if (!promise) {
+    promise = buildHomePageData(locale);
+    homePageDataPromises.set(locale, promise);
+  }
+  return promise;
+}
+
+async function buildHomePageData(locale: Locale) {
+  const [index, news, topPeople] = await Promise.all([
+    loadVodHomeIndex(),
+    loadVodNews(),
+    loadTopPeople(),
+  ]);
+  const t = getDictionary(locale);
   const heroBanners = uniqueBackdropCards([
     ...(index.sections.find((section) => section.id === "recent-films")?.items ?? []).slice(0, 5),
     ...(index.sections.find((section) => section.id === "best-movies")?.items ?? []).slice(0, 5),
@@ -40,9 +115,18 @@ export default async function HomePage() {
     ...(index.sections.find((section) => section.id === "animation")?.items ?? []).slice(0, 4),
   ]).slice(0, 10);
   const aiPrompt = t.home.aiPrompt;
-  const initialAiResults = aiSearch(index.items, aiPrompt, 10);
+  const initialAiResults = aiSearch(index.items, aiPrompt, 10).map(({ item, score, reasons }) => ({
+    item: {
+      title: item.title,
+      imdbCode: item.imdbCode,
+      backdropUrl: item.backdropUrl,
+      posterUrl: item.posterUrl,
+    },
+    score,
+    reasons,
+  }));
   const persianSection = index.sections.find((section) => section.id === "persian-movies");
-  const megaSections = buildGenreMenu(index.items);
+  const { sections: megaSections, featuredItems: megaFeaturedItems } = buildGenreMenu(index.items);
   const wideItems = uniqueCards(
     index.items
       .filter((item) => item.backdropUrl && item.overview && (item.imdbRating ?? 0) >= 7.2)
@@ -80,46 +164,19 @@ export default async function HomePage() {
     ),
   ];
 
-  return (
-    <main className="shell">
-      <HomeLoadingOverlay label={t.common.loading} />
-      <section className="hero home-hero">
-        <GradientMenu totalTitles={index.totalTitles} locale={locale} menuSections={megaSections} />
-
-        <BannerCarousel items={heroBanners} locale={locale} />
-
-        <div className="hero-tools wrap">
-          <form className="hero-search" action="/browse">
-            <SearchSuggest placeholder={t.home.searchPlaceholder} locale={locale} />
-            <button type="submit">{t.common.search}</button>
-          </form>
-          <div className="quick-tabs">
-            {quickLinks(locale).map((item) => (
-              <Link key={item.href} href={item.href}>{item.label}</Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="home-stack wrap">
-        <DownloadHistory />
-        <ContinueWatching />
-        <HomeRail section={localizeSection(index.sections[0], locale)} locale={locale} />
-        {persianSection && <HomeRail section={localizeSection(persianSection, locale)} locale={locale} />}
-        <FocusRail items={midBanners} locale={locale} />
-        <WideRailComponent items={wideItems} locale={locale} />
-        <AiSearchPanel locale={locale} initialQuery={aiPrompt} initialResults={initialAiResults} />
-        {extraSections.map((section) => (
-          <HomeRail key={section.id} section={section} locale={locale} />
-        ))}
-        <PeopleRail people={topPeople.people} locale={locale} />
-        <NewsRail items={news.items} locale={locale} />
-        {index.sections.filter((section) => section.id !== "top-imdb" && section.id !== "persian-movies").map((section) => (
-          <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />
-        ))}
-      </section>
-    </main>
-  );
+  return {
+    index,
+    news,
+    topPeople,
+    heroBanners,
+    midBanners,
+    initialAiResults,
+    persianSection,
+    megaSections,
+    megaFeaturedItems,
+    wideItems,
+    extraSections,
+  };
 }
 
 function uniqueCards(items: VodCard[]) {
@@ -162,23 +219,12 @@ function makeSection(id: string, title: string, subtitle: string, items: VodCard
   };
 }
 
-function menuSection(section: VodHomeSection | undefined, locale: Locale, href: string) {
-  if (!section) return null;
-  const localized = localizeSection(section, locale);
-  return {
-    id: localized.id,
-    title: localized.title,
-    href,
-    items: localized.items,
-  };
-}
-
 function buildGenreMenu(items: VodCard[]) {
   const counts = new Map<string, number>();
   const usedImages = new Set<string>();
   const usedIds = new Set<string>();
   for (const item of items) for (const genre of item.genres ?? []) counts.set(genre, (counts.get(genre) ?? 0) + 1);
-  return [...counts.entries()]
+  const sections = [...counts.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, 7)
     .map(([genre, total], genreIndex) => {
@@ -199,11 +245,28 @@ function buildGenreMenu(items: VodCard[]) {
         id: `genre-${genre.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
         title: genre,
         href: `/browse?genre=${encodeURIComponent(genre)}`,
-        items: (selected.length ? selected : candidates).slice(0, 16),
+        items: (selected.length ? selected : candidates).slice(0, 10).map(toMegaMenuItem),
         artUrl: artItem?.backdropUrl ?? artItem?.posterUrl ?? null,
         total,
       };
     });
+  const featuredItems = uniqueVisualCards(
+    [...items].sort((a, b) => (b.imdbRating ?? 0) - (a.imdbRating ?? 0) || (b.imdbVotes ?? 0) - (a.imdbVotes ?? 0))
+  )
+    .filter((item) => item.posterUrl && !usedImages.has(item.posterUrl))
+    .slice(0, 8)
+    .map(toMegaMenuItem);
+  return { sections, featuredItems };
+}
+
+function toMegaMenuItem(item: VodCard): MegaMenuItem {
+  return {
+    imdbCode: item.imdbCode,
+    title: item.title,
+    year: item.year,
+    posterUrl: item.posterUrl,
+    backdropUrl: item.backdropUrl,
+  };
 }
 
 function yearSort(a: VodCard, b: VodCard) {
@@ -245,42 +308,6 @@ function HomeRail({ section, locale }: { section: HomeRailSection; locale: Local
         </Link>
       </div>
       <PosterRail items={section.items} locale={locale} href={section.href ?? `/browse?section=${section.id}`} />
-    </section>
-  );
-}
-
-function WideRail({ items, locale }: { items: VodCard[]; locale: Locale }) {
-  if (!items.length) return null;
-  const t = getDictionary(locale);
-
-  return (
-    <section className="section wide-rail-section">
-      <div className="section-head">
-        <div>
-          <h2>{t.home.wideTitle}</h2>
-          <p className="muted">{t.home.wideSubtitle}</p>
-        </div>
-        <Link className="view-all" href="/browse?minScore=7">
-          {t.common.viewAll}
-        </Link>
-      </div>
-      <div className="wide-rail">
-        {items.map((item, index) => (
-          <Link
-            key={`wide-${item.imdbCode}`}
-            className={`wide-card wide-card-${index % 3}`}
-            href={`/${item.imdbCode}`}
-            style={item.backdropUrl ? { backgroundImage: `url(${item.backdropUrl})` } : undefined}
-          >
-            <span className="rating">{item.imdbRating ? `IMDb ${item.imdbRating.toFixed(1)}` : item.year ?? t.common.movie}</span>
-            <span className="wide-copy">
-              <strong>{item.title}</strong>
-              <small>{[item.year, item.genres.slice(0, 2).join(" / ")].filter(Boolean).join(" / ")}</small>
-              <em>{t.home.wideAction}</em>
-            </span>
-          </Link>
-        ))}
-      </div>
     </section>
   );
 }

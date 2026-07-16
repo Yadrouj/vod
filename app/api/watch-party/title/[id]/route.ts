@@ -1,5 +1,6 @@
 import { findVodItem } from "@/lib/catalog";
 import { episodeLabel, playableLinks } from "@/lib/link-labels";
+import { publicCacheHeaders } from "@/lib/runtime-cache";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -15,5 +16,8 @@ export async function GET(_: Request, { params }: Props) {
     episode: link.episode ?? null,
   }));
   if (!sources.length) return Response.json({ error: "No playable source" }, { status: 404 });
-  return Response.json({ itemId: item.imdbCode, title: item.title, posterUrl: item.backdropUrl ?? item.posterUrl ?? null, source: sources[0], sources });
+  return Response.json(
+    { itemId: item.imdbCode, title: item.title, posterUrl: item.backdropUrl ?? item.posterUrl ?? null, source: sources[0], sources },
+    { headers: publicCacheHeaders({ browserSeconds: 60, edgeSeconds: 900 }) },
+  );
 }

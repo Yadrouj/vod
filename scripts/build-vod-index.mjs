@@ -160,7 +160,16 @@ async function main() {
     totalTitles: index.totalTitles,
     totalLinks: index.totalLinks,
     generatedAt: index.generatedAt,
-    filters: index.filters,
+    // The landing page never uses browse filters. Keeping the 11k+ group names
+    // here made this otherwise small bootstrap file almost one megabyte larger.
+    filters: {
+      genres: [],
+      countries: [],
+      languages: [],
+      years: [],
+      qualities: [],
+      groups: [],
+    },
     sections: index.sections,
     items: homeItems,
   };

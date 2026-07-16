@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
+import { sizedImageUrl } from "@/lib/image-url";
 import type { VodCard } from "@/lib/types";
 
 export function FocusRail({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]; locale?: Locale }) {
@@ -42,7 +43,7 @@ export function FocusRail({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]
         className="focus-track"
         aria-label="Featured focus rail"
         style={current.backdropUrl || current.posterUrl ? {
-          backgroundImage: `linear-gradient(90deg, rgba(5,5,7,0.04), rgba(5,5,7,0.32)), url(${current.backdropUrl ?? current.posterUrl})`,
+          backgroundImage: `linear-gradient(90deg, rgba(5,5,7,0.04), rgba(5,5,7,0.32)), url(${sizedImageUrl(current.backdropUrl ?? current.posterUrl, 1280)})`,
         } : undefined}
       >
         <div className="focus-gallery-copy">{current.title}</div>
@@ -58,9 +59,7 @@ export function FocusRail({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]
               type="button"
               className={`focus-card ${isActive ? "active" : ""}`}
               style={{
-                backgroundImage: item.backdropUrl || item.posterUrl
-                  ? `linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.82)), url(${item.backdropUrl ?? item.posterUrl})`
-                  : "linear-gradient(135deg, #303038, #09090b)",
+                background: "linear-gradient(135deg, #303038, #09090b)",
                 transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(clamp(-210px, -14vw, -130px)) rotate(${-angle}deg) scale(${isActive ? 1.18 : 0.82})`,
                 opacity: isActive ? 1 : 0.72,
                 filter: isActive ? "none" : "saturate(0.72)",
@@ -69,11 +68,12 @@ export function FocusRail({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]
               onClick={() => setActive(index)}
               aria-label={`Focus ${item.title}`}
             >
-              <span
+              <img
                 className="focus-card-art"
-                style={item.backdropUrl || item.posterUrl
-                  ? { backgroundImage: `url(${item.backdropUrl ?? item.posterUrl})` }
-                  : undefined}
+                src={sizedImageUrl(item.backdropUrl ?? item.posterUrl, 260) ?? undefined}
+                alt=""
+                loading="lazy"
+                decoding="async"
               />
               <span className="focus-card-title">{item.title}</span>
               <span className="rating">{item.imdbRating ? `IMDb ${item.imdbRating.toFixed(1)}` : item.year ?? t.common.movie}</span>

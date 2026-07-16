@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
+import { sizedImageUrl } from "@/lib/image-url";
 import type { VodCard } from "@/lib/types";
 
 type AiResult = {
-  item: VodCard;
+  item: Pick<VodCard, "title" | "imdbCode" | "backdropUrl" | "posterUrl">;
   score: number;
   reasons: string[];
 };
@@ -95,7 +96,7 @@ export function AiSearchPanel({
               href={`/${result.item.imdbCode}`}
               style={
                 result.item.backdropUrl || result.item.posterUrl
-                  ? { backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.9)), url(${result.item.backdropUrl ?? result.item.posterUrl})` }
+                  ? { backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.9)), url(${sizedImageUrl(result.item.backdropUrl ?? result.item.posterUrl, 560)})` }
                   : undefined
               }
             >

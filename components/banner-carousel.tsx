@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import { DEFAULT_LOCALE, getDictionary, type Locale, typeLabel } from "@/lib/i18n";
+import { sizedImageUrl } from "@/lib/image-url";
 import type { VodCard } from "@/lib/types";
 
 export function BannerCarousel({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]; locale?: Locale }) {
@@ -30,7 +32,7 @@ export function BannerCarousel({ items, locale = DEFAULT_LOCALE }: { items: VodC
       style={
         current.backdropUrl
           ? {
-              backgroundImage: `linear-gradient(90deg, rgba(5,5,5,0.72), rgba(5,5,5,0.35), rgba(5,5,5,0.12)), url(${current.backdropUrl})`,
+              backgroundImage: `linear-gradient(90deg, rgba(5,5,5,0.72), rgba(5,5,5,0.35), rgba(5,5,5,0.12)), url(${sizedImageUrl(current.backdropUrl, 1600)})`,
             }
           : undefined
       }
@@ -64,6 +66,11 @@ export function BannerCarousel({ items, locale = DEFAULT_LOCALE }: { items: VodC
           <Link className="chip" href={`/${current.imdbCode}`}>
             {t.common.details}
           </Link>
+          <WatchTogetherLauncher
+            locale={locale}
+            placement="inline"
+            preset={{ itemId: current.imdbCode, title: current.title, posterUrl: current.backdropUrl ?? current.posterUrl }}
+          />
         </div>
       </div>
       <button
@@ -102,7 +109,7 @@ export function BannerStrip({ items }: { items: VodCard[] }) {
           style={
             item.backdropUrl
               ? {
-                  backgroundImage: `linear-gradient(90deg, rgba(5,5,5,0.88), rgba(5,5,5,0.2)), url(${item.backdropUrl})`,
+                  backgroundImage: `linear-gradient(90deg, rgba(5,5,5,0.88), rgba(5,5,5,0.2)), url(${sizedImageUrl(item.backdropUrl, 720)})`,
                 }
               : undefined
           }

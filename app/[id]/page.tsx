@@ -2,17 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
+import { DeferredBackgroundVideo } from "@/components/deferred-background-video";
 import { DownloadButton } from "@/components/ui/download-animation";
 import { LanguageToggle } from "@/components/language-toggle";
-import { TitleTabs } from "@/components/title-tabs";
+import { TitleTabs, type TitleTabsItem } from "@/components/title-tabs";
+import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { buildSeasonSummaries, movieDownloadSources } from "@/lib/downloads";
 import { formatNumber, getDictionary, typeLabel } from "@/lib/i18n";
 import { getLocale } from "@/lib/server-locale";
 import { subzoneSearchUrl } from "@/lib/subtitles";
-import { loadVodIndex } from "@/lib/vod-index";
 import { BRAND_NAME } from "@/lib/brand";
-import type { VodCard, VodItem } from "@/lib/types";
+import { sizedImageUrl } from "@/lib/image-url";
+import type { VodItem } from "@/lib/types";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -39,9 +41,8 @@ export default async function DetailPage({ params }: Props) {
   const seasons = buildSeasonSummaries(item.links);
   const isSeries = normalizeVodType(item.type) === "series" && seasons.length > 0;
   const movieFiles = isSeries ? [] : movieDownloadSources(item.links);
-  const index = await loadVodIndex();
-  const suggestions = similarTitles(item, index.items);
-  const heroVideo = await detailHeroVideo(item);
+  const heroVideo = detailHeroVideo(item);
+  const tabsItem = toTitleTabsItem(item);
 
   return (
     <div className="shell">
@@ -50,7 +51,7 @@ export default async function DetailPage({ params }: Props) {
         style={
           item.backdropUrl
             ? {
-                backgroundImage: `linear-gradient(90deg, rgba(5,5,5,0.96), rgba(5,5,5,0.56)), url(${item.backdropUrl})`,
+                backgroundImage: `linear-gradient(90deg, rgba(5,5,5,0.96), rgba(5,5,5,0.56)), url(${sizedImageUrl(item.backdropUrl, 1600)})`,
                 backgroundPosition: "center",
                 backgroundSize: "cover",
               }
@@ -58,17 +59,9 @@ export default async function DetailPage({ params }: Props) {
         }
       >
         {heroVideo && (
-          <video
-            className="detail-video-bg"
+          <DeferredBackgroundVideo
             src={heroVideo}
-            poster={item.backdropUrl ?? item.posterUrl ?? undefined}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            aria-hidden="true"
-            tabIndex={-1}
+            poster={sizedImageUrl(item.backdropUrl ?? item.posterUrl, 1600)}
           />
         )}
         <div className="wrap">
@@ -122,6 +115,11 @@ export default async function DetailPage({ params }: Props) {
                 <Link className="play-glow detail-play-button" href={`/watch/${item.imdbCode}`}>
                   <span className="play-dot" /> {t.common.playOnline}
                 </Link>
+                <WatchTogetherLauncher
+                  locale={locale}
+                  placement="inline"
+                  preset={{ itemId: item.imdbCode, title: item.title, posterUrl: item.backdropUrl ?? item.posterUrl }}
+                />
                 {best && <DownloadButton href={best.url} label={t.common.bestFile} />}
                 <a
                   className="hover-button"
@@ -145,10 +143,12 @@ export default async function DetailPage({ params }: Props) {
 
             <aside className="detail-card">
               {item.posterUrl && (
-                <div
+                <img
                   className="detail-poster"
-                  style={{ backgroundImage: `url(${item.posterUrl})` }}
-                  aria-label={`${item.title} poster`}
+                  src={sizedImageUrl(item.posterUrl, 500) ?? item.posterUrl}
+                  alt={`${item.title} poster`}
+                  loading="eager"
+                  decoding="async"
                 />
               )}
               <p className="label">{t.title.imdbData}</p>
@@ -170,11 +170,10 @@ export default async function DetailPage({ params }: Props) {
 
       <main className="wrap">
         <TitleTabs
-          item={item}
+          item={tabsItem}
           isSeries={isSeries}
           seasons={seasons}
           movieFiles={movieFiles}
-          suggestions={suggestions}
           locale={locale}
         />
       </main>
@@ -191,25 +190,32 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-async function detailHeroVideo(item: VodItem) {
+function detailHeroVideo(item: VodItem) {
   const storedUrl = pickHeroVideoUrl(item.imdbVideos ?? []);
-  if (storedUrl && !videoUrlExpired(storedUrl)) return storedUrl;
+  return storedUrl && !videoUrlExpired(storedUrl) ? storedUrl : null;
+}
 
-  if (!/^tt\d+$/.test(item.imdbCode)) return storedUrl;
-
-  try {
-    const response = await fetch(`http://185.203.118.87:8026/titles/${item.imdbCode}/fetch`, {
-      method: "POST",
-      body: "",
-      cache: "no-store",
-      signal: AbortSignal.timeout(7000),
-    });
-    if (!response.ok) return storedUrl;
-    const data = (await response.json()) as { videos?: VodItem["imdbVideos"] };
-    return pickHeroVideoUrl(data.videos ?? []) ?? storedUrl;
-  } catch {
-    return storedUrl;
-  }
+function toTitleTabsItem(item: VodItem): TitleTabsItem {
+  return {
+    title: item.title,
+    imdbCode: item.imdbCode,
+    type: item.type,
+    year: item.year,
+    endYear: item.endYear,
+    releaseDate: item.releaseDate,
+    certificate: item.certificate,
+    countries: item.countries,
+    languages: item.languages,
+    qualities: item.qualities,
+    keywords: item.keywords?.slice(0, 14),
+    companies: item.companies?.slice(0, 8),
+    credits: item.credits?.slice(0, 30),
+    imdbVideos: item.imdbVideos?.slice(0, 10),
+    imdbImages: item.imdbImages?.slice(0, 20),
+    backdropUrl: item.backdropUrl,
+    posterUrl: item.posterUrl,
+    source: item.source,
+  };
 }
 
 function pickHeroVideoUrl(videos: NonNullable<VodItem["imdbVideos"]>) {
@@ -232,58 +238,4 @@ function videoUrlExpired(url: string) {
   } catch {
     return false;
   }
-}
-
-function similarTitles(item: VodItem, items: VodCard[]) {
-  const genres = new Set((item.genres ?? []).map((genre) => genre.toLowerCase()));
-  const countries = new Set((item.countries ?? []).map((country) => country.toLowerCase()));
-  const type = normalizeVodType(item.type);
-  const sourceTitle = `${item.title} ${item.originalTitle ?? ""}`.toLowerCase();
-  const franchiseTokens = franchiseFamily(sourceTitle);
-
-  return items
-    .filter((candidate) => candidate.imdbCode !== item.imdbCode)
-    .map((candidate) => {
-      const sharedGenres = candidate.genres.filter((genre) => genres.has(genre.toLowerCase())).length;
-      const sharedCountries = candidate.countries.filter((country) => countries.has(country.toLowerCase())).length;
-      const candidateTitle = candidate.title.toLowerCase();
-      const sharedTitleTokens = titleTokens(sourceTitle).filter((token) => candidateTitle.includes(token)).length;
-      const franchiseBoost = franchiseTokens.some((token) => candidateTitle.includes(token)) ? 90 : 0;
-      const sequelBoost = sequelRelation(sourceTitle, candidateTitle) ? 54 : 0;
-      const typeBoost = candidate.type === type ? 10 : 0;
-      const score =
-        franchiseBoost + sequelBoost + sharedTitleTokens * 28 +
-        sharedGenres * 24 +
-        sharedCountries * 6 +
-        typeBoost +
-        (candidate.imdbRating ?? 0) * 2 +
-        Math.min(8, Math.log10((candidate.imdbVotes ?? 0) + 1));
-      return { candidate, score };
-    })
-    .filter(({ score }) => score > 18)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 18)
-    .map(({ candidate }) => candidate);
-}
-
-function titleTokens(value: string) {
-  return value.split(/[^a-z0-9]+/i).filter((token) => token.length > 3 && !["the", "and", "film", "movie", "series"].includes(token));
-}
-
-function franchiseFamily(title: string) {
-  const families = [
-    ["breaking bad", "better call saul", "el camino"],
-    ["avengers", "iron man", "thor", "captain america", "hulk", "guardians of the galaxy"],
-    ["star wars", "mandalorian", "andor", "obi-wan"],
-    ["game of thrones", "house of the dragon"],
-    ["lord of the rings", "hobbit"],
-    ["harry potter", "fantastic beasts"],
-  ];
-  return families.find((family) => family.some((entry) => title.includes(entry))) ?? [];
-}
-
-function sequelRelation(source: string, candidate: string) {
-  const sourceWords = titleTokens(source);
-  const candidateWords = titleTokens(candidate);
-  return sourceWords.length > 0 && candidateWords.some((word) => sourceWords.includes(word));
 }

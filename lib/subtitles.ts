@@ -1,3 +1,5 @@
+import { normalizeSearchQuery, TtlLruCache } from "./runtime-cache";
+
 export function subzoneSearchUrl(title: string, year?: number | null) {
   const query = [title, year].filter(Boolean).join(" ");
   return `http://subzone.ir/subtitles/searchbytitle?query=${encodeURIComponent(query).replace(/%20/g, "+")}&l=`;
@@ -16,8 +18,29 @@ export type SubzoneSubtitle = {
 };
 
 const SUBZONE_ORIGIN = "http://subzone.ir";
+const subtitleCache = new TtlLruCache<string, SubzoneSubtitle[]>(300, 60 * 60_000);
+const subtitleInflight = new Map<string, Promise<SubzoneSubtitle[]>>();
 
 export async function findSubzoneEnglishSubtitles(query: string, limit = 40): Promise<SubzoneSubtitle[]> {
+  const cacheKey = `${normalizeSearchQuery(query)}:${limit}`;
+  const cached = subtitleCache.get(cacheKey);
+  if (cached) return cached;
+
+  const running = subtitleInflight.get(cacheKey);
+  if (running) return running;
+
+  const request = findSubzoneEnglishSubtitlesUncached(query, limit);
+  subtitleInflight.set(cacheKey, request);
+  try {
+    const items = await request;
+    subtitleCache.set(cacheKey, items);
+    return items;
+  } finally {
+    subtitleInflight.delete(cacheKey);
+  }
+}
+
+async function findSubzoneEnglishSubtitlesUncached(query: string, limit: number): Promise<SubzoneSubtitle[]> {
   const searchHtml = await fetchSubzone(searchByTitleUrl(query));
   const titlePages = parseSearchResults(searchHtml).slice(0, 8);
   const subtitles: SubzoneSubtitle[] = [];
@@ -44,6 +67,7 @@ async function fetchSubzone(url: string) {
       accept: "text/html,application/xhtml+xml",
     },
     cache: "no-store",
+    signal: AbortSignal.timeout(8_000),
   });
   if (!response.ok) throw new Error(`Subzone request failed: ${response.status} ${url}`);
   return response.text();

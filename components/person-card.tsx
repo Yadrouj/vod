@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DEFAULT_LOCALE, formatNumber, getDictionary, type Locale } from "@/lib/i18n";
+import { sizedImageUrl } from "@/lib/image-url";
 import type { TopPerson } from "@/lib/top-people";
 
 export function PersonCard({ person, locale = DEFAULT_LOCALE, rank }: { person: TopPerson; locale?: Locale; rank?: number }) {
@@ -14,7 +15,7 @@ export function PersonCard({ person, locale = DEFAULT_LOCALE, rank }: { person: 
       <span className="person-rank">{rank ? String(rank).padStart(2, "0") : formatNumber(person.popularityScore, locale)}</span>
       <span className="person-avatar">
         {person.imageUrl ? (
-          <i style={{ backgroundImage: `url(${person.imageUrl})` }} aria-label={person.name} />
+          <img src={sizedImageUrl(person.imageUrl, 180) ?? person.imageUrl} alt={person.name} loading="lazy" decoding="async" />
         ) : (
           <span>{person.name.slice(0, 1)}</span>
         )}

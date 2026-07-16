@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { DEFAULT_LOCALE, getDictionary, type Locale, typeLabel } from "@/lib/i18n";
+import { sizedImageUrl } from "@/lib/image-url";
 
 type Suggestion = {
   title: string;
@@ -84,7 +85,7 @@ export function SearchSuggest({
         <div className="suggest-menu">
           {items.map((item) => (
             <Link key={item.imdbCode} className="suggest-item" href={`/${item.imdbCode}`}>
-              {item.posterUrl && <img src={item.posterUrl} alt="" />}
+              {item.posterUrl && <img src={sizedImageUrl(item.posterUrl, 120) ?? item.posterUrl} alt="" loading="lazy" decoding="async" />}
               <span>
                 <strong>{item.title}</strong>
                 <small>

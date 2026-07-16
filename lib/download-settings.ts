@@ -12,22 +12,28 @@ const DEFAULT_BASE_URL = "https://dls3.aparatchi-dlcenter.top/DonyayeSerial/";
 export const DEFAULT_ARCHIVE_URL = "https://dls2.aparatchi-dlcenter.top/DonyayeSerial/donyaye_serial_all_archive.html";
 const SETTINGS_FILE = path.join(process.cwd(), "data", "vod-settings.json");
 const DONYAYE_SERIAL_RE = /\/DonyayeSerial\/(.+)$/i;
+const SETTINGS_CACHE_MS = 5_000;
+let settingsCache: DownloadSettings | null = null;
+let settingsCacheExpiresAt = 0;
 
 export async function loadDownloadSettings(): Promise<DownloadSettings> {
+  if (settingsCache && Date.now() < settingsCacheExpiresAt) return settingsCache;
   try {
     const settings = JSON.parse(await readFile(SETTINGS_FILE, "utf8")) as Partial<DownloadSettings>;
-    return {
+    settingsCache = {
       baseUrl: normalizeDownloadBaseUrl(settings.baseUrl ?? DEFAULT_BASE_URL),
       archiveUrl: settings.archiveUrl ?? DEFAULT_ARCHIVE_URL,
       updatedAt: settings.updatedAt ?? null,
     };
   } catch {
-    return {
+    settingsCache = {
       baseUrl: DEFAULT_BASE_URL,
       archiveUrl: DEFAULT_ARCHIVE_URL,
       updatedAt: null,
     };
   }
+  settingsCacheExpiresAt = Date.now() + SETTINGS_CACHE_MS;
+  return settingsCache;
 }
 
 export async function saveDownloadBaseUrl(baseUrl: string, archiveUrl?: string): Promise<DownloadSettings> {
@@ -38,6 +44,8 @@ export async function saveDownloadBaseUrl(baseUrl: string, archiveUrl?: string):
   };
   await mkdir(path.dirname(SETTINGS_FILE), { recursive: true });
   await writeFile(SETTINGS_FILE, `${JSON.stringify(settings, null, 2)}\n`);
+  settingsCache = settings;
+  settingsCacheExpiresAt = Date.now() + SETTINGS_CACHE_MS;
   return settings;
 }
 

@@ -4,25 +4,36 @@ import Link from "next/link";
 import { useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
+import { sizedImageUrl } from "@/lib/image-url";
 import { formatNumber, getDictionary, type Locale } from "@/lib/i18n";
-import type { VodCard } from "@/lib/types";
+
+export type MegaMenuItem = {
+  imdbCode: string;
+  title: string;
+  year: number | null;
+  posterUrl: string | null;
+  backdropUrl: string | null;
+};
 
 export type MegaMenuSection = {
   id: string;
   title: string;
   href: string;
-  items: VodCard[];
+  items: MegaMenuItem[];
   artUrl?: string | null;
+  total: number;
 };
 
 export function GradientMenu({
   totalTitles,
   locale,
   menuSections = [],
+  featuredItems = [],
 }: {
   totalTitles?: number;
   locale: Locale;
   menuSections?: MegaMenuSection[];
+  featuredItems?: MegaMenuItem[];
 }) {
   const [activeSectionId, setActiveSectionId] = useState(menuSections[0]?.id ?? "");
   const t = getDictionary(locale);
@@ -33,12 +44,6 @@ export function GradientMenu({
     { href: "/browse?section=best-series", label: t.nav.series },
     { href: "/browse?section=animation", label: t.nav.animation },
   ];
-  const menuItemsForGallery = menuSections.flatMap((section) => section.items.slice(0, 10));
-  const usedGalleryImages = new Set(menuItemsForGallery.map((item) => item.backdropUrl ?? item.posterUrl).filter(Boolean));
-  const posterBadges = uniqueGalleryCards(menuSections.flatMap((section) => section.items.slice(10)))
-    .filter((item) => !usedGalleryImages.has(item.backdropUrl ?? item.posterUrl))
-    .slice(0, 8);
-
   return (
     <header className="gradient-menu wrap">
       <BrandLogo className="gradient-brand" locale={locale} />
@@ -64,7 +69,7 @@ export function GradientMenu({
                 onClick={() => setActiveSectionId(section.id)}
               >
                 {section.title}
-                <span>{formatNumber(section.items.length, locale)}</span>
+                <span>{formatNumber(section.total, locale)}</span>
               </button>
             ))}
           </aside>
@@ -78,14 +83,14 @@ export function GradientMenu({
                     <>
                 <div className="mega-group-head">
                   <Link href={section.href}>{section.title}</Link>
-                  <span>{formatNumber(section.items.length, locale)}</span>
+                  <span>{formatNumber(section.total, locale)}</span>
                 </div>
                 <div className="mega-category-content">
                   <Link
                     className="mega-category-art"
                     href={visibleItems[0] ? `/${visibleItems[0].imdbCode}` : section.href}
                     style={section.artUrl
-                      ? { backgroundImage: `url(${section.artUrl})` }
+                      ? { backgroundImage: `url(${sizedImageUrl(section.artUrl, 960)})` }
                       : undefined}
                   >
                     <span>{visibleItems[0]?.title ?? section.title}</span>
@@ -109,9 +114,11 @@ export function GradientMenu({
           <aside className="mega-badges">
             <p>{t.common.featured}</p>
             <div>
-              {posterBadges.map((item) => (
+              {featuredItems.map((item) => (
                 <Link key={`badge-${item.imdbCode}`} className="mega-badge" href={`/${item.imdbCode}`}>
-                  <span style={item.posterUrl ? { backgroundImage: `url(${item.posterUrl})` } : undefined} />
+                  {item.posterUrl ? (
+                    <img src={sizedImageUrl(item.posterUrl, 180) ?? item.posterUrl} alt="" loading="lazy" decoding="async" />
+                  ) : <span />}
                   <small>{item.title}</small>
                 </Link>
               ))}
@@ -132,25 +139,4 @@ export function GradientMenu({
       </Link>
     </header>
   );
-}
-
-function uniqueCards(items: VodCard[]) {
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    if (seen.has(item.imdbCode)) return false;
-    seen.add(item.imdbCode);
-    return true;
-  });
-}
-
-function uniqueGalleryCards(items: VodCard[]) {
-  const ids = new Set<string>();
-  const images = new Set<string>();
-  return items.filter((item) => {
-    const image = item.backdropUrl ?? item.posterUrl;
-    if (ids.has(item.imdbCode) || !image || images.has(image)) return false;
-    ids.add(item.imdbCode);
-    images.add(image);
-    return true;
-  });
 }

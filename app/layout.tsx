@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { AppMessageCenter } from "@/components/app-message-center";
+import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import { BRAND_DESCRIPTION, BRAND_MARK, BRAND_NAME, BRAND_SLOGAN } from "@/lib/brand";
 import { isRtl } from "@/lib/i18n";
 import { getLocale } from "@/lib/server-locale";
@@ -34,7 +36,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={locale} dir={isRtl(locale) ? "rtl" : "ltr"}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <WatchTogetherLauncher locale={locale} />
+        <AppMessageCenter />
+      </body>
     </html>
   );
 }

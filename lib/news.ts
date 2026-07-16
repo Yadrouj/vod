@@ -24,13 +24,11 @@ const fallbackNews: VodNewsPayload = {
   sources: [],
   items: [],
 };
+let newsPromise: Promise<VodNewsPayload> | null = null;
 
-export async function loadVodNews(): Promise<VodNewsPayload> {
-  try {
-    return JSON.parse(
-      await readFile(path.join(process.cwd(), "public", "data", "vod-news.json"), "utf8")
-    ) as VodNewsPayload;
-  } catch {
-    return fallbackNews;
-  }
+export function loadVodNews(): Promise<VodNewsPayload> {
+  newsPromise ??= readFile(path.join(process.cwd(), "public", "data", "vod-news.json"), "utf8")
+    .then((data) => JSON.parse(data) as VodNewsPayload)
+    .catch(() => fallbackNews);
+  return newsPromise;
 }

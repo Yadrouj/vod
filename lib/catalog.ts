@@ -1,10 +1,19 @@
-import { cache } from "react";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { cache } from "react";
 import { applyDownloadBaseToItem } from "./download-settings";
 import type { VodArchive, VodItem } from "./types";
 
-export const loadVodArchive = cache(async (): Promise<VodArchive> => {
+let archivePromise: Promise<VodArchive> | null = null;
+let titleMapPromise: Promise<Record<string, string>> | null = null;
+const titleFilePromises = new Map<string, Promise<VodItem | null>>();
+
+export function loadVodArchive(): Promise<VodArchive> {
+  archivePromise ??= loadArchiveFile();
+  return archivePromise;
+}
+
+async function loadArchiveFile(): Promise<VodArchive> {
   const catalog = path.join(process.cwd(), "public", "data", "vod-catalog.json");
   const fallback = path.join(process.cwd(), "public", "data", "vod-archive-imdb.json");
   try {
@@ -12,37 +21,23 @@ export const loadVodArchive = cache(async (): Promise<VodArchive> => {
   } catch {
     return JSON.parse(await readFile(fallback, "utf8")) as VodArchive;
   }
-});
-
-export async function findVodItem(id: string): Promise<VodItem | null> {
-  const item = await findVodTitleFile(id);
-  if (item) return applyDownloadBaseToItem(item);
-
-  const archive = await loadVodArchive();
-  const normalized = id.toLowerCase();
-  const found =
-    archive.items.find(
-      (item) =>
-        item.id.toLowerCase() === normalized ||
-        item.imdbCode.toLowerCase() === normalized
-    ) ?? null;
-
-  return found ? applyDownloadBaseToItem(found) : null;
 }
+
+export const findVodItem = cache(async (id: string): Promise<VodItem | null> => {
+  const item = await findVodTitleFile(id);
+  return item ? applyDownloadBaseToItem(item) : null;
+});
 
 export function normalizeVodType(type: string): "movie" | "series" {
   return /series|tv|episode/i.test(type) ? "series" : "movie";
 }
 
-const loadTitleMap = cache(async (): Promise<Record<string, string>> => {
-  try {
-    return JSON.parse(
-      await readFile(path.join(process.cwd(), "public", "data", "title-map.json"), "utf8")
-    ) as Record<string, string>;
-  } catch {
-    return {};
-  }
-});
+function loadTitleMap(): Promise<Record<string, string>> {
+  titleMapPromise ??= readFile(path.join(process.cwd(), "public", "data", "title-map.json"), "utf8")
+    .then((data) => JSON.parse(data) as Record<string, string>)
+    .catch(() => ({}));
+  return titleMapPromise;
+}
 
 async function findVodTitleFile(id: string): Promise<VodItem | null> {
   const normalized = id.toLowerCase();
@@ -50,11 +45,17 @@ async function findVodTitleFile(id: string): Promise<VodItem | null> {
   const fileId = map[normalized] ?? (/^tt\d+$/i.test(id) ? id : null);
   if (!fileId) return null;
 
-  try {
-    return JSON.parse(
-      await readFile(path.join(process.cwd(), "public", "data", "titles", `${fileId}.json`), "utf8")
-    ) as VodItem;
-  } catch {
-    return null;
+  const cacheKey = fileId.toLowerCase();
+  let promise = titleFilePromises.get(cacheKey);
+  if (!promise) {
+    promise = readFile(path.join(process.cwd(), "public", "data", "titles", `${fileId}.json`), "utf8")
+      .then((data) => JSON.parse(data) as VodItem)
+      .catch(() => null);
+    titleFilePromises.set(cacheKey, promise);
+    if (titleFilePromises.size > 256) {
+      const oldest = titleFilePromises.keys().next().value as string | undefined;
+      if (oldest) titleFilePromises.delete(oldest);
+    }
   }
+  return promise;
 }

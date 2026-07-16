@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
+import { sizedImageUrl } from "@/lib/image-url";
 import type { VodNewsItem } from "@/lib/news";
 
 export function NewsRail({ items, locale = DEFAULT_LOCALE }: { items: VodNewsItem[]; locale?: Locale }) {
@@ -29,10 +30,12 @@ export function NewsRail({ items, locale = DEFAULT_LOCALE }: { items: VodNewsIte
             rel="noreferrer"
           >
             {item.imageUrl && (
-              <span
+              <img
                 className="news-card-backdrop"
-                style={{ backgroundImage: `url(${item.imageUrl})` }}
-                aria-hidden="true"
+                src={sizedImageUrl(item.imageUrl, 720) ?? item.imageUrl}
+                alt=""
+                loading="lazy"
+                decoding="async"
               />
             )}
             <span className="news-index">{String(index + 1).padStart(2, "0")}</span>

@@ -83,8 +83,8 @@ export default async function BrowsePage({ searchParams }: Props) {
 
       <section className="section wrap">
         <div className="grid browse-grid">
-          {result.items.map((item) => (
-            <PosterCard key={item.imdbCode} item={item} locale={locale} />
+          {result.items.map((item, index) => (
+            <PosterCard key={item.imdbCode} item={item} locale={locale} priority={index < 6} />
           ))}
         </div>
 

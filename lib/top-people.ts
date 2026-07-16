@@ -24,13 +24,11 @@ export type TopPeoplePayload = {
   totalPeople: number;
   people: TopPerson[];
 };
+let topPeoplePromise: Promise<TopPeoplePayload> | null = null;
 
-export async function loadTopPeople(): Promise<TopPeoplePayload> {
-  try {
-    return JSON.parse(
-      await readFile(path.join(process.cwd(), "public", "data", "vod-top-people.json"), "utf8")
-    ) as TopPeoplePayload;
-  } catch {
-    return { generatedAt: new Date(0).toISOString(), totalPeople: 0, people: [] };
-  }
+export function loadTopPeople(): Promise<TopPeoplePayload> {
+  topPeoplePromise ??= readFile(path.join(process.cwd(), "public", "data", "vod-top-people.json"), "utf8")
+    .then((data) => JSON.parse(data) as TopPeoplePayload)
+    .catch(() => ({ generatedAt: new Date(0).toISOString(), totalPeople: 0, people: [] }));
+  return topPeoplePromise;
 }
