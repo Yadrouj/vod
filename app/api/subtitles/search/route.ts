@@ -1,4 +1,4 @@
-import { findSubzoneEnglishSubtitles, subzoneSearchUrl } from "@/lib/subtitles";
+import { findSubzoneSubtitles, subtitleTrackUrl, subzoneSearchUrl } from "@/lib/subtitles";
 import { checkRateLimit, clientIp, publicCacheHeaders, rateLimitedResponse, rateLimitHeaders } from "@/lib/runtime-cache";
 
 export const dynamic = "force-dynamic";
@@ -16,9 +16,9 @@ export async function GET(request: Request) {
   if (!rate.allowed) return rateLimitedResponse(rate);
 
   try {
-    const items = await findSubzoneEnglishSubtitles(query, limit);
+    const items = (await findSubzoneSubtitles(query, limit)).map((item) => ({ ...item, trackUrl: subtitleTrackUrl(item.downloadUrl) }));
     return Response.json(
-      { query, searchUrl: subzoneSearchUrl(query), language: "english", count: items.length, items },
+      { query, searchUrl: subzoneSearchUrl(query), languages: ["Farsi/Persian", "English"], count: items.length, items },
       { headers: { ...publicCacheHeaders({ browserSeconds: 60, edgeSeconds: 3600 }), ...rateLimitHeaders(rate) } },
     );
   } catch (error) {

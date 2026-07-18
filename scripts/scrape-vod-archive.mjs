@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
@@ -141,26 +141,61 @@ async function fetchArchive(url) {
     "curl",
     [
       "-L",
-      "--fail",
       "--silent",
       "--show-error",
       "--max-time",
       "120",
       "-A",
       UA,
+      "--write-out",
+      "\n__SARVNEMA_HTTP_STATUS__:%{http_code}",
       url,
     ],
     { maxBuffer: 64 * 1024 * 1024 }
   );
-  return stdout;
+  const marker = /\n__SARVNEMA_HTTP_STATUS__:(\d{3})\s*$/.exec(stdout);
+  const status = Number(marker?.[1] ?? 0);
+  const body = marker ? stdout.slice(0, marker.index) : stdout;
+  return { status, body };
 }
 
 async function main() {
-  const html = await fetchArchive(SOURCE_URL);
+  const attempts = [];
+  let html = "";
+  let resolvedSourceUrl = SOURCE_URL;
+  for (const candidate of sourceCandidates(SOURCE_URL)) {
+    try {
+      const response = await fetchArchive(candidate);
+      attempts.push({ url: candidate, status: response.status, bytes: Buffer.byteLength(response.body) });
+      if (response.status >= 200 && response.status < 300 && looksLikeArchive(response.body)) {
+        html = response.body;
+        resolvedSourceUrl = candidate;
+        break;
+      }
+      if (isIranIpBlock(response.body)) attempts[attempts.length - 1].reason = "iran-ip-required";
+    } catch (error) {
+      attempts.push({ url: candidate, status: 0, reason: error instanceof Error ? error.message.slice(0, 180) : "request-failed" });
+    }
+  }
+  if (!html) {
+    const blocked = attempts.some((attempt) => attempt.reason === "iran-ip-required");
+    throw new Error(`${blocked ? "Archive access requires an Iranian server IP. " : "No healthy archive endpoint was found. "}Existing data was preserved. Attempts: ${JSON.stringify(attempts)}`);
+  }
+
   const items = parseArchive(html);
   const linkCount = items.reduce((sum, item) => sum + item.links.length, 0);
+  if (items.length < 100 || linkCount < 1_000) {
+    throw new Error(`Archive validation failed (${items.length} titles / ${linkCount} links). Existing data was preserved.`);
+  }
+
+  const previous = await readPreviousSummary(OUT_FILE);
+  const allowShrink = process.env.ALLOW_LARGE_ARCHIVE_SHRINK === "1";
+  if (!allowShrink && previous && (items.length < previous.totalTitles * 0.8 || linkCount < previous.totalLinks * 0.8)) {
+    throw new Error(`Archive shrank unexpectedly from ${previous.totalTitles}/${previous.totalLinks} to ${items.length}/${linkCount}. Set ALLOW_LARGE_ARCHIVE_SHRINK=1 only after verifying the source.`);
+  }
+
   const payload = {
-    sourceUrl: SOURCE_URL,
+    sourceUrl: resolvedSourceUrl,
     scrapedAt: new Date().toISOString(),
     totalTitles: items.length,
     totalLinks: linkCount,
@@ -168,20 +203,74 @@ async function main() {
   };
 
   await mkdir(path.dirname(OUT_FILE), { recursive: true });
-  await writeFile(OUT_FILE, JSON.stringify(payload));
+  await safeReplaceJson(OUT_FILE, JSON.stringify(payload));
 
   console.log(
     JSON.stringify(
       {
-        sourceUrl: SOURCE_URL,
+        sourceUrl: resolvedSourceUrl,
         outFile: OUT_FILE,
         totalTitles: items.length,
         totalLinks: linkCount,
+        attempts,
       },
       null,
       2
     )
   );
+}
+
+function sourceCandidates(sourceUrl) {
+  if (process.env.ARCHIVE_SOURCE_ONLY === "1") return [sourceUrl];
+  const parsed = new URL(sourceUrl);
+  const hostMatch = /^(dls\d*)\.(.+)$/i.exec(parsed.hostname);
+  if (!hostMatch) return [sourceUrl];
+  const hosts = ["dls2", "dls", "dls3", "dls4", "dls5", "dls6", "dls7", "dls8", "dls9"];
+  return Array.from(new Set([sourceUrl, ...hosts.map((host) => {
+    const candidate = new URL(sourceUrl);
+    candidate.hostname = `${host}.${hostMatch[2]}`;
+    return candidate.toString();
+  })]));
+}
+
+function looksLikeArchive(body) {
+  return body.length > 50_000 && /IMDb Code:/i.test(body) && /start_year/i.test(body) && /<a\s+href=/i.test(body);
+}
+
+function isIranIpBlock(body) {
+  return /(iran|iranian|vpn|proxy|داخلی|ایران)/i.test(stripTags(body).slice(0, 4_000));
+}
+
+async function readPreviousSummary(file) {
+  try {
+    const previous = JSON.parse(await readFile(file, "utf8"));
+    const totalTitles = Number(previous.totalTitles ?? previous.items?.length ?? 0);
+    const totalLinks = Number(previous.totalLinks ?? previous.items?.reduce((sum, item) => sum + (item.links?.length ?? 0), 0) ?? 0);
+    return totalTitles > 0 && totalLinks > 0 ? { totalTitles, totalLinks } : null;
+  } catch {
+    return null;
+  }
+}
+
+async function safeReplaceJson(file, content) {
+  const temporary = `${file}.tmp-${process.pid}`;
+  const backup = `${file}.previous-${process.pid}`;
+  await writeFile(temporary, content);
+  let movedPrevious = false;
+  try {
+    try {
+      await rename(file, backup);
+      movedPrevious = true;
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+    }
+    await rename(temporary, file);
+    if (movedPrevious) await unlink(backup).catch(() => undefined);
+  } catch (error) {
+    await unlink(temporary).catch(() => undefined);
+    if (movedPrevious) await rename(backup, file).catch(() => undefined);
+    throw error;
+  }
 }
 
 main().catch((error) => {

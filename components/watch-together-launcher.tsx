@@ -3,11 +3,13 @@
 import { Check, Copy, Link2, Radio, Search, Share2, UsersRound, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Socket } from "socket.io-client";
 import { sizedImageUrl } from "@/lib/image-url";
 import type { Locale } from "@/lib/i18n";
 import { newPartyProfile, readPartyProfile, savePartyProfile } from "@/lib/watch-party-profile";
 import type { PartyMedia, PartyProfile } from "@/lib/watch-party-types";
+import { WatchTogetherMark } from "@/components/watch-together-mark";
 
 export type WatchTogetherPreset = {
   itemId: string;
@@ -64,6 +66,9 @@ const copyByLocale = {
     profileError: "Enter a display name to create the room.",
     mediaError: "This title does not have a playable source right now.",
     createError: "The room could not be created. Please try again.",
+    titleStep: "Title",
+    profileStep: "Profile",
+    inviteStep: "Invite",
   },
   fa: {
     button: "تماشای همزمان",
@@ -95,6 +100,9 @@ const copyByLocale = {
     profileError: "برای ساخت اتاق یک نام نمایشی وارد کن.",
     mediaError: "در حال حاضر لینک قابل پخشی برای این عنوان پیدا نشد.",
     createError: "ساخت اتاق انجام نشد؛ دوباره تلاش کن.",
+    titleStep: "انتخاب فیلم",
+    profileStep: "پروفایل",
+    inviteStep: "دعوت",
   },
 } as const;
 
@@ -113,6 +121,7 @@ export function WatchTogetherLauncher({
 }) {
   const pathname = usePathname();
   const socketRef = useRef<Socket | null>(null);
+  const builderRef = useRef<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Suggestion[]>([]);
@@ -132,6 +141,22 @@ export function WatchTogetherLauncher({
   useEffect(() => () => {
     socketRef.current?.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeLauncher();
+    };
+    document.body.style.overflow = "hidden";
+    document.documentElement.classList.add("watch-builder-is-open");
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.documentElement.classList.remove("watch-builder-is-open");
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
 
   useEffect(() => {
     const normalized = query.trim();
@@ -244,6 +269,7 @@ export function WatchTogetherLauncher({
       const roomUrl = `${window.location.origin}/watch-together/${result.roomId}?invite=${encodeURIComponent(result.inviteToken)}`;
       setInviteUrl(roomUrl);
       setCopied(false);
+      window.requestAnimationFrame(() => builderRef.current?.scrollTo({ top: 0, behavior: "smooth" }));
     } catch (reason) {
       socketRef.current?.disconnect();
       socketRef.current = null;
@@ -277,6 +303,7 @@ export function WatchTogetherLauncher({
   }
 
   const buttonText = label ?? text.button;
+  const builderStep = inviteUrl ? 3 : selected ? 2 : 1;
 
   return (
     <>
@@ -287,8 +314,7 @@ export function WatchTogetherLauncher({
         aria-haspopup="dialog"
       >
         <span className="watch-together-launcher-icon" aria-hidden="true">
-          <UsersRound size={placement === "floating" ? 21 : 17} />
-          <i />
+          <WatchTogetherMark />
         </span>
         <span className="watch-together-launcher-copy">
           <strong>{buttonText}</strong>
@@ -296,17 +322,18 @@ export function WatchTogetherLauncher({
         </span>
       </button>
 
-      {open && (
+      {open && typeof document !== "undefined" && createPortal((
         <div className="watch-builder-backdrop" onClick={closeLauncher}>
           <section
-            className="watch-builder"
+            ref={builderRef}
+            className={`watch-builder watch-builder-step-${builderStep}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="watch-builder-title"
             onClick={(event) => event.stopPropagation()}
           >
             <header className="watch-builder-header">
-              <div className="watch-builder-mark"><Radio size={22} /></div>
+              <div className="watch-builder-mark"><WatchTogetherMark /></div>
               <div>
                 <span className="label">{text.eyebrow}</span>
                 <h2 id="watch-builder-title">{inviteUrl ? text.ready : text.title}</h2>
@@ -315,6 +342,23 @@ export function WatchTogetherLauncher({
                 <X size={19} />
               </button>
             </header>
+
+            <div className="watch-builder-progress" aria-label="Room setup progress">
+              {[
+                { step: 1, label: text.titleStep },
+                { step: 2, label: text.profileStep },
+                { step: 3, label: text.inviteStep },
+              ].map((item) => (
+                <span
+                  className={item.step <= builderStep ? "is-active" : ""}
+                  aria-current={item.step === builderStep ? "step" : undefined}
+                  key={item.step}
+                >
+                  <i>{item.step < builderStep ? <Check size={10} /> : item.step}</i>
+                  <small>{item.label}</small>
+                </span>
+              ))}
+            </div>
 
             {inviteUrl ? (
               <div className="watch-builder-success">
@@ -325,14 +369,14 @@ export function WatchTogetherLauncher({
                   <input value={inviteUrl} readOnly aria-label={text.copyLink} />
                 </div>
                 <div className="watch-builder-actions watch-builder-success-actions">
+                  <button type="button" className="play-glow" onClick={() => window.location.assign(inviteUrl)}>
+                    <WatchTogetherMark /> {text.enter}
+                  </button>
                   <button type="button" className="watch-share-button" onClick={shareInvite}>
                     <Share2 size={17} /> {text.share}
                   </button>
                   <button type="button" className="watch-copy-button" onClick={copyInvite}>
                     {copied ? <Check size={17} /> : <Copy size={17} />} {copied ? text.copied : text.copyLink}
-                  </button>
-                  <button type="button" className="play-glow" onClick={() => window.location.assign(inviteUrl)}>
-                    {text.enter}
                   </button>
                 </div>
               </div>
@@ -427,7 +471,7 @@ export function WatchTogetherLauncher({
             )}
           </section>
         </div>
-      )}
+      ), document.body)}
     </>
   );
 }

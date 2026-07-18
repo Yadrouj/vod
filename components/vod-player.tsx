@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Captions, Settings } from "lucide-react";
 import { BrandLoader } from "@/components/brand-loader";
+import { PlayerSubtitles } from "@/components/player-subtitles";
 import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 import { episodeLabel } from "@/lib/link-labels";
 import type { VodLink } from "@/lib/types";
@@ -32,13 +33,13 @@ export function VodPlayer({
   const [activeIndex, setActiveIndex] = useState(0);
   const [speed, setSpeed] = useState("1");
   const [volume, setVolume] = useState("0.85");
-  const [subtitleUrl, setSubtitleUrl] = useState("");
   const [paused, setPaused] = useState(true);
   const [duration, setDuration] = useState(0);
   const [time, setTime] = useState(0);
   const [buffered, setBuffered] = useState(0);
   const [preview, setPreview] = useState<{ x: number; time: number } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [subtitlesOpen, setSubtitlesOpen] = useState(false);
   const [selectionOpen, setSelectionOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [buffering, setBuffering] = useState(true);
@@ -177,7 +178,7 @@ export function VodPlayer({
       <div className="pro-player">
         <video
           ref={videoRef}
-          key={`${active?.url}-${subtitleUrl}`}
+          key={active?.url}
           className="player"
           src={active?.url}
           poster={posterUrl ?? undefined}
@@ -191,7 +192,7 @@ export function VodPlayer({
             if (resumeAt && resumeAt < event.currentTarget.duration - 8) {
               event.currentTarget.currentTime = resumeAt;
               setTime(resumeAt);
-              setMessage(`ادامه پخش از ${formatTime(resumeAt)}`);
+              setMessage(locale === "fa" ? `ادامه پخش از ${formatTime(resumeAt)}` : `Resuming from ${formatTime(resumeAt)}`);
             }
             setBuffering(false);
             setBuffered(0);
@@ -215,9 +216,7 @@ export function VodPlayer({
             setBuffering(false);
             setMessage(t.player.sourceError);
           }}
-        >
-          {subtitleUrl && <track kind="subtitles" src={subtitleUrl} label="Subtitle" default />}
-        </video>
+        />
 
         {buffering && (
           <div className="player-loading">
@@ -276,10 +275,10 @@ export function VodPlayer({
             <button type="button" className="player-btn" onClick={castVideo}>{t.player.cast}</button>
             <button type="button" className="player-btn" onClick={openPictureInPicture}>PiP</button>
             <button type="button" className="player-btn" onClick={toggleFullscreen}>{t.player.full}</button>
-            <button type="button" className="player-icon-btn" onClick={() => setSettingsOpen((value) => !value)} aria-label="Subtitles" title="Subtitles">
+            <button type="button" className={`player-icon-btn ${subtitlesOpen ? "is-active" : ""}`} onClick={() => { setSubtitlesOpen((value) => !value); setSettingsOpen(false); }} aria-label="Subtitles" title="Subtitles">
               <Captions size={17} />
             </button>
-            <button type="button" className="player-icon-btn" onClick={() => setSettingsOpen((value) => !value)} aria-label={t.player.settings} title={t.player.settings}>
+            <button type="button" className={`player-icon-btn ${settingsOpen ? "is-active" : ""}`} onClick={() => { setSettingsOpen((value) => !value); setSubtitlesOpen(false); }} aria-label={t.player.settings} title={t.player.settings}>
               <Settings size={17} />
             </button>
           </div>
@@ -307,26 +306,18 @@ export function VodPlayer({
                 ))}
               </select>
             </label>
-            <label className="settings-wide">
-              <span className="label">{t.player.subtitleUrl}</span>
-              <input
-                className="search"
-                value={subtitleUrl}
-                onChange={(event) => setSubtitleUrl(event.target.value)}
-                placeholder={t.player.subtitlePlaceholder}
-              />
-              <input
-                className="search subtitle-file-input"
-                type="file"
-                accept=".vtt,.srt,text/vtt,application/x-subrip"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) setSubtitleUrl(URL.createObjectURL(file));
-                }}
-                aria-label="Add subtitle file"
-              />
-            </label>
           </div>
+        )}
+        {itemId && (
+          <PlayerSubtitles
+            videoRef={videoRef}
+            itemId={itemId}
+            title={title}
+            sourceKey={active?.url ?? ""}
+            sourceLabel={sources[activeIndex]?.label ?? ""}
+            open={subtitlesOpen}
+            onClose={() => setSubtitlesOpen(false)}
+          />
         )}
         {selectionOpen && sources.length > 1 && (
           <div className="player-choice-overlay">
