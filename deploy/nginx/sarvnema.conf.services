@@ -1,0 +1,48 @@
+# sarvnema.ir (VOD) -> dockerised app `vod-app:3000` on infrastructure_default.
+#
+# TLS is terminated upstream at the ArvanCloud CDN (sarvnema.ir currently resolves
+# to Arvan IPs), so this origin is HTTP-only — matching every other site on this
+# host. Point Arvan's origin/upstream at 185.203.118.87:80.
+#
+# The app is a socket.io watch-party server, so /socket.io/ needs websocket upgrade
+# + long timeouts. Resolver-based upstream so `nginx -s reload` survives the
+# container being down.
+#
+# Install:  copy to /opt/infrastructure/nginx/services/sarvnema.conf.services on the
+# host, then: docker exec mn2-nginx nginx -t && docker exec mn2-nginx nginx -s reload
+server {
+    listen 80;
+    listen [::]:80;
+    server_name sarvnema.ir www.sarvnema.ir;
+
+    client_max_body_size 100M;
+
+    # Watch-party websockets (socket.io) — keep long-lived.
+    location /socket.io/ {
+        set $vod_upstream vod-app:3000;
+        proxy_pass http://$vod_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        access_log off;
+    }
+
+    location / {
+        set $vod_upstream vod-app:3000;
+        proxy_pass http://$vod_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 120s;
+    }
+}
