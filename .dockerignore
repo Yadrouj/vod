@@ -1,4 +1,5 @@
 .git
+<<<<<<< HEAD
 .next
 node_modules
 artifacts
@@ -13,3 +14,18 @@ npm-debug.log*
 public/data/vod-catalog.json
 public/data/vod-archive-imdb.json
 public/data/vod-source-current.json
+=======
+.gitignore
+node_modules
+.next
+out
+build
+*.tsbuildinfo
+dev-server.log
+dev-server.err.log
+dev-server.pid
+npm-debug.log*
+.DS_Store
+# NOTE: public/ (the LFS-backed catalog) and .env.local are intentionally kept —
+# the catalog is served at runtime and .env.local is needed at build for NEXT_PUBLIC_*.
+>>>>>>> c8bf795889c7454b88f78e0ea0b3c56411e6a508
