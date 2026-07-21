@@ -1,0 +1,95 @@
+/* Loaded after globals.css so room overlays cannot be buried by page stacking contexts. */
+.watch-builder-backdrop {
+  z-index: 2147483000;
+  isolation: isolate;
+  overscroll-behavior: contain;
+}
+
+html.watch-builder-is-open,
+html.watch-builder-is-open body { overflow: hidden !important; }
+
+/* Compact, circular and movable room camera dock. */
+.party-camera-dock,
+.party-camera-dock.has-1,
+.party-camera-dock.has-2,
+.party-camera-dock.has-interpreter {
+  top: 14px;
+  right: auto;
+  bottom: auto;
+  left: 14px;
+  width: auto;
+  max-width: min(58%, 520px);
+  display: flex;
+  grid-template-columns: none;
+  align-items: center;
+  gap: 9px;
+  padding: 5px;
+  overflow: visible;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 999px;
+  background: rgba(8, 10, 12, .42);
+  box-shadow: 0 12px 42px rgba(0, 0, 0, .34);
+  backdrop-filter: blur(14px);
+  transition: top .24s ease, right .24s ease, bottom .24s ease, left .24s ease;
+}
+
+.party-camera-dock.position-top-right { right: 232px; left: auto; }
+.party-camera-dock.position-bottom-right { top: auto; right: 14px; bottom: 68px; left: auto; }
+.party-camera-dock.position-bottom-left { top: auto; bottom: 68px; }
+.party-camera-position { width: 31px; height: 31px; flex: 0 0 31px; display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, .14); border-radius: 50%; color: rgba(255, 255, 255, .72); background: rgba(255, 255, 255, .08); cursor: pointer; pointer-events: auto; transition: color .18s ease, background .18s ease, transform .18s ease; }
+.party-camera-position:hover { color: #fff; background: rgba(255, 255, 255, .16); transform: rotate(12deg); }
+
+.party-camera-tile,
+.party-camera-dock.has-interpreter .party-camera-tile.is-interpreter {
+  width: 86px;
+  height: 86px;
+  flex: 0 0 86px;
+  grid-column: auto;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-width: 2px;
+  border-radius: 50%;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, .46), inset 0 0 0 2px rgba(255, 255, 255, .04);
+}
+
+.party-camera-tile.is-speaking { transform: none; box-shadow: 0 0 0 4px rgba(102, 231, 163, .16), 0 8px 30px rgba(0, 0, 0, .5); }
+.party-camera-dock.has-interpreter .party-camera-tile.is-interpreter { width: 104px; height: 104px; flex-basis: 104px; border-color: rgba(248, 224, 122, .78); }
+.party-camera-label { right: 8px; bottom: 7px; left: 8px; justify-content: center; }
+.party-camera-label span { max-width: 100%; padding: 3px 6px; font-size: 7px; text-align: center; }
+.party-camera-label small { display: none; }
+.party-camera-tile.is-interpreter .party-camera-label small { position: absolute; bottom: 18px; display: block; font-size: 6px; white-space: nowrap; }
+.party-camera-tile > button { top: 5px; right: 5px; width: 24px; height: 24px; }
+.party-camera-waiting small { display: none; }
+
+/* Talking indicators no longer participate in layout, so PTT never jumps. */
+.party-voice-speakers { position: absolute; top: 5px; right: calc(100% + 7px); width: max-content; padding: 0; pointer-events: none; }
+.party-voice-panel { contain: layout; }
+.party-voice-ptt,
+.party-voice.is-talking .party-voice-ptt,
+.party-voice-ptt:active { position: relative; inset: auto; transform: none !important; }
+
+.party-network-quality { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 7px; min-height: 36px; padding: 6px 8px; border: 1px solid rgba(255, 255, 255, .09); border-radius: 7px; color: #89edb6; background: rgba(82, 205, 140, .07); }
+.party-network-quality > span { min-width: 0; display: grid; gap: 1px; }
+.party-network-quality strong { font-size: 9px; }
+.party-network-quality small { color: rgba(255, 255, 255, .43); font-size: 7px; }
+.party-network-quality.is-good { color: #f0d878; background: rgba(240, 216, 120, .07); }
+.party-network-quality.is-weak { border-color: rgba(255, 119, 125, .22); color: #ff9da2; background: rgba(210, 57, 66, .09); }
+.party-network-quality.is-solo { color: rgba(255, 255, 255, .5); background: rgba(255, 255, 255, .035); }
+
+@media (max-width: 760px) {
+  .party-camera-dock,
+  .party-camera-dock.has-1,
+  .party-camera-dock.has-2,
+  .party-camera-dock.has-interpreter { top: 7px; right: auto; bottom: auto; left: 7px; width: auto; max-width: calc(100% - 60px); gap: 6px; padding: 4px; overflow-x: auto; }
+  .party-camera-dock.position-top-right { right: 54px; left: auto; }
+  .party-camera-dock.position-bottom-right { top: auto; right: 7px; bottom: 57px; left: auto; }
+  .party-camera-dock.position-bottom-left { top: auto; bottom: 57px; }
+  .party-camera-position { width: 27px; height: 27px; flex-basis: 27px; }
+  .party-camera-tile,
+  .party-camera-dock.has-interpreter .party-camera-tile.is-interpreter { width: 62px; height: 62px; flex: 0 0 62px; }
+  .party-camera-dock.has-interpreter .party-camera-tile.is-interpreter { width: 76px; height: 76px; flex-basis: 76px; }
+  .party-camera-label { right: 5px; bottom: 4px; left: 5px; }
+  .party-camera-label span { font-size: 6px; }
+  .party-voice-speakers { top: 3px; right: calc(100% + 5px); padding: 0; }
+  .party-voice-speakers span { width: 29px; height: 29px; }
+}

@@ -57,11 +57,34 @@ try {
   guest.emit("voice:talking", { roomId: created.roomId, active: true });
   await talkingPromise;
 
+  const cameraPromise = waitForEvent(host, "voice:camera", (value) => value?.userId === "smoke-guest" && value?.active === true);
+  const camera = await emitWithAck(guest, "voice:camera", { roomId: created.roomId, active: true });
+  if (!camera?.ok) throw new Error(camera?.error || "guest camera state failed");
+  await cameraPromise;
+
+  const captionPromise = waitForEvent(host, "accessibility:caption", (value) => value?.userId === "smoke-guest" && value?.text === "Smoke caption");
+  const caption = await emitWithAck(guest, "accessibility:caption", { roomId: created.roomId, segmentId: "smoke-caption", text: "Smoke caption", language: "en-US", final: true });
+  if (!caption?.ok) throw new Error(caption?.error || "live caption failed");
+  await captionPromise;
+
+  const permissionPromise = waitForEvent(guest, "room:snapshot", (value) => value?.participants?.find((participant) => participant.id === "smoke-guest")?.permissions?.interpreter === true);
+  host.emit("permissions:user", { roomId: created.roomId, userId: "smoke-guest", permissions: { interpreter: true } });
+  await permissionPromise;
+  const interpreterPromise = waitForEvent(host, "accessibility:interpreter", (value) => value?.userId === "smoke-guest");
+  const interpreter = await emitWithAck(guest, "accessibility:interpreter", { roomId: created.roomId, active: true });
+  if (!interpreter?.ok) throw new Error(interpreter?.error || "interpreter pin failed");
+  await interpreterPromise;
+
+  const subtitlePromise = waitForEvent(guest, "subtitle:state", (value) => value?.mode === "off");
+  const subtitle = await emitWithAck(host, "subtitle:command", { roomId: created.roomId, selection: { mode: "off", id: null, url: null, label: null, language: null, offsetMs: 0 } });
+  if (!subtitle?.ok) throw new Error(subtitle?.error || "shared subtitle state failed");
+  await subtitlePromise;
+
   const leftPromise = waitForEvent(host, "voice:peer-left", (value) => value?.userId === "smoke-guest");
   guest.emit("voice:leave", { roomId: created.roomId });
   await leftPromise;
 
-  console.log(JSON.stringify({ ok: true, roomId: created.roomId, syncedTime: state.currentTime, voiceSignaling: true, pushToTalkState: true }, null, 2));
+  console.log(JSON.stringify({ ok: true, roomId: created.roomId, syncedTime: state.currentTime, voiceSignaling: true, pushToTalkState: true, cameraState: true, liveCaptions: true, interpreterPin: true, sharedSubtitles: true }, null, 2));
 } finally {
   host.disconnect();
   guest.disconnect();

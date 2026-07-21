@@ -20,16 +20,26 @@ export type SubzoneSubtitle = {
 const SUBZONE_ORIGIN = "http://subzone.ir";
 const subtitleCache = new TtlLruCache<string, SubzoneSubtitle[]>(300, 60 * 60_000);
 const subtitleInflight = new Map<string, Promise<SubzoneSubtitle[]>>();
+const DEFAULT_SUBTITLE_LANGUAGES = ["Farsi/Persian", "English"];
+
+export function subtitleTrackUrl(downloadUrl: string) {
+  return `/api/subtitles/track?url=${encodeURIComponent(downloadUrl)}`;
+}
 
 export async function findSubzoneEnglishSubtitles(query: string, limit = 40): Promise<SubzoneSubtitle[]> {
-  const cacheKey = `${normalizeSearchQuery(query)}:${limit}`;
+  return findSubzoneSubtitles(query, limit, ["English"]);
+}
+
+export async function findSubzoneSubtitles(query: string, limit = 40, languages = DEFAULT_SUBTITLE_LANGUAGES): Promise<SubzoneSubtitle[]> {
+  const normalizedLanguages = languages.map((language) => language.trim()).filter(Boolean);
+  const cacheKey = `${normalizeSearchQuery(query)}:${limit}:${normalizedLanguages.join("|").toLowerCase()}`;
   const cached = subtitleCache.get(cacheKey);
   if (cached) return cached;
 
   const running = subtitleInflight.get(cacheKey);
   if (running) return running;
 
-  const request = findSubzoneEnglishSubtitlesUncached(query, limit);
+  const request = findSubzoneSubtitlesUncached(query, limit, normalizedLanguages);
   subtitleInflight.set(cacheKey, request);
   try {
     const items = await request;
@@ -40,20 +50,26 @@ export async function findSubzoneEnglishSubtitles(query: string, limit = 40): Pr
   }
 }
 
-async function findSubzoneEnglishSubtitlesUncached(query: string, limit: number): Promise<SubzoneSubtitle[]> {
+async function findSubzoneSubtitlesUncached(query: string, limit: number, languages: string[]): Promise<SubzoneSubtitle[]> {
   const searchHtml = await fetchSubzone(searchByTitleUrl(query));
   const titlePages = parseSearchResults(searchHtml).slice(0, 8);
   const subtitles: SubzoneSubtitle[] = [];
 
   for (const titlePage of titlePages) {
     const titleHtml = await fetchSubzone(titlePage.url);
-    const englishUrl = parseLanguageUrl(titleHtml, "English") ?? `${titlePage.url}/english`;
-    const listingHtml = englishUrl === titlePage.url ? titleHtml : await fetchSubzone(englishUrl);
-    subtitles.push(...parseEnglishSubtitleRows(listingHtml, titlePage.url));
+    const listings = await Promise.allSettled(languages.map(async (language) => {
+      const fallbackSlug = language.toLowerCase().replace(/\//g, "_").replace(/[^a-z_]+/g, "_");
+      const languageUrl = parseLanguageUrl(titleHtml, language) ?? `${titlePage.url}/${fallbackSlug}`;
+      const listingHtml = languageUrl === titlePage.url ? titleHtml : await fetchSubzone(languageUrl);
+      return parseSubtitleRows(listingHtml, titlePage.url, language);
+    }));
+    for (const listing of listings) if (listing.status === "fulfilled") subtitles.push(...listing.value);
     if (subtitles.length >= limit) break;
   }
 
-  return uniqueBy(subtitles, (subtitle) => subtitle.detailUrl).slice(0, limit);
+  return uniqueBy(subtitles, (subtitle) => subtitle.detailUrl)
+    .sort((left, right) => languageRank(left.language, languages) - languageRank(right.language, languages) || Number(right.rating === "good") - Number(left.rating === "good"))
+    .slice(0, limit);
 }
 
 function searchByTitleUrl(query: string) {
@@ -89,14 +105,14 @@ function parseLanguageUrl(html: string, language: string) {
   return href ? absoluteSubzoneUrl(href) : null;
 }
 
-function parseEnglishSubtitleRows(html: string, sourceTitleUrl: string): SubzoneSubtitle[] {
+function parseSubtitleRows(html: string, sourceTitleUrl: string, requestedLanguage: string): SubzoneSubtitle[] {
   const rows = Array.from(html.matchAll(/<li class='item[^']*'>([\s\S]*?)<\/li>/gi));
   const title = cleanHtml(html.match(/<h1>\s*<span[^>]*>([\s\S]*?)<\/span>/i)?.[1] ?? html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "");
   const subtitles: SubzoneSubtitle[] = [];
 
   for (const [, row] of rows) {
     const language = cleanHtml(row.match(/<span class='language[^']*'>([\s\S]*?)<\/span>/i)?.[1] ?? "");
-    if (language.toLowerCase() !== "english") continue;
+    if (normalizeLanguage(language) !== normalizeLanguage(requestedLanguage)) continue;
     const href = row.match(/<a class='download icon-download' href='([^']+)'/i)?.[1];
     if (!href) continue;
     const detailUrl = absoluteSubzoneUrl(href);
@@ -119,6 +135,15 @@ function parseEnglishSubtitleRows(html: string, sourceTitleUrl: string): Subzone
   }
 
   return subtitles;
+}
+
+function languageRank(language: string, preferred: string[]) {
+  const index = preferred.findIndex((item) => normalizeLanguage(item) === normalizeLanguage(language));
+  return index < 0 ? preferred.length : index;
+}
+
+function normalizeLanguage(value: string) {
+  return value.toLowerCase().replace(/[^a-z]+/g, "");
 }
 
 function absoluteSubzoneUrl(href: string) {

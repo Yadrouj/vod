@@ -1,6 +1,6 @@
 import { findVodItem } from "@/lib/catalog";
 import { checkRateLimit, clientIp, publicCacheHeaders, rateLimitedResponse, rateLimitHeaders } from "@/lib/runtime-cache";
-import { findSubzoneEnglishSubtitles, subzoneSearchUrl } from "@/lib/subtitles";
+import { findSubzoneSubtitles, subtitleTrackUrl, subzoneSearchUrl } from "@/lib/subtitles";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -20,13 +20,13 @@ export async function GET(request: Request, { params }: Props) {
   if (!rate.allowed) return rateLimitedResponse(rate);
 
   try {
-    const items = await findSubzoneEnglishSubtitles(query, limit);
+    const items = (await findSubzoneSubtitles(query, limit)).map((item) => ({ ...item, trackUrl: subtitleTrackUrl(item.downloadUrl) }));
     return Response.json({
       id,
       title: item.title,
       query,
       searchUrl: subzoneSearchUrl(query),
-      language: "english",
+      languages: ["Farsi/Persian", "English"],
       count: items.length,
       items,
     }, { headers: { ...publicCacheHeaders({ browserSeconds: 60, edgeSeconds: 3600 }), ...rateLimitHeaders(rate) } });

@@ -73,7 +73,11 @@ export function DownloadBrowser({
   const loading = isSeries && !activeData && !error;
 
   useEffect(() => {
-    setBundleQuality((current) => seasonQualities.includes(current) ? current : seasonQualities[0] ?? "");
+    let current = true;
+    queueMicrotask(() => {
+      if (current) setBundleQuality((quality) => seasonQualities.includes(quality) ? quality : seasonQualities[0] ?? "");
+    });
+    return () => { current = false; };
   }, [activeSeason, seasonQualities]);
 
   function downloadSeasonLinks() {

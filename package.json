@@ -23,10 +23,12 @@
     "enrich-vod-api": "node scripts/enrich-vod-api.mjs",
     "scrape-imdb-images": "node scripts/scrape-imdb-images.mjs",
     "scrape-vod": "node scripts/scrape-vod-archive.mjs",
+    "audit-vod-links": "node scripts/audit-vod-links.mjs",
     "enrich-vod-imdb": "node scripts/enrich-vod-imdb.mjs",
     "enrich-vod-images": "node scripts/enrich-vod-images.mjs"
   },
   "dependencies": {
+    "fflate": "^0.8.2",
     "lucide-react": "^1.24.0",
     "next": "16.2.9",
     "react": "19.2.4",
