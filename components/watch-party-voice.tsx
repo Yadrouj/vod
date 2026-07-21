@@ -1,7 +1,7 @@
 "use client";
 
 import { Accessibility, Camera, CameraOff, Headphones, Mic, MicOff, Move, PhoneOff, Radio, RefreshCw, ShieldAlert, ShieldCheck, Users, Wifi, WifiOff } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import type { Socket } from "socket.io-client";
 import { showAppMessage } from "@/lib/app-messages";
 import type { PartyParticipant, PartyProfile } from "@/lib/watch-party-types";
@@ -21,7 +21,17 @@ type VoiceJoinResult = {
 };
 
 type CameraResult = { ok: boolean; cameras?: string[]; error?: string };
-type DockPosition = "top-left" | "top-right" | "bottom-right" | "bottom-left";
+type CameraOffset = { x: number; y: number };
+type CameraDrag = CameraOffset & {
+  userId: string;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+};
 type NetworkSnapshot = { quality: "solo" | "excellent" | "good" | "weak"; rttMs: number | null; loss: number | null };
 type VoicePermissionState = "unknown" | "prompt" | "granted" | "denied" | "insecure" | "unsupported";
 type VoiceIssue = {
@@ -56,6 +66,7 @@ export function WatchPartyVoice({
   const pendingCandidatesRef = useRef(new Map<string, RTCIceCandidateInit[]>());
   const localStreamRef = useRef<MediaStream | null>(null);
   const audioContainerRef = useRef<HTMLDivElement>(null);
+  const cameraDragRef = useRef<CameraDrag | null>(null);
   const joinedRef = useRef(false);
   const cameraEnabledRef = useRef(false);
   const iceServersRef = useRef<RTCIceServer[]>(fallbackIceServers);
@@ -74,7 +85,9 @@ export function WatchPartyVoice({
   const [activeTalkers, setActiveTalkers] = useState<Set<string>>(new Set());
   const [cameraUsers, setCameraUsers] = useState<Set<string>>(new Set());
   const [remoteVideoStreams, setRemoteVideoStreams] = useState<Map<string, MediaStream>>(new Map());
-  const [dockPosition, setDockPosition] = useState<DockPosition>("top-left");
+  const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
+  const [draggingCameraId, setDraggingCameraId] = useState<string | null>(null);
+  const [cameraOffsets, setCameraOffsets] = useState<Record<string, CameraOffset>>({});
   const [network, setNetwork] = useState<NetworkSnapshot>({ quality: "solo", rttMs: null, loss: null });
   participantsRef.current = participants;
   mutedLocallyRef.current = mutedLocally;
@@ -359,9 +372,58 @@ export function WatchPartyVoice({
       : { title: "Interpreter pinned", message: "Your signed interpretation is now prioritized over the movie for everyone in the room.", tone: "success" });
   }
 
-  function moveCameraDock() {
-    const positions: DockPosition[] = ["top-left", "top-right", "bottom-right", "bottom-left"];
-    setDockPosition((current) => positions[(positions.indexOf(current) + 1) % positions.length]);
+  function startCameraDrag(event: ReactPointerEvent<HTMLButtonElement>, userId: string) {
+    event.preventDefault();
+    event.stopPropagation();
+    const item = event.currentTarget.closest<HTMLElement>(".party-camera-item");
+    const stage = event.currentTarget.closest<HTMLElement>(".party-player-stage");
+    if (!item || !stage) return;
+
+    const origin = cameraOffsets[userId] ?? { x: 0, y: 0 };
+    const itemRect = item.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
+    const safeEdge = 8;
+    cameraDragRef.current = {
+      userId,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      x: origin.x,
+      y: origin.y,
+      minX: origin.x + stageRect.left + safeEdge - itemRect.left,
+      maxX: origin.x + stageRect.right - safeEdge - itemRect.right,
+      minY: origin.y + stageRect.top + safeEdge - itemRect.top,
+      maxY: origin.y + stageRect.bottom - safeEdge - itemRect.bottom,
+    };
+    setSelectedCameraId(userId);
+    setDraggingCameraId(userId);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function dragCamera(event: ReactPointerEvent<HTMLButtonElement>) {
+    const drag = cameraDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    const next = {
+      x: clamp(drag.x + event.clientX - drag.startX, Math.min(drag.minX, drag.maxX), Math.max(drag.minX, drag.maxX)),
+      y: clamp(drag.y + event.clientY - drag.startY, Math.min(drag.minY, drag.maxY), Math.max(drag.minY, drag.maxY)),
+    };
+    setCameraOffsets((current) => ({ ...current, [drag.userId]: next }));
+  }
+
+  function finishCameraDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    const drag = cameraDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    cameraDragRef.current = null;
+    setDraggingCameraId(null);
+  }
+
+  function resetCameraPosition(userId: string) {
+    setCameraOffsets((current) => {
+      const next = { ...current };
+      delete next[userId];
+      return next;
+    });
   }
 
   async function replaceTrackForAll(kind: "audio" | "video", track: MediaStreamTrack | null) {
@@ -490,18 +552,32 @@ export function WatchPartyVoice({
   return (
     <>
       {visibleCameras.length > 0 && (
-        <div className={`party-camera-dock position-${dockPosition} has-${Math.min(visibleCameras.length, 4)} ${interpreterUserId ? "has-interpreter" : ""}`} aria-label="Room cameras">
-          <button className="party-camera-position" type="button" onClick={moveCameraDock} aria-label="Move camera dock" title="Move cameras to another corner"><Move size={14} /></button>
-          {visibleCameras.slice(0, 4).map((participant) => {
+        <div className={`party-camera-dock has-${Math.min(visibleCameras.length, 8)} ${visibleCameras.length > 5 ? "is-crowded" : ""} ${interpreterUserId ? "has-interpreter" : ""}`} aria-label="Room cameras">
+          {visibleCameras.map((participant) => {
             const local = participant.id === profile.id;
             const stream = local ? localStreamRef.current : remoteVideoStreams.get(participant.id) ?? null;
             const interpreter = participant.id === interpreterUserId;
+            const selected = selectedCameraId === participant.id;
+            const offset = cameraOffsets[participant.id] ?? { x: 0, y: 0 };
+            const cameraStyle = { "--camera-x": `${offset.x}px`, "--camera-y": `${offset.y}px` } as CSSProperties;
             return (
-              <article className={`party-camera-tile ${activeTalkers.has(participant.id) ? "is-speaking" : ""} ${interpreter ? "is-interpreter" : ""}`} key={participant.id}>
-                {stream?.getVideoTracks().length ? <StreamVideo stream={stream} mirrored={local} /> : <div className="party-camera-waiting">{participant.avatarUrl ? <img src={participant.avatarUrl} alt="" /> : <span>{participant.name.slice(0, 1)}</span>}<small>Connecting camera…</small></div>}
-                <div className="party-camera-label"><span>{participant.name}</span>{interpreter ? <small>Sign interpreter</small> : local ? <small>You</small> : null}</div>
-                {local && <button type="button" onClick={() => stopCamera()} aria-label="Turn camera off"><CameraOff size={14} /></button>}
-              </article>
+              <div className={`party-camera-item ${selected ? "is-selected" : ""} ${draggingCameraId === participant.id ? "is-dragging" : ""}`} style={cameraStyle} key={participant.id}>
+                <article
+                  className={`party-camera-tile ${participant.connected ? "is-online" : ""} ${activeTalkers.has(participant.id) ? "is-speaking" : ""} ${interpreter ? "is-interpreter" : ""}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${participant.name} camera. Select to move.`}
+                  aria-pressed={selected}
+                  onClick={() => setSelectedCameraId(participant.id)}
+                  onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedCameraId(participant.id); } }}
+                >
+                  {stream?.getVideoTracks().length ? <StreamVideo stream={stream} mirrored={local} /> : <div className="party-camera-waiting">{participant.avatarUrl ? <img src={participant.avatarUrl} alt="" /> : <span>{participant.name.slice(0, 1)}</span>}<small>Connecting camera…</small></div>}
+                </article>
+                {selected && <button className="party-camera-move" type="button" onPointerDown={(event) => startCameraDrag(event, participant.id)} onPointerMove={dragCamera} onPointerUp={finishCameraDrag} onPointerCancel={finishCameraDrag} onLostPointerCapture={finishCameraDrag} onDoubleClick={() => resetCameraPosition(participant.id)} aria-label={`Move ${participant.name} camera`} title="Drag to move · double-click to reset"><Move size={13} /></button>}
+                {local && selected && <button className="party-camera-stop" type="button" onClick={() => stopCamera()} aria-label="Turn camera off" title="Turn camera off"><CameraOff size={13} /></button>}
+                <span className={`party-camera-network is-${network.quality}`} title={networkLabel} aria-label={networkLabel}>{network.quality === "weak" ? <WifiOff size={10} /> : <Wifi size={10} />}</span>
+                <div className="party-camera-caption"><strong>{participant.name}</strong>{interpreter ? <small>Interpreter</small> : local ? <small>You</small> : null}</div>
+              </div>
             );
           })}
         </div>
@@ -569,6 +645,10 @@ function without(source: Set<string>, value: string) {
   const next = new Set(source);
   next.delete(value);
   return next;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
 
 async function measureConnections(peers: Map<string, RTCPeerConnection>): Promise<NetworkSnapshot> {
