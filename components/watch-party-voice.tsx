@@ -100,6 +100,8 @@ export function WatchPartyVoice({
     .filter((participant) => cameraUsers.has(participant.id) && !mutedLocally.has(participant.id))
     .sort((left, right) => Number(right.id === interpreterUserId) - Number(left.id === interpreterUserId));
   const networkLabel = network.quality === "solo" ? "Waiting for peers" : network.quality === "excellent" ? "Excellent network" : network.quality === "good" ? "Good network" : "Weak network";
+  const cameraControlLabel = cameraStarting ? "Starting…" : cameraEnabled ? "Camera off" : cameraAllowed ? "Camera" : "Camera locked";
+  const interpreterControlLabel = interpreterActive ? "Stop signs" : interpreterAllowed ? "Interpreter" : "Signs locked";
 
   useEffect(() => {
     const onSignal = (signal: VoiceSignal) => { void receiveSignal(signal); };
@@ -595,25 +597,25 @@ export function WatchPartyVoice({
         </button>
         {panelOpen && (
           <div className="party-voice-panel">
-            <div className="party-voice-copy"><Headphones size={19} /><span><strong>Room voice & camera</strong><small>Both start only after you choose them.</small></span></div>
+            <div className="party-voice-copy"><Headphones size={19} /><span><strong>Voice & camera</strong><small>Private until you turn them on.</small></span></div>
             {joined && <div className={`party-network-quality is-${network.quality}`}>{network.quality === "weak" ? <WifiOff size={15} /> : <Wifi size={15} />}<span><strong>{networkLabel}</strong><small>{network.rttMs !== null ? `${network.rttMs} ms` : "Direct WebRTC"}{network.loss !== null ? ` · ${network.loss.toFixed(1)}% loss` : ""}</small></span></div>}
             {voiceIssue && <div className={`party-voice-permission is-${voiceIssue.kind}`} role="alert"><ShieldAlert size={18} /><div><strong>{voiceIssue.title}</strong><p>{voiceIssue.message}</p><small>{voiceIssue.hint}</small></div></div>}
-            {!voiceIssue && <div className="party-voice-privacy"><ShieldCheck size={14} /><span>{permissionState === "granted" ? "Microphone permission is ready" : "Camera and microphone are always opt-in"}</span></div>}
+            {!voiceIssue && <div className="party-voice-privacy"><ShieldCheck size={14} /><span>{permissionState === "granted" ? "Mic ready" : "Media is opt-in"}</span></div>}
 
             {!microphoneReady ? (
               <button className="party-voice-join" type="button" disabled={joining} onClick={() => void joinVoice()}>{voiceIssue ? <RefreshCw size={17} /> : <Mic size={17} />}{joining ? "Connecting…" : voiceIssue ? "Try microphone again" : "Join voice"}</button>
             ) : (
               <button className="party-voice-ptt" type="button" disabled={mutedByHost} onPointerDown={(event) => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); startTalking(); }} onPointerUp={stopTalking} onPointerCancel={stopTalking} onLostPointerCapture={stopTalking} onKeyDown={(event) => { if (!event.repeat && (event.key === " " || event.key === "Enter")) { event.preventDefault(); startTalking(); } }} onKeyUp={(event) => { if (event.key === " " || event.key === "Enter") stopTalking(); }}>
-                {talking ? <Mic size={22} /> : mutedByHost ? <MicOff size={22} /> : <Mic size={22} />}<span>{mutedByHost ? "Muted by host" : talking ? "Talking… let go to mute" : "Hold to talk"}</span>
+                {talking ? <Mic size={22} /> : mutedByHost ? <MicOff size={22} /> : <Mic size={22} />}<span>{mutedByHost ? "Host muted" : talking ? "Talking · release" : "Hold to talk"}</span>
               </button>
             )}
 
-            <button className={`party-camera-toggle ${cameraEnabled ? "is-live" : ""}`} type="button" disabled={cameraStarting || !cameraAllowed} onClick={() => cameraEnabled ? stopCamera() : void startCamera()}>
-              {cameraEnabled ? <CameraOff size={17} /> : <Camera size={17} />}<span>{cameraStarting ? "Starting camera…" : cameraEnabled ? "Camera off" : cameraAllowed ? "Turn camera on" : "Camera disabled by host"}</span>
+            <button className={`party-camera-toggle ${cameraEnabled ? "is-live" : ""}`} type="button" disabled={cameraStarting || !cameraAllowed} onClick={() => cameraEnabled ? stopCamera() : void startCamera()} aria-label={cameraControlLabel} title={cameraControlLabel}>
+              {cameraEnabled ? <CameraOff size={17} /> : <Camera size={17} />}<span>{cameraControlLabel}</span>
             </button>
 
-            <button className={`party-interpreter-toggle ${interpreterActive ? "is-live" : ""}`} type="button" disabled={!interpreterAllowed} onClick={() => void toggleInterpreter()}>
-              <Accessibility size={17} /><span>{interpreterActive ? "Stop sign interpreter" : interpreterAllowed ? "Pin me as sign interpreter" : "Interpreter permission required"}</span>
+            <button className={`party-interpreter-toggle ${interpreterActive ? "is-live" : ""}`} type="button" disabled={!interpreterAllowed} onClick={() => void toggleInterpreter()} aria-label={interpreterControlLabel} title={interpreterControlLabel}>
+              <Accessibility size={17} /><span>{interpreterControlLabel}</span>
             </button>
 
             {joined && <div className="party-voice-meta"><Users size={15} /><span>{Math.max(peerIds.size, 1)} in lounge</span><button type="button" onClick={leaveVoice}><PhoneOff size={15} /> Leave</button></div>}

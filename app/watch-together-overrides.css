@@ -151,6 +151,92 @@ html.watch-builder-is-open body { overflow: hidden !important; }
 .party-network-quality.is-weak { border-color: rgba(255, 119, 125, .22); color: #ff9da2; background: rgba(210, 57, 66, .09); }
 .party-network-quality.is-solo { color: rgba(255, 255, 255, .5); background: rgba(255, 255, 255, .035); }
 
+/* Minimal Media Lounge: all controls stay available without covering the movie. */
+.party-voice { width: 188px; gap: 5px; }
+.party-voice-toggle {
+  width: 138px;
+  min-height: 36px;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 6px;
+  padding: 4px 9px 4px 5px;
+  border-color: rgba(255,255,255,.13);
+  border-radius: 12px;
+  background: rgba(11,14,16,.7);
+  box-shadow: 0 8px 28px rgba(0,0,0,.28);
+}
+.party-voice-toggle > svg { width: 24px; height: 24px; padding: 5px; }
+.party-voice-toggle strong { font-size: 9px; line-height: 1.1; }
+.party-voice-toggle small { font-size: 7px; }
+.party-voice-panel {
+  width: 188px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px;
+  border-color: rgba(255,255,255,.11);
+  border-radius: 14px;
+  background: rgba(12,14,16,.88);
+  box-shadow: 0 16px 48px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.04);
+  animation: party-lounge-in .16s ease-out both;
+}
+.party-voice-copy,
+.party-voice-panel .party-network-quality,
+.party-voice-panel .party-voice-permission,
+.party-voice-panel .party-voice-privacy,
+.party-voice-panel .party-voice-join,
+.party-voice-panel .party-voice-ptt,
+.party-voice-panel .party-voice-meta { grid-column: 1 / -1; }
+.party-voice-copy { min-height: 27px; gap: 6px; }
+.party-voice-copy > svg { width: 16px; height: 16px; }
+.party-voice-copy span { gap: 1px; }
+.party-voice-copy strong { font-size: 9px; }
+.party-voice-copy small { display: none; }
+.party-voice-panel .party-network-quality { min-height: 29px; gap: 6px; padding: 4px 7px; border: 0; border-radius: 9px; }
+.party-voice-panel .party-network-quality > svg { width: 13px; height: 13px; }
+.party-voice-panel .party-network-quality strong { font-size: 8px; }
+.party-voice-panel .party-network-quality small { font-size: 6px; }
+.party-voice-panel .party-voice-privacy { min-height: 22px; gap: 5px; padding-inline: 2px; font-size: 7px; }
+.party-voice-panel .party-voice-privacy svg { width: 13px; height: 13px; }
+.party-voice-panel .party-voice-permission { gap: 6px; padding: 7px; border-radius: 9px; }
+.party-voice-panel .party-voice-permission strong { font-size: 8px; }
+.party-voice-panel .party-voice-permission p { margin: 2px 0; font-size: 7px; }
+.party-voice-panel .party-voice-permission small { font-size: 6px; }
+.party-voice-panel .party-voice-join { min-height: 36px; border-radius: 10px; font-size: 8px; }
+.party-voice-panel .party-voice-ptt,
+.party-voice.is-talking .party-voice-ptt {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 6px 9px;
+  border-radius: 11px;
+  box-shadow: none;
+}
+.party-voice-panel .party-voice-ptt > svg { width: 19px; height: 19px; }
+.party-voice-panel .party-voice-ptt span { font-size: 8px; }
+.party-voice-panel .party-camera-toggle,
+.party-voice-panel .party-interpreter-toggle {
+  min-width: 0;
+  min-height: 35px;
+  gap: 5px;
+  padding: 5px 6px;
+  border-radius: 9px;
+  font-size: 7px;
+  line-height: 1.1;
+}
+.party-voice-panel .party-camera-toggle svg,
+.party-voice-panel .party-interpreter-toggle svg { width: 15px; height: 15px; flex: 0 0 15px; }
+.party-voice-panel .party-camera-toggle span,
+.party-voice-panel .party-interpreter-toggle span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.party-voice-panel .party-voice-meta { min-height: 25px; gap: 4px; padding-top: 1px; font-size: 7px; }
+.party-voice-panel .party-voice-meta > svg { width: 13px; height: 13px; }
+.party-voice-panel .party-voice-meta button { font-size: 7px; }
+.party-voice-panel .party-voice-meta button svg { width: 13px; height: 13px; }
+
+@keyframes party-lounge-in {
+  from { opacity: 0; transform: translateY(-5px) scale(.985); }
+}
+
 @media (max-width: 760px) {
   .party-camera-dock,
   .party-camera-dock.has-1,
@@ -172,4 +258,7 @@ html.watch-builder-is-open body { overflow: hidden !important; }
   .party-camera-caption small { display: none; }
   .party-voice-speakers { top: 3px; right: calc(100% + 5px); padding: 0; }
   .party-voice-speakers span { width: 29px; height: 29px; }
+  .party-voice { top: 7px; right: 7px; width: 176px; }
+  .party-voice-panel { width: 176px; }
+  .party-voice-toggle { width: 128px; }
 }
