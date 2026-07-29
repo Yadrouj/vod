@@ -5,7 +5,7 @@ import { Captions, Settings } from "lucide-react";
 import { BrandLoader } from "@/components/brand-loader";
 import { PlayerSubtitles } from "@/components/player-subtitles";
 import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
-import { episodeLabel } from "@/lib/link-labels";
+import { playbackSourceLabel } from "@/lib/link-labels";
 import type { VodLink } from "@/lib/types";
 
 type CastableVideo = HTMLVideoElement & {
@@ -20,12 +20,14 @@ export function VodPlayer({
   itemId,
   posterUrl,
   links,
+  isSeries = false,
   locale = DEFAULT_LOCALE,
 }: {
   title: string;
   itemId?: string;
   posterUrl: string | null | undefined;
   links: VodLink[];
+  isSeries?: boolean;
   locale?: Locale;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -83,13 +85,9 @@ export function VodPlayer({
     () =>
       links.map((link, index) => ({
         ...link,
-        label: [
-          episodeLabel(link),
-          link.quality ?? `${t.player.source} ${index + 1}`,
-          link.release ?? link.group ?? t.common.file,
-        ].filter(Boolean).join(" / "),
+        label: playbackSourceLabel(link, index, isSeries, t.player.source),
       })),
-    [links, t.common.file, t.player.source]
+    [isSeries, links, t.player.source]
   );
 
   function togglePlay() {
@@ -329,7 +327,15 @@ export function VodPlayer({
             <div className="player-choice-card">
               <span className="label">Choose playback</span>
               <h3>{title}</h3>
-              <p>Select episode, quality or source before starting.</p>
+              <p>
+                {isSeries
+                  ? locale === "fa"
+                    ? "قسمت و کیفیت پخش را انتخاب کن."
+                    : "Select an episode and playback quality."
+                  : locale === "fa"
+                    ? "کیفیت پخش را انتخاب کن."
+                    : "Select a playback quality."}
+              </p>
               <select className="select" value={activeIndex} onChange={(event) => changeSource(event.target.value)}>
                 {sources.map((source, index) => <option key={`${source.url}-${index}`} value={index}>{source.label}</option>)}
               </select>

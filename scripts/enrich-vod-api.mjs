@@ -13,6 +13,8 @@ const COMPANY_LIMIT = Number(process.env.IMDB_API_COMPANY_LIMIT || 24);
 const WRITE_EVERY = Number(process.env.IMDB_API_WRITE_EVERY || 100);
 const RETRIES = Number(process.env.IMDB_API_RETRIES || 3);
 const FORCE = process.env.IMDB_API_FORCE === "1";
+const IDS_FILE = process.env.IMDB_API_IDS_FILE || "";
+const REQUEST_TIMEOUT_MS = Math.max(2_000, Number(process.env.IMDB_API_TIMEOUT_MS || 20_000));
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let saveChain = Promise.resolve();
@@ -80,7 +82,10 @@ async function fetchTitle(imdbCode) {
   let lastError;
   for (let attempt = 1; attempt <= RETRIES + 1; attempt += 1) {
     try {
-      const res = await fetch(`${API_BASE}/titles/${imdbCode}/fetch`, { method: "POST" });
+      const res = await fetch(`${API_BASE}/titles/${imdbCode}/fetch`, {
+        method: "POST",
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
       if (!res.ok) throw new Error(`API ${res.status}`);
       return res.json();
     } catch (error) {
@@ -91,6 +96,18 @@ async function fetchTitle(imdbCode) {
     }
   }
   throw lastError;
+}
+
+async function readRequestedIds() {
+  if (!IDS_FILE) return null;
+  const raw = await readFile(IDS_FILE, "utf8");
+  try {
+    const parsed = JSON.parse(raw);
+    const values = Array.isArray(parsed) ? parsed : parsed.ids;
+    return new Set((values ?? []).filter((value) => /^tt\d+$/.test(value)));
+  } catch {
+    return new Set(raw.split(/\r?\n|,/).map((value) => value.trim()).filter((value) => /^tt\d+$/.test(value)));
+  }
 }
 
 async function replaceFileWithRetry(tmpFile, outFile) {
@@ -140,9 +157,11 @@ async function mapPool(targets, worker) {
 async function main() {
   const archive = JSON.parse(await readFile(IN_FILE, "utf8"));
   const items = [...archive.items];
+  const requestedIds = await readRequestedIds();
   const allTargets = items
     .map((item, index) => ({ item, index }))
     .filter(({ item }) => /^tt\d+$/.test(item.imdbCode ?? ""))
+    .filter(({ item }) => !requestedIds || requestedIds.has(item.imdbCode))
     .filter(({ item }) => FORCE || !item.apiFetchedAt);
   const targets = LIMIT > 0 ? allTargets.slice(0, LIMIT) : allTargets;
   let completed = 0;

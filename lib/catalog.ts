@@ -1,25 +1,27 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { cache } from "react";
 import { applyDownloadBaseToItem } from "./download-settings";
 import type { VodArchive, VodItem } from "./types";
 
-let archivePromise: Promise<VodArchive> | null = null;
-let titleMapPromise: Promise<Record<string, string>> | null = null;
+const DATA_DIR = path.resolve(process.env.VOD_DATA_DIR || path.join(process.cwd(), "public", "data"));
+const FILE_CHECK_INTERVAL_MS = Math.max(5_000, Number(process.env.VOD_DATA_CHECK_INTERVAL_MS || 30_000));
+const archiveCache: FileCache<VodArchive> = {};
+const archiveFallbackCache: FileCache<VodArchive> = {};
+const titleMapCache: FileCache<Record<string, string>> = {};
 const titleFilePromises = new Map<string, Promise<VodItem | null>>();
 
-export function loadVodArchive(): Promise<VodArchive> {
-  archivePromise ??= loadArchiveFile();
-  return archivePromise;
+export async function loadVodArchive(): Promise<VodArchive> {
+  return loadArchiveFile();
 }
 
 async function loadArchiveFile(): Promise<VodArchive> {
-  const catalog = path.join(process.cwd(), "public", "data", "vod-catalog.json");
-  const fallback = path.join(process.cwd(), "public", "data", "vod-archive-imdb.json");
+  const catalog = path.join(DATA_DIR, "vod-catalog.json");
+  const fallback = path.join(DATA_DIR, "vod-archive-imdb.json");
   try {
-    return JSON.parse(await readFile(catalog, "utf8")) as VodArchive;
+    return await loadFreshJson(catalog, archiveCache);
   } catch {
-    return JSON.parse(await readFile(fallback, "utf8")) as VodArchive;
+    return loadFreshJson(fallback, archiveFallbackCache);
   }
 }
 
@@ -32,11 +34,34 @@ export function normalizeVodType(type: string): "movie" | "series" {
   return /series|tv|episode/i.test(type) ? "series" : "movie";
 }
 
-function loadTitleMap(): Promise<Record<string, string>> {
-  titleMapPromise ??= readFile(path.join(process.cwd(), "public", "data", "title-map.json"), "utf8")
-    .then((data) => JSON.parse(data) as Record<string, string>)
-    .catch(() => ({}));
-  return titleMapPromise;
+async function loadTitleMap(): Promise<Record<string, string>> {
+  const file = path.join(DATA_DIR, "title-map.json");
+  const now = Date.now();
+  if (
+    titleMapCache.promise &&
+    titleMapCache.checkedAt &&
+    now - titleMapCache.checkedAt < FILE_CHECK_INTERVAL_MS
+  ) {
+    return titleMapCache.promise;
+  }
+
+  titleMapCache.checkedAt = now;
+  try {
+    const fileStat = await stat(file);
+    if (!titleMapCache.promise || titleMapCache.mtimeMs !== fileStat.mtimeMs) {
+      titleMapCache.mtimeMs = fileStat.mtimeMs;
+      titleFilePromises.clear();
+      titleMapCache.promise = readFile(file, "utf8")
+        .then((data) => JSON.parse(data) as Record<string, string>)
+        .catch((error) => {
+          titleMapCache.promise = undefined;
+          throw error;
+        });
+    }
+    return titleMapCache.promise;
+  } catch {
+    return {};
+  }
 }
 
 async function findVodTitleFile(id: string): Promise<VodItem | null> {
@@ -48,7 +73,7 @@ async function findVodTitleFile(id: string): Promise<VodItem | null> {
   const cacheKey = fileId.toLowerCase();
   let promise = titleFilePromises.get(cacheKey);
   if (!promise) {
-    promise = readFile(path.join(process.cwd(), "public", "data", "titles", `${fileId}.json`), "utf8")
+    promise = readFile(path.join(DATA_DIR, "titles", `${fileId}.json`), "utf8")
       .then((data) => JSON.parse(data) as VodItem)
       .catch(() => null);
     titleFilePromises.set(cacheKey, promise);
@@ -58,4 +83,30 @@ async function findVodTitleFile(id: string): Promise<VodItem | null> {
     }
   }
   return promise;
+}
+
+type FileCache<T> = {
+  checkedAt?: number;
+  mtimeMs?: number;
+  promise?: Promise<T>;
+};
+
+async function loadFreshJson<T>(file: string, cache: FileCache<T>): Promise<T> {
+  const now = Date.now();
+  if (cache.promise && cache.checkedAt && now - cache.checkedAt < FILE_CHECK_INTERVAL_MS) {
+    return cache.promise;
+  }
+
+  cache.checkedAt = now;
+  const fileStat = await stat(file);
+  if (!cache.promise || cache.mtimeMs !== fileStat.mtimeMs) {
+    cache.mtimeMs = fileStat.mtimeMs;
+    cache.promise = readFile(file, "utf8")
+      .then((data) => JSON.parse(data) as T)
+      .catch((error) => {
+        cache.promise = undefined;
+        throw error;
+      });
+  }
+  return cache.promise;
 }

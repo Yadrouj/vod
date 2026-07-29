@@ -11,6 +11,8 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+export const revalidate = 300;
+
 export default async function BrowsePage({ searchParams }: Props) {
   const locale = await getLocale();
   const t = getDictionary(locale);
@@ -46,27 +48,39 @@ export default async function BrowsePage({ searchParams }: Props) {
           <form className="browse-filters" action="/browse">
             <input type="hidden" name="section" value={result.section === "all" ? "" : result.section} />
             <SearchSuggest defaultValue={params.q ?? ""} placeholder={t.browse.searchPlaceholder} locale={locale} />
-            <Select
-              name="type"
-              label={t.browse.type}
-              value={params.type ?? "all"}
-              options={[
-                { value: "all", label: t.common.all },
-                { value: "movie", label: t.common.movie },
-                { value: "series", label: t.common.series },
-              ]}
-            />
-            <Select name="genre" label={t.browse.genre} value={params.genre ?? "All"} options={withAll(index.filters.genres, locale)} />
-            <Select name="year" label={t.browse.year} value={params.year ?? "All"} options={withAll(index.filters.years, locale)} />
-            <Select name="quality" label={t.browse.quality} value={params.quality ?? "All"} options={withAll(index.filters.qualities, locale)} />
-            <label>
-              <span className="label">{t.browse.imdbScore}</span>
-              <input className="select" name="minScore" defaultValue={params.minScore ?? ""} placeholder="0-10" />
+            <button className="browse-search-submit" type="submit">{t.common.search}</button>
+            <input className="browse-filter-toggle" id="browse-filter-toggle" type="checkbox" />
+            <label className="browse-filter-trigger" htmlFor="browse-filter-toggle">
+              <span>{locale === "fa" ? "فیلترهای دقیق" : "Refine results"}</span>
+              <small>{locale === "fa" ? "نوع، ژانر، کشور، زبان و کیفیت" : "Type, genre, country, language & quality"}</small>
             </label>
-            <button className="chip active" type="submit">{t.common.apply}</button>
-            <Link className="chip" href={`/browse${result.section === "all" ? "" : `?section=${result.section}`}`}>
-              {t.common.reset}
-            </Link>
+            <div className="browse-filter-grid">
+              <Select
+                name="type"
+                label={t.browse.type}
+                value={params.type ?? "all"}
+                options={[
+                  { value: "all", label: t.common.all },
+                  { value: "movie", label: t.common.movie },
+                  { value: "series", label: t.common.series },
+                ]}
+              />
+              <Select name="genre" label={t.browse.genre} value={params.genre ?? "All"} options={withAll(index.filters.genres, locale)} />
+              <Select name="country" label={locale === "fa" ? "کشور" : "Country"} value={params.country ?? "All"} options={withAll(index.filters.countries, locale)} />
+              <Select name="language" label={locale === "fa" ? "زبان" : "Language"} value={params.language ?? "All"} options={withAll(index.filters.languages, locale)} />
+              <Select name="year" label={t.browse.year} value={params.year ?? "All"} options={withAll(index.filters.years, locale)} />
+              <Select name="quality" label={t.browse.quality} value={params.quality ?? "All"} options={withAll(index.filters.qualities, locale)} />
+              <label>
+                <span className="label">{t.browse.imdbScore}</span>
+                <input className="select" name="minScore" defaultValue={params.minScore ?? ""} placeholder="0-10" inputMode="decimal" />
+              </label>
+              <div className="browse-filter-actions">
+                <button className="chip active" type="submit">{t.common.apply}</button>
+                <Link className="chip" href={`/browse${result.section === "all" ? "" : `?section=${result.section}`}`}>
+                  {t.common.reset}
+                </Link>
+              </div>
+            </div>
           </form>
 
           <div className="quick-tabs">

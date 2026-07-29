@@ -20,6 +20,8 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
+export const revalidate = 300;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const item = await findVodItem(id);
@@ -110,8 +112,8 @@ export default async function DetailPage({ params }: Props) {
               {item.originalTitle && item.originalTitle !== item.title && (
                 <p className="muted">{t.title.originalTitle}: {item.originalTitle}</p>
               )}
-              {item.overview && <p>{item.overview}</p>}
-              <div className="chips" style={{ marginTop: 24 }}>
+              {item.overview && <p className="detail-overview">{item.overview}</p>}
+              <div className="chips detail-primary-actions">
                 <Link className="play-glow detail-play-button" href={`/watch/${item.imdbCode}`}>
                   <span className="play-dot" /> {t.common.playOnline}
                 </Link>
@@ -151,17 +153,19 @@ export default async function DetailPage({ params }: Props) {
                   decoding="async"
                 />
               )}
-              <p className="label">{t.title.imdbData}</p>
-              <div className="stats" style={{ marginTop: 16 }}>
-                <Stat label={t.title.rating} value={item.imdbRating ? item.imdbRating.toFixed(1) : "-"} />
-                <Stat label={t.title.votes} value={formatNumber(item.imdbVotes ?? 0, locale)} />
-                <Stat label={t.title.runtime} value={item.runtimeMinutes ? `${item.runtimeMinutes}m` : "-"} />
-                <Stat label={t.title.metascore} value={item.metascore ? String(item.metascore) : "-"} />
-              </div>
-              <div className="chips" style={{ marginTop: 18 }}>
-                {(item.genres ?? []).map((genre) => (
-                  <span key={genre} className="chip">{genre}</span>
-                ))}
+              <div className="detail-card-data">
+                <p className="label">{t.title.imdbData}</p>
+                <div className="stats">
+                  <Stat label={t.title.rating} value={item.imdbRating ? item.imdbRating.toFixed(1) : "-"} />
+                  <Stat label={t.title.votes} value={formatNumber(item.imdbVotes ?? 0, locale)} />
+                  <Stat label={t.title.runtime} value={item.runtimeMinutes ? `${item.runtimeMinutes}m` : "-"} />
+                  <Stat label={t.title.metascore} value={item.metascore ? String(item.metascore) : "-"} />
+                </div>
+                <div className="chips detail-genres">
+                  {(item.genres ?? []).map((genre) => (
+                    <span key={genre} className="chip">{genre}</span>
+                  ))}
+                </div>
               </div>
             </aside>
           </div>

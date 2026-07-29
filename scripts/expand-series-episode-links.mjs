@@ -1,13 +1,21 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const IN_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
 const OUT_FILE = process.argv[3] || IN_FILE;
+const REPORT_FILE = process.argv[4] || "";
 const CACHE_FILE = process.env.VOD_SERIES_EXPAND_CACHE || path.join("data", "series-expansion-cache.json");
+const IDS_FILE = process.env.VOD_SERIES_EXPAND_IDS_FILE || "";
 const LIMIT = Number(process.env.VOD_SERIES_EXPAND_LIMIT || 0);
+const RECENT_LIMIT = Number(process.env.VOD_SERIES_EXPAND_RECENT_LIMIT || 0);
 const CONCURRENCY = Number(process.env.VOD_SERIES_EXPAND_CONCURRENCY || 18);
 const FETCH_TIMEOUT_MS = Number(process.env.VOD_SERIES_FETCH_TIMEOUT_MS || 12000);
 const MAX_DEPTH = Number(process.env.VOD_SERIES_MAX_DEPTH || 6);
+const CACHE_MAX_AGE_MS = Math.max(
+  15 * 60 * 1000,
+  Number(process.env.VOD_SERIES_EXPAND_CACHE_MAX_AGE_MS || 24 * 60 * 60 * 1000),
+);
+const FORCE_REFRESH = process.env.VOD_SERIES_EXPAND_FORCE === "1";
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 VOD-Series-Expander";
 
@@ -105,7 +113,7 @@ function groupNameFromUrl(url) {
 function inferSeriesRoots(item) {
   const roots = new Set();
 
-  for (const link of item.links ?? []) {
+  for (const link of [...(item.links ?? []), ...(item.sourceDirectoryLinks ?? [])]) {
     try {
       const url = new URL(link.url);
       const parts = url.pathname.split("/").filter(Boolean);
@@ -245,16 +253,28 @@ async function crawlRoot(rootUrl) {
     rootUrl: root,
     requests,
     links: Array.from(filesByUrl.values()),
+    fetchedAt: new Date().toISOString(),
+    checkedAt: new Date().toISOString(),
   };
 }
 
 function mergeExpandedLinks(existingLinks, expandedLinks) {
-  const byUrl = new Map();
-  for (const link of expandedLinks) byUrl.set(link.url, link);
-  if (byUrl.size === 0) {
-    for (const link of existingLinks ?? []) byUrl.set(link.url, link);
+  const byPath = new Map();
+  for (const link of existingLinks ?? []) {
+    byPath.set(downloadPath(link.url), link);
   }
-  return Array.from(byUrl.values()).sort((a, b) => {
+  for (const link of expandedLinks ?? []) {
+    const key = downloadPath(link.url);
+    const previous = byPath.get(key);
+    byPath.set(key, previous ? { ...previous, ...link } : link);
+  }
+
+  let links = Array.from(byPath.values());
+  if (links.some(isConcreteDownloadLink)) {
+    links = links.filter(isConcreteDownloadLink);
+  }
+
+  return links.sort((a, b) => {
     const season = (a.season ?? 9999) - (b.season ?? 9999);
     if (season !== 0) return season;
     const episode = (a.episode ?? 9999) - (b.episode ?? 9999);
@@ -263,6 +283,40 @@ function mergeExpandedLinks(existingLinks, expandedLinks) {
     if (quality !== 0) return quality;
     return (a.group ?? "").localeCompare(b.group ?? "") || a.url.localeCompare(b.url);
   });
+}
+
+function isConcreteDownloadLink(link) {
+  return (
+    (link?.episode != null && Number.isFinite(Number(link.episode))) ||
+    VIDEO_EXTENSIONS.test(link?.url ?? "") ||
+    ARCHIVE_EXTENSIONS.test(link?.url ?? "")
+  );
+}
+
+function downloadPath(rawUrl) {
+  try {
+    const parsed = new URL(rawUrl);
+    const marker = parsed.pathname.toLowerCase().indexOf("/donyayeserial/");
+    return marker >= 0 ? parsed.pathname.slice(marker).toLowerCase() : parsed.pathname.toLowerCase();
+  } catch {
+    return rawUrl;
+  }
+}
+
+function linkSignature(links) {
+  return JSON.stringify(
+    (links ?? [])
+      .map((link) => [
+        downloadPath(link.url),
+        link.url,
+        link.size ?? null,
+        link.modified ?? null,
+        link.quality ?? null,
+        link.season ?? null,
+        link.episode ?? null,
+      ])
+      .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
+  );
 }
 
 async function mapLimit(items, limit, worker) {
@@ -288,18 +342,83 @@ async function readCache() {
 }
 
 async function writeCache(cache) {
+  cache.updatedAt = new Date().toISOString();
   await mkdir(path.dirname(CACHE_FILE), { recursive: true });
-  await writeFile(CACHE_FILE, `${JSON.stringify(cache)}\n`);
+  await writeAtomic(CACHE_FILE, `${JSON.stringify(cache)}\n`);
+}
+
+async function writeAtomic(file, content) {
+  await mkdir(path.dirname(file), { recursive: true });
+  const temporary = `${file}.tmp-${process.pid}`;
+  await writeFile(temporary, content);
+  try {
+    await rename(temporary, file);
+  } catch (error) {
+    await unlink(temporary).catch(() => undefined);
+    throw error;
+  }
+}
+
+async function readRequestedIds() {
+  if (!IDS_FILE) return new Set();
+  try {
+    const raw = await readFile(IDS_FILE, "utf8");
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return new Set(parsed.map(String));
+      if (Array.isArray(parsed?.ids)) return new Set(parsed.ids.map(String));
+    } catch {
+      // A line-delimited file is also accepted for operational convenience.
+    }
+    return new Set(raw.split(/\r?\n|,/).map((value) => value.trim()).filter(Boolean));
+  } catch {
+    return new Set();
+  }
+}
+
+function cacheEntryIsFresh(entry) {
+  if (!entry || FORCE_REFRESH) return false;
+  const checkedAt = Date.parse(entry.checkedAt ?? entry.fetchedAt ?? "");
+  return Number.isFinite(checkedAt) && Date.now() - checkedAt < CACHE_MAX_AGE_MS;
 }
 
 async function main() {
   const archive = JSON.parse(await readFile(IN_FILE, "utf8"));
   const cache = await readCache();
-  const seriesItems = archive.items.filter(isSeries).slice(0, LIMIT || undefined);
+  cache.roots ??= {};
+  cache.items ??= {};
+  const requestedIds = await readRequestedIds();
+  const allSeriesItems = archive.items.filter(isSeries);
+  const byRequestedId = new Map();
+
+  if (requestedIds.size || RECENT_LIMIT > 0) {
+    for (const item of allSeriesItems) {
+      const key = String(item.imdbCode || item.id);
+      if (requestedIds.has(key)) byRequestedId.set(key, item);
+    }
+    const recent = [...allSeriesItems]
+      .sort(
+        (a, b) =>
+          (b.year ?? 0) - (a.year ?? 0) ||
+          Date.parse(a.seriesLinksExpandedAt ?? "1970-01-01") -
+            Date.parse(b.seriesLinksExpandedAt ?? "1970-01-01"),
+      )
+      .slice(0, RECENT_LIMIT || 0);
+    for (const item of recent) byRequestedId.set(String(item.imdbCode || item.id), item);
+  } else {
+    for (const item of allSeriesItems) {
+      byRequestedId.set(String(item.imdbCode || item.id), item);
+    }
+  }
+
+  const seriesItems = Array.from(byRequestedId.values()).slice(0, LIMIT || undefined);
   let processed = 0;
   let expandedItems = 0;
   let expandedLinks = 0;
   let totalRequests = 0;
+  let changedItems = 0;
+  let linksAdded = 0;
+  let cacheWrite = Promise.resolve();
 
   const byKey = new Map(archive.items.map((item) => [item.imdbCode || item.id, item]));
 
@@ -309,8 +428,18 @@ async function main() {
     const rootResults = [];
 
     for (const root of roots) {
-      if (!cache.roots[root]) {
-        cache.roots[root] = await crawlRoot(root);
+      const cached = cache.roots[root];
+      if (!cacheEntryIsFresh(cached)) {
+        const fresh = await crawlRoot(root);
+        totalRequests += fresh.requests ?? 0;
+        cache.roots[root] =
+          fresh.links.length > 0 || !cached
+            ? fresh
+            : {
+                ...cached,
+                checkedAt: new Date().toISOString(),
+                lastEmptyRefreshAt: new Date().toISOString(),
+              };
       }
       rootResults.push(cache.roots[root]);
     }
@@ -319,6 +448,10 @@ async function main() {
       item.links ?? [],
       rootResults.flatMap((result) => result.links ?? [])
     );
+    if (linkSignature(links) !== linkSignature(item.links ?? [])) {
+      changedItems += 1;
+      linksAdded += Math.max(0, links.length - (item.links?.length ?? 0));
+    }
     const hasEpisodeFiles = links.some((link) => link.episode || VIDEO_EXTENSIONS.test(link.url));
     const nextItem = {
       ...item,
@@ -330,13 +463,18 @@ async function main() {
     };
 
     byKey.set(key, nextItem);
+    cache.items[key] = {
+      roots,
+      checkedAt: new Date().toISOString(),
+      links: links.length,
+    };
     processed += 1;
     if (hasEpisodeFiles) expandedItems += 1;
     expandedLinks += links.length;
-    totalRequests += rootResults.reduce((sum, result) => sum + (result.requests ?? 0), 0);
 
-    if (processed % 25 === 0 || processed === seriesItems.length) {
-      await writeCache(cache);
+    if (processed % 50 === 0 || processed === seriesItems.length) {
+      cacheWrite = cacheWrite.then(() => writeCache(cache));
+      await cacheWrite;
       console.log(
         JSON.stringify({
           processed,
@@ -360,21 +498,22 @@ async function main() {
     items,
   };
 
+  await cacheWrite;
   await writeCache(cache);
-  await writeFile(OUT_FILE, JSON.stringify(payload));
+  await writeAtomic(OUT_FILE, JSON.stringify(payload));
+  const report = {
+    outFile: OUT_FILE,
+    processed,
+    expandedItems,
+    changedItems,
+    linksAdded,
+    totalTitles: payload.totalTitles,
+    totalLinks: payload.totalLinks,
+    totalRequests,
+  };
+  if (REPORT_FILE) await writeAtomic(REPORT_FILE, JSON.stringify(report, null, 2));
   console.log(
-    JSON.stringify(
-      {
-        outFile: OUT_FILE,
-        processed,
-        expandedItems,
-        totalTitles: payload.totalTitles,
-        totalLinks: payload.totalLinks,
-        totalRequests,
-      },
-      null,
-      2
-    )
+    JSON.stringify(report, null, 2)
   );
 }
 

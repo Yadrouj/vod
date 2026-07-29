@@ -3,7 +3,7 @@ import path from "node:path";
 
 const IN_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
 const OUT_FILE = process.argv[3] || path.join("public", "data", "vod-index.json");
-const HOME_OUT_FILE = path.join("public", "data", "vod-home.json");
+const HOME_OUT_FILE = process.argv[4] || path.join("public", "data", "vod-home.json");
 const SECTION_LIMIT = Number(process.env.VOD_INDEX_SECTION_LIMIT || 15);
 
 const SECTIONS = [

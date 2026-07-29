@@ -23,6 +23,9 @@
     "enrich-vod-api": "node scripts/enrich-vod-api.mjs",
     "scrape-imdb-images": "node scripts/scrape-imdb-images.mjs",
     "scrape-vod": "node scripts/scrape-vod-archive.mjs",
+    "scrape-series-feed": "node scripts/scrape-donyaye-series-feed.mjs",
+    "sync-vod-catalog": "node scripts/sync-vod-catalog.mjs",
+    "sync-vod-daemon": "node scripts/catalog-sync-daemon.mjs",
     "audit-vod-links": "node scripts/audit-vod-links.mjs",
     "enrich-vod-imdb": "node scripts/enrich-vod-imdb.mjs",
     "enrich-vod-images": "node scripts/enrich-vod-images.mjs"

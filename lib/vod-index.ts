@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import type { VodCard, VodCatalogIndex } from "./types";
 
@@ -34,21 +34,18 @@ export type BrowseParams = {
   page?: string;
 };
 
-let indexPromise: Promise<VodCatalogIndex> | null = null;
-let homeIndexPromise: Promise<VodCatalogIndex> | null = null;
+const DATA_DIR = path.resolve(process.env.VOD_DATA_DIR || path.join(process.cwd(), "public", "data"));
+const FILE_CHECK_INTERVAL_MS = Math.max(5_000, Number(process.env.VOD_DATA_CHECK_INTERVAL_MS || 30_000));
+const indexCache: FileCache<VodCatalogIndex> = {};
+const homeIndexCache: FileCache<VodCatalogIndex> = {};
 
-export function loadVodIndex(): Promise<VodCatalogIndex> {
-  indexPromise ??= readFile(path.join(process.cwd(), "public", "data", "vod-index.json"), "utf8").then(
-    (data) => JSON.parse(data) as VodCatalogIndex
-  );
-  return indexPromise;
+export async function loadVodIndex(): Promise<VodCatalogIndex> {
+  return loadFreshJson(path.join(DATA_DIR, "vod-index.json"), indexCache);
 }
 
-export function loadVodHomeIndex(): Promise<VodCatalogIndex> {
-  homeIndexPromise ??= readFile(path.join(process.cwd(), "public", "data", "vod-home.json"), "utf8")
-    .then((data) => JSON.parse(data) as VodCatalogIndex)
+export async function loadVodHomeIndex(): Promise<VodCatalogIndex> {
+  return loadFreshJson(path.join(DATA_DIR, "vod-home.json"), homeIndexCache)
     .catch(() => loadVodIndex());
-  return homeIndexPromise;
 }
 
 export function pickHero(index: VodCatalogIndex): VodCard | null {
@@ -165,4 +162,25 @@ function yearSort(a: VodCard, b: VodCard) {
 function hasGenre(item: VodCard, names: string[]) {
   const haystack = item.genres.map((genre) => genre.toLowerCase());
   return names.some((name) => haystack.includes(name));
+}
+
+type FileCache<T> = {
+  checkedAt?: number;
+  mtimeMs?: number;
+  promise?: Promise<T>;
+};
+
+async function loadFreshJson<T>(file: string, cache: FileCache<T>): Promise<T> {
+  const now = Date.now();
+  if (cache.promise && cache.checkedAt && now - cache.checkedAt < FILE_CHECK_INTERVAL_MS) {
+    return cache.promise;
+  }
+
+  cache.checkedAt = now;
+  const fileStat = await stat(file);
+  if (!cache.promise || cache.mtimeMs !== fileStat.mtimeMs) {
+    cache.mtimeMs = fileStat.mtimeMs;
+    cache.promise = readFile(file, "utf8").then((data) => JSON.parse(data) as T);
+  }
+  return cache.promise;
 }

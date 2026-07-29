@@ -24,6 +24,32 @@ services:
       NODE_ENV: production
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
+      VOD_DATA_DIR: /app/public/data
+    volumes:
+      - ./public/data:/app/public/data
+      - ./data:/app/data
+    networks:
+      - edge
+
+  catalog-sync:
+    image: vod-app
+    container_name: vod-catalog-sync
+    restart: unless-stopped
+    depends_on:
+      - app
+    env_file:
+      - path: .env.local
+        required: false
+    environment:
+      NODE_ENV: production
+      VOD_DATA_DIR: /app/public/data
+      VOD_SYNC_INTERVAL_MS: ${VOD_SYNC_INTERVAL_MS:-21600000}
+      VOD_SYNC_INITIAL_DELAY_MS: ${VOD_SYNC_INITIAL_DELAY_MS:-90000}
+      NODE_OPTIONS: --max-old-space-size=3072
+    command: ["node", "scripts/catalog-sync-daemon.mjs"]
+    volumes:
+      - ./public/data:/app/public/data
+      - vod_imdb_cache:/app/.media-cache
     networks:
       - edge
 
@@ -32,3 +58,6 @@ networks:
   edge:
     external: true
     name: infrastructure_default
+
+volumes:
+  vod_imdb_cache:

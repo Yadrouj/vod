@@ -50,6 +50,7 @@ export function WatchPartyVoice({
   cameraAllowed,
   interpreterAllowed,
   interpreterUserId,
+  controlsVisible = true,
 }: {
   socket: Socket;
   roomId: string;
@@ -59,6 +60,7 @@ export function WatchPartyVoice({
   cameraAllowed: boolean;
   interpreterAllowed: boolean;
   interpreterUserId: string | null;
+  controlsVisible?: boolean;
 }) {
   const peersRef = useRef(new Map<string, RTCPeerConnection>());
   const remoteAudioRef = useRef(new Map<string, HTMLAudioElement>());
@@ -95,6 +97,7 @@ export function WatchPartyVoice({
   const me = participants.find((participant) => participant.id === profile.id);
   const mutedByHost = Boolean(me?.mutedByHost);
   const interpreterActive = interpreterUserId === profile.id;
+  const panelVisible = controlsVisible && panelOpen;
   const talkers = participants.filter((participant) => activeTalkers.has(participant.id));
   const visibleCameras = participants
     .filter((participant) => cameraUsers.has(participant.id) && !mutedLocally.has(participant.id))
@@ -554,7 +557,7 @@ export function WatchPartyVoice({
   return (
     <>
       {visibleCameras.length > 0 && (
-        <div className={`party-camera-dock has-${Math.min(visibleCameras.length, 8)} ${visibleCameras.length > 5 ? "is-crowded" : ""} ${interpreterUserId ? "has-interpreter" : ""}`} aria-label="Room cameras">
+        <div className={`party-camera-dock has-${Math.min(visibleCameras.length, 8)} ${visibleCameras.length > 5 ? "is-crowded" : ""} ${interpreterUserId ? "has-interpreter" : ""}`} data-player-ui="true" aria-label="Room cameras">
           {visibleCameras.map((participant) => {
             const local = participant.id === profile.id;
             const stream = local ? localStreamRef.current : remoteVideoStreams.get(participant.id) ?? null;
@@ -585,17 +588,17 @@ export function WatchPartyVoice({
         </div>
       )}
 
-      <div className={`party-voice ${panelOpen ? "is-open" : ""} ${talking ? "is-talking" : ""}`}>
+      <div className={`party-voice ${panelVisible ? "is-open" : ""} ${talking ? "is-talking" : ""} ${controlsVisible ? "is-hud-visible" : "is-hud-hidden"}`} data-player-ui="true">
         {talkers.length > 0 && (
           <div className="party-voice-speakers">
             {talkers.slice(0, 3).map((participant) => <span key={participant.id} title={`${participant.name} is talking`}>{participant.avatarUrl ? <img src={participant.avatarUrl} alt="" /> : participant.name.slice(0, 1)}<i /></span>)}
           </div>
         )}
-        <button className="party-voice-toggle" type="button" onClick={() => setPanelOpen((value) => !value)} aria-expanded={panelOpen}>
+        <button className="party-voice-toggle" type="button" onClick={() => setPanelOpen((value) => !value)} aria-expanded={panelVisible}>
           <Radio size={17} />
           <span><strong>Media Lounge</strong><small>{joined ? `${Math.max(peerIds.size, 1)} online` : "Voice + camera"}</small></span>
         </button>
-        {panelOpen && (
+        {panelVisible && (
           <div className="party-voice-panel">
             <div className="party-voice-copy"><Headphones size={19} /><span><strong>Voice & camera</strong><small>Private until you turn them on.</small></span></div>
             {joined && <div className={`party-network-quality is-${network.quality}`}>{network.quality === "weak" ? <WifiOff size={15} /> : <Wifi size={15} />}<span><strong>{networkLabel}</strong><small>{network.rttMs !== null ? `${network.rttMs} ms` : "Direct WebRTC"}{network.loss !== null ? ` · ${network.loss.toFixed(1)}% loss` : ""}</small></span></div>}

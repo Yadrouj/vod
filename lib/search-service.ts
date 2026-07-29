@@ -28,6 +28,7 @@ type SearchDocument = {
 const suggestionCache = new TtlLruCache<string, Suggestion[]>(1_500, 15 * 60_000);
 const aiResultCache = new TtlLruCache<string, AiSearchPayload[]>(1_000, 30 * 60_000);
 let documentsPromise: Promise<SearchDocument[]> | null = null;
+let documentsVersion = "";
 
 export async function searchSuggestions(query: string, limit = 8) {
   const normalized = normalizeSearchQuery(query);
@@ -86,8 +87,13 @@ export async function searchWithAi(query: string, limit = 10) {
 }
 
 async function loadSearchDocuments() {
-  documentsPromise ??= loadVodIndex().then((index) =>
-    index.items.map((item) => {
+  const index = await loadVodIndex();
+  if (!documentsPromise || documentsVersion !== index.generatedAt) {
+    documentsVersion = index.generatedAt;
+    suggestionCache.clear();
+    aiResultCache.clear();
+    documentsPromise = Promise.resolve(
+      index.items.map((item) => {
       const title = normalizeSearchQuery(item.title);
       const imdbCode = normalizeSearchQuery(item.imdbCode);
       return {
@@ -98,7 +104,8 @@ async function loadSearchDocuments() {
           [item.title, item.imdbCode, ...item.genres, ...item.countries, ...item.languages].join(" "),
         ),
       };
-    }),
-  );
+      }),
+    );
+  }
   return documentsPromise;
 }

@@ -1,6 +1,6 @@
 import { createGunzip } from "node:zlib";
 import { createReadStream, createWriteStream } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
 import { Readable } from "node:stream";
@@ -15,6 +15,8 @@ const IN_FILE = process.argv[2] || path.join("public", "data", "vod-archive.json
 const OUT_FILE =
   process.argv[3] || path.join("public", "data", "vod-archive-imdb.json");
 const CACHE_DIR = path.join(".media-cache", "imdb");
+const DATASET_MAX_AGE_MS =
+  Math.max(1, Number(process.env.IMDB_DATASET_MAX_AGE_HOURS || 30)) * 60 * 60 * 1000;
 
 function clean(value) {
   return value && value !== "\\N" ? value : null;
@@ -43,15 +45,27 @@ async function download(url, dest) {
 
 async function ensureDataset(name, url) {
   const dest = path.join(CACHE_DIR, `${name}.tsv.gz`);
+  let cached = null;
   try {
-    const { stat } = await import("node:fs/promises");
-    const file = await stat(dest);
-    if (file.size > 0) return dest;
+    cached = await stat(dest);
+    if (cached.size > 0 && Date.now() - cached.mtimeMs <= DATASET_MAX_AGE_MS) return dest;
   } catch {
     /* cache miss */
   }
-  console.log(`Downloading ${name}...`);
-  await download(url, dest);
+
+  const temporary = `${dest}.tmp-${process.pid}`;
+  console.log(`Refreshing ${name}...`);
+  try {
+    await download(url, temporary);
+    await rename(temporary, dest);
+  } catch (error) {
+    await unlink(temporary).catch(() => undefined);
+    if (cached?.size > 0) {
+      console.warn(`Could not refresh ${name}; using the previous verified dataset.`);
+      return dest;
+    }
+    throw error;
+  }
   return dest;
 }
 
@@ -129,10 +143,10 @@ async function main() {
       imdbVotes: imdbRatings?.numVotes ?? item.imdbVotes,
       imdbRating: imdbRatings?.averageRating ?? item.imdbRating,
       imdb,
-      genres: imdbBasics?.genres ?? [],
-      runtimeMinutes: imdbBasics?.runtimeMinutes ?? null,
-      originalTitle: imdbBasics?.originalTitle ?? null,
-      endYear: imdbBasics?.endYear ?? null,
+      genres: imdbBasics?.genres ?? item.genres ?? [],
+      runtimeMinutes: imdbBasics?.runtimeMinutes ?? item.runtimeMinutes ?? null,
+      originalTitle: imdbBasics?.originalTitle ?? item.originalTitle ?? null,
+      endYear: imdbBasics?.endYear ?? item.endYear ?? null,
     };
   });
 

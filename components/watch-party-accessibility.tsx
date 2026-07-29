@@ -46,12 +46,14 @@ export function WatchPartyAccessibility({
   participants,
   canCaption,
   onOpenMovieSubtitles,
+  controlsVisible = true,
 }: {
   socket: Socket;
   roomId: string;
   participants: PartyParticipant[];
   canCaption: boolean;
   onOpenMovieSubtitles: () => void;
+  controlsVisible?: boolean;
 }) {
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const enabledRef = useRef(false);
@@ -65,6 +67,7 @@ export function WatchPartyAccessibility({
   const [captions, setCaptions] = useState<PartyLiveCaption[]>([]);
   const [transcript, setTranscript] = useState<PartyLiveCaption[]>([]);
   const supported = typeof window !== "undefined" && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const panelVisible = controlsVisible && panelOpen;
 
   useEffect(() => {
     const timers = removeTimersRef.current;
@@ -214,12 +217,12 @@ export function WatchPartyAccessibility({
         </div>
       )}
 
-      <div className={`party-accessibility ${panelOpen ? "is-open" : ""}`}>
-        <button className="party-accessibility-toggle" type="button" onClick={() => setPanelOpen((value) => !value)} aria-expanded={panelOpen} aria-label="Accessibility and live captions">
+      <div className={`party-accessibility ${panelVisible ? "is-open" : ""} ${controlsVisible ? "is-hud-visible" : "is-hud-hidden"}`} data-player-ui="true">
+        <button className="party-accessibility-toggle" type="button" onClick={() => setPanelOpen((value) => !value)} aria-expanded={panelVisible} aria-label="Accessibility and live captions">
           <Accessibility size={18} />
           <span><strong>Accessibility</strong><small>{enabled ? "Live captions on" : "Captions & signs"}</small></span>
         </button>
-        {panelOpen && (
+        {panelVisible && (
           <section className="party-accessibility-panel" aria-label="Accessibility tools">
             <header><div><Accessibility size={18} /><span><strong>Accessible room</strong><small>Movie subtitles, speech captions, translation</small></span></div><button type="button" onClick={() => setPanelOpen(false)} aria-label="Close accessibility panel"><X size={15} /></button></header>
             <button className="party-accessibility-movie" type="button" onClick={onOpenMovieSubtitles}><Captions size={17} /><span><strong>Movie subtitles</strong><small>Auto, online, URL, or a local file</small></span></button>

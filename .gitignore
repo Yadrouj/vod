@@ -1,5 +1,6 @@
 node_modules
 .next
+.next.recovery-*
 out
 build
 *.tsbuildinfo
@@ -16,3 +17,5 @@ public/data/title-map.json
 public/data/vod-source-current.json
 data/vod-settings.json
 data/series-expansion-cache.json
+.media-cache/
+public/data/vod-sync-status.json

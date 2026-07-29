@@ -75,6 +75,8 @@ export type VodItem = {
   apiFetchedAt?: string | null;
   seriesLinksExpandedAt?: string | null;
   seriesLinksExpanded?: boolean;
+  sourceLinkFingerprint?: string | null;
+  sourceDirectoryLinks?: VodLink[];
 };
 
 export type VodArchive = {

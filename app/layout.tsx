@@ -6,6 +6,7 @@ import { isRtl } from "@/lib/i18n";
 import { getLocale } from "@/lib/server-locale";
 import "./globals.css";
 import "./watch-together-overrides.css";
+import "./mobile-ux-overrides.css";
 
 export const metadata: Metadata = {
   title: {

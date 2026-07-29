@@ -3,11 +3,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: sarvnema-app
     environment:
       NODE_ENV: production
       PORT: 3004
       HOSTNAME: 0.0.0.0
       NODE_OPTIONS: --max-old-space-size=1536
+      VOD_DATA_DIR: /app/public/data
       PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://sarvnema.ir}
       WATCH_PARTY_MAX_ROOMS: ${WATCH_PARTY_MAX_ROOMS:-500}
       WATCH_PARTY_MAX_PARTICIPANTS: ${WATCH_PARTY_MAX_PARTICIPANTS:-50}
@@ -22,6 +24,7 @@ services:
     mem_limit: 2g
     cpus: 2.0
     volumes:
+      - ./public/data:/app/public/data
       - ./data:/app/data
     expose:
       - "3004"
@@ -31,6 +34,27 @@ services:
       timeout: 3s
       start_period: 30s
       retries: 3
+
+  catalog-sync:
+    image: sarvnema-app
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      VOD_DATA_DIR: /app/public/data
+      VOD_SYNC_INTERVAL_MS: ${VOD_SYNC_INTERVAL_MS:-21600000}
+      VOD_SYNC_INITIAL_DELAY_MS: ${VOD_SYNC_INITIAL_DELAY_MS:-90000}
+      VOD_SOURCE_URL: ${VOD_SOURCE_URL:-https://dls2.aparatchi-dlcenter.top/DonyayeSerial/donyaye_serial_all_archive.html}
+      IMDB_DATA_API_BASE: ${IMDB_DATA_API_BASE:-http://185.203.118.87:8026}
+      NODE_OPTIONS: --max-old-space-size=3072
+    command: ["node", "scripts/catalog-sync-daemon.mjs"]
+    restart: unless-stopped
+    mem_limit: 3g
+    cpus: 1.0
+    volumes:
+      - ./public/data:/app/public/data
+      - vod_imdb_cache:/app/.media-cache
 
   nginx:
     image: nginx:1.28-alpine
@@ -48,3 +72,4 @@ services:
 
 volumes:
   nginx_cache:
+  vod_imdb_cache:

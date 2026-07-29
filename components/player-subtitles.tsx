@@ -63,6 +63,7 @@ export function PlayerSubtitles({
   const [size, setSize] = useState<"small" | "medium" | "large">("medium");
   const managedTrackRef = useRef<HTMLTrackElement | null>(null);
   const managedUrlRef = useRef<string | null>(null);
+  const managedTrackTimerRef = useRef<number | null>(null);
   const contentCacheRef = useRef(new Map<string, string>());
   const applyRevisionRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -74,6 +75,10 @@ export function PlayerSubtitles({
   );
 
   const clearManagedTrack = useCallback(() => {
+    if (managedTrackTimerRef.current !== null) {
+      window.clearTimeout(managedTrackTimerRef.current);
+      managedTrackTimerRef.current = null;
+    }
     managedTrackRef.current?.remove();
     managedTrackRef.current = null;
     if (managedUrlRef.current) URL.revokeObjectURL(managedUrlRef.current);
@@ -88,13 +93,20 @@ export function PlayerSubtitles({
     element.kind = "subtitles";
     element.label = label;
     element.srclang = normalizeLanguageCode(language);
-    element.src = blobUrl;
     element.default = true;
-    element.addEventListener("load", () => { element.track.mode = "showing"; }, { once: true });
-    video.appendChild(element);
-    element.track.mode = "showing";
     managedTrackRef.current = element;
     managedUrlRef.current = blobUrl;
+    const show = () => {
+      if (managedTrackRef.current === element) element.track.mode = "showing";
+    };
+    element.addEventListener("load", show, { once: true });
+    element.src = blobUrl;
+    video.appendChild(element);
+    // Chromium can emit `addtrack` before the blob track has finished loading.
+    // Keeping the same element as the managed track and re-applying its mode on
+    // the next task prevents a native-track refresh from disabling local SRTs.
+    show();
+    managedTrackTimerRef.current = window.setTimeout(show, 80);
   }, [clearManagedTrack]);
 
   const fetchSubtitleText = useCallback(async (url: string, cacheKey: string) => {
@@ -189,7 +201,7 @@ export function PlayerSubtitles({
           label: track.label || readableLanguage(track.language) || `Embedded ${index + 1}`,
           language: track.language || "und",
         }));
-      setNativeTracks(tracks);
+      setNativeTracks((current) => sameNativeTracks(current, tracks) ? current : tracks);
     };
 
     refresh();
@@ -352,6 +364,13 @@ function nativeLanguageScore(item: NativeSubtitle) {
 
 function nativeTrackId(track: TextTrack, index: number) {
   return `embedded-${index}-${track.language || "und"}-${track.label || "track"}`;
+}
+
+function sameNativeTracks(left: NativeSubtitle[], right: NativeSubtitle[]) {
+  return left.length === right.length && left.every((track, index) => {
+    const next = right[index];
+    return track.id === next?.id && track.index === next.index && track.label === next.label && track.language === next.language;
+  });
 }
 
 function disableAllTracks(video: HTMLVideoElement) {

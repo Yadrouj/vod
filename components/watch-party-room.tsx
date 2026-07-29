@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Captions, Check, Clock3, Copy, Expand, ExternalLink, Film, Globe2, MessageCircle, Pause, Play, Settings, Share2, Star, Users, X } from "lucide-react";
+import { Captions, Check, Clock3, Copy, ExternalLink, Film, Globe2, Maximize2, MessageCircle, Minimize2, Pause, Play, Send, Settings, Share2, SmilePlus, Star, Users, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import type { PartyCapability, PartyChatMessage, PartyMedia, PartyParticipant, PartyPermissions, PartyProfile, PartyQueueItem, PartyReaction, PartySnapshot } from "@/lib/watch-party-types";
@@ -31,6 +31,7 @@ const CAPABILITIES: { id: PartyCapability; label: string }[] = [
   { id: "subtitles", label: "Change room subtitles" }, { id: "camera", label: "Stream camera" },
   { id: "liveCaptions", label: "Share live captions" }, { id: "interpreter", label: "Sign interpreter" },
 ];
+const REACTION_EMOJIS = ["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDC4F", "\uD83D\uDD25", "\uD83D\uDE2E", "\uD83D\uDE22"];
 
 export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const socketRef = useRef<Socket | null>(null);
@@ -46,6 +47,9 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const hasServerClockOffset = useRef(false);
   const rateCorrectionTimer = useRef<number | null>(null);
   const scrubTimeRef = useRef<number | null>(null);
+  const hudTimerRef = useRef<number | null>(null);
+  const hudSuppressedUntilRef = useRef(0);
+  const stageChatLogRef = useRef<HTMLDivElement>(null);
   const [profile, setProfile] = useState<PartyProfile | null>(null);
   const [snapshot, setSnapshot] = useState<PartySnapshot | null>(null);
   const [name, setName] = useState(""); const [avatar, setAvatar] = useState("");
@@ -63,6 +67,10 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const [scrubTime, setScrubTime] = useState<number | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [roomSocket, setRoomSocket] = useState<Socket | null>(null);
+  const [hudVisible, setHudVisible] = useState(true);
+  const [stagePanel, setStagePanel] = useState<"chat" | "reactions" | null>(null);
+  const [stageFullscreen, setStageFullscreen] = useState(false);
+  const [pseudoFullscreen, setPseudoFullscreen] = useState(false);
 
   const me = snapshot?.participants.find((participant) => participant.id === profile?.id);
   const isHost = snapshot?.ownerId === profile?.id;
@@ -78,6 +86,42 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     });
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    const updateFullscreenState = () => {
+      const active = document.fullscreenElement === stageRef.current;
+      setStageFullscreen(active);
+      setHudVisible(true);
+      if (hudTimerRef.current !== null) window.clearTimeout(hudTimerRef.current);
+      if (active) hudTimerRef.current = window.setTimeout(() => setHudVisible(false), 4_500);
+    };
+    document.addEventListener("fullscreenchange", updateFullscreenState);
+    return () => {
+      document.removeEventListener("fullscreenchange", updateFullscreenState);
+      if (hudTimerRef.current !== null) window.clearTimeout(hudTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.toggle("party-cinema-lock", pseudoFullscreen);
+    const exitPseudoFullscreen = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPseudoFullscreen(false);
+    };
+    if (pseudoFullscreen) window.addEventListener("keydown", exitPseudoFullscreen);
+    return () => {
+      window.removeEventListener("keydown", exitPseudoFullscreen);
+      document.body.classList.remove("party-cinema-lock");
+    };
+  }, [pseudoFullscreen]);
+
+  useEffect(() => {
+    if (stagePanel !== "chat") return;
+    const frame = window.requestAnimationFrame(() => {
+      const log = stageChatLogRef.current;
+      if (log) log.scrollTop = log.scrollHeight;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [chat, stagePanel]);
 
   useEffect(() => {
     if (!profile || !inviteToken) return;
@@ -210,6 +254,63 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     setScrubTime(null);
     command("seek", { time: next });
   }
+  function clearHudTimer() {
+    if (hudTimerRef.current === null) return;
+    window.clearTimeout(hudTimerRef.current);
+    hudTimerRef.current = null;
+  }
+  function revealHud(delay = 3_600) {
+    clearHudTimer();
+    setHudVisible(true);
+    if (stagePanel || settingsOpen || subtitlesOpen) return;
+    hudTimerRef.current = window.setTimeout(() => {
+      setHudVisible(false);
+      hudTimerRef.current = null;
+    }, delay);
+  }
+  function hideHud() {
+    clearHudTimer();
+    hudSuppressedUntilRef.current = Date.now() + 650;
+    setHudVisible(false);
+    setStagePanel(null);
+    setSettingsOpen(false);
+    setSubtitlesOpen(false);
+  }
+  function handleStageClick(event: React.MouseEvent<HTMLDivElement>) {
+    if (isStageUiTarget(event.target)) return;
+    if (hudVisible) hideHud();
+    else revealHud(4_200);
+  }
+  function handleStagePointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (event.pointerType !== "mouse" || Date.now() < hudSuppressedUntilRef.current) return;
+    revealHud();
+  }
+  function toggleStagePanel(panel: "chat" | "reactions") {
+    clearHudTimer();
+    setHudVisible(true);
+    setSettingsOpen(false);
+    setSubtitlesOpen(false);
+    setStagePanel((current) => current === panel ? null : panel);
+  }
+  async function toggleStageFullscreen() {
+    const stage = stageRef.current;
+    if (!stage) return;
+    clearHudTimer();
+    setHudVisible(true);
+    if (pseudoFullscreen) {
+      setPseudoFullscreen(false);
+      return;
+    }
+    if (document.fullscreenElement === stage) {
+      await document.exitFullscreen().catch(() => undefined);
+      return;
+    }
+    try {
+      await stage.requestFullscreen();
+    } catch {
+      setPseudoFullscreen(true);
+    }
+  }
   function sendChat(event: React.FormEvent) { event.preventDefault(); if (!chatText.trim()) return; socketRef.current?.emit("chat:send", { roomId, text: chatText }); setChatText(""); }
   function react(emoji: string) { socketRef.current?.emit("reaction:send", { roomId, emoji }); }
   function changeSubtitle(selection: SubtitleSelection) {
@@ -280,6 +381,9 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   if (!snapshot) return <PartyMessage title="Joining room…" text="Connecting to the synchronized session." />;
 
   const playback = snapshot.playback;
+  const cinemaFullscreen = stageFullscreen || pseudoFullscreen;
+  const roomChat = chat.filter((message) => !mutedLocally.has(message.userId));
+  const latestChat = roomChat.at(-1);
   return <div className="party-layout">
     <Link className="party-sarvnema-corner" href="/" aria-label="Back to SarvNema" title="SarvNema">
       <img src={BRAND_MARK} alt="" />
@@ -296,16 +400,64 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
           <button className="chip party-people-action" type="button" onClick={() => setPeopleOpen((value) => !value)} aria-expanded={peopleOpen}><Users size={15} /> <span>{snapshot.participants.filter((item) => item.connected).length}</span></button>
         </div>
       </header>
-      <div className="party-player-stage" ref={stageRef}>
+      <div
+        className={`party-player-stage ${hudVisible ? "is-hud-visible" : "is-hud-hidden"} ${cinemaFullscreen ? "is-cinema-fullscreen" : ""} ${pseudoFullscreen ? "is-pseudo-fullscreen" : ""} ${stagePanel ? `has-${stagePanel}-panel` : ""}`}
+        ref={stageRef}
+        onClick={handleStageClick}
+        onPointerMove={handleStagePointerMove}
+        onPointerDownCapture={(event) => { if (isStageUiTarget(event.target)) revealHud(); }}
+      >
         <video ref={videoRef} key={playback.media.source.url} src={playback.media.source.url} poster={playback.media.posterUrl ?? undefined} playsInline preload="auto" onLoadedMetadata={(event) => { setPlayerDuration(event.currentTarget.duration || 0); const state = pendingPlayback.current ?? playback; latestPlayback.current = state; const next = Math.max(0, expectedPosition(state)); remoteSeekInFlight.current = Math.abs(event.currentTarget.currentTime - next) > .05; event.currentTarget.currentTime = next; event.currentTarget.playbackRate = state.playbackRate; if (state.paused) event.currentTarget.pause(); else event.currentTarget.play().catch(() => undefined); }} onTimeUpdate={(event) => { if (scrubTimeRef.current === null) setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={resumeWhenReady} />
+        <div className="party-cinema-shade" aria-hidden="true" />
         <div className="party-reaction-layer">{reactions.map((reaction, index) => <div className="party-floating-reaction" key={reaction.id} style={{ left: `${12 + (index * 17) % 72}%` }}>{reaction.avatarUrl ? <img src={reaction.avatarUrl} alt="" /> : <span>{reaction.name.slice(0, 1)}</span>}<b>{reaction.emoji}</b><small>{reaction.name}</small></div>)}</div>
-        {roomSocket && <WatchPartyAccessibility socket={roomSocket} roomId={roomId} participants={snapshot.participants} canCaption={can("liveCaptions")} onOpenMovieSubtitles={() => { setSubtitlesOpen(true); setSettingsOpen(false); }} />}
-        {roomSocket && <WatchPartyVoice socket={roomSocket} roomId={roomId} profile={profile} participants={snapshot.participants} mutedLocally={mutedLocally} cameraAllowed={can("camera")} interpreterAllowed={can("interpreter")} interpreterUserId={snapshot.interpreterUserId} />}
-        <div className="party-controls"><button type="button" disabled={!can("playback")} onClick={() => command(playback.paused ? "play" : "pause", { time: videoRef.current?.currentTime })}>{playback.paused ? <Play /> : <Pause />}</button><input type="range" min="0" max={playerDuration || 0} value={Math.min(scrubTime ?? playerTime, playerDuration || 0)} disabled={!can("seek")} onChange={(event) => previewSeek(Number(event.target.value))} onPointerUp={commitSeek} onPointerCancel={() => { scrubTimeRef.current = null; setScrubTime(null); }} onKeyUp={commitSeek} onBlur={commitSeek} /><button className={subtitlesOpen ? "is-active" : ""} type="button" onClick={() => { setSubtitlesOpen((value) => !value); setSettingsOpen(false); }} aria-label="Subtitles"><Captions /></button><button className={settingsOpen ? "is-active" : ""} type="button" onClick={() => { setSettingsOpen((value) => !value); setSubtitlesOpen(false); }}><Settings /></button><button type="button" onClick={() => stageRef.current?.requestFullscreen()}><Expand /></button></div>
-        {settingsOpen && <div className="party-player-settings"><label>Source<select className="select" value={playback.media.source.url} disabled={!can("changeSource")} onChange={(event) => { const source = playback.media.sources.find((item) => item.url === event.target.value); if (source) command("source", { source, time: videoRef.current?.currentTime }); }}>{playback.media.sources.map((source) => <option value={source.url} key={source.url}>{source.label}</option>)}</select></label><label>Speed<select className="select" value={playback.playbackRate} disabled={!can("playback")} onChange={(event) => command("rate", { rate: Number(event.target.value) })}>{[.5,.75,1,1.25,1.5,2].map((rate) => <option key={rate} value={rate}>{rate}x</option>)}</select></label></div>}
+        {roomSocket && <WatchPartyAccessibility controlsVisible={hudVisible} socket={roomSocket} roomId={roomId} participants={snapshot.participants} canCaption={can("liveCaptions")} onOpenMovieSubtitles={() => { clearHudTimer(); setHudVisible(true); setStagePanel(null); setSubtitlesOpen(true); setSettingsOpen(false); }} />}
+        {roomSocket && <WatchPartyVoice controlsVisible={hudVisible} socket={roomSocket} roomId={roomId} profile={profile} participants={snapshot.participants} mutedLocally={mutedLocally} cameraAllowed={can("camera")} interpreterAllowed={can("interpreter")} interpreterUserId={snapshot.interpreterUserId} />}
+
+        {latestChat && stagePanel !== "chat" && (
+          <button className="party-chat-peek" type="button" data-player-ui="true" onClick={() => toggleStagePanel("chat")}>
+            <span>{latestChat.avatarUrl ? <img src={latestChat.avatarUrl} alt="" /> : latestChat.name.slice(0, 1)}</span>
+            <span><strong>{latestChat.name}</strong><small>{latestChat.text}</small></span>
+          </button>
+        )}
+
+        {stagePanel === "chat" && (
+          <section className="party-stage-chat-panel" data-player-ui="true" aria-label="Room chat">
+            <header>
+              <div><MessageCircle size={17} /><span><strong>Room chat</strong><small>{snapshot.participants.filter((item) => item.connected).length} watching</small></span></div>
+              <button type="button" onClick={() => { setStagePanel(null); revealHud(); }} aria-label="Close chat"><X size={16} /></button>
+            </header>
+            <div className="party-stage-chat-log" ref={stageChatLogRef}>
+              {roomChat.length > 0 ? roomChat.slice(-30).map((message) => (
+                <div className={message.userId === profile.id ? "is-me" : ""} key={message.id}>
+                  <strong>{message.name}</strong><p>{message.text}</p>
+                </div>
+              )) : <p className="party-stage-chat-empty">No messages yet. Someone has to break the cinematic silence.</p>}
+            </div>
+            <form onSubmit={sendChat}>
+              <input value={chatText} onChange={(event) => setChatText(event.target.value)} placeholder="Message the room…" disabled={!can("chat")} aria-label="Message the room" />
+              <button type="submit" disabled={!can("chat") || !chatText.trim()} aria-label="Send message"><Send size={16} /></button>
+            </form>
+          </section>
+        )}
+
+        {stagePanel === "reactions" && (
+          <div className="party-stage-reaction-tray" data-player-ui="true" aria-label="Send a reaction">
+            {REACTION_EMOJIS.map((emoji) => <button key={emoji} type="button" disabled={!can("react")} onClick={() => { react(emoji); revealHud(); }}>{emoji}</button>)}
+          </div>
+        )}
+
+        <div className="party-controls" data-player-ui="true">
+          <button type="button" disabled={!can("playback")} onClick={() => command(playback.paused ? "play" : "pause", { time: videoRef.current?.currentTime })} aria-label={playback.paused ? "Play" : "Pause"}>{playback.paused ? <Play /> : <Pause />}</button>
+          <input type="range" min="0" max={playerDuration || 0} value={Math.min(scrubTime ?? playerTime, playerDuration || 0)} disabled={!can("seek")} aria-label="Playback position" onChange={(event) => previewSeek(Number(event.target.value))} onPointerUp={commitSeek} onPointerCancel={() => { scrubTimeRef.current = null; setScrubTime(null); }} onKeyUp={commitSeek} onBlur={commitSeek} />
+          <button className={subtitlesOpen ? "is-active" : ""} type="button" onClick={() => { clearHudTimer(); setHudVisible(true); setStagePanel(null); setSubtitlesOpen((value) => !value); setSettingsOpen(false); }} aria-label="Subtitles" title="Subtitles"><Captions /></button>
+          <button className={stagePanel === "reactions" ? "is-active" : ""} type="button" onClick={() => toggleStagePanel("reactions")} aria-label="Reactions" title="Reactions" aria-expanded={stagePanel === "reactions"}><SmilePlus /></button>
+          <button className={stagePanel === "chat" ? "is-active" : ""} type="button" onClick={() => toggleStagePanel("chat")} aria-label="Room chat" title="Room chat" aria-expanded={stagePanel === "chat"}><MessageCircle />{roomChat.length > 0 && <small>{Math.min(roomChat.length, 99)}</small>}</button>
+          <button className={settingsOpen ? "is-active" : ""} type="button" onClick={() => { clearHudTimer(); setHudVisible(true); setStagePanel(null); setSettingsOpen((value) => !value); setSubtitlesOpen(false); }} aria-label="Playback settings" title="Playback settings"><Settings /></button>
+          <button type="button" onClick={() => void toggleStageFullscreen()} aria-label={cinemaFullscreen ? "Exit fullscreen" : "Enter fullscreen"} title={cinemaFullscreen ? "Exit fullscreen" : "Fullscreen"}>{cinemaFullscreen ? <Minimize2 /> : <Maximize2 />}</button>
+        </div>
+        {settingsOpen && <div className="party-player-settings" data-player-ui="true"><label>Source<select className="select" value={playback.media.source.url} disabled={!can("changeSource")} onChange={(event) => { const source = playback.media.sources.find((item) => item.url === event.target.value); if (source) command("source", { source, time: videoRef.current?.currentTime }); }}>{playback.media.sources.map((source) => <option value={source.url} key={source.url}>{source.label}</option>)}</select></label><label>Speed<select className="select" value={playback.playbackRate} disabled={!can("playback")} onChange={(event) => command("rate", { rate: Number(event.target.value) })}>{[.5,.75,1,1.25,1.5,2].map((rate) => <option key={rate} value={rate}>{rate}x</option>)}</select></label></div>}
         <PlayerSubtitles videoRef={videoRef} itemId={playback.media.itemId} title={playback.media.title} sourceKey={playback.media.source.url} sourceLabel={playback.media.source.label} open={subtitlesOpen} onClose={() => setSubtitlesOpen(false)} selection={snapshot.subtitle} onSelectionChange={changeSubtitle} canChange={can("subtitles")} shared />
       </div>
-      <div className="party-reactions">{["❤️", "😂", "👏", "🔥", "😮", "😢"].map((emoji) => <button key={emoji} type="button" disabled={!can("react")} onClick={() => react(emoji)}>{emoji}</button>)}</div>
       <section className="party-queue"><div className="section-head"><div><h2>Watch queue</h2><p className="muted">Search, add, or switch movies for everyone.</p></div></div><div className="party-media-search"><input className="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search movie or series…" />{results.length > 0 && <div className="party-search-results">{results.map((item) => <div key={item.imdbCode}><span><strong>{item.title}</strong><small>{item.year ?? ""} · IMDb {item.imdbRating ?? "-"}</small></span><button disabled={!can("queue")} onClick={() => queueMedia(item.imdbCode)}>Queue</button><button disabled={!can("changeMedia")} onClick={() => queueMedia(item.imdbCode, true)}>Play now</button></div>)}</div>}</div><div className="party-queue-list">{snapshot.queue.map((item) => <article key={item.queueId}><strong>{item.title}</strong><span>{item.source.label}</span><div><button disabled={!can("changeMedia")} onClick={() => socketRef.current?.emit("queue:play", { roomId, queueId: item.queueId })}>Play</button><button disabled={!can("queue")} onClick={() => socketRef.current?.emit("queue:remove", { roomId, queueId: item.queueId })}>Remove</button></div></article>)}</div></section>
       <PartyTitleDetails media={playback.media} />
     </section>
@@ -313,7 +465,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     <aside className={`party-sidebar ${peopleOpen ? "is-open" : ""}`}>
       <div className="party-tabs"><Users size={17} /><span>Room & chat</span><MessageCircle size={17} /><button className="party-sidebar-close" type="button" onClick={() => setPeopleOpen(false)} aria-label="Close room panel"><X size={18} /></button></div>
       <section className="party-people"><h3>Participants</h3>{snapshot.participants.map((participant) => <Participant key={participant.id} participant={participant} isHost={Boolean(isHost)} mutedLocally={mutedLocally.has(participant.id)} meId={profile.id} guestPermissions={snapshot.guestPermissions} onMuteLocal={() => muteLocal(participant.id)} onPermission={(permission, value) => socketRef.current?.emit("permissions:user", { roomId, userId: participant.id, permissions: { [permission]: value } })} onModerate={(action) => socketRef.current?.emit("moderation", { roomId, userId: participant.id, action })} />)}{isHost && <details className="party-global-permissions"><summary>Guest permissions</summary>{CAPABILITIES.map(({ id, label }) => <label key={id}><input type="checkbox" checked={snapshot.guestPermissions[id]} onChange={(event) => socketRef.current?.emit("permissions:global", { roomId, permissions: { [id]: event.target.checked } })} />{label}</label>)}</details>}</section>
-      <section className="party-chat"><div className="party-chat-log">{chat.filter((message) => !mutedLocally.has(message.userId)).map((message) => <div key={message.id}><strong>{message.name}</strong><p>{message.text}</p></div>)}</div><form onSubmit={sendChat}><input value={chatText} onChange={(event) => setChatText(event.target.value)} placeholder="Message room…" disabled={!can("chat")} /><button disabled={!can("chat")}>Send</button></form></section>
+      <section className="party-chat"><div className="party-chat-log">{roomChat.map((message) => <div key={message.id}><strong>{message.name}</strong><p>{message.text}</p></div>)}</div><form onSubmit={sendChat}><input value={chatText} onChange={(event) => setChatText(event.target.value)} placeholder="Message room…" disabled={!can("chat")} /><button disabled={!can("chat")}>Send</button></form></section>
     </aside>
   </div>;
 }
@@ -371,6 +523,10 @@ function PartyTitleDetails({ media }: { media: PartyMedia }) {
       )}
     </section>
   );
+}
+
+function isStageUiTarget(target: EventTarget | null) {
+  return target instanceof Element && Boolean(target.closest("button, input, select, textarea, form, a, [role='button'], [data-player-ui='true'], .party-accessibility, .party-voice, .party-camera-dock, .subtitle-panel, .party-player-settings"));
 }
 
 function formatCompact(value: number) {

@@ -24,3 +24,20 @@ export function playableLinks(links: VodLink[]) {
   const playable = links.filter((link) => /\.(mp4|m4v|webm|mov)(\?|$)/i.test(link.url));
   return playable.length ? playable : links;
 }
+
+export function playbackSourceLabel(
+  link: VodLink,
+  index: number,
+  isSeries: boolean,
+  sourceLabel = "Source",
+) {
+  if (!isSeries) {
+    return link.quality || `${sourceLabel} ${index + 1}`;
+  }
+
+  return [
+    episodeLabel(link),
+    link.quality,
+    link.release ?? link.group,
+  ].filter(Boolean).join(" / ") || `${sourceLabel} ${index + 1}`;
+}

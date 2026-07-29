@@ -5,9 +5,9 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { VodPlayer } from "@/components/vod-player";
 import { WatchTogetherInvite } from "@/components/watch-together-invite";
 import { SubtitleList } from "@/components/subtitle-list";
-import { findVodItem } from "@/lib/catalog";
+import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { getDictionary } from "@/lib/i18n";
-import { episodeLabel, playableLinks } from "@/lib/link-labels";
+import { playbackSourceLabel, playableLinks } from "@/lib/link-labels";
 import { getLocale } from "@/lib/server-locale";
 import { subzoneSearchUrl } from "@/lib/subtitles";
 import { watchPartyDetails } from "@/lib/watch-party-media";
@@ -16,6 +16,8 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
+export const revalidate = 300;
+
 export default async function WatchPage({ params }: Props) {
   const locale = await getLocale();
   const t = getDictionary(locale);
@@ -23,8 +25,15 @@ export default async function WatchPage({ params }: Props) {
   const item = await findVodItem(id);
   if (!item) notFound();
 
+  const isSeries = normalizeVodType(item.type) === "series";
   const links = playableLinks(item.links);
-  const partySources = links.map((link, index) => ({ url: link.url, label: [episodeLabel(link), link.quality, link.release ?? link.group].filter(Boolean).join(" / ") || `Source ${index + 1}`, quality: link.quality, season: link.season ?? null, episode: link.episode ?? null }));
+  const partySources = links.map((link, index) => ({
+    url: link.url,
+    label: playbackSourceLabel(link, index, isSeries),
+    quality: link.quality,
+    season: isSeries ? link.season ?? null : null,
+    episode: isSeries ? link.episode ?? null : null,
+  }));
   const heroImage = item.backdropUrl ?? item.posterUrl ?? null;
   const partyMedia = partySources[0] ? {
     itemId: item.imdbCode,
@@ -85,7 +94,14 @@ export default async function WatchPage({ params }: Props) {
       </section>
 
       <section className="wrap watch-player-section">
-        <VodPlayer itemId={item.imdbCode} title={item.title} posterUrl={heroImage} links={links} locale={locale} />
+        <VodPlayer
+          itemId={item.imdbCode}
+          title={item.title}
+          posterUrl={heroImage}
+          links={links}
+          isSeries={isSeries}
+          locale={locale}
+        />
         <SubtitleList imdbCode={item.imdbCode} title={item.title} />
       </section>
     </main>

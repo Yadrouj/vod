@@ -22,6 +22,8 @@ type HomeRailSection = VodHomeSection & {
   href?: string;
 };
 
+export const revalidate = 300;
+
 export default async function HomePage() {
   const locale = await getLocale();
   const t = getDictionary(locale);
@@ -37,7 +39,7 @@ export default async function HomePage() {
     megaFeaturedItems,
     wideItems,
     extraSections,
-  } = await loadHomePageData(locale);
+  } = await buildHomePageData(locale);
 
   const aiPrompt = t.home.aiPrompt;
 
@@ -85,17 +87,6 @@ export default async function HomePage() {
       </section>
     </main>
   );
-}
-
-const homePageDataPromises = new Map<Locale, Promise<Awaited<ReturnType<typeof buildHomePageData>>>>();
-
-function loadHomePageData(locale: Locale) {
-  let promise = homePageDataPromises.get(locale);
-  if (!promise) {
-    promise = buildHomePageData(locale);
-    homePageDataPromises.set(locale, promise);
-  }
-  return promise;
 }
 
 async function buildHomePageData(locale: Locale) {
