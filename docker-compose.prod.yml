@@ -45,6 +45,11 @@ services:
       VOD_DATA_DIR: /app/public/data
       VOD_SYNC_INTERVAL_MS: ${VOD_SYNC_INTERVAL_MS:-21600000}
       VOD_SYNC_INITIAL_DELAY_MS: ${VOD_SYNC_INITIAL_DELAY_MS:-90000}
+      MOVIESHO_DOWNLOAD_BASE: ${MOVIESHO_DOWNLOAD_BASE:-https://sr1.moviesho.com/}
+      MOVIESHO_SITE_BASE: ${MOVIESHO_SITE_BASE:-https://www.moviesho.com/}
+      MOVIESHO_MOVIE_YEARS: ${MOVIESHO_MOVIE_YEARS:-2025,2026}
+      MOVIESHO_SITE_REQUEST_INTERVAL_MS: ${MOVIESHO_SITE_REQUEST_INTERVAL_MS:-220}
+      MOVIESHO_SITE_RETRIES: ${MOVIESHO_SITE_RETRIES:-7}
       NODE_OPTIONS: --max-old-space-size=3072
     command: ["node", "scripts/catalog-sync-daemon.mjs"]
     volumes:

@@ -318,6 +318,7 @@ export function VodPlayer({
             title={title}
             sourceKey={active?.url ?? ""}
             sourceLabel={sources[activeIndex]?.label ?? ""}
+            sourceSubtitleUrl={active?.subtitleUrl ?? null}
             open={subtitlesOpen}
             onClose={() => setSubtitlesOpen(false)}
           />

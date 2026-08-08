@@ -50,6 +50,9 @@ async function main() {
     const mergeReportFile = path.join(runDir, "merge-report.json");
     const seriesSourceFile = path.join(runDir, "series-source.json");
     const seriesMergeReportFile = path.join(runDir, "series-merge-report.json");
+    const movieshoSourceFile = path.join(runDir, "moviesho-source.json");
+    const movieshoReportFile = path.join(runDir, "moviesho-report.json");
+    const movieshoMergeReportFile = path.join(runDir, "moviesho-merge-report.json");
 
     await run("Scrape and validate DonyayeSerial", "scripts/scrape-vod-archive.mjs", [
       SOURCE_URL,
@@ -94,7 +97,7 @@ async function main() {
       }
       catalogWithFeedsFile = seriesMergedFile;
     }
-    const changes = combineChanges(movieChanges, seriesChanges);
+    let changes = combineChanges(movieChanges, seriesChanges);
     const expansionFile = path.join(runDir, "catalog-expanded.json");
     const expansionReportFile = path.join(runDir, "expansion-report.json");
     const expansionIdsFile = path.join(runDir, "series-refresh-ids.json");
@@ -119,6 +122,37 @@ async function main() {
     );
     const expansion = await readJson(expansionReportFile);
     if (!expansion) throw new Error("Series expansion completed without a validation report.");
+
+    await run(
+      "Check Moviesho 2025/2026 movies and series with exact IMDb evidence",
+      "scripts/scrape-moviesho-source.mjs",
+      [expansionFile, movieshoSourceFile, movieshoReportFile],
+      {
+        MOVIESHO_MATCH_CACHE:
+          process.env.MOVIESHO_MATCH_CACHE || path.join(WORK_DIR, "moviesho-match-cache.json"),
+      },
+    );
+    const movieshoSource = await readJson(movieshoSourceFile);
+    const moviesho = await readJson(movieshoReportFile);
+    if (!movieshoSource || !moviesho) {
+      throw new Error("Moviesho scan completed without a validation report.");
+    }
+    let catalogAfterSourcesFile = expansionFile;
+    let movieshoChanges = emptyChanges(changes);
+    if ((movieshoSource.items?.length ?? 0) > 0) {
+      const movieshoMergedFile = path.join(runDir, "catalog-moviesho-merged.json");
+      await run(
+        "Merge only newly matched Moviesho titles",
+        "scripts/merge-vod-source.mjs",
+        [expansionFile, movieshoSourceFile, movieshoMergedFile, movieshoMergeReportFile],
+      );
+      movieshoChanges = await readJson(movieshoMergeReportFile);
+      if (!movieshoChanges) {
+        throw new Error("Moviesho merge completed without a validation report.");
+      }
+      catalogAfterSourcesFile = movieshoMergedFile;
+      changes = combineChanges(changes, movieshoChanges);
+    }
     const metadataDue =
       FORCE ||
       !previousStatus?.metadataEnrichedAt ||
@@ -140,6 +174,8 @@ async function main() {
         sourceLinks: source.totalLinks,
         seriesFeedTitles: seriesSource?.totalTitles ?? 0,
         seriesFeedLinks: seriesSource?.totalLinks ?? 0,
+        moviesho,
+        movieshoChanges,
         changes,
         expansion,
         message: "Source checked; no catalog changes were found.",
@@ -160,11 +196,11 @@ async function main() {
     const peopleFile = path.join(runDir, "vod-people.json");
     const topPeopleFile = path.join(runDir, "vod-top-people.json");
 
-    let finalCatalogFile = expansionFile;
+    let finalCatalogFile = catalogAfterSourcesFile;
     let metadataEnrichedAt = previousStatus?.metadataEnrichedAt ?? null;
     if (metadataDue || changes.added > 0) {
       await run("Refresh official IMDb title data", "scripts/enrich-vod-imdb.mjs", [
-        expansionFile,
+        catalogAfterSourcesFile,
         imdbFile,
       ]);
       finalCatalogFile = imdbFile;
@@ -179,7 +215,7 @@ async function main() {
         [finalCatalogFile, apiFile],
         {
           IMDB_API_IDS_FILE: idsFile,
-          IMDB_API_LIMIT: process.env.VOD_SYNC_API_LIMIT || "160",
+          IMDB_API_LIMIT: process.env.VOD_SYNC_API_LIMIT || "0",
           IMDB_API_RETRIES: process.env.IMDB_API_RETRIES || "1",
           IMDB_API_TIMEOUT_MS: process.env.IMDB_API_TIMEOUT_MS || "12000",
         },
@@ -223,6 +259,7 @@ async function main() {
     }
 
     const completedAt = new Date().toISOString();
+    const finalSummary = await readCatalogHeader(finalCatalogFile);
     await writeStatus({
       ok: true,
       checkedAt: completedAt,
@@ -234,8 +271,10 @@ async function main() {
       sourceLinks: source.totalLinks,
       seriesFeedTitles: seriesSource?.totalTitles ?? 0,
       seriesFeedLinks: seriesSource?.totalLinks ?? 0,
-      catalogTitles: expansion.totalTitles,
-      catalogLinks: expansion.totalLinks,
+      moviesho,
+      movieshoChanges,
+      catalogTitles: finalSummary.totalTitles,
+      catalogLinks: finalSummary.totalLinks,
       changes,
       expansion,
       message: DRY_RUN

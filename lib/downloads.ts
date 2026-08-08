@@ -1,4 +1,4 @@
-import type { VodItem, VodLink } from "./types";
+import type { VodItem, VodLink, VodSubtitleLink } from "./types";
 
 export type DownloadSource = {
   label: string;
@@ -10,6 +10,8 @@ export type DownloadSource = {
   season?: number | null;
   episode?: number | null;
   fileName?: string | null;
+  subtitleUrl?: string | null;
+  subtitles?: VodSubtitleLink[];
 };
 
 export type SeasonSummary = {
@@ -115,6 +117,8 @@ export function toDownloadSource(link: VodLink): DownloadSource {
     season: link.season ?? null,
     episode: link.episode ?? null,
     fileName: link.fileName ?? null,
+    subtitleUrl: link.subtitleUrl ?? null,
+    subtitles: link.subtitles ?? [],
   };
 }
 

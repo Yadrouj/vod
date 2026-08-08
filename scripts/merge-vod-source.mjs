@@ -218,8 +218,17 @@ async function main() {
   );
   const payload = {
     ...existing,
-    sourceUrl: source.sourceUrl ?? existing.sourceUrl,
-    sourceUrls: Array.from(new Set([existing.sourceUrl, ...(existing.sourceUrls ?? []), source.sourceUrl].filter(Boolean))),
+    sourceUrl: source.preservePrimarySource
+      ? existing.sourceUrl
+      : source.sourceUrl ?? existing.sourceUrl,
+    sourceUrls: Array.from(
+      new Set([
+        existing.sourceUrl,
+        ...(existing.sourceUrls ?? []),
+        source.sourceUrl,
+        ...(source.sourceUrls ?? []),
+      ].filter(Boolean)),
+    ),
     scrapedAt: source.scrapedAt ?? existing.scrapedAt,
     mergedAt: new Date().toISOString(),
     totalTitles: items.length,

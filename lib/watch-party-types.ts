@@ -17,6 +17,7 @@ export type PartyMediaSource = {
   quality?: string | null;
   episode?: number | null;
   season?: number | null;
+  subtitleUrl?: string | null;
 };
 
 export type PartyMediaCredit = {

@@ -7,7 +7,12 @@ export const dynamic = "force-dynamic";
 const MAX_COMPRESSED_BYTES = 4 * 1024 * 1024;
 const MAX_SUBTITLE_BYTES = 2 * 1024 * 1024;
 const MAX_REDIRECTS = 4;
-const TRUSTED_HOSTS = new Set(["subzone.ir", "www.subzone.ir", "media.sub-api.ir"]);
+const TRUSTED_HOSTS = new Set([
+  "subzone.ir",
+  "www.subzone.ir",
+  "media.sub-api.ir",
+  "sr1.moviesho.com",
+]);
 const SUBTITLE_FILE = /\.(vtt|srt|ass|ssa|txt)$/i;
 
 export async function GET(request: Request) {
@@ -80,6 +85,9 @@ function trustedUrl(value: string) {
   }
   if (!TRUSTED_HOSTS.has(url.hostname.toLowerCase()) || !["http:", "https:"].includes(url.protocol)) {
     throw new SubtitleRequestError("This subtitle host is not trusted.", 403);
+  }
+  if (url.hostname.toLowerCase() === "sr1.moviesho.com" && !SUBTITLE_FILE.test(url.pathname)) {
+    throw new SubtitleRequestError("Only subtitle files can be loaded from this source.", 403);
   }
   url.username = "";
   url.password = "";

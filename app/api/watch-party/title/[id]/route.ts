@@ -16,6 +16,7 @@ export async function GET(_: Request, { params }: Props) {
     quality: link.quality,
     season: isSeries ? link.season ?? null : null,
     episode: isSeries ? link.episode ?? null : null,
+    subtitleUrl: link.subtitleUrl ?? null,
   }));
   if (!sources.length) return Response.json({ error: "No playable source" }, { status: 404 });
   return Response.json(

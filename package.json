@@ -24,6 +24,8 @@
     "scrape-imdb-images": "node scripts/scrape-imdb-images.mjs",
     "scrape-vod": "node scripts/scrape-vod-archive.mjs",
     "scrape-series-feed": "node scripts/scrape-donyaye-series-feed.mjs",
+    "scrape-moviesho": "node scripts/scrape-moviesho-source.mjs",
+    "test:moviesho-source": "node --test scripts/tests/moviesho-source.test.mjs",
     "sync-vod-catalog": "node scripts/sync-vod-catalog.mjs",
     "sync-vod-daemon": "node scripts/catalog-sync-daemon.mjs",
     "audit-vod-links": "node scripts/audit-vod-links.mjs",

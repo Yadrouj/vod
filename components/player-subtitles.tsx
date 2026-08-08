@@ -28,6 +28,7 @@ type Props = {
   title: string;
   sourceKey: string;
   sourceLabel?: string;
+  sourceSubtitleUrl?: string | null;
   open: boolean;
   onClose: () => void;
   selection?: SubtitleSelection;
@@ -44,6 +45,7 @@ export function PlayerSubtitles({
   title,
   sourceKey,
   sourceLabel = "",
+  sourceSubtitleUrl = null,
   open,
   onClose,
   selection,
@@ -73,6 +75,17 @@ export function PlayerSubtitles({
     () => [...onlineItems].sort((left, right) => subtitleScore(right, sourceLabel, sourceKey) - subtitleScore(left, sourceLabel, sourceKey)),
     [onlineItems, sourceKey, sourceLabel],
   );
+  const sourceSubtitle = useMemo<SubtitleSelection | null>(() => {
+    if (!sourceSubtitleUrl) return null;
+    const language = guessLanguage(sourceSubtitleUrl);
+    return {
+      id: `source-${sourceSubtitleUrl}`,
+      mode: "online",
+      label: language === "Unknown" ? "Source subtitle" : `${language} source subtitle`,
+      language,
+      url: `/api/subtitles/track?url=${encodeURIComponent(sourceSubtitleUrl)}`,
+    };
+  }, [sourceSubtitleUrl]);
 
   const clearManagedTrack = useCallback(() => {
     if (managedTrackTimerRef.current !== null) {
@@ -157,7 +170,9 @@ export function PlayerSubtitles({
       }
     }
 
-    const resolved = next.mode === "auto" ? sortedOnlineItems[0] ? onlineSelection(sortedOnlineItems[0]) : null : next;
+    const resolved = next.mode === "auto"
+      ? sourceSubtitle ?? (sortedOnlineItems[0] ? onlineSelection(sortedOnlineItems[0]) : null)
+      : next;
     if (!resolved) {
       clearManagedTrack();
       setStatus(onlineLoading ? "Finding an online subtitle…" : "No compatible subtitle was found automatically.");
@@ -177,7 +192,7 @@ export function PlayerSubtitles({
       clearManagedTrack();
       setStatus(reason instanceof Error ? reason.message : "Subtitle could not be loaded.");
     }
-  }, [clearManagedTrack, fetchSubtitleText, mountManagedTrack, nativeTracks, offset, onlineLoading, sortedOnlineItems, videoRef]);
+  }, [clearManagedTrack, fetchSubtitleText, mountManagedTrack, nativeTracks, offset, onlineLoading, sortedOnlineItems, sourceSubtitle, videoRef]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -315,6 +330,17 @@ export function PlayerSubtitles({
                 <span><strong>{track.label}</strong><small>{readableLanguage(track.language)} · embedded</small></span><Check size={14} />
               </button>
             ))}
+          </div>
+        </section>
+      )}
+
+      {sourceSubtitle && (
+        <section className="subtitle-source-group">
+          <div className="subtitle-group-title"><Subtitles size={14} /><span>Included with this file</span></div>
+          <div className="subtitle-option-list">
+            <button type="button" disabled={!canChange} className={activeSelection.id === sourceSubtitle.id ? "is-active" : ""} onClick={() => choose(sourceSubtitle)}>
+              <span><strong>{sourceSubtitle.label}</strong><small>Matched to this exact movie or episode</small></span><Check size={14} />
+            </button>
           </div>
         </section>
       )}

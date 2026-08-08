@@ -1,3 +1,12 @@
+export type VodSubtitleLink = {
+  label: string;
+  url: string;
+  language: string;
+  format: string;
+  size?: string | null;
+  modified?: string | null;
+};
+
 export type VodLink = {
   label: string;
   url: string;
@@ -10,6 +19,8 @@ export type VodLink = {
   fileName?: string | null;
   sourceUrl?: string | null;
   modified?: string | null;
+  subtitleUrl?: string | null;
+  subtitles?: VodSubtitleLink[];
 };
 
 export type VodItem = {
@@ -77,6 +88,7 @@ export type VodItem = {
   seriesLinksExpanded?: boolean;
   sourceLinkFingerprint?: string | null;
   sourceDirectoryLinks?: VodLink[];
+  movieshoSourceDirectories?: string[];
 };
 
 export type VodArchive = {

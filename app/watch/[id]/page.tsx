@@ -33,6 +33,7 @@ export default async function WatchPage({ params }: Props) {
     quality: link.quality,
     season: isSeries ? link.season ?? null : null,
     episode: isSeries ? link.episode ?? null : null,
+    subtitleUrl: link.subtitleUrl ?? null,
   }));
   const heroImage = item.backdropUrl ?? item.posterUrl ?? null;
   const partyMedia = partySources[0] ? {
