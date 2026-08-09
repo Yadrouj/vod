@@ -3850,6 +3850,217 @@ html { scroll-behavior: smooth; }
   line-height: 1.45;
 }
 
+.f2my-admin-panel {
+  margin-top: 36px;
+  padding: 24px;
+  border: 1px solid rgba(145, 246, 181, 0.24);
+  background: linear-gradient(135deg, rgba(36, 83, 57, 0.22), rgba(12, 14, 16, 0.94) 48%);
+}
+
+.f2my-admin-panel .admin-copy h2 {
+  margin: 6px 0 10px;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 0.98;
+}
+
+.f2my-admin-actions,
+.f2my-token {
+  display: grid;
+  gap: 8px;
+}
+
+.f2my-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.f2my-button-row button {
+  min-height: 46px;
+}
+
+.f2my-stop {
+  border-color: rgba(255, 124, 124, 0.56);
+  color: #ffb3b3;
+}
+
+.f2my-status-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding-top: 10px;
+}
+
+.f2my-status-head > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.f2my-state {
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.f2my-state-running,
+.f2my-state-starting {
+  border-color: rgba(129, 241, 164, 0.5);
+  color: #a9ffc4;
+}
+
+.f2my-state-completed {
+  border-color: rgba(116, 196, 255, 0.5);
+  color: #b7e4ff;
+}
+
+.f2my-state-failed,
+.f2my-state-cancelled {
+  border-color: rgba(255, 130, 130, 0.5);
+  color: #ffc2c2;
+}
+
+.f2my-progress-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.f2my-progress > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.f2my-progress > span {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.f2my-progress i {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  background: linear-gradient(90deg, #89e7aa, #e6ffe9);
+  box-shadow: 0 0 20px rgba(137, 231, 170, 0.8);
+  transition: width 280ms ease;
+}
+
+.f2my-counter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.f2my-counter-grid .admin-info {
+  min-height: 94px;
+}
+
+.f2my-counter-grid .value {
+  margin: 8px 0 0;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.f2my-admin-lower {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+  gap: 12px;
+}
+
+.f2my-log-card,
+.f2my-base-card {
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.f2my-log {
+  max-height: 250px;
+  overflow: auto;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.36);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.f2my-log p {
+  margin: 0 0 5px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.f2my-base-list {
+  display: grid;
+  gap: 8px;
+  max-height: 370px;
+  overflow: auto;
+}
+
+.f2my-base-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.65fr) minmax(220px, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.f2my-base-row strong,
+.f2my-base-row span {
+  display: block;
+}
+
+.f2my-base-row span {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 11px;
+}
+
+.f2my-base-row .search {
+  min-width: 0;
+  height: 42px;
+  font-size: 12px;
+}
+
+.f2my-error {
+  border-color: rgba(255, 126, 126, 0.46);
+  color: #ffc1c1;
+}
+
+@media (max-width: 760px) {
+  .f2my-admin-panel {
+    padding: 16px;
+  }
+
+  .f2my-status-head,
+  .f2my-status-head > div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .f2my-counter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .f2my-admin-lower {
+    grid-template-columns: 1fr;
+  }
+
+  .f2my-base-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .cast-card img,
 .cast-fallback,
 .person-title img,

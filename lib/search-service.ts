@@ -101,7 +101,17 @@ async function loadSearchDocuments() {
         title,
         imdbCode,
         haystack: normalizeSearchQuery(
-          [item.title, item.imdbCode, ...item.genres, ...item.countries, ...item.languages].join(" "),
+          [
+            item.title,
+            item.persianTitle,
+            item.imdbCode,
+            ...item.genres,
+            ...item.countries,
+            ...item.languages,
+            ...(item.persianGenres ?? []),
+            ...(item.persianCountries ?? []),
+            ...(item.persianLanguages ?? []),
+          ].filter(Boolean).join(" "),
         ),
       };
       }),

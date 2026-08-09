@@ -1,5 +1,8 @@
-import { rename, readFile, writeFile } from "node:fs/promises";
+import { createWriteStream } from "node:fs";
+import { once } from "node:events";
+import { rename, readFile } from "node:fs/promises";
 import path from "node:path";
+import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 
 const API_BASE = process.env.IMDB_DATA_API_BASE || "http://185.203.118.87:8026";
 const IN_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
@@ -15,6 +18,11 @@ const RETRIES = Number(process.env.IMDB_API_RETRIES || 3);
 const FORCE = process.env.IMDB_API_FORCE === "1";
 const IDS_FILE = process.env.IMDB_API_IDS_FILE || "";
 const REQUEST_TIMEOUT_MS = Math.max(2_000, Number(process.env.IMDB_API_TIMEOUT_MS || 20_000));
+const LIGHTWEIGHT = process.env.IMDB_API_LIGHTWEIGHT === "1";
+const EFFECTIVE_IMAGE_LIMIT = LIGHTWEIGHT ? Math.min(1, IMAGE_LIMIT) : IMAGE_LIMIT;
+const EFFECTIVE_VIDEO_LIMIT = LIGHTWEIGHT ? 0 : VIDEO_LIMIT;
+const EFFECTIVE_CREDIT_LIMIT = LIGHTWEIGHT ? 0 : CREDIT_LIMIT;
+const EFFECTIVE_COMPANY_LIMIT = LIGHTWEIGHT ? 0 : COMPANY_LIMIT;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let saveChain = Promise.resolve();
@@ -44,7 +52,7 @@ function mapApiToItem(item, data) {
   ]
     .filter(Boolean)
     .filter((image, index, all) => all.findIndex((other) => other.url === image.url) === index)
-    .slice(0, IMAGE_LIMIT);
+    .slice(0, EFFECTIVE_IMAGE_LIMIT);
 
   return {
     ...item,
@@ -69,9 +77,9 @@ function mapApiToItem(item, data) {
       ? data.akas.map((aka) => ({ text: aka.text, country: aka.country ?? null })).filter((aka) => aka.text)
       : item.akas ?? [],
     imdbImages: images,
-    imdbVideos: Array.isArray(data.videos) ? data.videos.slice(0, VIDEO_LIMIT) : item.imdbVideos ?? [],
-    credits: Array.isArray(data.credits) ? data.credits.slice(0, CREDIT_LIMIT) : item.credits ?? [],
-    companies: Array.isArray(data.companies) ? data.companies.slice(0, COMPANY_LIMIT) : item.companies ?? [],
+    imdbVideos: EFFECTIVE_VIDEO_LIMIT > 0 && Array.isArray(data.videos) ? data.videos.slice(0, EFFECTIVE_VIDEO_LIMIT) : item.imdbVideos ?? [],
+    credits: EFFECTIVE_CREDIT_LIMIT > 0 && Array.isArray(data.credits) ? data.credits.slice(0, EFFECTIVE_CREDIT_LIMIT) : item.credits ?? [],
+    companies: EFFECTIVE_COMPANY_LIMIT > 0 && Array.isArray(data.companies) ? data.companies.slice(0, EFFECTIVE_COMPANY_LIMIT) : item.companies ?? [],
     posterUrl: data.primary_image_url ?? images[0]?.url ?? item.posterUrl ?? null,
     backdropUrl: pickBackdrop(images) ?? item.backdropUrl ?? data.primary_image_url ?? null,
     apiFetchedAt: data.fetched_at ?? new Date().toISOString(),
@@ -127,14 +135,29 @@ async function replaceFileWithRetry(tmpFile, outFile) {
 async function writeSnapshot(archive, items) {
   const matched = items.filter((item) => item.apiFetchedAt).length;
   const tmpFile = `${OUT_FILE}.${process.pid}.tmp`;
-  const data = JSON.stringify({
-    ...archive,
+  const { items: _existingItems, ...archiveMeta } = archive;
+  const header = JSON.stringify({
+    ...archiveMeta,
     apiProvider: API_BASE,
     apiMatchedTitles: matched,
     apiEnrichedAt: new Date().toISOString(),
-    items,
   });
-  await writeFile(tmpFile, data);
+  const stream = createWriteStream(tmpFile, { encoding: "utf8" });
+  const write = async (chunk) => {
+    if (!stream.write(chunk, "utf8")) await once(stream, "drain");
+  };
+  try {
+    await write(`${header.slice(0, -1)},\"items\":[`);
+    for (let index = 0; index < items.length; index += 1) {
+      await write(`${index ? "," : ""}${JSON.stringify(items[index])}`);
+    }
+    await write("]}");
+    stream.end();
+    await once(stream, "finish");
+  } catch (error) {
+    stream.destroy();
+    throw error;
+  }
   await replaceFileWithRetry(tmpFile, OUT_FILE);
 }
 
@@ -155,8 +178,10 @@ async function mapPool(targets, worker) {
 }
 
 async function main() {
-  const archive = JSON.parse(await readFile(IN_FILE, "utf8"));
-  const items = [...archive.items];
+  const items = [];
+  const archive = await streamVodArchiveItems(IN_FILE, async (item) => {
+    items.push(item);
+  });
   const requestedIds = await readRequestedIds();
   const allTargets = items
     .map((item, index) => ({ item, index }))
@@ -166,6 +191,23 @@ async function main() {
   const targets = LIMIT > 0 ? allTargets.slice(0, LIMIT) : allTargets;
   let completed = 0;
   let failed = 0;
+
+  if (!targets.length) {
+    console.log(
+      JSON.stringify(
+        {
+          outFile: OUT_FILE,
+          requestedTitles: 0,
+          apiMatchedTitles: items.filter((item) => item.apiFetchedAt).length,
+          failed: 0,
+          skippedWrite: true,
+        },
+        null,
+        2
+      )
+    );
+    return;
+  }
 
   await mapPool(targets, async ({ item, index }) => {
     try {

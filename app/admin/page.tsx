@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { BaseUrlAdmin } from "@/components/base-url-admin";
+import { F2myScraperAdmin } from "@/components/f2my-scraper-admin";
 import { LanguageToggle } from "@/components/language-toggle";
 import { getDictionary } from "@/lib/i18n";
 import { loadDownloadSettings, rewriteDownloadUrl } from "@/lib/download-settings";
@@ -39,6 +40,7 @@ export default async function AdminPage() {
           sampleAfter={rewriteDownloadUrl(SAMPLE_URL, settings.baseUrl)}
           locale={locale}
         />
+        <F2myScraperAdmin />
       </section>
     </main>
   );

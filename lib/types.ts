@@ -5,6 +5,10 @@ export type VodSubtitleLink = {
   format: string;
   size?: string | null;
   modified?: string | null;
+  sourceProvider?: string | null;
+  sourceBaseId?: string | null;
+  sourceRelativePath?: string | null;
+  sourceOriginalUrl?: string | null;
 };
 
 export type VodLink = {
@@ -21,6 +25,11 @@ export type VodLink = {
   modified?: string | null;
   subtitleUrl?: string | null;
   subtitles?: VodSubtitleLink[];
+  sourceProvider?: string | null;
+  sourceBaseId?: string | null;
+  sourceRelativePath?: string | null;
+  sourceOriginalUrl?: string | null;
+  mediaKind?: "video" | "stream" | "subtitle" | "archive" | "trailer" | "unknown" | null;
 };
 
 export type VodItem = {
@@ -89,6 +98,28 @@ export type VodItem = {
   sourceLinkFingerprint?: string | null;
   sourceDirectoryLinks?: VodLink[];
   movieshoSourceDirectories?: string[];
+  movieshoPageUrl?: string | null;
+  movieshoPostId?: number | null;
+  movieshoPublishedAt?: string | null;
+  movieshoModifiedAt?: string | null;
+  persianTitle?: string | null;
+  persianOverview?: string | null;
+  persianDescription?: string | null;
+  persianGenres?: string[];
+  persianCountries?: string[];
+  persianLanguages?: string[];
+  movieshoImages?: {
+    url: string;
+    remoteUrl?: string | null;
+    localUrl?: string | null;
+    width?: number | null;
+    height?: number | null;
+    caption?: string | null;
+  }[];
+  f2myPageUrl?: string | null;
+  f2myPostId?: number | null;
+  f2myModifiedAt?: string | null;
+  f2myExtraLinks?: VodLink[];
 };
 
 export type VodArchive = {
@@ -124,6 +155,11 @@ export type VodCard = {
   linksCount: number;
   source?: string | null;
   sourcePageUrl?: string | null;
+  persianTitle?: string | null;
+  persianOverview?: string | null;
+  persianGenres?: string[];
+  persianCountries?: string[];
+  persianLanguages?: string[];
 };
 
 export type VodHomeSection = {

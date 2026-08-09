@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { VodItem, VodLink } from "./types";
+import { applySourceLinkBasesToItem } from "./source-link-settings";
 
 export type DownloadSettings = {
   baseUrl: string;
@@ -76,10 +77,10 @@ export function rewriteDownloadUrl(url: string, baseUrl: string) {
 
 export async function applyDownloadBaseToItem(item: VodItem): Promise<VodItem> {
   const settings = await loadDownloadSettings();
-  return {
+  return applySourceLinkBasesToItem({
     ...item,
     links: item.links.map((link) => rewriteLink(link, settings.baseUrl)),
-  };
+  });
 }
 
 function rewriteLink(link: VodLink, baseUrl: string): VodLink {

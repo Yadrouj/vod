@@ -45,6 +45,9 @@ export default async function DetailPage({ params }: Props) {
   const movieFiles = isSeries ? [] : movieDownloadSources(item.links);
   const heroVideo = detailHeroVideo(item);
   const tabsItem = toTitleTabsItem(item);
+  const displayTitle = locale === "fa" ? item.persianTitle || item.title : item.title;
+  const displayOverview = locale === "fa" ? item.persianOverview || item.overview : item.overview;
+  const displayGenres = locale === "fa" && item.persianGenres?.length ? item.persianGenres : item.genres ?? [];
 
   return (
     <div className="shell">
@@ -76,7 +79,7 @@ export default async function DetailPage({ params }: Props) {
                 {normalizeVodType(item.type) === "series" ? t.common.series : t.common.films}
               </Link>
               <span aria-hidden="true">/</span>
-              <span className="breadcrumb-current" aria-current="page">{item.title}</span>
+              <span className="breadcrumb-current" aria-current="page">{displayTitle}</span>
             </nav>
             <div className="detail-topbar-tools">
               {item.imdbRating ? (
@@ -108,11 +111,11 @@ export default async function DetailPage({ params }: Props) {
                 <i className="dot" />
                 <span>{item.source === "mihandownload" ? t.common.persianMovies : item.imdbCode}</span>
               </div>
-              <h1>{item.title}</h1>
-              {item.originalTitle && item.originalTitle !== item.title && (
+              <h1>{displayTitle}</h1>
+              {item.originalTitle && item.originalTitle !== displayTitle && (
                 <p className="muted">{t.title.originalTitle}: {item.originalTitle}</p>
               )}
-              {item.overview && <p className="detail-overview">{item.overview}</p>}
+              {displayOverview && <p className="detail-overview">{displayOverview}</p>}
               <div className="chips detail-primary-actions">
                 <Link className="play-glow detail-play-button" href={`/watch/${item.imdbCode}`}>
                   <span className="play-dot" /> {t.common.playOnline}
@@ -120,7 +123,7 @@ export default async function DetailPage({ params }: Props) {
                 <WatchTogetherLauncher
                   locale={locale}
                   placement="inline"
-                  preset={{ itemId: item.imdbCode, title: item.title, posterUrl: item.backdropUrl ?? item.posterUrl }}
+                  preset={{ itemId: item.imdbCode, title: displayTitle, posterUrl: item.backdropUrl ?? item.posterUrl }}
                 />
                 {best && <DownloadButton href={best.url} label={t.common.bestFile} />}
                 <a
@@ -148,7 +151,7 @@ export default async function DetailPage({ params }: Props) {
                 <img
                   className="detail-poster"
                   src={sizedImageUrl(item.posterUrl, 500) ?? item.posterUrl}
-                  alt={`${item.title} poster`}
+                  alt={`${displayTitle} poster`}
                   loading="eager"
                   decoding="async"
                 />
@@ -162,7 +165,7 @@ export default async function DetailPage({ params }: Props) {
                   <Stat label={t.title.metascore} value={item.metascore ? String(item.metascore) : "-"} />
                 </div>
                 <div className="chips detail-genres">
-                  {(item.genres ?? []).map((genre) => (
+                  {displayGenres.map((genre) => (
                     <span key={genre} className="chip">{genre}</span>
                   ))}
                 </div>
@@ -216,6 +219,7 @@ function toTitleTabsItem(item: VodItem): TitleTabsItem {
     credits: item.credits?.slice(0, 30),
     imdbVideos: item.imdbVideos?.slice(0, 10),
     imdbImages: item.imdbImages?.slice(0, 20),
+    movieshoImages: item.movieshoImages?.slice(0, 20),
     backdropUrl: item.backdropUrl,
     posterUrl: item.posterUrl,
     source: item.source,

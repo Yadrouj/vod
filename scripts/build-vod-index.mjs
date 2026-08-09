@@ -1,5 +1,6 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
+import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 
 const IN_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
 const OUT_FILE = process.argv[3] || path.join("public", "data", "vod-index.json");
@@ -69,6 +70,11 @@ function toCard(item) {
     linksCount: Array.isArray(item.links) ? item.links.length : 0,
     source: item.source ?? null,
     sourcePageUrl: item.sourcePageUrl ?? null,
+    persianTitle: item.persianTitle ?? null,
+    persianOverview: item.persianOverview ? item.persianOverview.slice(0, 220) : null,
+    persianGenres: item.persianGenres ?? [],
+    persianCountries: item.persianCountries ?? [],
+    persianLanguages: item.persianLanguages ?? [],
   };
 }
 
@@ -128,8 +134,10 @@ function sortQuality(a, b) {
 }
 
 async function main() {
-  const archive = JSON.parse(await readFile(IN_FILE, "utf8"));
-  const items = archive.items.map(toCard);
+  const items = [];
+  const archive = await streamVodArchiveItems(IN_FILE, async (item) => {
+    items.push(toCard(item));
+  });
   const index = {
     sourceUrl: archive.sourceUrl,
     totalTitles: archive.totalTitles ?? items.length,

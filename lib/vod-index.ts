@@ -75,10 +75,14 @@ export function browseVodIndex(index: VodCatalogIndex, params: BrowseParams) {
     const matchesQuery =
       !needle ||
       item.title.toLowerCase().includes(needle) ||
+      item.persianTitle?.toLowerCase().includes(needle) ||
       item.imdbCode.toLowerCase().includes(needle) ||
       item.genres.join(" ").toLowerCase().includes(needle) ||
       item.countries.join(" ").toLowerCase().includes(needle) ||
-      item.languages.join(" ").toLowerCase().includes(needle);
+      item.languages.join(" ").toLowerCase().includes(needle) ||
+      (item.persianGenres ?? []).join(" ").toLowerCase().includes(needle) ||
+      (item.persianCountries ?? []).join(" ").toLowerCase().includes(needle) ||
+      (item.persianLanguages ?? []).join(" ").toLowerCase().includes(needle);
 
     return (
       matchesQuery &&

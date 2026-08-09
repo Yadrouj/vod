@@ -25,6 +25,7 @@ export type TitleTabsItem = Pick<VodItem,
   | "credits"
   | "imdbVideos"
   | "imdbImages"
+  | "movieshoImages"
   | "backdropUrl"
   | "posterUrl"
   | "source"
@@ -97,7 +98,7 @@ export function TitleTabs({
             seasons={seasons}
             movieFiles={movieFiles}
             fallbackImage={item.backdropUrl ?? item.posterUrl ?? null}
-            fallbackImages={(item.imdbImages ?? []).map((image) => image.url)}
+            fallbackImages={[...(item.imdbImages ?? []), ...(item.movieshoImages ?? [])].map((image) => image.url)}
             locale={locale}
           />
         </section>
@@ -132,7 +133,7 @@ function AboutTab({ item, locale }: { item: TitleTabsItem; locale: Locale }) {
           title={t.title.trailersPictures}
           note={interpolate(t.title.trailersPicturesNote, {
             trailers: item.imdbVideos?.length ?? 0,
-            pictures: item.imdbImages?.length ?? 0,
+            pictures: (item.imdbImages?.length ?? 0) + (item.movieshoImages?.length ?? 0),
           })}
         />
         <MediaCarousel item={item} locale={locale} />
@@ -185,9 +186,13 @@ function PanelHead({ title, note }: { title: string; note: string }) {
 function MediaCarousel({ item }: { item: TitleTabsItem; locale: Locale }) {
   const videos = item.imdbVideos?.slice(0, 10) ?? [];
   const images = item.imdbImages?.slice(0, 20) ?? [];
+  const sourceImages = item.movieshoImages?.slice(0, 20) ?? [];
   const media: GalleryMedia[] = [
     ...videos.flatMap((video, index) => { const source = video.playback_urls?.find((playback) => playback.mime_type === "MP4")?.url ?? video.playback_urls?.[0]?.url; return source ? [{ id: `video-${video.video_id ?? index}`, type: "video" as const, title: video.name, url: source, poster: video.thumbnail_url ?? undefined }] : []; }),
     ...images.map((image, index) => ({ id: `image-${index}-${image.url}`, type: "image" as const, title: image.caption ?? item.title, url: image.url })),
+    ...sourceImages
+      .filter((image) => !images.some((existing) => existing.url === image.url))
+      .map((image, index) => ({ id: `moviesho-image-${index}-${image.url}`, type: "image" as const, title: image.caption ?? item.title, url: image.url })),
   ];
   if (!media.length && (item.backdropUrl ?? item.posterUrl)) media.push({ id: "fallback", type: "image", title: item.title, url: item.backdropUrl ?? item.posterUrl! });
   return <InteractiveMediaGallery items={media} />;

@@ -16,6 +16,11 @@ public/data/titles/
 public/data/title-map.json
 public/data/vod-source-current.json
 data/vod-settings.json
+data/source-link-registry.json
+data/f2my-scrape-status.json
+data/f2my-scrape-status.json.*.tmp
+data/f2my-scrape-status/
+data/f2my-scrape-control.json
 data/series-expansion-cache.json
 .media-cache/
 public/data/vod-sync-status.json

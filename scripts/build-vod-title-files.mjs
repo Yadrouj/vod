@@ -1,25 +1,25 @@
-import { mkdir, rm, writeFile, readFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 
 const IN_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
 const OUT_DIR = process.argv[3] || path.join("public", "data", "titles");
 const MAP_FILE = process.argv[4] || path.join("public", "data", "title-map.json");
 
 async function main() {
-  const archive = JSON.parse(await readFile(IN_FILE, "utf8"));
   await rm(OUT_DIR, { recursive: true, force: true });
   await mkdir(OUT_DIR, { recursive: true });
 
   const map = {};
   let written = 0;
-  for (const item of archive.items) {
+  await streamVodArchiveItems(IN_FILE, async (item) => {
     const key = item.imdbCode || item.id;
-    if (!key) continue;
+    if (!key) return;
     map[item.id.toLowerCase()] = key;
     map[key.toLowerCase()] = key;
     await writeFile(path.join(OUT_DIR, `${key}.json`), JSON.stringify(item));
     written += 1;
-  }
+  });
 
   await writeFile(MAP_FILE, JSON.stringify(map));
   console.log(JSON.stringify({ outDir: OUT_DIR, mapFile: MAP_FILE, written }, null, 2));
