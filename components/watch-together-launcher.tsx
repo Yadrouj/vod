@@ -123,6 +123,11 @@ export function WatchTogetherLauncher({
   experience?: Experience;
 }) {
   const pathname = usePathname();
+  // The global launcher lives in the root layout. Resolve its purpose from
+  // the current route so music never exposes a misleading watch label.
+  const effectiveExperience: Experience = experience === "listen" || (experience === "watch" && pathname?.startsWith("/music"))
+    ? "listen"
+    : "watch";
   const socketRef = useRef<Socket | null>(null);
   const builderRef = useRef<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
@@ -141,7 +146,7 @@ export function WatchTogetherLauncher({
   const [copied, setCopied] = useState(false);
   const [visibility, setVisibility] = useState<PartyRoomVisibility>("private");
   const baseText = copyByLocale[locale === "fa" ? "fa" : "en"];
-  const text = experience === "listen"
+  const text = effectiveExperience === "listen"
     ? {
       ...baseText,
       button: "Listen together",
@@ -188,7 +193,7 @@ export function WatchTogetherLauncher({
     if (!open || selected || normalized.length < 2) return;
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      fetch(`${experience === "listen" ? "/api/music/search" : "/api/suggest"}?q=${encodeURIComponent(normalized)}`, { signal: controller.signal })
+      fetch(`${effectiveExperience === "listen" ? "/api/music/search" : "/api/suggest"}?q=${encodeURIComponent(normalized)}`, { signal: controller.signal })
         .then((response) => response.json())
         .then((data: { items?: Suggestion[] }) => {
           setResults((data.items ?? []).slice(0, 6));
@@ -205,7 +210,7 @@ export function WatchTogetherLauncher({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [experience, open, query, selected]);
+  }, [effectiveExperience, open, query, selected]);
 
   if (placement === "floating" && (pathname === "/" || pathname.startsWith("/watch/"))) return null;
   if (placement === "floating" && pathname.startsWith("/watch-together/")) return null;
@@ -277,7 +282,7 @@ export function WatchTogetherLauncher({
 
       let roomMedia = resolvedMedia;
       if (!roomMedia || roomMedia.itemId !== selected.imdbCode) {
-        const response = await fetch(`/api/watch-party/${experience === "listen" ? "music" : "title"}/${encodeURIComponent(selected.imdbCode)}`);
+        const response = await fetch(`/api/watch-party/${effectiveExperience === "listen" ? "music" : "title"}/${encodeURIComponent(selected.imdbCode)}`);
         if (!response.ok) throw new Error(text.mediaError);
         roomMedia = await response.json() as PartyMedia;
         setResolvedMedia(roomMedia);
@@ -334,7 +339,7 @@ export function WatchTogetherLauncher({
   return (
     <>
       <button
-        className={`watch-together-launcher watch-together-${placement} ${experience === "listen" ? "watch-together-listen" : ""}`}
+        className={`watch-together-launcher watch-together-${placement} ${effectiveExperience === "listen" ? "watch-together-listen" : ""}`}
         type="button"
         onClick={openLauncher}
         aria-haspopup="dialog"
@@ -490,7 +495,7 @@ export function WatchTogetherLauncher({
                   <div className="watch-builder-section-title"><span>{locale === "fa" ? "دسترسی به اتاق" : "Room access"}</span></div>
                   <div className="watch-builder-access-options" role="radiogroup" aria-label={locale === "fa" ? "نوع دسترسی اتاق" : "Room visibility"}>
                     <button className={visibility === "private" ? "is-active" : ""} type="button" role="radio" aria-checked={visibility === "private"} onClick={() => setVisibility("private")}><LockKeyhole size={16} /><span><strong>{locale === "fa" ? "خصوصی" : "Private"}</strong><small>{locale === "fa" ? "فقط کسانی که لینک دعوت دارند وارد می‌شوند." : "Only people with the invite link can enter."}</small></span></button>
-                    <button className={visibility === "public" ? "is-active" : ""} type="button" role="radio" aria-checked={visibility === "public"} onClick={() => setVisibility("public")}><Globe2 size={16} /><span><strong>{experience === "listen" ? (locale === "fa" ? "اتاق شنیدن عمومی" : "Public listening room") : (locale === "fa" ? "اتاق تماشای عمومی" : "Public watch room")}</strong><small>{locale === "fa" ? "در فهرست اتاق‌های زنده نمایش داده می‌شود و هرکس می‌تواند وارد شود." : "Shows in the live directory so anyone can join."}</small></span></button>
+                    <button className={visibility === "public" ? "is-active" : ""} type="button" role="radio" aria-checked={visibility === "public"} onClick={() => setVisibility("public")}><Globe2 size={16} /><span><strong>{effectiveExperience === "listen" ? (locale === "fa" ? "اتاق شنیدن عمومی" : "Public listening room") : (locale === "fa" ? "اتاق تماشای عمومی" : "Public watch room")}</strong><small>{locale === "fa" ? "در فهرست اتاق‌های زنده نمایش داده می‌شود و هرکس می‌تواند وارد شود." : "Shows in the live directory so anyone can join."}</small></span></button>
                   </div>
                 </div>
 

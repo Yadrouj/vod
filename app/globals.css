@@ -54,6 +54,193 @@
   font-weight: 900;
 }
 
+/* Music artist directory: use the same rich visual language as track cards,
+   rather than a separate row of circular avatars. */
+.music-artists-page {
+  background:
+    radial-gradient(circle at 88% 3%, rgba(71, 197, 134, .13), transparent 24%),
+    radial-gradient(circle at 8% 24%, rgba(243, 203, 104, .10), transparent 23%),
+    #080809;
+}
+
+.music-directory-head {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  align-items: center;
+  min-height: 235px;
+  padding: clamp(26px, 4vw, 48px);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 24px !important;
+  background:
+    radial-gradient(circle at 84% 15%, rgba(141,239,185,.22), transparent 32%),
+    linear-gradient(130deg, rgba(26,29,29,.98), rgba(14,14,16,.98));
+  box-shadow: 0 22px 70px rgba(0,0,0,.24);
+}
+
+.music-directory-head::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: min(38vw, 430px);
+  aspect-ratio: 1;
+  top: -44%;
+  left: -6%;
+  border: 1px solid rgba(141,239,185,.17);
+  border-radius: 50%;
+  box-shadow: 0 0 0 36px rgba(141,239,185,.035), 0 0 0 74px rgba(141,239,185,.025);
+}
+
+.music-directory-head p { color: #8defb9; }
+.music-directory-head h1 { max-width: 730px; }
+.music-directory-head span { max-width: 520px; font-size: 13px; line-height: 1.75; }
+.music-directory-search {
+  position: relative;
+  z-index: 1;
+  min-width: min(100%, 370px);
+  padding: 8px 10px;
+  border-color: rgba(141,239,185,.28);
+  border-radius: 13px !important;
+  background: rgba(5,8,7,.62);
+  backdrop-filter: blur(16px);
+}
+.music-directory-search button { border-radius: 9px !important; background: #8defb9; color: #0d2116; }
+
+.music-directory-grid {
+  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+  gap: 16px;
+}
+
+.music-artists.music-artist-rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(178px, 205px);
+  gap: 14px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: 2px 1px 12px;
+  scrollbar-width: thin;
+}
+
+.music-artist,
+.music-directory-artist {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-width: 0;
+  min-height: 244px;
+  align-content: end;
+  gap: 5px;
+  overflow: hidden;
+  padding: 15px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 16px !important;
+  background: #1a1b1e;
+  color: #fff;
+  text-align: right;
+  box-shadow: 0 12px 30px rgba(0,0,0,.19);
+  transition: transform 190ms ease, border-color 190ms ease, box-shadow 190ms ease;
+}
+
+.music-artist:hover,
+.music-directory-artist:hover {
+  z-index: 2;
+  border-color: rgba(141,239,185,.62);
+  box-shadow: 0 20px 42px rgba(0,0,0,.36), 0 0 0 1px rgba(141,239,185,.08);
+  transform: translateY(-5px);
+}
+
+.music-artist > span,
+.music-directory-artist > span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  width: auto;
+  height: auto;
+  place-items: center;
+  margin: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0 !important;
+  background: #27292c center/cover;
+  color: rgba(255,255,255,.83);
+  font-size: 48px;
+  font-weight: 950;
+  box-shadow: none;
+  transition: transform 380ms ease, filter 260ms ease;
+}
+
+.music-artist > span::after,
+.music-directory-artist > span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(4,5,5,.04) 18%, rgba(4,5,5,.16) 40%, rgba(4,5,5,.94) 100%),
+    linear-gradient(90deg, rgba(5,6,6,.30), transparent 70%);
+}
+
+.music-artist:hover > span,
+.music-directory-artist:hover > span { transform: scale(1.07); filter: saturate(1.08); }
+
+.music-artist strong,
+.music-artist small,
+.music-directory-artist strong,
+.music-directory-artist small {
+  position: relative;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-artist strong,
+.music-directory-artist strong { color: #fff; font-size: 14px; font-weight: 950; }
+.music-artist small,
+.music-directory-artist small { color: rgba(224,255,237,.68); font-size: 10px; font-weight: 800; }
+
+.music-artist::after,
+.music-directory-artist::after {
+  content: "↗";
+  position: absolute;
+  z-index: 2;
+  top: 11px;
+  left: 11px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.33);
+  border-radius: 50%;
+  background: rgba(7,11,9,.46);
+  color: #d9ffe8;
+  font-size: 15px;
+  line-height: 1;
+  opacity: .82;
+  backdrop-filter: blur(7px);
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.music-artist:hover::after,
+.music-directory-artist:hover::after { background: #8defb9; color: #0d2116; opacity: 1; transform: rotate(45deg); }
+
+@media (max-width: 680px) {
+  .music-directory-head { min-height: 0; border-radius: 18px !important; }
+  .music-directory-search { width: 100%; min-width: 0; }
+  .music-directory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .music-artists.music-artist-rail { grid-auto-columns: minmax(148px, 44vw); gap: 10px; }
+  .music-artist,
+  .music-directory-artist { min-height: 205px; padding: 11px; border-radius: 13px !important; }
+  .music-artist strong,
+  .music-directory-artist strong { font-size: 11px; }
+  .music-artist small,
+  .music-directory-artist small { font-size: 9px; }
+  .music-artist::after,
+  .music-directory-artist::after { width: 26px; height: 26px; top: 8px; left: 8px; font-size: 13px; }
+}
+
 /* Persian UI and numerals. The FaNum cut renders ASCII digits in their
    Persian form too, so ratings, years and counts stay consistent in RTL. */
 @font-face {
@@ -5630,6 +5817,131 @@ html[dir="rtl"] .mega-menu-shell:focus-within .mega-panel {
     overflow: visible;
     padding-top: 12px;
   }
+}
+
+/* Final placement keeps the artist redesign ahead of legacy gallery rules. */
+.music-artists.music-artist-rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(178px, 205px);
+  gap: 14px;
+  overflow-x: auto;
+  padding: 2px 1px 12px;
+  scrollbar-width: thin;
+}
+
+.music-artists.music-artist-rail .music-artist,
+.music-directory-grid .music-directory-artist {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-width: 0;
+  min-height: 244px;
+  align-content: end;
+  gap: 5px;
+  overflow: hidden;
+  padding: 15px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 16px !important;
+  background: #1a1b1e;
+  color: #fff;
+  text-align: right;
+  box-shadow: 0 12px 30px rgba(0,0,0,.19);
+  transition: transform 190ms ease, border-color 190ms ease, box-shadow 190ms ease;
+}
+
+.music-artists.music-artist-rail .music-artist:hover,
+.music-directory-grid .music-directory-artist:hover {
+  z-index: 2;
+  border-color: rgba(141,239,185,.62);
+  box-shadow: 0 20px 42px rgba(0,0,0,.36), 0 0 0 1px rgba(141,239,185,.08);
+  transform: translateY(-5px);
+}
+
+.music-artists.music-artist-rail .music-artist > span,
+.music-directory-grid .music-directory-artist > span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  width: auto;
+  height: auto;
+  place-items: center;
+  margin: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0 !important;
+  background: #27292c center/cover;
+  color: rgba(255,255,255,.83);
+  font-size: 48px;
+  font-weight: 950;
+  box-shadow: none;
+  transition: transform 380ms ease, filter 260ms ease;
+}
+
+.music-artists.music-artist-rail .music-artist > span::after,
+.music-directory-grid .music-directory-artist > span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(4,5,5,.04) 18%, rgba(4,5,5,.16) 40%, rgba(4,5,5,.94) 100%), linear-gradient(90deg, rgba(5,6,6,.30), transparent 70%);
+}
+
+.music-artists.music-artist-rail .music-artist:hover > span,
+.music-directory-grid .music-directory-artist:hover > span { transform: scale(1.07); filter: saturate(1.08); }
+
+.music-artists.music-artist-rail .music-artist strong,
+.music-artists.music-artist-rail .music-artist small,
+.music-directory-grid .music-directory-artist strong,
+.music-directory-grid .music-directory-artist small {
+  position: relative;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-artists.music-artist-rail .music-artist strong,
+.music-directory-grid .music-directory-artist strong { color: #fff; font-size: 14px; font-weight: 950; }
+.music-artists.music-artist-rail .music-artist small,
+.music-directory-grid .music-directory-artist small { color: rgba(224,255,237,.68); font-size: 10px; font-weight: 800; }
+
+.music-artists.music-artist-rail .music-artist::after,
+.music-directory-grid .music-directory-artist::after {
+  content: "↗";
+  position: absolute;
+  z-index: 2;
+  top: 11px;
+  left: 11px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.33);
+  border-radius: 50%;
+  background: rgba(7,11,9,.46);
+  color: #d9ffe8;
+  font-size: 15px;
+  line-height: 1;
+  opacity: .82;
+  backdrop-filter: blur(7px);
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+.music-artists.music-artist-rail .music-artist:hover::after,
+.music-directory-grid .music-directory-artist:hover::after { background: #8defb9; color: #0d2116; opacity: 1; transform: rotate(45deg); }
+
+@media (max-width: 680px) {
+  .music-directory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .music-artists.music-artist-rail { grid-auto-columns: minmax(148px, 44vw); gap: 10px; }
+  .music-artists.music-artist-rail .music-artist,
+  .music-directory-grid .music-directory-artist { min-height: 205px; padding: 11px; border-radius: 13px !important; }
+  .music-artists.music-artist-rail .music-artist strong,
+  .music-directory-grid .music-directory-artist strong { font-size: 11px; }
+  .music-artists.music-artist-rail .music-artist small,
+  .music-directory-grid .music-directory-artist small { font-size: 9px; }
+  .music-artists.music-artist-rail .music-artist::after,
+  .music-directory-grid .music-directory-artist::after { width: 26px; height: 26px; top: 8px; left: 8px; font-size: 13px; }
 }
 
 /* Community playlists: public discovery stays light, while private edits stay local. */

@@ -9,9 +9,21 @@ const LIKES_KEY = "sarvnema-music-likes";
 
 type RepeatMode = "off" | "all" | "one";
 
-export function MusicPlayer({ track, queue = [], onTrackPlay }: { track: MusicTrack; queue?: MusicTrack[]; onTrackPlay?: (track: MusicTrack) => void }) {
+export function MusicPlayer({
+  track,
+  queue = [],
+  onTrackPlay,
+  playRequest = 0,
+}: {
+  track: MusicTrack;
+  queue?: MusicTrack[];
+  onTrackPlay?: (track: MusicTrack) => void;
+  /** Increment this from a parent click to begin playback without a DOM ref. */
+  playRequest?: number;
+}) {
   const media = useRef<HTMLAudioElement | HTMLVideoElement>(null);
   const autoplayTrackId = useRef<string | null>(null);
+  const handledPlayRequest = useRef(0);
   const library = useMemo(() => uniqueTracks([track, ...queue]), [queue, track]);
   const [activeIndex, setActiveIndex] = useState(0);
   const activeTrack = library[activeIndex] ?? track;
@@ -46,7 +58,7 @@ export function MusicPlayer({ track, queue = [], onTrackPlay }: { track: MusicTr
   }, [activeTrack.id, activeTrack.kind, streams]);
 
   useEffect(() => {
-    if (autoplayTrackId.current !== activeTrack.id || sourceIndex !== preferredSourceIndex(streams, activeTrack.kind)) return;
+    if (autoplayTrackId.current !== activeTrack.id) return;
     const player = media.current;
     if (!player) return;
     const start = () => {
@@ -57,7 +69,30 @@ export function MusicPlayer({ track, queue = [], onTrackPlay }: { track: MusicTr
     if (player.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) start();
     else player.addEventListener("canplay", start, { once: true });
     return () => player.removeEventListener("canplay", start);
-  }, [activeTrack.id, activeTrack.kind, source?.url, sourceIndex, streams]);
+  }, [activeTrack.id, source?.url]);
+
+  useEffect(() => {
+    if (!playRequest || playRequest === handledPlayRequest.current) return;
+    handledPlayRequest.current = playRequest;
+    autoplayTrackId.current = activeTrack.id;
+
+    const player = media.current;
+    if (!player) return;
+
+    const start = () => {
+      if (autoplayTrackId.current !== activeTrack.id) return;
+      autoplayTrackId.current = null;
+      void player.play().catch(() => setPlaying(false));
+    };
+
+    if (player.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+      start();
+    } else {
+      player.addEventListener("canplay", start, { once: true });
+    }
+
+    return () => player.removeEventListener("canplay", start);
+  }, [activeTrack.id, playRequest, source?.url]);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(PLAYBACK_KEY);
@@ -104,7 +139,7 @@ export function MusicPlayer({ track, queue = [], onTrackPlay }: { track: MusicTr
     navigator.mediaSession.setActionHandler("seekbackward", () => seek(Math.max(0, player.currentTime - 10)));
     navigator.mediaSession.setActionHandler("seekforward", () => seek(Math.min(player.duration || 0, player.currentTime + 10)));
     navigator.mediaSession.setActionHandler("previoustrack", previous);
-    navigator.mediaSession.setActionHandler("nexttrack", next);
+      navigator.mediaSession.setActionHandler("nexttrack", () => next());
     return () => {
       for (const action of ["play", "pause", "seekbackward", "seekforward", "previoustrack", "nexttrack"] as MediaSessionAction[]) {
         navigator.mediaSession.setActionHandler(action, null);
@@ -150,10 +185,19 @@ export function MusicPlayer({ track, queue = [], onTrackPlay }: { track: MusicTr
 
   function chooseTrack(index: number, autoplay = playing) {
     const nextIndex = Math.max(0, Math.min(library.length - 1, index));
-    if (nextIndex === activeIndex) return;
+    if (nextIndex === activeIndex) {
+      if (autoplay) {
+        autoplayTrackId.current = activeTrack.id;
+        const player = media.current;
+        if (player?.readyState && player.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+          autoplayTrackId.current = null;
+          void player.play().catch(() => setPlaying(false));
+        }
+      }
+      return;
+    }
     autoplayTrackId.current = autoplay ? library[nextIndex]?.id ?? null : null;
     setActiveIndex(nextIndex);
-    setSourceIndex(0);
     setQueueOpen(false);
   }
 
@@ -162,14 +206,14 @@ export function MusicPlayer({ track, queue = [], onTrackPlay }: { track: MusicTr
     chooseTrack(activeIndex > 0 ? activeIndex - 1 : repeat === "all" ? library.length - 1 : 0);
   }
 
-  function next() {
+  function next(autoplay = playing) {
     if (shuffle && library.length > 1) {
       const candidates = library.map((_, index) => index).filter((index) => index !== activeIndex);
-      chooseTrack(candidates[Math.floor(Math.random() * candidates.length)] ?? activeIndex);
+      chooseTrack(candidates[Math.floor(Math.random() * candidates.length)] ?? activeIndex, autoplay);
       return;
     }
-    if (activeIndex < library.length - 1) chooseTrack(activeIndex + 1);
-    else if (repeat === "all") chooseTrack(0);
+    if (activeIndex < library.length - 1) chooseTrack(activeIndex + 1, autoplay);
+    else if (repeat === "all") chooseTrack(0, autoplay);
     else setPlaying(false);
   }
 
@@ -179,7 +223,7 @@ export function MusicPlayer({ track, queue = [], onTrackPlay }: { track: MusicTr
       void media.current.play().catch(() => undefined);
       return;
     }
-    next();
+    next(true);
   }
 
   function handleMediaError() {
@@ -230,7 +274,7 @@ export function MusicPlayer({ track, queue = [], onTrackPlay }: { track: MusicTr
         <button className={`music-icon-button ${shuffle ? "is-active" : ""}`} type="button" onClick={() => setShuffle((value) => !value)} aria-label="Shuffle"><Shuffle size={17} /></button>
         <button className="music-icon-button" type="button" onClick={previous} aria-label="Previous"><SkipBack size={20} fill="currentColor" /></button>
         <button className="music-play-toggle" type="button" onClick={togglePlayback} aria-label={playing ? "Pause" : "Play"}>{playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}</button>
-        <button className="music-icon-button" type="button" onClick={next} aria-label="Next"><SkipForward size={20} fill="currentColor" /></button>
+        <button className="music-icon-button" type="button" onClick={() => next()} aria-label="Next"><SkipForward size={20} fill="currentColor" /></button>
         <button className={`music-icon-button ${repeat !== "off" ? "is-active" : ""}`} type="button" onClick={() => setRepeat((value) => value === "off" ? "all" : value === "all" ? "one" : "off")} aria-label={`Repeat ${repeat}`}><Repeat2 size={17} />{repeat === "one" && <small>1</small>}</button>
       </div>
 
@@ -244,7 +288,7 @@ export function MusicPlayer({ track, queue = [], onTrackPlay }: { track: MusicTr
         <button className={`music-icon-button ${queueOpen ? "is-active" : ""}`} type="button" onClick={() => setQueueOpen((value) => !value)} aria-label="Listening queue"><ListMusic size={18} /></button>
       </div>
 
-      {queueOpen && <aside className="music-player-queue" aria-label="Listening queue"><header><span><ListMusic size={16} /><strong>Queue</strong><small>{library.length} tracks</small></span><button className="music-icon-button" type="button" onClick={() => setQueueOpen(false)} aria-label="Close queue"><X size={16} /></button></header><ol>{library.map((item, index) => <li className={index === activeIndex ? "is-active" : ""} key={item.id}><button type="button" onClick={() => chooseTrack(index)}>{item.coverUrl ? <img src={item.coverUrl} alt="" /> : <span />}{index === activeIndex && playing ? <i className="music-equalizer"><b /><b /><b /></i> : <em>{String(index + 1).padStart(2, "0")}</em>}<span><strong>{item.persianTitle || item.title}</strong><small>{item.artists.map((artist) => artist.name).join(" · ")}</small></span></button></li>)}</ol></aside>}
+      {queueOpen && <aside className="music-player-queue" aria-label="Listening queue"><header><span><ListMusic size={16} /><strong>Queue</strong><small>{library.length} tracks</small></span><button className="music-icon-button" type="button" onClick={() => setQueueOpen(false)} aria-label="Close queue"><X size={16} /></button></header><ol>{library.map((item, index) => <li className={index === activeIndex ? "is-active" : ""} key={item.id}><button type="button" onClick={() => chooseTrack(index, true)}>{item.coverUrl ? <img src={item.coverUrl} alt="" /> : <span />}{index === activeIndex && playing ? <i className="music-equalizer"><b /><b /><b /></i> : <em>{String(index + 1).padStart(2, "0")}</em>}<span><strong>{item.persianTitle || item.title}</strong><small>{item.artists.map((artist) => artist.name).join(" · ")}</small></span></button></li>)}</ol></aside>}
     </section>
   );
 }

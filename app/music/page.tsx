@@ -25,7 +25,7 @@ export default async function MusicPage({ searchParams }: Props) {
   const artistTracks = artistOfMoment
     ? index.tracks.filter((track) => track.artists.some((artist) => artist.slug === artistOfMoment.slug)).slice(0, 12)
     : [];
-  const featuredArtists = index.artists.slice(0, 20);
+  const featuredArtists = pickFeaturedArtists(index.artists, 14);
   // Music-video artwork is generally larger and more reliable than the tiny
   // archive thumbnails, so it leads the visual hero while the shelves keep
   // their chronological catalog order.
@@ -100,7 +100,7 @@ export default async function MusicPage({ searchParams }: Props) {
           <div><p>خواننده‌ها</p><h2>صفحهٔ اختصاصی هنرمندان</h2></div>
           <Link className="music-view-all" href="/music/artists">نمایش همه <span>←</span></Link>
         </div>
-        <div className="music-artists">
+        <div className="music-artists music-artist-rail">
           {featuredArtists.map((artist) => (
             <Link href={`/music/artists/${encodeURIComponent(artist.slug)}`} key={artist.slug} className="music-artist">
               <span style={(artist.profileImageUrl || artist.coverUrl) ? { backgroundImage: `url(${artist.profileImageUrl || artist.coverUrl})` } : undefined}>
@@ -131,4 +131,30 @@ function MusicShelf({ eyebrow, title, tracks, viewAll, preload = false }: { eyeb
 
 function asText(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+}
+
+function pickFeaturedArtists<T extends { slug: string; trackIds: string[]; profileImageUrl?: string | null; coverUrl: string | null }>(artists: T[], limit: number) {
+  const day = new Date().toISOString().slice(0, 10);
+  const pool = artists
+    .filter((artist) => artist.trackIds.length > 1)
+    .sort((left, right) => (
+      Number(Boolean(right.profileImageUrl || right.coverUrl)) - Number(Boolean(left.profileImageUrl || left.coverUrl))
+      || right.trackIds.length - left.trackIds.length
+    ))
+    .slice(0, Math.max(limit * 5, 70));
+
+  return pool
+    .map((artist) => ({ artist, score: hashArtist(`${day}:${artist.slug}`) }))
+    .sort((left, right) => left.score - right.score)
+    .slice(0, limit)
+    .map(({ artist }) => artist);
+}
+
+function hashArtist(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
 }
