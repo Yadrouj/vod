@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { BaseUrlAdmin } from "@/components/base-url-admin";
 import { F2myScraperAdmin } from "@/components/f2my-scraper-admin";
+import { ReleaseMonitorAdmin } from "@/components/release-monitor-admin";
 import { LanguageToggle } from "@/components/language-toggle";
 import { getDictionary } from "@/lib/i18n";
 import { loadDownloadSettings, rewriteDownloadUrl } from "@/lib/download-settings";
@@ -41,6 +42,7 @@ export default async function AdminPage() {
           locale={locale}
         />
         <F2myScraperAdmin />
+        <ReleaseMonitorAdmin />
       </section>
     </main>
   );

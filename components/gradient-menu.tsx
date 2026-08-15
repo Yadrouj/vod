@@ -38,6 +38,7 @@ export function GradientMenu({
   const [activeSectionId, setActiveSectionId] = useState(menuSections[0]?.id ?? "");
   const t = getDictionary(locale);
   const menuItems = [
+    { href: "/music", label: locale === "fa" ? "موسیقی" : "Music" },
     { href: "/browse?section=persian-movies", label: t.common.persianMovies },
     { href: "/browse?section=top-imdb", label: t.nav.topImdb },
     { href: "/browse?section=recent-films", label: t.nav.films },

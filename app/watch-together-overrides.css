@@ -232,6 +232,48 @@ html.watch-builder-is-open body { overflow: hidden !important; }
 .party-voice-panel .party-voice-meta > svg { width: 13px; height: 13px; }
 .party-voice-panel .party-voice-meta button { font-size: 7px; }
 .party-voice-panel .party-voice-meta button svg { width: 13px; height: 13px; }
+.party-voice-panel .party-local-music-share {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 5px;
+}
+.party-local-music-share input { display: none; }
+.party-local-music-start,
+.party-local-music-live {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid rgba(132, 239, 179, .28);
+  border-radius: 9px;
+  padding: 6px 8px;
+  color: #d7ffe8;
+  background: linear-gradient(135deg, rgba(53, 139, 91, .2), rgba(10, 17, 14, .68));
+  font: inherit;
+  font-size: 8px;
+  cursor: pointer;
+}
+.party-local-music-start:hover { border-color: rgba(157, 255, 197, .6); background: rgba(63, 157, 101, .28); }
+.party-local-music-start svg { width: 15px; height: 15px; }
+.party-local-music-live {
+  justify-content: space-between;
+  color: #d5fce2;
+  cursor: default;
+}
+.party-local-music-live > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.party-local-music-live button {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 6px;
+  padding: 4px 6px;
+  color: #ffd7d7;
+  background: rgba(174, 68, 68, .24);
+  font: inherit;
+  font-size: 7px;
+  cursor: pointer;
+}
+.party-local-music-note { color: rgba(224, 238, 230, .58); font-size: 6px; line-height: 1.35; }
 
 @keyframes party-lounge-in {
   from { opacity: 0; transform: translateY(-5px) scale(.985); }

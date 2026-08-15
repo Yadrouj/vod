@@ -21,14 +21,8 @@ export function NewsRail({ items, locale = DEFAULT_LOCALE }: { items: VodNewsIte
       </div>
 
       <div className="news-rail">
-        {items.slice(0, 9).map((item, index) => (
-          <a
-            key={item.id}
-            className={`news-card news-card-${index % 3}`}
-            href={item.url}
-            target="_blank"
-            rel="noreferrer"
-          >
+        {items.slice(0, 9).map((item, index) => {
+          const content = <>
             {item.imageUrl && (
               <img
                 className="news-card-backdrop"
@@ -50,8 +44,12 @@ export function NewsRail({ items, locale = DEFAULT_LOCALE }: { items: VodNewsIte
               <span>{item.source}</span>
               <span>{item.tags.slice(0, 3).join(" / ")}</span>
             </span>
-          </a>
-        ))}
+          </>;
+          if (item.url.startsWith("/")) {
+            return <Link key={item.id} className={`news-card news-card-${index % 3}`} href={item.url}>{content}</Link>;
+          }
+          return <a key={item.id} className={`news-card news-card-${index % 3}`} href={item.url} target="_blank" rel="noreferrer">{content}</a>;
+        })}
       </div>
     </section>
   );

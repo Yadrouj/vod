@@ -1,0 +1,77 @@
+{
+  "generatedAt": "2026-08-12T23:44:11.826Z",
+  "sources": [
+    "https://www.imdb.com/search/title/?title_type=feature&release_date=2026-08-05,2026-08-12&sort=release_date,desc",
+    "https://www.imdb.com/search/title/?title_type=tv_series%2Ctv_miniseries&release_date=2026-08-05,2026-08-12&sort=release_date,desc"
+  ],
+  "bootstrap": true,
+  "summary": {
+    "catalogTitles": 20101,
+    "available": 0,
+    "comingSoon": 3,
+    "newEvents": 3,
+    "imdbCandidates": 28
+  },
+  "items": [
+    {
+      "id": "coming-soon-tt27165187",
+      "eventAt": "2026-08-12T23:44:11.826Z",
+      "status": "coming-soon",
+      "kind": "film",
+      "title": "The End of Oak Street",
+      "baseTitle": "The End of Oak Street",
+      "imdbCode": "tt27165187",
+      "year": 2026,
+      "releaseDate": "2026-08-14",
+      "season": null,
+      "episode": null,
+      "href": null,
+      "imdbUrl": "https://www.imdb.com/title/tt27165187/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZGI0YmRjNWYtYTliYy00YzdjLTkzNzQtZWExNjA2ZDU5MzAwXkEyXkFqcGc@._V1_QL75_UY133_CR8,0,90,133_.jpg",
+      "sourceNames": [],
+      "qualities": [],
+      "linksCount": 0,
+      "reason": "IMDb release found — source scan is queued."
+    },
+    {
+      "id": "coming-soon-tt37959966",
+      "eventAt": "2026-08-12T23:44:11.826Z",
+      "status": "coming-soon",
+      "kind": "film",
+      "title": "Chiranjeevi Hanuman: The Eternal",
+      "baseTitle": "Chiranjeevi Hanuman: The Eternal",
+      "imdbCode": "tt37959966",
+      "year": 2026,
+      "releaseDate": "2026-09-25",
+      "season": null,
+      "episode": null,
+      "href": null,
+      "imdbUrl": "https://www.imdb.com/title/tt37959966/",
+      "imageUrl": null,
+      "sourceNames": [],
+      "qualities": [],
+      "linksCount": 0,
+      "reason": "IMDb release found — source scan is queued."
+    },
+    {
+      "id": "coming-soon-tt39305139",
+      "eventAt": "2026-08-12T23:44:11.826Z",
+      "status": "coming-soon",
+      "kind": "film",
+      "title": "The Wanted Part II",
+      "baseTitle": "The Wanted Part II",
+      "imdbCode": "tt39305139",
+      "year": 2026,
+      "releaseDate": "2026-08-28",
+      "season": null,
+      "episode": null,
+      "href": null,
+      "imdbUrl": "https://www.imdb.com/title/tt39305139/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOGI0YmE3NWQtODY4Yy00ZDNkLTk1YzMtOTQ2ZjBmNWM3MTJjXkEyXkFqcGc@._V1_QL75_UX90_CR0,1,90,133_.jpg",
+      "sourceNames": [],
+      "qualities": [],
+      "linksCount": 0,
+      "reason": "IMDb release found — source scan is queued."
+    }
+  ]
+}

@@ -4,17 +4,22 @@ import { BannerCarousel } from "@/components/banner-carousel";
 import { FocusRail } from "@/components/focus-rail";
 import { GradientMenu, type MegaMenuItem } from "@/components/gradient-menu";
 import { NewsRail } from "@/components/news-rail";
+import { MusicRail } from "@/components/music-rail";
 import { DownloadHistory } from "@/components/download-history";
 import { ContinueWatching } from "@/components/continue-watching";
 import { PeopleRail } from "@/components/people-rail";
 import { PosterRail } from "@/components/poster-rail";
+import { ReleaseUpdatesRail } from "@/components/release-updates-rail";
 import { WideRail as WideRailComponent } from "@/components/wide-rail";
 import { SearchSuggest } from "@/components/search-suggest";
+import { PublicPartyRooms } from "@/components/public-party-rooms";
 import { aiSearch } from "@/lib/ai-search";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import { loadVodNews } from "@/lib/news";
+import { loadReleaseUpdates } from "@/lib/release-updates";
 import { getLocale } from "@/lib/server-locale";
 import { loadTopPeople } from "@/lib/top-people";
+import { loadMusicIndex } from "@/lib/music";
 import { loadVodHomeIndex } from "@/lib/vod-index";
 import type { VodCard, VodHomeSection } from "@/lib/types";
 
@@ -30,7 +35,9 @@ export default async function HomePage() {
   const {
     index,
     news,
+    updates,
     topPeople,
+    music,
     heroBanners,
     midBanners,
     initialAiResults,
@@ -71,6 +78,9 @@ export default async function HomePage() {
       <section className="home-stack wrap">
         <DownloadHistory />
         <ContinueWatching />
+        <PublicPartyRooms mode="watch" locale={locale} />
+        <ReleaseUpdatesRail items={updates.items} locale={locale} />
+        <MusicRail tracks={music.tracks} />
         <HomeRail section={localizeSection(index.sections[0], locale)} locale={locale} />
         {persianSection && <HomeRail section={localizeSection(persianSection, locale)} locale={locale} />}
         <FocusRail items={midBanners} locale={locale} />
@@ -90,10 +100,12 @@ export default async function HomePage() {
 }
 
 async function buildHomePageData(locale: Locale) {
-  const [index, news, topPeople] = await Promise.all([
+  const [index, news, topPeople, updates, music] = await Promise.all([
     loadVodHomeIndex(),
     loadVodNews(),
     loadTopPeople(),
+    loadReleaseUpdates(),
+    loadMusicIndex(),
   ]);
   const t = getDictionary(locale);
   const heroBanners = uniqueBackdropCards([
@@ -158,7 +170,9 @@ async function buildHomePageData(locale: Locale) {
   return {
     index,
     news,
+    updates,
     topPeople,
+    music,
     heroBanners,
     midBanners,
     initialAiResults,

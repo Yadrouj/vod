@@ -1,0 +1,28 @@
+import Link from "next/link";
+import { ArrowLeft, Search } from "lucide-react";
+import { loadMusicIndex } from "@/lib/music";
+
+export const revalidate = 300;
+
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
+
+export default async function MusicArtistsPage({ searchParams }: Props) {
+  const [index, params] = await Promise.all([loadMusicIndex(), searchParams]);
+  const query = text(params.q).trim().toLocaleLowerCase();
+  const requestedPage = Math.max(1, Number(text(params.page)) || 1);
+  const artists = index.artists.filter((artist) => !query || `${artist.name} ${artist.aliases?.join(" ") ?? ""}`.toLocaleLowerCase().includes(query));
+  const perPage = 60;
+  const pages = Math.max(1, Math.ceil(artists.length / perPage));
+  const page = Math.min(requestedPage, pages);
+  const visible = artists.slice((page - 1) * perPage, page * perPage);
+
+  return <main className="shell music-artists-page" dir="rtl"><section className="wrap">
+    <Link href="/music" className="music-back"><ArrowLeft size={16} /> بازگشت به موسیقی</Link>
+    <header className="music-directory-head"><div><p>ARTIST DIRECTORY</p><h1>همهٔ خواننده‌ها</h1><span>{artists.length.toLocaleString("fa-IR")} پروفایل از آرشیو موسیقی سرو‌نما</span></div><form action="/music/artists" className="music-directory-search"><Search size={16} /><input name="q" defaultValue={query} placeholder="نام خواننده…" /><button type="submit">جستجو</button></form></header>
+    <div className="music-directory-grid">{visible.map((artist) => <Link href={`/music/artists/${encodeURIComponent(artist.slug)}`} key={artist.slug} className="music-directory-artist"><span style={(artist.profileImageUrl || artist.coverUrl) ? { backgroundImage: `url(${artist.profileImageUrl || artist.coverUrl})` } : undefined}>{!(artist.profileImageUrl || artist.coverUrl) && artist.name.slice(0, 1)}</span><strong>{artist.name}</strong><small>{artist.trackIds.length.toLocaleString("fa-IR")} اثر</small></Link>)}</div>
+    {pages > 1 && <nav className="music-directory-pages" aria-label="Artist pages">{page > 1 && <Link href={href(query, page - 1)}>بعدی</Link>}<span>{page.toLocaleString("fa-IR")} از {pages.toLocaleString("fa-IR")}</span>{page < pages && <Link href={href(query, page + 1)}>قبلی</Link>}</nav>}
+  </section></main>;
+}
+
+function text(value: string | string[] | undefined) { return Array.isArray(value) ? value[0] ?? "" : value ?? ""; }
+function href(query: string, page: number) { const params = new URLSearchParams({ page: String(page) }); if (query) params.set("q", query); return `/music/artists?${params}`; }

@@ -22,5 +22,10 @@ data/f2my-scrape-status.json.*.tmp
 data/f2my-scrape-status/
 data/f2my-scrape-control.json
 data/series-expansion-cache.json
+data/release-monitor-state.json
+data/release-monitor-status.json
+data/release-monitor.lock
+data/daily-release-bot-status.json
+data/daily-release-refresh.lock
 .media-cache/
 public/data/vod-sync-status.json

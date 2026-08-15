@@ -1,0 +1,17 @@
+{
+  "state": "complete",
+  "startedAt": "2026-08-13T18:22:44.661Z",
+  "updatedAt": "2026-08-13T18:23:08.445Z",
+  "pages": {
+    "total": 18,
+    "complete": 18,
+    "failed": 0
+  },
+  "tracks": {
+    "discovered": 180,
+    "new": 179,
+    "duplicate": 1
+  },
+  "warnings": [],
+  "current": null
+}

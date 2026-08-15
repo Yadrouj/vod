@@ -1,10 +1,10 @@
 "use client";
 
-import { Accessibility, Camera, CameraOff, Headphones, Mic, MicOff, Move, PhoneOff, Radio, RefreshCw, ShieldAlert, ShieldCheck, Users, Wifi, WifiOff } from "lucide-react";
+import { Accessibility, Camera, CameraOff, FileAudio, Headphones, Mic, MicOff, Move, PhoneOff, Radio, RefreshCw, ShieldAlert, ShieldCheck, Square, Upload, Users, Volume2, Wifi, WifiOff } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import type { Socket } from "socket.io-client";
 import { showAppMessage } from "@/lib/app-messages";
-import type { PartyParticipant, PartyProfile } from "@/lib/watch-party-types";
+import type { PartyParticipant, PartyProfile, PartySharedAudio } from "@/lib/watch-party-types";
 
 type VoiceSignal = {
   fromUserId: string;
@@ -21,6 +21,7 @@ type VoiceJoinResult = {
 };
 
 type CameraResult = { ok: boolean; cameras?: string[]; error?: string };
+type MusicShareResult = { ok: boolean; sharedAudio?: PartySharedAudio | null; error?: string };
 type CameraOffset = { x: number; y: number };
 type CameraDrag = CameraOffset & {
   userId: string;
@@ -50,6 +51,9 @@ export function WatchPartyVoice({
   cameraAllowed,
   interpreterAllowed,
   interpreterUserId,
+  isListeningRoom = false,
+  localAudioAllowed = false,
+  sharedAudio = null,
   controlsVisible = true,
 }: {
   socket: Socket;
@@ -60,6 +64,9 @@ export function WatchPartyVoice({
   cameraAllowed: boolean;
   interpreterAllowed: boolean;
   interpreterUserId: string | null;
+  isListeningRoom?: boolean;
+  localAudioAllowed?: boolean;
+  sharedAudio?: PartySharedAudio | null;
   controlsVisible?: boolean;
 }) {
   const peersRef = useRef(new Map<string, RTCPeerConnection>());
@@ -67,6 +74,15 @@ export function WatchPartyVoice({
   const remoteVideoStreamsRef = useRef(new Map<string, MediaStream>());
   const pendingCandidatesRef = useRef(new Map<string, RTCIceCandidateInit[]>());
   const localStreamRef = useRef<MediaStream | null>(null);
+  const microphoneTrackRef = useRef<MediaStreamTrack | null>(null);
+  const localMusicTrackRef = useRef<MediaStreamTrack | null>(null);
+  const localMusicAudioRef = useRef<HTMLAudioElement | null>(null);
+  const localMusicObjectUrlRef = useRef<string | null>(null);
+  const localMusicContextRef = useRef<AudioContext | null>(null);
+  const localMusicSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const localMusicSendersRef = useRef(new Map<string, RTCRtpSender>());
+  const localMusicActiveRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const audioContainerRef = useRef<HTMLDivElement>(null);
   const cameraDragRef = useRef<CameraDrag | null>(null);
   const joinedRef = useRef(false);
@@ -91,6 +107,9 @@ export function WatchPartyVoice({
   const [draggingCameraId, setDraggingCameraId] = useState<string | null>(null);
   const [cameraOffsets, setCameraOffsets] = useState<Record<string, CameraOffset>>({});
   const [network, setNetwork] = useState<NetworkSnapshot>({ quality: "solo", rttMs: null, loss: null });
+  const [musicStarting, setMusicStarting] = useState(false);
+  const [musicSharing, setMusicSharing] = useState(false);
+  const [activeSharedAudio, setActiveSharedAudio] = useState<PartySharedAudio | null>(sharedAudio);
   participantsRef.current = participants;
   mutedLocallyRef.current = mutedLocally;
 
@@ -129,6 +148,13 @@ export function WatchPartyVoice({
       stopCamera(false);
       showAppMessage({ title: "Camera paused by the host", message: "Your camera is off. The movie and voice room are still running.", tone: "warning" });
     };
+    const onMusicShare = ({ sharedAudio: nextSharedAudio }: { sharedAudio: PartySharedAudio | null }) => {
+      setActiveSharedAudio(nextSharedAudio ?? null);
+    };
+    const onForceMusicOff = () => {
+      stopLocalMusic(false, false);
+      showAppMessage({ title: "Local track stopped by the host", message: "Your browser stream is off; the room soundtrack is paused and ready for the next cue.", tone: "warning" });
+    };
 
     socket.on("voice:signal", onSignal);
     socket.on("voice:peer-joined", onPeerJoined);
@@ -136,6 +162,8 @@ export function WatchPartyVoice({
     socket.on("voice:talking", onTalking);
     socket.on("voice:camera", onCamera);
     socket.on("voice:camera-force-off", onForceCameraOff);
+    socket.on("voice:music-share", onMusicShare);
+    socket.on("voice:music-share-force-off", onForceMusicOff);
     return () => {
       socket.off("voice:signal", onSignal);
       socket.off("voice:peer-joined", onPeerJoined);
@@ -143,6 +171,8 @@ export function WatchPartyVoice({
       socket.off("voice:talking", onTalking);
       socket.off("voice:camera", onCamera);
       socket.off("voice:camera-force-off", onForceCameraOff);
+      socket.off("voice:music-share", onMusicShare);
+      socket.off("voice:music-share-force-off", onForceMusicOff);
       if (joinedRef.current) socket.emit("voice:leave", { roomId });
       joinedRef.current = false;
       for (const peer of peersRef.current.values()) peer.close();
@@ -150,8 +180,10 @@ export function WatchPartyVoice({
       for (const audio of remoteAudioRef.current.values()) audio.remove();
       remoteAudioRef.current.clear();
       remoteVideoStreamsRef.current.clear();
+      stopLocalMusic(false, false);
       for (const track of localStreamRef.current?.getTracks() ?? []) track.stop();
       localStreamRef.current = null;
+      microphoneTrackRef.current = null;
     };
   }, [profile.id, roomId, socket]);
 
@@ -221,10 +253,12 @@ export function WatchPartyVoice({
       const audioTrack = stream.getAudioTracks()[0];
       if (!audioTrack) throw new DOMException("No microphone track was created.", "NotFoundError");
       audioTrack.enabled = false;
+      microphoneTrackRef.current = audioTrack;
       setPermissionState("granted");
       if (!joinedRef.current) await joinMediaSession(stream);
       else {
-        localStreamRef.current?.addTrack(audioTrack);
+        if (!localStreamRef.current) localStreamRef.current = new MediaStream();
+        localStreamRef.current.addTrack(audioTrack);
         await replaceTrackForAll("audio", audioTrack);
       }
       setMicrophoneReady(true);
@@ -262,6 +296,7 @@ export function WatchPartyVoice({
   function leaveVoice() {
     stopTalking();
     stopCamera(false);
+    stopLocalMusic(false);
     socket.emit("voice:leave", { roomId });
     joinedRef.current = false;
     for (const peer of peersRef.current.values()) peer.close();
@@ -271,6 +306,7 @@ export function WatchPartyVoice({
     remoteVideoStreamsRef.current.clear();
     for (const track of localStreamRef.current?.getTracks() ?? []) track.stop();
     localStreamRef.current = null;
+    microphoneTrackRef.current = null;
     setRemoteVideoStreams(new Map());
     setJoined(false);
     setMicrophoneReady(false);
@@ -288,7 +324,7 @@ export function WatchPartyVoice({
       showAppMessage({ title: "Push-to-talk is muted", message: "The host currently has your room microphone muted.", tone: "warning" });
       return;
     }
-    const track = localStreamRef.current?.getAudioTracks()[0];
+    const track = microphoneTrackRef.current;
     if (!track) return;
     track.enabled = true;
     setTalking(true);
@@ -297,12 +333,95 @@ export function WatchPartyVoice({
   }
 
   function stopTalking() {
-    const track = localStreamRef.current?.getAudioTracks()[0];
+    const track = microphoneTrackRef.current;
     if (track) track.enabled = false;
     if (!talking) return;
     setTalking(false);
     setActiveTalkers((current) => without(current, profile.id));
     socket.emit("voice:talking", { roomId, active: false });
+  }
+
+  async function startLocalMusic(file: File) {
+    if (!isListeningRoom || musicStarting || musicSharing) return;
+    if (!localAudioAllowed) {
+      showAppMessage({ title: "Local music is locked", message: "Ask the room host to enable Share local music for you.", tone: "warning" });
+      return;
+    }
+    if (file.type && !file.type.startsWith("audio/")) {
+      showAppMessage({ title: "Choose an audio file", message: "MP3, M4A, WAV, OGG, and other browser-playable audio files work here.", tone: "warning" });
+      return;
+    }
+    setMusicStarting(true);
+    setVoiceIssue(null);
+    try {
+      stopLocalMusic(false);
+      const objectUrl = URL.createObjectURL(file);
+      const audio = document.createElement("audio");
+      audio.src = objectUrl;
+      audio.preload = "auto";
+      audio.volume = 1;
+      const context = new AudioContext();
+      const sourceNode = context.createMediaElementSource(audio);
+      const destination = context.createMediaStreamDestination();
+      sourceNode.connect(destination);
+      sourceNode.connect(context.destination);
+      await context.resume();
+      const track = destination.stream.getAudioTracks()[0];
+      if (!track) throw new DOMException("The browser could not capture this audio file.", "NotSupportedError");
+      track.contentHint = "music";
+      localMusicTrackRef.current = track;
+      localMusicAudioRef.current = audio;
+      localMusicObjectUrlRef.current = objectUrl;
+      localMusicContextRef.current = context;
+      localMusicSourceRef.current = sourceNode;
+      audio.addEventListener("ended", () => stopLocalMusic(true), { once: true });
+
+      // Start the local preview while this click still has browser user
+      // activation. Waiting for WebRTC signaling first can make Safari and
+      // mobile Chromium reject the eventual play() call.
+      await audio.play();
+      if (!joinedRef.current) await joinMediaSession(new MediaStream());
+      await replaceLocalMusicTrackForAll(track);
+      const result = await emitMusicShare(socket, roomId, true, file.name);
+      if (!result.ok) throw new Error(result.error ?? "This local track could not be shared.");
+      localMusicActiveRef.current = true;
+      setMusicSharing(true);
+      setActiveSharedAudio(result.sharedAudio ?? { userId: profile.id, name: profile.name, fileName: file.name, startedAt: Date.now() });
+      setPanelOpen(true);
+      showAppMessage({ title: "Your local track is live 🎵", message: "It stays in your browser and streams directly to the people in this listening room.", tone: "success" });
+    } catch (reason) {
+      stopLocalMusic(false);
+      const message = reason instanceof Error ? reason.message : "The local track could not be started.";
+      showAppMessage({ title: "Local track could not start", message, tone: "error" });
+    } finally {
+      setMusicStarting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  function stopLocalMusic(announce = true, notifyServer = true) {
+    const wasActive = localMusicActiveRef.current;
+    localMusicActiveRef.current = false;
+    if (notifyServer && wasActive && joinedRef.current) socket.emit("voice:music-share", { roomId, active: false });
+    void replaceLocalMusicTrackForAll(null);
+    localMusicTrackRef.current?.stop();
+    localMusicTrackRef.current = null;
+    const audio = localMusicAudioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+    }
+    localMusicAudioRef.current = null;
+    localMusicSourceRef.current?.disconnect();
+    localMusicSourceRef.current = null;
+    const context = localMusicContextRef.current;
+    localMusicContextRef.current = null;
+    void context?.close().catch(() => undefined);
+    if (localMusicObjectUrlRef.current) URL.revokeObjectURL(localMusicObjectUrlRef.current);
+    localMusicObjectUrlRef.current = null;
+    setMusicSharing(false);
+    if (wasActive && announce) showAppMessage({ title: "Local track ended", message: "The live browser stream is off. Pick another file whenever the next song calls.", tone: "info" });
   }
 
   async function startCamera() {
@@ -444,10 +563,25 @@ export function WatchPartyVoice({
     }
   }
 
+  async function replaceLocalMusicTrackForAll(track: MediaStreamTrack | null) {
+    for (const [userId, peer] of peersRef.current) {
+      let sender = localMusicSendersRef.current.get(userId);
+      let added = false;
+      if (track && !sender) {
+        sender = peer.addTransceiver("audio", { direction: "sendrecv" }).sender;
+        localMusicSendersRef.current.set(userId, sender);
+        added = true;
+      }
+      if (sender && sender.track !== track) await sender.replaceTrack(track);
+      if (added) await makeOffer(userId, peer);
+    }
+  }
+
   async function makeOffer(userId: string, providedPeer?: RTCPeerConnection) {
     const peer = providedPeer ?? ensurePeer(userId, true);
     ensureMediaTransceivers(peer);
     await attachLocalTracks(peer);
+    await attachLocalMusicTrack(peer, userId);
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
     socket.emit("voice:signal", { roomId, targetUserId: userId, description: peer.localDescription });
@@ -461,6 +595,7 @@ export function WatchPartyVoice({
       if (signal.description) {
         await peer.setRemoteDescription(signal.description);
         await attachLocalTracks(peer);
+        await attachLocalMusicTrack(peer, signal.fromUserId);
         const pending = pendingCandidatesRef.current.get(signal.fromUserId) ?? [];
         for (const candidate of pending) await peer.addIceCandidate(candidate);
         pendingCandidatesRef.current.delete(signal.fromUserId);
@@ -504,24 +639,40 @@ export function WatchPartyVoice({
 
   async function attachLocalTracks(peer: RTCPeerConnection) {
     for (const kind of ["audio", "video"] as const) {
-      const track = kind === "audio" ? localStreamRef.current?.getAudioTracks()[0] : localStreamRef.current?.getVideoTracks()[0];
+      const track = kind === "audio" ? microphoneTrackRef.current : localStreamRef.current?.getVideoTracks()[0];
       const sender = mediaSender(peer, kind);
       if (sender && sender.track !== (track ?? null)) await sender.replaceTrack(track ?? null);
     }
   }
 
+  async function attachLocalMusicTrack(peer: RTCPeerConnection, userId: string) {
+    const track = localMusicTrackRef.current;
+    if (!track) return;
+    let sender = localMusicSendersRef.current.get(userId);
+    if (!sender) {
+      sender = peer.addTransceiver("audio", { direction: "sendrecv" }).sender;
+      localMusicSendersRef.current.set(userId, sender);
+    }
+    if (sender.track !== track) await sender.replaceTrack(track);
+  }
+
   function attachRemoteAudio(userId: string, track: MediaStreamTrack) {
-    let audio = remoteAudioRef.current.get(userId);
+    const audioId = `${userId}:${track.id}`;
+    let audio = remoteAudioRef.current.get(audioId);
     if (!audio) {
       audio = document.createElement("audio");
       audio.autoplay = true;
       audio.dataset.voiceUser = userId;
       audioContainerRef.current?.appendChild(audio);
-      remoteAudioRef.current.set(userId, audio);
+      remoteAudioRef.current.set(audioId, audio);
     }
     audio.srcObject = new MediaStream([track]);
     audio.muted = shouldMute(userId);
     void audio.play().catch(() => undefined);
+    track.addEventListener("ended", () => {
+      remoteAudioRef.current.get(audioId)?.remove();
+      remoteAudioRef.current.delete(audioId);
+    }, { once: true });
   }
 
   function attachRemoteVideo(userId: string, track: MediaStreamTrack) {
@@ -539,8 +690,12 @@ export function WatchPartyVoice({
   function closePeer(userId: string) {
     peersRef.current.get(userId)?.close();
     peersRef.current.delete(userId);
-    remoteAudioRef.current.get(userId)?.remove();
-    remoteAudioRef.current.delete(userId);
+    localMusicSendersRef.current.delete(userId);
+    for (const [audioId, audio] of remoteAudioRef.current) {
+      if (!audioId.startsWith(`${userId}:`)) continue;
+      audio.remove();
+      remoteAudioRef.current.delete(audioId);
+    }
     removeRemoteVideo(userId);
     pendingCandidatesRef.current.delete(userId);
   }
@@ -620,6 +775,12 @@ export function WatchPartyVoice({
             <button className={`party-interpreter-toggle ${interpreterActive ? "is-live" : ""}`} type="button" disabled={!interpreterAllowed} onClick={() => void toggleInterpreter()} aria-label={interpreterControlLabel} title={interpreterControlLabel}>
               <Accessibility size={17} /><span>{interpreterControlLabel}</span>
             </button>
+
+            {isListeningRoom && <div className="party-local-music-share">
+              <input ref={fileInputRef} type="file" accept="audio/*,.mp3,.m4a,.aac,.ogg,.wav,.flac" onChange={(event) => { const file = event.currentTarget.files?.[0]; if (file) void startLocalMusic(file); }} />
+              {activeSharedAudio ? <div className={`party-local-music-live ${activeSharedAudio.userId === profile.id ? "is-mine" : ""}`}><Volume2 size={15} /><span><strong>{activeSharedAudio.userId === profile.id ? "Your local track is live" : `${activeSharedAudio.name}'s local track`}</strong><small>{activeSharedAudio.fileName}</small></span>{activeSharedAudio.userId === profile.id && <button type="button" onClick={() => stopLocalMusic()} aria-label="Stop local track" title="Stop local track"><Square size={13} fill="currentColor" /></button>}</div> : <button className="party-local-music-start" type="button" disabled={musicStarting || !localAudioAllowed} onClick={() => fileInputRef.current?.click()} title={localAudioAllowed ? "Share an audio file from this browser" : "Host permission is required"}><FileAudio size={16} /><span>{musicStarting ? "Opening local track…" : localAudioAllowed ? "Play local file" : "Local file locked"}</span><Upload size={13} /></button>}
+              {!activeSharedAudio && <small className="party-local-music-note">{localAudioAllowed ? "Stays on your device; it streams live to people in the Media Lounge." : "Ask the host to enable Share local music."}</small>}
+            </div>}
 
             {joined && <div className="party-voice-meta"><Users size={15} /><span>{Math.max(peerIds.size, 1)} in lounge</span><button type="button" onClick={leaveVoice}><PhoneOff size={15} /> Leave</button></div>}
           </div>
@@ -748,6 +909,16 @@ function emitCamera(socket: Socket, roomId: string, active: boolean) {
   return new Promise<CameraResult>((resolve) => {
     const timer = window.setTimeout(() => resolve({ ok: false, error: "Camera permission timed out." }), 8_000);
     socket.emit("voice:camera", { roomId, active }, (result: CameraResult) => { window.clearTimeout(timer); resolve(result); });
+  });
+}
+
+function emitMusicShare(socket: Socket, roomId: string, active: boolean, fileName?: string) {
+  return new Promise<MusicShareResult>((resolve) => {
+    const timer = window.setTimeout(() => resolve({ ok: false, error: "Local music request timed out." }), 8_000);
+    socket.emit("voice:music-share", { roomId, active, fileName }, (result: MusicShareResult) => {
+      window.clearTimeout(timer);
+      resolve(result);
+    });
   });
 }
 

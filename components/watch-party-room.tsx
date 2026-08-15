@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Captions, Check, Clock3, Copy, ExternalLink, Film, Globe2, Maximize2, MessageCircle, Minimize2, Pause, Play, Send, Settings, Share2, SmilePlus, Star, Users, X } from "lucide-react";
+import { Captions, Check, Clock3, Copy, Disc3, ExternalLink, Film, Globe2, Maximize2, MessageCircle, Minimize2, Pause, Play, Send, Settings, Share2, SmilePlus, Star, Users, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import type { PartyCapability, PartyChatMessage, PartyMedia, PartyParticipant, PartyPermissions, PartyProfile, PartyQueueItem, PartyReaction, PartySnapshot } from "@/lib/watch-party-types";
@@ -29,13 +29,14 @@ const CAPABILITIES: { id: PartyCapability; label: string }[] = [
   { id: "playback", label: "Play / pause" }, { id: "seek", label: "Seek" }, { id: "changeSource", label: "Change source" },
   { id: "changeMedia", label: "Change movie" }, { id: "queue", label: "Manage queue" }, { id: "chat", label: "Chat" }, { id: "react", label: "Reactions" },
   { id: "subtitles", label: "Change room subtitles" }, { id: "camera", label: "Stream camera" },
-  { id: "liveCaptions", label: "Share live captions" }, { id: "interpreter", label: "Sign interpreter" },
+  { id: "liveCaptions", label: "Share live captions" }, { id: "interpreter", label: "Sign interpreter" }, { id: "shareLocalAudio", label: "Share local music" },
 ];
 const REACTION_EMOJIS = ["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDC4F", "\uD83D\uDD25", "\uD83D\uDE2E", "\uD83D\uDE22"];
 
 export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const socketRef = useRef<Socket | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const mutedRef = useRef<Set<string>>(new Set());
   const pendingPlayback = useRef<PlaybackState | null>(null);
@@ -124,7 +125,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   }, [chat, stagePanel]);
 
   useEffect(() => {
-    if (!profile || !inviteToken) return;
+    if (!profile) return;
     const socket = io({ transports: ["websocket", "polling"] }); socketRef.current = socket;
     const applyPlayback = (state: PlaybackState) => {
       if (state.revision < lastAppliedRevision.current) return;
@@ -140,7 +141,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
       pendingPlayback.current = state;
       latestPlayback.current = state;
       setSnapshot((current) => current ? { ...current, playback: state } : current);
-      const video = videoRef.current;
+      const video = state.media.mediaKind === "audio" ? audioRef.current : videoRef.current;
       if (!video || video.readyState < 1 || video.getAttribute("src") !== state.media.source.url) return;
 
       const estimatedServerNow = hasServerClockOffset.current ? receivedAt + serverClockOffset.current : Number(state.serverNow ?? receivedAt);
@@ -203,9 +204,10 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
       const emptyTimer = window.setTimeout(() => setResults([]), 0);
       return () => window.clearTimeout(emptyTimer);
     }
-    const timer = window.setTimeout(() => fetch(`/api/suggest?q=${encodeURIComponent(query)}`).then((response) => response.json()).then((data) => setResults(data.items ?? [])).catch(() => setResults([])), 250);
+    const endpoint = snapshot?.playback.media.catalogue === "music" ? "/api/music/search" : "/api/suggest";
+    const timer = window.setTimeout(() => fetch(`${endpoint}?q=${encodeURIComponent(query)}`).then((response) => response.json()).then((data) => setResults(data.items ?? [])).catch(() => setResults([])), 250);
     return () => window.clearTimeout(timer);
-  }, [query]);
+  }, [query, snapshot?.playback.media.catalogue]);
 
   useEffect(() => {
     if (profile) return;
@@ -222,7 +224,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     const nowAtServer = hasServerClockOffset.current ? Date.now() + serverClockOffset.current : Number(state.serverNow ?? state.updatedAt);
     return state.paused ? state.currentTime : state.currentTime + Math.max(0, nowAtServer - Number(state.serverNow ?? state.updatedAt)) / 1000 * state.playbackRate;
   }
-  function resumeWhenReady(event: React.SyntheticEvent<HTMLVideoElement>) {
+  function resumeWhenReady(event: React.SyntheticEvent<HTMLMediaElement>) {
     const video = event.currentTarget;
     const state = latestPlayback.current;
     if (!state) return;
@@ -230,7 +232,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     if (state.paused) video.pause();
     else video.play().catch(() => undefined);
   }
-  function finishRemoteSeek(event: React.SyntheticEvent<HTMLVideoElement>) {
+  function finishRemoteSeek(event: React.SyntheticEvent<HTMLMediaElement>) {
     const video = event.currentTarget;
     const state = latestPlayback.current;
     if (!state) return;
@@ -320,7 +322,12 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   }
   function saveIdentity() { const value = newPartyProfile(name, avatar || null); savePartyProfile(value); setProfile(value); }
   function muteLocal(userId: string) { const next = new Set(mutedRef.current); if (next.has(userId)) next.delete(userId); else next.add(userId); mutedRef.current = next; setMutedLocally(next); localStorage.setItem("sarvnema_party_muted", JSON.stringify([...next])); }
-  async function loadMedia(itemId: string) { const response = await fetch(`/api/watch-party/title/${encodeURIComponent(itemId)}`); if (!response.ok) return null; return response.json() as Promise<PartyMedia>; }
+  async function loadMedia(itemId: string) {
+    const catalogue = snapshot?.playback.media.catalogue === "music" ? "music" : "title";
+    const response = await fetch(`/api/watch-party/${catalogue}/${encodeURIComponent(itemId)}`);
+    if (!response.ok) return null;
+    return response.json() as Promise<PartyMedia>;
+  }
   async function queueMedia(itemId: string, playNow = false) { const media = await loadMedia(itemId); if (!media) return; socketRef.current?.emit(playNow ? "playback:command" : "queue:add", playNow ? { roomId, action: "media", media } : { roomId, media }); setQuery(""); setResults([]); }
   async function copyInvite() {
     try {
@@ -345,7 +352,6 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   function playbackTitle() { return snapshot?.playback.media.title ?? "SarvNema Watch Together"; }
 
   if (!inviteLoaded) return <PartyMessage title="Opening invite…" text="Checking the room link." />;
-  if (!inviteToken) return <PartyMessage title="Invalid invite" text="This room link does not contain an invite token." />;
   if (!profile) return (
     <div className="party-entry party-entry-join">
       <div className="party-entry-card">
@@ -381,6 +387,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   if (!snapshot) return <PartyMessage title="Joining room…" text="Connecting to the synchronized session." />;
 
   const playback = snapshot.playback;
+  const isListeningRoom = playback.media.mediaKind === "audio";
   const cinemaFullscreen = stageFullscreen || pseudoFullscreen;
   const roomChat = chat.filter((message) => !mutedLocally.has(message.userId));
   const latestChat = roomChat.at(-1);
@@ -392,7 +399,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
       <header className="party-header">
         <div className="party-header-brand">
           <span className="party-header-mark"><WatchTogetherMark /></span>
-          <div><span className="label">Watch together · {connected ? "Live" : "Connecting"}</span><h1>{playback.media.title}</h1></div>
+          <div><span className="label">{isListeningRoom ? "Listen together" : "Watch together"} · {connected ? "Live" : "Connecting"}</span><h1>{playback.media.title}</h1></div>
         </div>
         <div className="chips party-header-actions">
           <button className="chip party-share-primary" type="button" onClick={shareInvite}><Share2 size={15} /> <span>Share room</span></button>
@@ -401,17 +408,24 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
         </div>
       </header>
       <div
-        className={`party-player-stage ${hudVisible ? "is-hud-visible" : "is-hud-hidden"} ${cinemaFullscreen ? "is-cinema-fullscreen" : ""} ${pseudoFullscreen ? "is-pseudo-fullscreen" : ""} ${stagePanel ? `has-${stagePanel}-panel` : ""}`}
+        className={`party-player-stage ${isListeningRoom ? "party-listening-stage" : ""} ${hudVisible ? "is-hud-visible" : "is-hud-hidden"} ${cinemaFullscreen ? "is-cinema-fullscreen" : ""} ${pseudoFullscreen ? "is-pseudo-fullscreen" : ""} ${stagePanel ? `has-${stagePanel}-panel` : ""}`}
         ref={stageRef}
         onClick={handleStageClick}
         onPointerMove={handleStagePointerMove}
         onPointerDownCapture={(event) => { if (isStageUiTarget(event.target)) revealHud(); }}
       >
-        <video ref={videoRef} key={playback.media.source.url} src={playback.media.source.url} poster={playback.media.posterUrl ?? undefined} playsInline preload="auto" onLoadedMetadata={(event) => { setPlayerDuration(event.currentTarget.duration || 0); const state = pendingPlayback.current ?? playback; latestPlayback.current = state; const next = Math.max(0, expectedPosition(state)); remoteSeekInFlight.current = Math.abs(event.currentTarget.currentTime - next) > .05; event.currentTarget.currentTime = next; event.currentTarget.playbackRate = state.playbackRate; if (state.paused) event.currentTarget.pause(); else event.currentTarget.play().catch(() => undefined); }} onTimeUpdate={(event) => { if (scrubTimeRef.current === null) setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={resumeWhenReady} />
+        {isListeningRoom ? (
+          <>
+            <audio ref={audioRef} key={playback.media.source.url} src={playback.media.source.url} preload="auto" onLoadedMetadata={(event) => { setPlayerDuration(event.currentTarget.duration || 0); const state = pendingPlayback.current ?? playback; latestPlayback.current = state; const next = Math.max(0, expectedPosition(state)); remoteSeekInFlight.current = Math.abs(event.currentTarget.currentTime - next) > .05; event.currentTarget.currentTime = next; event.currentTarget.playbackRate = state.playbackRate; if (state.paused) event.currentTarget.pause(); else event.currentTarget.play().catch(() => undefined); }} onTimeUpdate={(event) => { if (scrubTimeRef.current === null) setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={resumeWhenReady} />
+            <div className="party-listening-art" style={playback.media.posterUrl ? { backgroundImage: `url(${playback.media.posterUrl})` } : undefined} aria-hidden="true"><div>{playback.media.posterUrl ? <img src={playback.media.posterUrl} alt="" /> : <Disc3 size={84} />}</div></div>
+            <div className="party-listening-copy" data-player-ui="true"><span>LISTEN TOGETHER · LIVE SYNC</span><h2>{playback.media.title}</h2><p>{playback.media.artistName || playback.media.details?.credits?.map((credit) => credit.name).join(" · ") || "Shared music room"}</p><small>{snapshot.participants.filter((item) => item.connected).length} people in the room · {playback.paused ? "paused" : "playing together"}</small></div>
+            <div className="party-listening-wave" aria-hidden="true">{Array.from({ length: 32 }, (_, index) => <i key={index} style={{ "--wave": `${28 + (index * 19) % 72}%`, "--delay": `${index * -0.07}s` } as React.CSSProperties} />)}</div>
+          </>
+        ) : <video ref={videoRef} key={playback.media.source.url} src={playback.media.source.url} poster={playback.media.posterUrl ?? undefined} playsInline preload="auto" onLoadedMetadata={(event) => { setPlayerDuration(event.currentTarget.duration || 0); const state = pendingPlayback.current ?? playback; latestPlayback.current = state; const next = Math.max(0, expectedPosition(state)); remoteSeekInFlight.current = Math.abs(event.currentTarget.currentTime - next) > .05; event.currentTarget.currentTime = next; event.currentTarget.playbackRate = state.playbackRate; if (state.paused) event.currentTarget.pause(); else event.currentTarget.play().catch(() => undefined); }} onTimeUpdate={(event) => { if (scrubTimeRef.current === null) setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={resumeWhenReady} />}
         <div className="party-cinema-shade" aria-hidden="true" />
         <div className="party-reaction-layer">{reactions.map((reaction, index) => <div className="party-floating-reaction" key={reaction.id} style={{ left: `${12 + (index * 17) % 72}%` }}>{reaction.avatarUrl ? <img src={reaction.avatarUrl} alt="" /> : <span>{reaction.name.slice(0, 1)}</span>}<b>{reaction.emoji}</b><small>{reaction.name}</small></div>)}</div>
-        {roomSocket && <WatchPartyAccessibility controlsVisible={hudVisible} socket={roomSocket} roomId={roomId} participants={snapshot.participants} canCaption={can("liveCaptions")} onOpenMovieSubtitles={() => { clearHudTimer(); setHudVisible(true); setStagePanel(null); setSubtitlesOpen(true); setSettingsOpen(false); }} />}
-        {roomSocket && <WatchPartyVoice controlsVisible={hudVisible} socket={roomSocket} roomId={roomId} profile={profile} participants={snapshot.participants} mutedLocally={mutedLocally} cameraAllowed={can("camera")} interpreterAllowed={can("interpreter")} interpreterUserId={snapshot.interpreterUserId} />}
+        {roomSocket && !isListeningRoom && <WatchPartyAccessibility controlsVisible={hudVisible} socket={roomSocket} roomId={roomId} participants={snapshot.participants} canCaption={can("liveCaptions")} onOpenMovieSubtitles={() => { clearHudTimer(); setHudVisible(true); setStagePanel(null); setSubtitlesOpen(true); setSettingsOpen(false); }} />}
+        {roomSocket && <WatchPartyVoice controlsVisible={hudVisible} socket={roomSocket} roomId={roomId} profile={profile} participants={snapshot.participants} mutedLocally={mutedLocally} cameraAllowed={can("camera")} interpreterAllowed={can("interpreter")} interpreterUserId={snapshot.interpreterUserId} isListeningRoom={isListeningRoom} localAudioAllowed={can("shareLocalAudio")} sharedAudio={snapshot.sharedAudio ?? null} />}
 
         {latestChat && stagePanel !== "chat" && (
           <button className="party-chat-peek" type="button" data-player-ui="true" onClick={() => toggleStagePanel("chat")}>
@@ -447,16 +461,16 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
         )}
 
         <div className="party-controls" data-player-ui="true">
-          <button type="button" disabled={!can("playback")} onClick={() => command(playback.paused ? "play" : "pause", { time: videoRef.current?.currentTime })} aria-label={playback.paused ? "Play" : "Pause"}>{playback.paused ? <Play /> : <Pause />}</button>
+          <button type="button" disabled={!can("playback")} onClick={() => command(playback.paused ? "play" : "pause", { time: (isListeningRoom ? audioRef.current : videoRef.current)?.currentTime })} aria-label={playback.paused ? "Play" : "Pause"}>{playback.paused ? <Play /> : <Pause />}</button>
           <input type="range" min="0" max={playerDuration || 0} value={Math.min(scrubTime ?? playerTime, playerDuration || 0)} disabled={!can("seek")} aria-label="Playback position" onChange={(event) => previewSeek(Number(event.target.value))} onPointerUp={commitSeek} onPointerCancel={() => { scrubTimeRef.current = null; setScrubTime(null); }} onKeyUp={commitSeek} onBlur={commitSeek} />
-          <button className={subtitlesOpen ? "is-active" : ""} type="button" onClick={() => { clearHudTimer(); setHudVisible(true); setStagePanel(null); setSubtitlesOpen((value) => !value); setSettingsOpen(false); }} aria-label="Subtitles" title="Subtitles"><Captions /></button>
+          {!isListeningRoom && <button className={subtitlesOpen ? "is-active" : ""} type="button" onClick={() => { clearHudTimer(); setHudVisible(true); setStagePanel(null); setSubtitlesOpen((value) => !value); setSettingsOpen(false); }} aria-label="Subtitles" title="Subtitles"><Captions /></button>}
           <button className={stagePanel === "reactions" ? "is-active" : ""} type="button" onClick={() => toggleStagePanel("reactions")} aria-label="Reactions" title="Reactions" aria-expanded={stagePanel === "reactions"}><SmilePlus /></button>
           <button className={stagePanel === "chat" ? "is-active" : ""} type="button" onClick={() => toggleStagePanel("chat")} aria-label="Room chat" title="Room chat" aria-expanded={stagePanel === "chat"}><MessageCircle />{roomChat.length > 0 && <small>{Math.min(roomChat.length, 99)}</small>}</button>
           <button className={settingsOpen ? "is-active" : ""} type="button" onClick={() => { clearHudTimer(); setHudVisible(true); setStagePanel(null); setSettingsOpen((value) => !value); setSubtitlesOpen(false); }} aria-label="Playback settings" title="Playback settings"><Settings /></button>
           <button type="button" onClick={() => void toggleStageFullscreen()} aria-label={cinemaFullscreen ? "Exit fullscreen" : "Enter fullscreen"} title={cinemaFullscreen ? "Exit fullscreen" : "Fullscreen"}>{cinemaFullscreen ? <Minimize2 /> : <Maximize2 />}</button>
         </div>
-        {settingsOpen && <div className="party-player-settings" data-player-ui="true"><label>Source<select className="select" value={playback.media.source.url} disabled={!can("changeSource")} onChange={(event) => { const source = playback.media.sources.find((item) => item.url === event.target.value); if (source) command("source", { source, time: videoRef.current?.currentTime }); }}>{playback.media.sources.map((source) => <option value={source.url} key={source.url}>{source.label}</option>)}</select></label><label>Speed<select className="select" value={playback.playbackRate} disabled={!can("playback")} onChange={(event) => command("rate", { rate: Number(event.target.value) })}>{[.5,.75,1,1.25,1.5,2].map((rate) => <option key={rate} value={rate}>{rate}x</option>)}</select></label></div>}
-        <PlayerSubtitles videoRef={videoRef} itemId={playback.media.itemId} title={playback.media.title} sourceKey={playback.media.source.url} sourceLabel={playback.media.source.label} sourceSubtitleUrl={playback.media.source.subtitleUrl ?? null} open={subtitlesOpen} onClose={() => setSubtitlesOpen(false)} selection={snapshot.subtitle} onSelectionChange={changeSubtitle} canChange={can("subtitles")} shared />
+        {settingsOpen && <div className="party-player-settings" data-player-ui="true"><label>{isListeningRoom ? "Audio source" : "Source"}<select className="select" value={playback.media.source.url} disabled={!can("changeSource")} onChange={(event) => { const source = playback.media.sources.find((item) => item.url === event.target.value); if (source) command("source", { source, time: (isListeningRoom ? audioRef.current : videoRef.current)?.currentTime }); }}>{playback.media.sources.map((source) => <option value={source.url} key={source.url}>{source.label}</option>)}</select></label><label>Speed<select className="select" value={playback.playbackRate} disabled={!can("playback")} onChange={(event) => command("rate", { rate: Number(event.target.value) })}>{[.5,.75,1,1.25,1.5,2].map((rate) => <option key={rate} value={rate}>{rate}x</option>)}</select></label></div>}
+        {!isListeningRoom && <PlayerSubtitles videoRef={videoRef} itemId={playback.media.itemId} title={playback.media.title} sourceKey={playback.media.source.url} sourceLabel={playback.media.source.label} sourceSubtitleUrl={playback.media.source.subtitleUrl ?? null} open={subtitlesOpen} onClose={() => setSubtitlesOpen(false)} selection={snapshot.subtitle} onSelectionChange={changeSubtitle} canChange={can("subtitles")} shared />}
       </div>
       <section className="party-queue"><div className="section-head"><div><h2>Watch queue</h2><p className="muted">Search, add, or switch movies for everyone.</p></div></div><div className="party-media-search"><input className="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search movie or series…" />{results.length > 0 && <div className="party-search-results">{results.map((item) => <div key={item.imdbCode}><span><strong>{item.title}</strong><small>{item.year ?? ""} · IMDb {item.imdbRating ?? "-"}</small></span><button disabled={!can("queue")} onClick={() => queueMedia(item.imdbCode)}>Queue</button><button disabled={!can("changeMedia")} onClick={() => queueMedia(item.imdbCode, true)}>Play now</button></div>)}</div>}</div><div className="party-queue-list">{snapshot.queue.map((item) => <article key={item.queueId}><strong>{item.title}</strong><span>{item.source.label}</span><div><button disabled={!can("changeMedia")} onClick={() => socketRef.current?.emit("queue:play", { roomId, queueId: item.queueId })}>Play</button><button disabled={!can("queue")} onClick={() => socketRef.current?.emit("queue:remove", { roomId, queueId: item.queueId })}>Remove</button></div></article>)}</div></section>
       <PartyTitleDetails media={playback.media} />
@@ -464,13 +478,14 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     <button className={`party-mobile-scrim ${peopleOpen ? "is-open" : ""}`} type="button" aria-label="Close room panel" onClick={() => setPeopleOpen(false)} />
     <aside className={`party-sidebar ${peopleOpen ? "is-open" : ""}`}>
       <div className="party-tabs"><Users size={17} /><span>Room & chat</span><MessageCircle size={17} /><button className="party-sidebar-close" type="button" onClick={() => setPeopleOpen(false)} aria-label="Close room panel"><X size={18} /></button></div>
-      <section className="party-people"><h3>Participants</h3>{snapshot.participants.map((participant) => <Participant key={participant.id} participant={participant} isHost={Boolean(isHost)} mutedLocally={mutedLocally.has(participant.id)} meId={profile.id} guestPermissions={snapshot.guestPermissions} onMuteLocal={() => muteLocal(participant.id)} onPermission={(permission, value) => socketRef.current?.emit("permissions:user", { roomId, userId: participant.id, permissions: { [permission]: value } })} onModerate={(action) => socketRef.current?.emit("moderation", { roomId, userId: participant.id, action })} />)}{isHost && <details className="party-global-permissions"><summary>Guest permissions</summary>{CAPABILITIES.map(({ id, label }) => <label key={id}><input type="checkbox" checked={snapshot.guestPermissions[id]} onChange={(event) => socketRef.current?.emit("permissions:global", { roomId, permissions: { [id]: event.target.checked } })} />{label}</label>)}</details>}</section>
+      <section className="party-people"><h3>Participants</h3>{snapshot.participants.map((participant) => <Participant key={participant.id} participant={participant} isHost={Boolean(isHost)} mutedLocally={mutedLocally.has(participant.id)} meId={profile.id} guestPermissions={snapshot.guestPermissions} sharingLocalAudio={snapshot.sharedAudio?.userId === participant.id} onMuteLocal={() => muteLocal(participant.id)} onPermission={(permission, value) => socketRef.current?.emit("permissions:user", { roomId, userId: participant.id, permissions: { [permission]: value } })} onModerate={(action) => socketRef.current?.emit("moderation", { roomId, userId: participant.id, action })} />)}{isHost && <details className="party-global-permissions"><summary>Guest permissions</summary>{CAPABILITIES.map(({ id, label }) => <label key={id}><input type="checkbox" checked={snapshot.guestPermissions[id]} onChange={(event) => socketRef.current?.emit("permissions:global", { roomId, permissions: { [id]: event.target.checked } })} />{label}</label>)}</details>}</section>
       <section className="party-chat"><div className="party-chat-log">{roomChat.map((message) => <div key={message.id}><strong>{message.name}</strong><p>{message.text}</p></div>)}</div><form onSubmit={sendChat}><input value={chatText} onChange={(event) => setChatText(event.target.value)} placeholder="Message room…" disabled={!can("chat")} /><button disabled={!can("chat")}>Send</button></form></section>
     </aside>
   </div>;
 }
 
 function PartyTitleDetails({ media }: { media: PartyMedia }) {
+  const isMusic = media.catalogue === "music";
   const details = media.details;
   const year = details?.year
     ? details.endYear && details.endYear !== details.year
@@ -502,7 +517,7 @@ function PartyTitleDetails({ media }: { media: PartyMedia }) {
         {(details?.languages.length ?? 0) > 0 && <p className="party-title-languages"><strong>Languages</strong> {details?.languages.join(" · ")}</p>}
 
         <div className="party-title-actions">
-          <Link href={`/${encodeURIComponent(media.itemId)}`}>Full title details <ExternalLink size={14} /></Link>
+          <Link href={isMusic ? `/music/${encodeURIComponent(media.itemId)}` : `/${encodeURIComponent(media.itemId)}`}>{isMusic ? "Open track page" : "Full title details"} <ExternalLink size={14} /></Link>
           {details?.imdbUrl && <a href={details.imdbUrl} target="_blank" rel="noreferrer">Open IMDb <ExternalLink size={14} /></a>}
         </div>
       </div>
@@ -533,8 +548,8 @@ function formatCompact(value: number) {
   return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(value);
 }
 
-function Participant({ participant, isHost, mutedLocally, meId, guestPermissions, onMuteLocal, onPermission, onModerate }: { participant: PartyParticipant; isHost: boolean; mutedLocally: boolean; meId: string; guestPermissions: PartyPermissions; onMuteLocal: () => void; onPermission: (permission: PartyCapability, value: boolean) => void; onModerate: (action: "kick" | "block" | "mute" | "unmute" | "cameraOff") => void }) {
-  return <details className="party-person"><summary>{participant.avatarUrl ? <img src={participant.avatarUrl} alt="" /> : <span>{participant.name.slice(0, 1)}</span>}<b>{participant.name}</b><small>{participant.role}{participant.connected ? " · online" : " · offline"}</small></summary>{participant.id !== meId && <div className="party-person-actions"><button onClick={onMuteLocal}>{mutedLocally ? "Unhide locally" : "Mute locally"}</button>{isHost && participant.role !== "host" && <><button onClick={() => onModerate(participant.mutedByHost ? "unmute" : "mute")}>{participant.mutedByHost ? "Unmute room" : "Mute room"}</button><button onClick={() => onModerate("cameraOff")}>Stop camera</button><button onClick={() => onModerate("kick")}>Kick</button><button onClick={() => onModerate("block")}>Block</button><div className="party-person-permissions">{CAPABILITIES.map(({ id, label }) => <label key={id}><input type="checkbox" checked={participant.permissions[id] ?? guestPermissions[id]} onChange={(event) => onPermission(id, event.target.checked)} />{label}</label>)}</div></>}</div>}</details>;
+function Participant({ participant, isHost, mutedLocally, meId, guestPermissions, sharingLocalAudio, onMuteLocal, onPermission, onModerate }: { participant: PartyParticipant; isHost: boolean; mutedLocally: boolean; meId: string; guestPermissions: PartyPermissions; sharingLocalAudio: boolean; onMuteLocal: () => void; onPermission: (permission: PartyCapability, value: boolean) => void; onModerate: (action: "kick" | "block" | "mute" | "unmute" | "cameraOff" | "audioOff") => void }) {
+  return <details className="party-person"><summary>{participant.avatarUrl ? <img src={participant.avatarUrl} alt="" /> : <span>{participant.name.slice(0, 1)}</span>}<b>{participant.name}</b><small>{participant.role}{participant.connected ? " · online" : " · offline"}</small></summary>{participant.id !== meId && <div className="party-person-actions"><button onClick={onMuteLocal}>{mutedLocally ? "Unhide locally" : "Mute locally"}</button>{isHost && participant.role !== "host" && <><button onClick={() => onModerate(participant.mutedByHost ? "unmute" : "mute")}>{participant.mutedByHost ? "Unmute room" : "Mute room"}</button><button onClick={() => onModerate("cameraOff")}>Stop camera</button>{sharingLocalAudio && <button onClick={() => onModerate("audioOff")}>Stop local music</button>}<button onClick={() => onModerate("kick")}>Kick</button><button onClick={() => onModerate("block")}>Block</button><div className="party-person-permissions">{CAPABILITIES.map(({ id, label }) => <label key={id}><input type="checkbox" checked={participant.permissions[id] ?? guestPermissions[id]} onChange={(event) => onPermission(id, event.target.checked)} />{label}</label>)}</div></>}</div>}</details>;
 }
 
 function PartyMessage({ title, text }: { title: string; text: string }) {

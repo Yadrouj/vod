@@ -833,3 +833,51 @@ html[dir="rtl"] .suggest-result-arrow {
   grid-row: 1;
   transform: scaleX(-1);
 }
+
+/* Music home lives after several legacy layout layers. Keep this last so a
+   narrow viewport can never inherit a desktop-width music grid. */
+@media (max-width: 760px) {
+  .music-spotify-page,
+  .music-spotify-page .music-landing-shell {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-x: clip !important;
+  }
+
+  .music-spotify-page .wrap {
+    width: calc(100vw - 24px) !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 24px) !important;
+    margin-inline: auto !important;
+  }
+
+  .music-spotify-page .music-landing-topbar,
+  .music-spotify-page .music-landing-hero,
+  .music-spotify-page .music-landing-hero-grid,
+  .music-spotify-page .music-landing-copy,
+  .music-spotify-page .music-landing-now-playing,
+  .music-spotify-page .music-landing-search {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .music-spotify-page .music-landing-hero-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto auto;
+  }
+
+  .music-spotify-page .music-landing-copy h1 {
+    max-width: 100% !important;
+    overflow-wrap: anywhere;
+  }
+
+  .music-spotify-page .music-landing-search input {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .music-spotify-page .music-landing-now-playing { justify-self: stretch !important; }
+}

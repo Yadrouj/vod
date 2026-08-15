@@ -84,7 +84,42 @@ try {
   guest.emit("voice:leave", { roomId: created.roomId });
   await leftPromise;
 
-  console.log(JSON.stringify({ ok: true, roomId: created.roomId, syncedTime: state.currentTime, voiceSignaling: true, pushToTalkState: true, cameraState: true, liveCaptions: true, interpreterPin: true, sharedSubtitles: true }, null, 2));
+  const publicMusicRoom = await emitWithAck(host, "room:create", {
+    profile: { id: "smoke-host", name: "Smoke Host", avatarUrl: null, telegramId: null },
+    visibility: "public",
+    media: {
+      itemId: "music-smoke",
+      title: "Smoke Music Room",
+      posterUrl: null,
+      source: { url: "https://example.com/smoke.mp3", label: "MP3", quality: "MP3", season: null, episode: null },
+      sources: [],
+      mediaKind: "audio",
+      catalogue: "music",
+      artistName: "Smoke Artist",
+    },
+  });
+  if (!publicMusicRoom?.ok) throw new Error(publicMusicRoom?.error || "public music room:create failed");
+  const publicJoin = await emitWithAck(guest, "room:join", {
+    roomId: publicMusicRoom.roomId,
+    profile: { id: "smoke-guest", name: "Smoke Guest", avatarUrl: null, telegramId: null },
+  });
+  if (!publicJoin?.ok) throw new Error(publicJoin?.error || "public music room join without invite failed");
+  const publicHostVoice = await emitWithAck(host, "voice:join", { roomId: publicMusicRoom.roomId });
+  const publicGuestVoice = await emitWithAck(guest, "voice:join", { roomId: publicMusicRoom.roomId });
+  if (!publicHostVoice?.ok || !publicGuestVoice?.ok) throw new Error("public music room voice join failed");
+  const localAudioPromise = waitForEvent(guest, "voice:music-share", (value) => value?.sharedAudio?.fileName === "smoke-local.mp3");
+  const localAudio = await emitWithAck(host, "voice:music-share", { roomId: publicMusicRoom.roomId, active: true, fileName: "smoke-local.mp3" });
+  if (!localAudio?.ok || localAudio.sharedAudio?.fileName !== "smoke-local.mp3") throw new Error(localAudio?.error || "local music share state failed");
+  await localAudioPromise;
+  const directory = await fetch(`${origin}/api/watch-party/public-rooms?mode=listen&limit=12`).then((response) => response.json());
+  const listedPublicMusicRoom = directory.rooms?.find((room) => room.roomId === publicMusicRoom.roomId);
+  if (!listedPublicMusicRoom || listedPublicMusicRoom.participantCount !== 2 || listedPublicMusicRoom.sharedAudio?.fileName !== "smoke-local.mp3") throw new Error("public music room is missing from the live directory");
+  const localAudioOff = await emitWithAck(host, "voice:music-share", { roomId: publicMusicRoom.roomId, active: false });
+  if (!localAudioOff?.ok) throw new Error(localAudioOff?.error || "local music share stop failed");
+  guest.emit("voice:leave", { roomId: publicMusicRoom.roomId });
+  host.emit("voice:leave", { roomId: publicMusicRoom.roomId });
+
+  console.log(JSON.stringify({ ok: true, roomId: created.roomId, syncedTime: state.currentTime, voiceSignaling: true, pushToTalkState: true, cameraState: true, liveCaptions: true, interpreterPin: true, sharedSubtitles: true, publicMusicRoom: true, localAudioSharing: true }, null, 2));
 } finally {
   host.disconnect();
   guest.disconnect();

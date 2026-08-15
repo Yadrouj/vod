@@ -7,7 +7,7 @@ export type PartyProfile = {
   telegramId?: string | null;
 };
 
-export type PartyCapability = "playback" | "seek" | "changeSource" | "changeMedia" | "queue" | "chat" | "react" | "subtitles" | "camera" | "liveCaptions" | "interpreter";
+export type PartyCapability = "playback" | "seek" | "changeSource" | "changeMedia" | "queue" | "chat" | "react" | "subtitles" | "camera" | "liveCaptions" | "interpreter" | "shareLocalAudio";
 
 export type PartyPermissions = Record<PartyCapability, boolean>;
 
@@ -51,6 +51,14 @@ export type PartyMedia = {
   source: PartyMediaSource;
   sources: PartyMediaSource[];
   details?: PartyMediaDetails | null;
+  /**
+   * The transport is intentionally separate from the catalogue. A music
+   * video can still use the video transport while a song uses audio only.
+   * Existing rooms omit this field and therefore stay video rooms.
+   */
+  mediaKind?: "video" | "audio";
+  catalogue?: "vod" | "music";
+  artistName?: string | null;
 };
 
 export type PartyPlayback = {
@@ -90,6 +98,29 @@ export type PartyReaction = {
   createdAt: number;
 };
 
+export type PartyRoomVisibility = "private" | "public";
+
+export type PartySharedAudio = {
+  userId: string;
+  name: string;
+  fileName: string;
+  startedAt: number;
+};
+
+export type PartyPublicRoom = {
+  roomId: string;
+  title: string;
+  posterUrl: string | null;
+  mediaKind: "video" | "audio";
+  catalogue: "vod" | "music";
+  artistName: string | null;
+  participantCount: number;
+  createdAt: number;
+  lastActiveAt: number;
+  paused: boolean;
+  sharedAudio: PartySharedAudio | null;
+};
+
 export type PartyLiveCaption = {
   id: string;
   userId: string;
@@ -106,6 +137,7 @@ export type PartyLiveCaption = {
 export type PartySnapshot = {
   roomId: string;
   ownerId: string;
+  visibility: PartyRoomVisibility;
   playback: PartyPlayback;
   participants: PartyParticipant[];
   guestPermissions: PartyPermissions;
@@ -113,6 +145,7 @@ export type PartySnapshot = {
   chat: PartyChatMessage[];
   subtitle: SubtitleSelection;
   interpreterUserId: string | null;
+  sharedAudio: PartySharedAudio | null;
   serverNow: number;
 };
 
@@ -128,4 +161,5 @@ export const DEFAULT_PARTY_PERMISSIONS: PartyPermissions = {
   camera: true,
   liveCaptions: true,
   interpreter: false,
+  shareLocalAudio: false,
 };

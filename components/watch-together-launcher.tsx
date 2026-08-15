@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Link2, Radio, Search, Share2, UsersRound, X } from "lucide-react";
+import { Check, Copy, Globe2, Link2, LockKeyhole, Radio, Search, Share2, UsersRound, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -8,7 +8,7 @@ import type { Socket } from "socket.io-client";
 import { sizedImageUrl } from "@/lib/image-url";
 import type { Locale } from "@/lib/i18n";
 import { newPartyProfile, readPartyProfile, savePartyProfile } from "@/lib/watch-party-profile";
-import type { PartyMedia, PartyProfile } from "@/lib/watch-party-types";
+import type { PartyMedia, PartyProfile, PartyRoomVisibility } from "@/lib/watch-party-types";
 import { WatchTogetherMark } from "@/components/watch-together-mark";
 
 export type WatchTogetherPreset = {
@@ -34,6 +34,7 @@ type CreateRoomResult = {
 };
 
 type Placement = "floating" | "inline" | "player";
+type Experience = "watch" | "listen";
 
 const copyByLocale = {
   en: {
@@ -112,12 +113,14 @@ export function WatchTogetherLauncher({
   preset,
   media,
   label,
+  experience = "watch",
 }: {
   locale: Locale;
   placement?: Placement;
   preset?: WatchTogetherPreset;
   media?: PartyMedia;
   label?: string;
+  experience?: Experience;
 }) {
   const pathname = usePathname();
   const socketRef = useRef<Socket | null>(null);
@@ -136,7 +139,29 @@ export function WatchTogetherLauncher({
   const [error, setError] = useState("");
   const [inviteUrl, setInviteUrl] = useState("");
   const [copied, setCopied] = useState(false);
-  const text = copyByLocale[locale === "fa" ? "fa" : "en"];
+  const [visibility, setVisibility] = useState<PartyRoomVisibility>("private");
+  const baseText = copyByLocale[locale === "fa" ? "fa" : "en"];
+  const text = experience === "listen"
+    ? {
+      ...baseText,
+      button: "Listen together",
+      buttonHint: "Create a listening room",
+      eyebrow: "LISTEN TOGETHER",
+      title: "Start a synchronized listening room",
+      description: "Create a private link and hear every beat together. Voice, push-to-talk, chat, reactions, and camera are ready when your friends join.",
+      searchLabel: "Selected track",
+      selected: "Selected for the listening room",
+      sync: "Beat-perfect sync",
+      host: "Host DJ controls",
+      social: "Voice, chat & reactions",
+      create: "Create listening room & invite",
+      creating: "Setting up the listening room…",
+      readyText: "Share this private link, then join the room. Everyone hears the same moment, with voice and reactions ready.",
+      chooseError: "Choose a track first.",
+      mediaError: "This track does not have a playable source right now.",
+      titleStep: "Track",
+    }
+    : baseText;
 
   useEffect(() => () => {
     socketRef.current?.disconnect();
@@ -163,7 +188,7 @@ export function WatchTogetherLauncher({
     if (!open || selected || normalized.length < 2) return;
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      fetch(`/api/suggest?q=${encodeURIComponent(normalized)}`, { signal: controller.signal })
+      fetch(`${experience === "listen" ? "/api/music/search" : "/api/suggest"}?q=${encodeURIComponent(normalized)}`, { signal: controller.signal })
         .then((response) => response.json())
         .then((data: { items?: Suggestion[] }) => {
           setResults((data.items ?? []).slice(0, 6));
@@ -180,7 +205,7 @@ export function WatchTogetherLauncher({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [open, query, selected]);
+  }, [experience, open, query, selected]);
 
   if (placement === "floating" && (pathname === "/" || pathname.startsWith("/watch/"))) return null;
   if (placement === "floating" && pathname.startsWith("/watch-together/")) return null;
@@ -188,7 +213,7 @@ export function WatchTogetherLauncher({
   function openLauncher() {
     const profile = readPartyProfile();
     const initial = media
-      ? suggestionFromPreset({ itemId: media.itemId, title: media.title, posterUrl: media.posterUrl })
+      ? suggestionFromPreset({ itemId: media.itemId, title: media.title, posterUrl: media.posterUrl, type: media.artistName ?? (media.mediaKind === "audio" ? "Music track" : "") })
       : preset
         ? suggestionFromPreset(preset)
         : null;
@@ -204,6 +229,7 @@ export function WatchTogetherLauncher({
     setError("");
     setInviteUrl("");
     setCopied(false);
+    setVisibility("private");
     setOpen(true);
   }
 
@@ -251,7 +277,7 @@ export function WatchTogetherLauncher({
 
       let roomMedia = resolvedMedia;
       if (!roomMedia || roomMedia.itemId !== selected.imdbCode) {
-        const response = await fetch(`/api/watch-party/title/${encodeURIComponent(selected.imdbCode)}`);
+        const response = await fetch(`/api/watch-party/${experience === "listen" ? "music" : "title"}/${encodeURIComponent(selected.imdbCode)}`);
         if (!response.ok) throw new Error(text.mediaError);
         roomMedia = await response.json() as PartyMedia;
         setResolvedMedia(roomMedia);
@@ -261,7 +287,7 @@ export function WatchTogetherLauncher({
       socketRef.current?.disconnect();
       const socket = io({ transports: ["websocket", "polling"], timeout: 12_000 });
       socketRef.current = socket;
-      const result = await emitCreateRoom(socket, { profile: identity, media: roomMedia });
+      const result = await emitCreateRoom(socket, { profile: identity, media: roomMedia, visibility });
       if (!result.ok || !result.roomId || !result.inviteToken) {
         throw new Error(result.error ?? text.createError);
       }
@@ -308,7 +334,7 @@ export function WatchTogetherLauncher({
   return (
     <>
       <button
-        className={`watch-together-launcher watch-together-${placement}`}
+        className={`watch-together-launcher watch-together-${placement} ${experience === "listen" ? "watch-together-listen" : ""}`}
         type="button"
         onClick={openLauncher}
         aria-haspopup="dialog"
@@ -392,7 +418,7 @@ export function WatchTogetherLauncher({
                 <div className="watch-builder-section">
                   <div className="watch-builder-section-title">
                     <span>{selected ? text.selected : text.searchLabel}</span>
-                    {selected && <button type="button" onClick={clearTitle}>{text.change}</button>}
+                    {selected && !media && <button type="button" onClick={clearTitle}>{text.change}</button>}
                   </div>
                   {selected ? (
                     <div className="watch-builder-selected">
@@ -460,6 +486,14 @@ export function WatchTogetherLauncher({
                   )}
                 </div>
 
+                <div className="watch-builder-section watch-builder-access">
+                  <div className="watch-builder-section-title"><span>{locale === "fa" ? "دسترسی به اتاق" : "Room access"}</span></div>
+                  <div className="watch-builder-access-options" role="radiogroup" aria-label={locale === "fa" ? "نوع دسترسی اتاق" : "Room visibility"}>
+                    <button className={visibility === "private" ? "is-active" : ""} type="button" role="radio" aria-checked={visibility === "private"} onClick={() => setVisibility("private")}><LockKeyhole size={16} /><span><strong>{locale === "fa" ? "خصوصی" : "Private"}</strong><small>{locale === "fa" ? "فقط کسانی که لینک دعوت دارند وارد می‌شوند." : "Only people with the invite link can enter."}</small></span></button>
+                    <button className={visibility === "public" ? "is-active" : ""} type="button" role="radio" aria-checked={visibility === "public"} onClick={() => setVisibility("public")}><Globe2 size={16} /><span><strong>{experience === "listen" ? (locale === "fa" ? "اتاق شنیدن عمومی" : "Public listening room") : (locale === "fa" ? "اتاق تماشای عمومی" : "Public watch room")}</strong><small>{locale === "fa" ? "در فهرست اتاق‌های زنده نمایش داده می‌شود و هرکس می‌تواند وارد شود." : "Shows in the live directory so anyone can join."}</small></span></button>
+                  </div>
+                </div>
+
                 {error && <p className="watch-builder-error">{error}</p>}
                 <div className="watch-builder-actions">
                   <button type="button" className="play-glow" disabled={busy || !selected} onClick={createRoom}>
@@ -476,18 +510,18 @@ export function WatchTogetherLauncher({
   );
 }
 
-function suggestionFromPreset(preset: WatchTogetherPreset): Suggestion {
+function suggestionFromPreset(preset: WatchTogetherPreset & { type?: string }): Suggestion {
   return {
     title: preset.title,
     imdbCode: preset.itemId,
     year: null,
-    type: "",
+    type: preset.type ?? "",
     posterUrl: preset.posterUrl ?? null,
     imdbRating: null,
   };
 }
 
-function emitCreateRoom(socket: Socket, payload: { profile: PartyProfile; media: PartyMedia }) {
+function emitCreateRoom(socket: Socket, payload: { profile: PartyProfile; media: PartyMedia; visibility: PartyRoomVisibility }) {
   return new Promise<CreateRoomResult>((resolve, reject) => {
     let settled = false;
     const finish = (callback: () => void) => {

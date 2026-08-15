@@ -3,7 +3,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import next from "next";
 import { Server } from "socket.io";
 import { loadVodHomeIndex, loadVodIndex } from "./lib/vod-index";
-import type { PartyCapability, PartyChatMessage, PartyLiveCaption, PartyMedia, PartyParticipant, PartyPermissions, PartyPlayback, PartyProfile, PartyQueueItem, PartySnapshot } from "./lib/watch-party-types";
+import type { PartyCapability, PartyChatMessage, PartyLiveCaption, PartyMedia, PartyParticipant, PartyPermissions, PartyPlayback, PartyProfile, PartyPublicRoom, PartyQueueItem, PartyRoomVisibility, PartySharedAudio, PartySnapshot } from "./lib/watch-party-types";
 import { DEFAULT_PARTY_PERMISSIONS } from "./lib/watch-party-types";
 import { AUTO_SUBTITLE_SELECTION, OFF_SUBTITLE_SELECTION, type SubtitleSelection } from "./lib/subtitle-types";
 
@@ -26,6 +26,7 @@ type Room = {
   id: string;
   inviteToken: string;
   ownerId: string;
+  visibility: PartyRoomVisibility;
   playback: PartyPlayback;
   participants: Map<string, PartyParticipant>;
   sockets: Map<string, string>;
@@ -37,6 +38,7 @@ type Room = {
   voiceTalking: Set<string>;
   cameraUsers: Set<string>;
   interpreterUserId: string | null;
+  sharedAudio: PartySharedAudio | null;
   subtitle: SubtitleSelection;
   createdAt: number;
   lastActiveAt: number;
@@ -86,7 +88,23 @@ function currentTime(playback: PartyPlayback, now = Date.now()) {
 }
 
 function snapshot(room: Room): PartySnapshot {
-  return { roomId: room.id, ownerId: room.ownerId, playback: { ...room.playback, currentTime: currentTime(room.playback) }, participants: [...room.participants.values()], guestPermissions: room.guestPermissions, queue: room.queue, chat: room.chat.slice(-100), subtitle: room.subtitle, interpreterUserId: room.interpreterUserId, serverNow: Date.now() };
+  return { roomId: room.id, ownerId: room.ownerId, visibility: room.visibility, playback: { ...room.playback, currentTime: currentTime(room.playback) }, participants: [...room.participants.values()], guestPermissions: room.guestPermissions, queue: room.queue, chat: room.chat.slice(-100), subtitle: room.subtitle, interpreterUserId: room.interpreterUserId, sharedAudio: room.sharedAudio, serverNow: Date.now() };
+}
+
+function publicRoomSummary(room: Room): PartyPublicRoom {
+  return {
+    roomId: room.id,
+    title: room.sharedAudio?.fileName || room.playback.media.title,
+    posterUrl: room.playback.media.posterUrl,
+    mediaKind: room.playback.media.mediaKind ?? "video",
+    catalogue: room.playback.media.catalogue ?? "vod",
+    artistName: room.playback.media.artistName ?? null,
+    participantCount: [...room.participants.values()].filter((participant) => participant.connected).length,
+    createdAt: room.createdAt,
+    lastActiveAt: room.lastActiveAt,
+    paused: room.playback.paused,
+    sharedAudio: room.sharedAudio,
+  };
 }
 
 function cleanSubtitleSelection(value: Partial<SubtitleSelection>): SubtitleSelection | null {
@@ -142,6 +160,21 @@ const httpServer = createServer((request, response) => {
     }));
     return;
   }
+  if (request.method === "GET" && pathname === "/api/watch-party/public-rooms") {
+    const url = new URL(request.url ?? "/api/watch-party/public-rooms", `http://${request.headers.host ?? "localhost"}`);
+    const mode = url.searchParams.get("mode");
+    const max = Math.max(1, Math.min(Number(url.searchParams.get("limit") ?? 12) || 12, 36));
+    const roomsForDirectory = [...rooms.values()]
+      .filter((room) => room.visibility === "public")
+      .map(publicRoomSummary)
+      .filter((room) => room.participantCount > 0)
+      .filter((room) => mode === "listen" ? room.catalogue === "music" || room.mediaKind === "audio" : mode === "watch" ? room.catalogue !== "music" && room.mediaKind !== "audio" : true)
+      .sort((left, right) => right.participantCount - left.participantCount || right.lastActiveAt - left.lastActiveAt)
+      .slice(0, max);
+    response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+    response.end(JSON.stringify({ rooms: roomsForDirectory, serverNow: Date.now() }));
+    return;
+  }
   if (!dev && pathname?.startsWith("/data/")) {
     response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
     response.end("Not found");
@@ -178,7 +211,7 @@ io.use((socket, nextMiddleware) => {
 });
 
 io.on("connection", (socket) => {
-  socket.on("room:create", (payload: { profile: PartyProfile; media: PartyMedia }, ack) => {
+  socket.on("room:create", (payload: { profile: PartyProfile; media: PartyMedia; visibility?: PartyRoomVisibility }, ack) => {
     if (!allowSocketEvent(socket, "room:create", 3, 60_000)) return ack?.({ ok: false, error: "Too many room requests." });
     if (rooms.size >= MAX_ACTIVE_ROOMS) return ack?.({ ok: false, error: "Room capacity is temporarily full." });
     const profile = cleanProfile(payload?.profile ?? {});
@@ -186,16 +219,18 @@ io.on("connection", (socket) => {
     const id = randomBytes(5).toString("base64url");
     const inviteToken = randomBytes(18).toString("base64url");
     const participant: PartyParticipant = { ...profile, role: "host", connected: true, mutedByHost: false, joinedAt: Date.now(), permissions: {} };
-    const room: Room = { id, inviteToken, ownerId: profile.id, playback: { media: payload.media, currentTime: 0, paused: true, playbackRate: 1, updatedAt: Date.now(), revision: 1 }, participants: new Map([[profile.id, participant]]), sockets: new Map([[socket.id, profile.id]]), guestPermissions: { ...DEFAULT_PARTY_PERMISSIONS }, queue: [], chat: [], blocked: new Set(), voiceUsers: new Set(), voiceTalking: new Set(), cameraUsers: new Set(), interpreterUserId: null, subtitle: { ...AUTO_SUBTITLE_SELECTION }, createdAt: Date.now(), lastActiveAt: Date.now() };
+    const isListeningRoom = payload.media.catalogue === "music" || payload.media.mediaKind === "audio";
+    const visibility: PartyRoomVisibility = payload.visibility === "public" ? "public" : "private";
+    const room: Room = { id, inviteToken, ownerId: profile.id, visibility, playback: { media: payload.media, currentTime: 0, paused: true, playbackRate: 1, updatedAt: Date.now(), revision: 1 }, participants: new Map([[profile.id, participant]]), sockets: new Map([[socket.id, profile.id]]), guestPermissions: { ...DEFAULT_PARTY_PERMISSIONS, shareLocalAudio: isListeningRoom }, queue: [], chat: [], blocked: new Set(), voiceUsers: new Set(), voiceTalking: new Set(), cameraUsers: new Set(), interpreterUserId: null, sharedAudio: null, subtitle: { ...AUTO_SUBTITLE_SELECTION }, createdAt: Date.now(), lastActiveAt: Date.now() };
     rooms.set(id, room); socket.join(id); trackSocketRoom(socket, id);
     ack?.({ ok: true, roomId: id, inviteToken, snapshot: snapshot(room) });
   });
 
-  socket.on("room:join", (payload: { roomId: string; inviteToken: string; profile: PartyProfile }, ack) => {
+  socket.on("room:join", (payload: { roomId: string; inviteToken?: string; profile: PartyProfile }, ack) => {
     if (!allowSocketEvent(socket, "room:join", 10, 60_000)) return ack?.({ ok: false, error: "Too many join attempts." });
     const room = rooms.get(payload?.roomId);
     const profile = cleanProfile(payload?.profile ?? {});
-    if (!room || room.inviteToken !== payload?.inviteToken) return ack?.({ ok: false, error: "Room or invite link is invalid." });
+    if (!room || (room.visibility !== "public" && room.inviteToken !== payload?.inviteToken)) return ack?.({ ok: false, error: "Room or invite link is invalid." });
     if (room.blocked.has(profile.id)) return ack?.({ ok: false, error: "You are blocked from this room." });
     const previous = room.participants.get(profile.id);
     const connectedCount = [...room.participants.values()].filter((participant) => participant.connected).length;
@@ -225,9 +260,12 @@ io.on("connection", (socket) => {
     if (!found) return;
     found.room.voiceUsers.delete(found.userId);
     found.room.voiceTalking.delete(found.userId);
+    const stoppedSharedAudio = found.room.sharedAudio?.userId === found.userId;
+    if (stoppedSharedAudio) found.room.sharedAudio = null;
     const cameraStopped = found.room.cameraUsers.delete(found.userId);
     releaseInterpreter(found.room, found.userId);
     socket.to(roomId).emit("voice:talking", { userId: found.userId, active: false });
+    if (stoppedSharedAudio) io.to(roomId).emit("voice:music-share", { sharedAudio: null });
     if (cameraStopped) socket.to(roomId).emit("voice:camera", { userId: found.userId, active: false });
     socket.to(roomId).emit("voice:peer-left", { userId: found.userId });
   });
@@ -271,6 +309,34 @@ io.on("connection", (socket) => {
     if (active) found.room.voiceTalking.add(found.userId);
     else found.room.voiceTalking.delete(found.userId);
     io.to(roomId).emit("voice:talking", { userId: found.userId, active: Boolean(active) });
+  });
+
+  socket.on("voice:music-share", ({ roomId, active, fileName }: { roomId: string; active: boolean; fileName?: string }, ack) => {
+    if (!allowSocketEvent(socket, "voice:music-share", 10, 60_000)) return ack?.({ ok: false, error: "Music sharing changed too often." });
+    const found = roomForSocket(roomId, socket.id);
+    if (!found || !found.room.voiceUsers.has(found.userId)) return ack?.({ ok: false, error: "Join the Media Lounge before sharing a local file." });
+    if (active && !permitted(found.room, found.userId, "shareLocalAudio")) return ack?.({ ok: false, error: "The host has not enabled local music sharing for you." });
+    if (active && found.room.sharedAudio && found.room.sharedAudio.userId !== found.userId) return ack?.({ ok: false, error: `${found.room.sharedAudio.name} is already sharing a local track.` });
+    const now = Date.now();
+    if (active) {
+      const participant = found.room.participants.get(found.userId);
+      if (!participant) return ack?.({ ok: false, error: "Room participant not found." });
+      found.room.sharedAudio = { userId: found.userId, name: participant.name, fileName: String(fileName ?? "Local audio").replace(/\s+/g, " ").trim().slice(0, 120) || "Local audio", startedAt: now };
+      const playback = found.room.playback;
+      playback.currentTime = currentTime(playback, now);
+      playback.paused = true;
+      playback.updatedAt = now;
+      playback.revision += 1;
+      io.to(roomId).emit("playback:state", { ...playback, currentTime: playback.currentTime, serverNow: now, action: "pause", originUserId: found.userId });
+    } else if (found.room.sharedAudio?.userId === found.userId || found.userId === found.room.ownerId) {
+      found.room.sharedAudio = null;
+    } else {
+      return ack?.({ ok: false, error: "Only the active DJ or room host can stop this stream." });
+    }
+    found.room.lastActiveAt = now;
+    io.to(roomId).emit("voice:music-share", { sharedAudio: found.room.sharedAudio });
+    io.to(roomId).emit("room:snapshot", snapshot(found.room));
+    ack?.({ ok: true, sharedAudio: found.room.sharedAudio });
   });
 
   socket.on("subtitle:command", ({ roomId, selection }: { roomId: string; selection: Partial<SubtitleSelection> }, ack) => {
@@ -374,7 +440,7 @@ io.on("connection", (socket) => {
 
   socket.on("permissions:global", ({ roomId, permissions }: { roomId: string; permissions: Partial<PartyPermissions> }) => { const found = roomForSocket(roomId, socket.id); if (!found || found.userId !== found.room.ownerId) return; found.room.guestPermissions = { ...found.room.guestPermissions, ...permissions }; io.to(roomId).emit("room:snapshot", snapshot(found.room)); });
   socket.on("permissions:user", ({ roomId, userId, permissions }: { roomId: string; userId: string; permissions: Partial<PartyPermissions> }) => { const found = roomForSocket(roomId, socket.id); if (!found || found.userId !== found.room.ownerId) return; const participant = found.room.participants.get(userId); if (!participant) return; participant.permissions = { ...participant.permissions, ...permissions }; io.to(roomId).emit("room:snapshot", snapshot(found.room)); });
-  socket.on("moderation", ({ roomId, userId, action }: { roomId: string; userId: string; action: "kick" | "block" | "mute" | "unmute" | "cameraOff" }) => {
+  socket.on("moderation", ({ roomId, userId, action }: { roomId: string; userId: string; action: "kick" | "block" | "mute" | "unmute" | "cameraOff" | "audioOff" }) => {
     const found = roomForSocket(roomId, socket.id);
     if (!found || found.userId !== found.room.ownerId || userId === found.room.ownerId) return;
     const participant = found.room.participants.get(userId);
@@ -390,13 +456,21 @@ io.on("connection", (socket) => {
       io.to(roomId).emit("voice:camera", { userId, active: false });
       for (const [socketId, id] of found.room.sockets) if (id === userId) io.to(socketId).emit("voice:camera-force-off");
     }
+    if (action === "audioOff" && found.room.sharedAudio?.userId === userId) {
+      found.room.sharedAudio = null;
+      io.to(roomId).emit("voice:music-share", { sharedAudio: null });
+      for (const [socketId, id] of found.room.sockets) if (id === userId) io.to(socketId).emit("voice:music-share-force-off");
+    }
     if (action === "block") found.room.blocked.add(userId);
     if (action === "kick" || action === "block") {
       found.room.voiceUsers.delete(userId);
       found.room.voiceTalking.delete(userId);
       found.room.cameraUsers.delete(userId);
+      const stoppedSharedAudio = found.room.sharedAudio?.userId === userId;
+      if (stoppedSharedAudio) found.room.sharedAudio = null;
       releaseInterpreter(found.room, userId);
       io.to(roomId).emit("voice:camera", { userId, active: false });
+      if (stoppedSharedAudio) io.to(roomId).emit("voice:music-share", { sharedAudio: null });
       io.to(roomId).emit("voice:peer-left", { userId });
       for (const [socketId, id] of found.room.sockets) if (id === userId) {
         io.to(socketId).emit("room:removed", { blocked: action === "block" });
@@ -421,9 +495,12 @@ io.on("connection", (socket) => {
       if (participant) participant.connected = stillConnected;
       if (!stillConnected && room.voiceUsers.delete(userId)) {
         room.voiceTalking.delete(userId);
+        const stoppedSharedAudio = room.sharedAudio?.userId === userId;
+        if (stoppedSharedAudio) room.sharedAudio = null;
         const cameraStopped = room.cameraUsers.delete(userId);
         releaseInterpreter(room, userId);
         io.to(roomId).emit("voice:talking", { userId, active: false });
+        if (stoppedSharedAudio) io.to(roomId).emit("voice:music-share", { sharedAudio: null });
         if (cameraStopped) io.to(roomId).emit("voice:camera", { userId, active: false });
         io.to(roomId).emit("voice:peer-left", { userId });
       }

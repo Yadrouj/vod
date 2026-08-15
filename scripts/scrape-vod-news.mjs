@@ -1,14 +1,15 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 
 const OUT_FILE = process.argv[2] || "public/data/vod-news.json";
 const LIMIT = Number(process.env.VOD_NEWS_LIMIT || 18);
 const USER_AGENT = "Mozilla/5.0 SarvNema News Browser";
 
+const releaseWindow = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date());
 const WEB_SEARCH_FEEDS = [
-  { category: "release", query: "latest film releases movie box office streaming July 2026" },
-  { category: "episodes", query: "latest series episodes release date streaming July 2026" },
-  { category: "animation", query: "latest animation movie series news July 2026" },
-  { category: "festival", query: "film festival awards event cinema news July 2026" },
+  { category: "release", query: `latest film releases movie box office streaming ${releaseWindow}` },
+  { category: "episodes", query: `latest series episodes release date streaming ${releaseWindow}` },
+  { category: "animation", query: `latest animation movie series news ${releaseWindow}` },
+  { category: "festival", query: `film festival awards event cinema news ${releaseWindow}` },
 ];
 
 const IMDb_PAGES = [
@@ -19,6 +20,12 @@ const IMDb_PAGES = [
 async function main() {
   const items = [];
   const sources = [];
+
+  const monitoredUpdates = await loadReleaseUpdates();
+  if (monitoredUpdates.items.length) {
+    sources.push("SarvNema daily source monitor");
+    items.push(...monitoredUpdates.items.slice(0, 12).map(toMonitorNews));
+  }
 
   for (const page of IMDb_PAGES) {
     sources.push(page.url);
@@ -44,11 +51,11 @@ async function main() {
   const selectedItems = uniqueBy(items, (item) => item.url)
     .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
     .slice(0, LIMIT);
-  const enrichedItems = await Promise.all(selectedItems.map(async (item) => ({
-    ...item,
-    url: await resolveFinalUrl(item.url),
-    imageUrl: await findOpenGraphImage(await resolveFinalUrl(item.url)) ?? item.imageUrl,
-  })));
+  const enrichedItems = await Promise.all(selectedItems.map(async (item) => {
+    if (!/^https?:\/\//i.test(item.url)) return item;
+    const url = await resolveFinalUrl(item.url);
+    return { ...item, url, imageUrl: await findOpenGraphImage(url) ?? item.imageUrl };
+  }));
 
   const payload = {
     generatedAt: new Date().toISOString(),
@@ -58,6 +65,36 @@ async function main() {
 
   await writeFile(OUT_FILE, JSON.stringify(payload));
   console.log(JSON.stringify({ outFile: OUT_FILE, items: payload.items.length, sources: payload.sources.length }, null, 2));
+}
+
+async function loadReleaseUpdates() {
+  try {
+    const raw = await readFile("public/data/vod-updates.json", "utf8");
+    const payload = JSON.parse(raw);
+    return { items: Array.isArray(payload.items) ? payload.items : [] };
+  } catch {
+    return { items: [] };
+  }
+}
+
+function toMonitorNews(item) {
+  const available = item.status === "available";
+  const episode = item.kind === "episode" && item.season && item.episode
+    ? ` S${String(item.season).padStart(2, "0")}E${String(item.episode).padStart(2, "0")}`
+    : "";
+  return {
+    id: `monitor-${item.id}`,
+    title: available ? `${item.baseTitle}${episode} is ready` : `${item.baseTitle} is coming soon`,
+    summary: available
+      ? `Verified source files are available${item.qualities?.length ? ` in ${item.qualities.slice(0, 3).join(" / ")}` : ""}.`
+      : "IMDb release found; the source scan is queued and this title will update when verified files arrive.",
+    source: "SarvNema monitor",
+    url: available && item.href ? item.href : item.imdbUrl,
+    publishedAt: item.eventAt,
+    category: available && item.kind === "episode" ? "episodes" : available ? "release" : "imdb",
+    imageUrl: item.imageUrl ?? null,
+    tags: [available ? "available" : "coming soon", item.kind, ...(item.sourceNames ?? []).slice(0, 2)],
+  };
 }
 
 function googleNewsUrl(query) {
