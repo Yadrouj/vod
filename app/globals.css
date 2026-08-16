@@ -6621,12 +6621,16 @@ html[dir="rtl"] .mega-menu-shell:focus-within .mega-panel {
 .music-spotify-page .music-grid { gap: 17px; }
 
 .music-spotify-page .music-artist-heading { margin-top: 68px; }
-.music-spotify-page .music-artists { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 18px 11px; }
-.music-spotify-page .music-artist { display: grid; min-width: 0; gap: 6px; color: #fff; text-align: center; }
-.music-spotify-page .music-artist > span { display: grid; width: min(100%, 98px); aspect-ratio: 1; place-items: center; margin: 0 auto; overflow: hidden; border: 2px solid rgba(159, 246, 195, 0.54); border-radius: 50% !important; background: #18251d center/cover; color: #aaf9cc; font-size: 27px; font-weight: 950; box-shadow: 0 0 0 4px rgba(87, 236, 145, 0.07); transition: transform 180ms ease, box-shadow 180ms ease; }
-.music-spotify-page .music-artist:hover > span { box-shadow: 0 0 0 5px rgba(119, 240, 170, 0.16), 0 13px 29px rgba(0, 0, 0, 0.35); transform: translateY(-4px); }
-.music-spotify-page .music-artist strong { overflow: hidden; color: rgba(255, 255, 255, 0.9); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
-.music-spotify-page .music-artist small { color: rgba(211, 255, 226, 0.48); font-size: 9px; }
+/* Legacy circular-avatar gallery. Kept for non-rail artist lists only: the rail
+   sets its own card grid, and an unscoped selector here would out-cascade it
+   (same specificity, later in the file) and squeeze the first ten cards into
+   1fr columns while the rest fell through to the implicit track size. */
+.music-spotify-page .music-artists:not(.music-artist-rail) { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 18px 11px; }
+.music-spotify-page .music-artists:not(.music-artist-rail) .music-artist { display: grid; min-width: 0; gap: 6px; color: #fff; text-align: center; }
+.music-spotify-page .music-artists:not(.music-artist-rail) .music-artist > span { display: grid; width: min(100%, 98px); aspect-ratio: 1; place-items: center; margin: 0 auto; overflow: hidden; border: 2px solid rgba(159, 246, 195, 0.54); border-radius: 50% !important; background: #18251d center/cover; color: #aaf9cc; font-size: 27px; font-weight: 950; box-shadow: 0 0 0 4px rgba(87, 236, 145, 0.07); transition: transform 180ms ease, box-shadow 180ms ease; }
+.music-spotify-page .music-artists:not(.music-artist-rail) .music-artist:hover > span { box-shadow: 0 0 0 5px rgba(119, 240, 170, 0.16), 0 13px 29px rgba(0, 0, 0, 0.35); transform: translateY(-4px); }
+.music-spotify-page .music-artists:not(.music-artist-rail) .music-artist strong { overflow: hidden; color: rgba(255, 255, 255, 0.9); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.music-spotify-page .music-artists:not(.music-artist-rail) .music-artist small { color: rgba(211, 255, 226, 0.48); font-size: 9px; }
 
 @keyframes music-landing-breathe {
   from { opacity: 0.38; transform: scale(0.86); }
@@ -6657,7 +6661,7 @@ html[dir="rtl"] .mega-menu-shell:focus-within .mega-panel {
 @media (max-width: 980px) {
   .music-landing-hero-grid { grid-template-columns: minmax(0, 1fr) minmax(286px, 0.72fr); gap: 23px; padding: 29px; }
   .music-landing-copy h1 { font-size: clamp(35px, 6.5vw, 58px); }
-  .music-spotify-page .music-artists { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .music-spotify-page .music-artists:not(.music-artist-rail) { grid-template-columns: repeat(7, minmax(0, 1fr)); }
   .music-discovery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -6701,10 +6705,10 @@ html[dir="rtl"] .mega-menu-shell:focus-within .mega-panel {
   .music-spotify-page .music-card-copy strong { font-size: 11px; }
   .music-spotify-page .music-card-copy span { font-size: 9px; }
   .music-spotify-page .music-artist-heading { margin-top: 48px; }
-  .music-spotify-page .music-artists { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px 7px; }
-  .music-spotify-page .music-artist > span { width: min(100%, 60px); font-size: 19px; }
-  .music-spotify-page .music-artist strong { font-size: 9px; }
-  .music-spotify-page .music-artist small { font-size: 8px; }
+  .music-spotify-page .music-artists:not(.music-artist-rail) { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px 7px; }
+  .music-spotify-page .music-artists:not(.music-artist-rail) .music-artist > span { width: min(100%, 60px); font-size: 19px; }
+  .music-spotify-page .music-artists:not(.music-artist-rail) .music-artist strong { font-size: 9px; }
+  .music-spotify-page .music-artists:not(.music-artist-rail) .music-artist small { font-size: 8px; }
   .music-search-results-head { margin: 0 0 19px; padding: 16px; }
 }
 
