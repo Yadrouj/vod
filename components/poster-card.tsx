@@ -12,21 +12,23 @@ export type PosterCardData = Pick<VodCard,
   | "imdbRating"
   | "genres"
   | "posterUrl"
+  | "backdropUrl"
   | "linksCount"
   | "source"
 >;
 
 export function PosterCard({ item, locale = DEFAULT_LOCALE, priority = false }: { item: PosterCardData; locale?: Locale; priority?: boolean }) {
   const t = getDictionary(locale);
-  const hasPoster = Boolean(item.posterUrl);
+  const imageUrl = item.posterUrl ?? item.backdropUrl;
+  const hasPoster = Boolean(imageUrl);
 
   return (
     <Link prefetch={priority ? undefined : false} href={`/${item.imdbCode || item.id}`} className={["poster", item.type === "series" ? "series-poster" : "", hasPoster ? "poster-has-image" : "poster-no-image"].filter(Boolean).join(" ")}>
       <div className="poster-art">
-        {item.posterUrl && (
+        {imageUrl && (
           <img
             className="poster-art-image"
-            src={sizedImageUrl(item.posterUrl, 400) ?? item.posterUrl}
+            src={sizedImageUrl(imageUrl, 400) ?? imageUrl}
             alt=""
             loading={priority ? "eager" : "lazy"}
             decoding="async"

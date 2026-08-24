@@ -133,7 +133,7 @@ async function buildHomePageData(locale: Locale) {
         index.items
           .filter((item) => item.backdropUrl && (item.year ?? 0) >= 2020)
           .sort(yearSort)
-      ).slice(0, 10),
+      ).slice(0, 15),
       "/browse?section=recent-films"
     ),
     makeSection(
@@ -144,14 +144,14 @@ async function buildHomePageData(locale: Locale) {
         index.items
           .filter((item) => item.type === "series")
           .sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || b.linksCount - a.linksCount)
-      ).slice(0, 10),
+      ).slice(0, 15),
       "/browse?type=series"
     ),
     makeSection(
       "ai-curated",
       t.home.sections["ai-curated"].title,
       t.home.sections["ai-curated"].subtitle,
-      aiSearch(index.items, "dark luxury crime drama thriller above 8", 10).map((result) => result.item),
+      aiSearch(index.items, "dark luxury crime drama thriller above 8", 15).map((result) => result.item),
       "/browse?minScore=8&genre=Crime"
     ),
   ];
@@ -159,7 +159,12 @@ async function buildHomePageData(locale: Locale) {
   const landingRails = rotateDaily([...index.sections, ...generatedSections])
     .map((section) => ({
       ...section,
-      items: takeFreshCards(section.items, seen, 10),
+      // Keep each category complete. The old global `seen` filter consumed
+      // shared titles from earlier rails and left later rails with only a few
+      // cards. Dedupe inside the rail, while allowing the same title to be
+      // discovered again in a genuinely different category.
+      items: uniqueCards(section.items).slice(0, 15),
+      total: uniqueCards(section.items).length,
     }))
     .filter((section) => section.items.length > 0)
     .map((section) => ({ ...section, total: section.items.length }));
