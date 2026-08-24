@@ -15,7 +15,7 @@ export function NewsRail({ items, locale = DEFAULT_LOCALE }: { items: VodNewsIte
           <h2>{t.home.newsTitle}</h2>
           <p className="muted">{t.home.newsSubtitle}</p>
         </div>
-        <Link className="view-all" href="/browse?section=recent-films">
+        <Link className="view-all" href="/updates">
           {t.common.viewAll}
         </Link>
       </div>

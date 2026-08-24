@@ -55,10 +55,11 @@ export function musicForArtist(index: MusicIndex, slug: string) {
   return index.tracks.filter((track) => track.artists.some((item) => identity.has(item.slug) || item.aliases?.some((alias) => identity.has(alias))));
 }
 
-export function searchMusic(index: MusicIndex, query: string, kind = "all") {
+export function searchMusic(index: MusicIndex, query: string, kind = "all", category = "all") {
   const needle = normalizeSearchValue(query);
   return index.tracks.filter((track) => {
     const matchesKind = kind === "all" || track.kind === kind;
+    const matchesCategory = category === "all" || !category || track.category === category;
     const matchesQuery = !needle || normalizeSearchValue([
       track.title,
       track.persianTitle,
@@ -66,8 +67,24 @@ export function searchMusic(index: MusicIndex, query: string, kind = "all") {
       ...track.artists.map((artist) => artist.name),
       ...track.artists.flatMap((artist) => artist.aliases ?? []),
     ].join(" ")).includes(needle);
-    return matchesKind && matchesQuery;
+    return matchesKind && matchesCategory && matchesQuery;
   });
+}
+
+export function selectMusicShelfTracks(tracks: MusicTrack[], limit = 15) {
+  const seen = new Set<string>();
+  return [...tracks]
+    .filter((track) => track.sources.some((source) => source.kind === "stream" && source.available !== false))
+    .sort((left, right) => (
+      Number(Boolean(right.coverUrl)) - Number(Boolean(left.coverUrl))
+      || (right.publishedAt ?? "").localeCompare(left.publishedAt ?? "")
+    ))
+    .filter((track) => {
+      if (seen.has(track.id)) return false;
+      seen.add(track.id);
+      return true;
+    })
+    .slice(0, limit);
 }
 
 export function relatedMusic(index: MusicIndex, track: MusicTrack, limit = 12) {

@@ -1,4 +1,4 @@
-import { createServer } from "node:http";
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { randomBytes, randomUUID } from "node:crypto";
 import next from "next";
 import { Server } from "socket.io";
@@ -6,6 +6,26 @@ import { loadVodHomeIndex, loadVodIndex } from "./lib/vod-index";
 import type { PartyCapability, PartyChatMessage, PartyLiveCaption, PartyMedia, PartyParticipant, PartyPermissions, PartyPlayback, PartyProfile, PartyPublicRoom, PartyQueueItem, PartyRoomVisibility, PartySharedAudio, PartySnapshot } from "./lib/watch-party-types";
 import { DEFAULT_PARTY_PERMISSIONS } from "./lib/watch-party-types";
 import { AUTO_SUBTITLE_SELECTION, OFF_SUBTITLE_SELECTION, type SubtitleSelection } from "./lib/subtitle-types";
+import {
+  externalPersonalMediaToPartyMedia,
+  isExpiredPartyMedia,
+  storedPersonalMediaToPartyMedia,
+  type PersonalMediaFields,
+  type PersonalMediaKind,
+  type PersonalMediaMode,
+} from "./lib/watch-party-personal-media";
+import {
+  cleanupExpiredTempPartyMedia,
+  createTempPartyMediaReadStream,
+  getTempPartyMedia,
+  getTempPartyMediaForRoom,
+  initializeTempPartyMediaStore,
+  MAX_TEMP_AUDIO_BYTES,
+  MAX_TEMP_VIDEO_BYTES,
+  saveTempPartyMediaUpload,
+  TempPartyMediaError,
+  TEMP_MEDIA_TTL_MS,
+} from "./lib/watch-party-temp-media-store";
 
 const dev = process.argv.includes("--dev");
 const hostname = process.env.HOSTNAME || "0.0.0.0";
@@ -19,8 +39,17 @@ const MAX_QUEUE_ITEMS = positiveInteger(process.env.WATCH_PARTY_MAX_QUEUE, 100);
 const MAX_VOICE_PARTICIPANTS = positiveInteger(process.env.WATCH_PARTY_MAX_VOICE_PARTICIPANTS, 10);
 const MAX_CAMERA_PARTICIPANTS = positiveInteger(process.env.WATCH_PARTY_MAX_CAMERA_PARTICIPANTS, 4);
 const MAX_SHARED_SUBTITLE_CHARS = 340 * 1024;
+const TEMP_MEDIA_UPLOAD_GRANT_TTL_MS = 5 * 60_000;
+const TEMP_MEDIA_UPLOAD_TIMEOUT_MS = Math.max(30_000, Number(process.env.WATCH_PARTY_UPLOAD_TIMEOUT_MS) || 5 * 60_000);
 let ready = false;
 let shuttingDown = false;
+
+type TempMediaUploadGrant = {
+  roomId: string;
+  userId: string;
+  ownerName: string;
+  expiresAt: number;
+};
 
 type Room = {
   id: string;
@@ -45,6 +74,7 @@ type Room = {
 };
 
 const rooms = new Map<string, Room>();
+const tempMediaUploadGrants = new Map<string, TempMediaUploadGrant>();
 const capabilityForAction: Record<string, PartyCapability> = { play: "playback", pause: "playback", seek: "seek", rate: "playback", source: "changeSource", media: "changeMedia" };
 
 function positiveInteger(value: string | undefined, fallback: number) {
@@ -85,6 +115,119 @@ function cleanProfile(value: Partial<PartyProfile>): PartyProfile {
 
 function currentTime(playback: PartyPlayback, now = Date.now()) {
   return playback.paused ? playback.currentTime : playback.currentTime + Math.max(0, now - playback.updatedAt) / 1000 * playback.playbackRate;
+}
+
+function cleanPersonalMediaFields(value: Record<string, unknown> | undefined): PersonalMediaFields {
+  const kind = value?.mediaKind;
+  const number = (candidate: unknown) => {
+    const parsed = Number(candidate);
+    return Number.isInteger(parsed) && parsed > 0 && parsed <= 9_999 ? parsed : null;
+  };
+  return {
+    title: typeof value?.title === "string" ? value.title.slice(0, 160) : null,
+    mediaKind: kind === "audio" || kind === "video" ? kind : null,
+    season: number(value?.season),
+    episode: number(value?.episode),
+  };
+}
+
+function readTempMediaUploadGrant(token: string | undefined) {
+  if (!token) return null;
+  const grant = tempMediaUploadGrants.get(token);
+  if (!grant || grant.expiresAt <= Date.now()) {
+    if (grant) tempMediaUploadGrants.delete(token);
+    return null;
+  }
+  return grant;
+}
+
+function json(response: ServerResponse, status: number, body: unknown) {
+  response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+  response.end(JSON.stringify(body));
+}
+
+function mediaRange(value: string | undefined, size: number) {
+  if (!value) return { start: 0, end: Math.max(0, size - 1), partial: false };
+  const match = /^bytes=(\d*)-(\d*)$/i.exec(value.trim());
+  if (!match) return null;
+  const [, startValue, endValue] = match;
+  if (!startValue && !endValue) return null;
+  if (!startValue) {
+    const suffix = Number(endValue);
+    if (!Number.isInteger(suffix) || suffix <= 0) return null;
+    return { start: Math.max(0, size - suffix), end: Math.max(0, size - 1), partial: true };
+  }
+  const start = Number(startValue);
+  const end = endValue ? Number(endValue) : size - 1;
+  if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end < start || start >= size) return null;
+  return { start, end: Math.min(end, size - 1), partial: true };
+}
+
+async function handleTempMediaUploadRequest(request: IncomingMessage, response: ServerResponse) {
+  const header = request.headers["x-party-upload-grant"];
+  const grantToken = Array.isArray(header) ? header[0] : header;
+  const grant = readTempMediaUploadGrant(grantToken);
+  if (!grant) {
+    json(response, 403, { ok: false, error: "This temporary upload ticket has expired. Open the room panel and try again." });
+    return;
+  }
+  request.setTimeout(TEMP_MEDIA_UPLOAD_TIMEOUT_MS);
+  try {
+    const record = await saveTempPartyMediaUpload(request, {
+      roomId: grant.roomId,
+      ownerId: grant.userId,
+      ownerName: grant.ownerName,
+    });
+    if (grantToken) tempMediaUploadGrants.delete(grantToken);
+    json(response, 201, { ok: true, mediaId: record.id, title: record.title, mediaKind: record.mediaKind, expiresAt: record.expiresAt });
+  } catch (error) {
+    const issue = error instanceof TempPartyMediaError ? error : new TempPartyMediaError("SarvNema could not save that temporary media file.", 500);
+    json(response, issue.status, { ok: false, error: issue.message });
+  }
+}
+
+async function handleTempMediaStreamRequest(request: IncomingMessage, response: ServerResponse, pathname: string) {
+  let id = "";
+  try {
+    id = decodeURIComponent(pathname.replace("/api/watch-party/personal-media/", ""));
+  } catch {
+    json(response, 400, { ok: false, error: "That temporary media address is malformed." });
+    return;
+  }
+  const url = new URL(request.url ?? pathname, `http://${request.headers.host ?? "localhost"}`);
+  const media = await getTempPartyMedia(id, url.searchParams.get("key"));
+  if (!media) {
+    response.writeHead(404, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+    response.end(JSON.stringify({ ok: false, error: "This temporary room media has expired or is unavailable." }));
+    return;
+  }
+  const range = mediaRange(request.headers.range, media.size);
+  if (!range) {
+    response.writeHead(416, { "Content-Range": `bytes */${media.size}`, "Cache-Control": "no-store" });
+    response.end();
+    return;
+  }
+  const length = range.end - range.start + 1;
+  response.writeHead(range.partial ? 206 : 200, {
+    "Content-Type": media.record.mimeType,
+    "Content-Length": length,
+    "Accept-Ranges": "bytes",
+    ...(range.partial ? { "Content-Range": `bytes ${range.start}-${range.end}/${media.size}` } : {}),
+    "Cache-Control": "private, no-store",
+    "X-Content-Type-Options": "nosniff",
+    "Content-Disposition": "inline",
+  });
+  if (request.method === "HEAD") {
+    response.end();
+    return;
+  }
+  const stream = createTempPartyMediaReadStream(media.record, range.start, range.end);
+  stream.on("error", () => {
+    if (!response.headersSent) response.writeHead(500);
+    response.end();
+  });
+  response.on("close", () => stream.destroy());
+  stream.pipe(response);
 }
 
 function snapshot(room: Room): PartySnapshot {
@@ -141,9 +284,17 @@ function roomForSocket(roomId: string, socketId: string) {
 }
 
 async function start() {
-await app.prepare();
+await Promise.all([app.prepare(), initializeTempPartyMediaStore()]);
 const httpServer = createServer((request, response) => {
   const pathname = request.url?.split("?", 1)[0];
+  if (request.method === "POST" && pathname === "/api/watch-party/personal-media/upload") {
+    void handleTempMediaUploadRequest(request, response);
+    return;
+  }
+  if ((request.method === "GET" || request.method === "HEAD") && pathname?.startsWith("/api/watch-party/personal-media/")) {
+    void handleTempMediaStreamRequest(request, response, pathname);
+    return;
+  }
   if (request.method === "GET" && pathname === "/healthz") {
     response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
     response.end(JSON.stringify({ status: "ok", uptimeSeconds: Math.floor((Date.now() - processStartedAt) / 1000) }));
@@ -184,7 +335,7 @@ const httpServer = createServer((request, response) => {
 });
 httpServer.keepAliveTimeout = 65_000;
 httpServer.headersTimeout = 66_000;
-httpServer.requestTimeout = 30_000;
+httpServer.requestTimeout = TEMP_MEDIA_UPLOAD_TIMEOUT_MS;
 
 const io = new Server(httpServer, {
   cors: { origin: allowedSocketOrigin, credentials: true },
@@ -198,6 +349,33 @@ const io = new Server(httpServer, {
     skipMiddlewares: true,
   },
 });
+
+function addPersonalMediaToRoom(room: Room, media: PartyMedia, mode: PersonalMediaMode, originUserId: string) {
+  if (isExpiredPartyMedia(media)) return { ok: false as const, error: "That temporary media has already expired." };
+  const now = Date.now();
+  if (mode === "queue") {
+    if (room.queue.length >= MAX_QUEUE_ITEMS) return { ok: false as const, error: "The room queue is full." };
+    const item: PartyQueueItem = { ...media, queueId: randomUUID(), addedBy: originUserId, addedAt: now };
+    room.queue.push(item);
+    room.lastActiveAt = now;
+    io.to(room.id).emit("queue:update", room.queue);
+    return { ok: true as const, queued: true, media: item };
+  }
+  room.playback = {
+    media,
+    currentTime: 0,
+    paused: true,
+    playbackRate: 1,
+    updatedAt: now,
+    revision: room.playback.revision + 1,
+  };
+  room.subtitle = { ...AUTO_SUBTITLE_SELECTION };
+  room.lastActiveAt = now;
+  io.to(room.id).emit("playback:state", { ...room.playback, serverNow: now, action: "media", originUserId });
+  io.to(room.id).emit("subtitle:state", room.subtitle);
+  io.to(room.id).emit("room:snapshot", snapshot(room));
+  return { ok: true as const, queued: false, media };
+}
 
 function releaseInterpreter(room: Room, userId: string) {
   if (room.interpreterUserId !== userId) return;
@@ -221,7 +399,7 @@ io.on("connection", (socket) => {
     const participant: PartyParticipant = { ...profile, role: "host", connected: true, mutedByHost: false, joinedAt: Date.now(), permissions: {} };
     const isListeningRoom = payload.media.catalogue === "music" || payload.media.mediaKind === "audio";
     const visibility: PartyRoomVisibility = payload.visibility === "public" ? "public" : "private";
-    const room: Room = { id, inviteToken, ownerId: profile.id, visibility, playback: { media: payload.media, currentTime: 0, paused: true, playbackRate: 1, updatedAt: Date.now(), revision: 1 }, participants: new Map([[profile.id, participant]]), sockets: new Map([[socket.id, profile.id]]), guestPermissions: { ...DEFAULT_PARTY_PERMISSIONS, shareLocalAudio: isListeningRoom }, queue: [], chat: [], blocked: new Set(), voiceUsers: new Set(), voiceTalking: new Set(), cameraUsers: new Set(), interpreterUserId: null, sharedAudio: null, subtitle: { ...AUTO_SUBTITLE_SELECTION }, createdAt: Date.now(), lastActiveAt: Date.now() };
+    const room: Room = { id, inviteToken, ownerId: profile.id, visibility, playback: { media: payload.media, currentTime: 0, paused: true, playbackRate: 1, updatedAt: Date.now(), revision: 1 }, participants: new Map([[profile.id, participant]]), sockets: new Map([[socket.id, profile.id]]), guestPermissions: { ...DEFAULT_PARTY_PERMISSIONS, shareLocalAudio: isListeningRoom, addPersonalMedia: visibility === "private" }, queue: [], chat: [], blocked: new Set(), voiceUsers: new Set(), voiceTalking: new Set(), cameraUsers: new Set(), interpreterUserId: null, sharedAudio: null, subtitle: { ...AUTO_SUBTITLE_SELECTION }, createdAt: Date.now(), lastActiveAt: Date.now() };
     rooms.set(id, room); socket.join(id); trackSocketRoom(socket, id);
     ack?.({ ok: true, roomId: id, inviteToken, snapshot: snapshot(room) });
   });
@@ -239,6 +417,51 @@ io.on("connection", (socket) => {
     room.sockets.set(socket.id, profile.id); room.lastActiveAt = Date.now(); socket.join(room.id); trackSocketRoom(socket, room.id);
     io.to(room.id).emit("room:snapshot", snapshot(room));
     ack?.({ ok: true, snapshot: snapshot(room) });
+  });
+
+  socket.on("personal-media:upload-grant", ({ roomId, mediaKind }: { roomId: string; mediaKind?: PersonalMediaKind }, ack) => {
+    if (!allowSocketEvent(socket, "personal-media:upload-grant", 8, 60_000)) return ack?.({ ok: false, error: "Too many upload requests. Give the pixels a moment." });
+    const found = roomForSocket(roomId, socket.id);
+    if (!found || !permitted(found.room, found.userId, "addPersonalMedia")) return ack?.({ ok: false, error: "The host has not enabled personal media for you." });
+    const kind: PersonalMediaKind = mediaKind === "audio" ? "audio" : "video";
+    const participant = found.room.participants.get(found.userId);
+    if (!participant) return ack?.({ ok: false, error: "Join the room before adding media." });
+    const grant = randomBytes(24).toString("base64url");
+    const expiresAt = Date.now() + TEMP_MEDIA_UPLOAD_GRANT_TTL_MS;
+    tempMediaUploadGrants.set(grant, { roomId: found.room.id, userId: found.userId, ownerName: participant.name, expiresAt });
+    ack?.({ ok: true, grant, endpoint: "/api/watch-party/personal-media/upload", expiresAt, maxBytes: kind === "audio" ? MAX_TEMP_AUDIO_BYTES : MAX_TEMP_VIDEO_BYTES });
+  });
+
+  socket.on("personal-media:link", ({ roomId, url, fields, mode }: { roomId: string; url?: string; fields?: Record<string, unknown>; mode?: PersonalMediaMode }, ack) => {
+    if (!allowSocketEvent(socket, "personal-media:link", 10, 60_000)) return ack?.({ ok: false, error: "Too many link requests. The room is catching its breath." });
+    const found = roomForSocket(roomId, socket.id);
+    if (!found || !permitted(found.room, found.userId, "addPersonalMedia")) return ack?.({ ok: false, error: "The host has not enabled personal media for you." });
+    const selectedMode: PersonalMediaMode = mode === "now" ? "now" : "queue";
+    if (selectedMode === "now" && !permitted(found.room, found.userId, "changeMedia")) return ack?.({ ok: false, error: "You can add this link to the queue, but the host controls what plays now." });
+    const participant = found.room.participants.get(found.userId);
+    const media = externalPersonalMediaToPartyMedia({
+      id: randomUUID(),
+      url: String(url ?? ""),
+      ownerName: participant?.name ?? "Guest",
+      expiresAt: Date.now() + TEMP_MEDIA_TTL_MS,
+      fields: cleanPersonalMediaFields(fields),
+    });
+    if (!media) return ack?.({ ok: false, error: "Use a public HTTPS link ending in a browser-playable audio or video file." });
+    const result = addPersonalMediaToRoom(found.room, media, selectedMode, found.userId);
+    ack?.(result);
+  });
+
+  socket.on("personal-media:apply-upload", async ({ roomId, mediaId, mode }: { roomId: string; mediaId?: string; mode?: PersonalMediaMode }, ack) => {
+    if (!allowSocketEvent(socket, "personal-media:apply-upload", 12, 60_000)) return ack?.({ ok: false, error: "Too many media changes. Give the player a second." });
+    const found = roomForSocket(roomId, socket.id);
+    if (!found || !permitted(found.room, found.userId, "addPersonalMedia")) return ack?.({ ok: false, error: "The host has not enabled personal media for you." });
+    const selectedMode: PersonalMediaMode = mode === "now" ? "now" : "queue";
+    if (selectedMode === "now" && !permitted(found.room, found.userId, "changeMedia")) return ack?.({ ok: false, error: "You can add your upload to the queue, but the host controls what plays now." });
+    const record = await getTempPartyMediaForRoom(String(mediaId ?? ""), found.room.id);
+    if (!record) return ack?.({ ok: false, error: "That temporary upload has expired or belongs to a different room." });
+    if (record.ownerId !== found.userId && found.userId !== found.room.ownerId) return ack?.({ ok: false, error: "Only the uploader or room host can use that temporary file." });
+    const result = addPersonalMediaToRoom(found.room, storedPersonalMediaToPartyMedia(record), selectedMode, found.userId);
+    ack?.(result);
   });
 
   socket.on("voice:join", ({ roomId }: { roomId: string }, ack) => {
@@ -411,6 +634,8 @@ io.on("connection", (socket) => {
     if (!allowSocketEvent(socket, "playback:command", 40, 10_000)) return ack?.({ ok: false, error: "Playback commands are arriving too quickly." });
     const found = roomForSocket(roomId, socket.id); if (!found) return;
     const capability = capabilityForAction[action]; if (!capability || !permitted(found.room, found.userId, capability)) return ack?.({ ok: false, error: "Permission denied." });
+    if (action === "source" && source?.expiresAt && source.expiresAt <= Date.now()) return ack?.({ ok: false, error: "That temporary media source has expired." });
+    if (action === "media" && media && isExpiredPartyMedia(media)) return ack?.({ ok: false, error: "That temporary media has expired." });
     const now = Date.now(); const playback = found.room.playback; playback.currentTime = currentTime(playback, now); playback.updatedAt = now;
     if (action === "play") playback.paused = false;
     if (action === "pause") playback.paused = true;
@@ -431,9 +656,9 @@ io.on("connection", (socket) => {
     ack?.({ ok: true });
   });
 
-  socket.on("queue:add", ({ roomId, media }: { roomId: string; media: PartyMedia }, ack) => { const found = roomForSocket(roomId, socket.id); if (!found || !permitted(found.room, found.userId, "queue") || !media?.source?.url) return ack?.({ ok: false, error: "Permission denied." }); if (!allowSocketEvent(socket, "queue:add", 20, 60_000)) return ack?.({ ok: false, error: "Queue requests are arriving too quickly." }); if (found.room.queue.length >= MAX_QUEUE_ITEMS) return ack?.({ ok: false, error: "The room queue is full." }); const item: PartyQueueItem = { ...media, queueId: randomUUID(), addedBy: found.userId, addedAt: Date.now() }; found.room.queue.push(item); io.to(roomId).emit("queue:update", found.room.queue); ack?.({ ok: true }); });
+  socket.on("queue:add", ({ roomId, media }: { roomId: string; media: PartyMedia }, ack) => { const found = roomForSocket(roomId, socket.id); if (!found || !permitted(found.room, found.userId, "queue") || !media?.source?.url || isExpiredPartyMedia(media)) return ack?.({ ok: false, error: "Permission denied or temporary media expired." }); if (!allowSocketEvent(socket, "queue:add", 20, 60_000)) return ack?.({ ok: false, error: "Queue requests are arriving too quickly." }); if (found.room.queue.length >= MAX_QUEUE_ITEMS) return ack?.({ ok: false, error: "The room queue is full." }); const item: PartyQueueItem = { ...media, queueId: randomUUID(), addedBy: found.userId, addedAt: Date.now() }; found.room.queue.push(item); io.to(roomId).emit("queue:update", found.room.queue); ack?.({ ok: true }); });
   socket.on("queue:remove", ({ roomId, queueId }: { roomId: string; queueId: string }) => { const found = roomForSocket(roomId, socket.id); if (!found || !permitted(found.room, found.userId, "queue")) return; found.room.queue = found.room.queue.filter((item) => item.queueId !== queueId); io.to(roomId).emit("queue:update", found.room.queue); });
-  socket.on("queue:play", ({ roomId, queueId }: { roomId: string; queueId: string }) => { const found = roomForSocket(roomId, socket.id); if (!found || !permitted(found.room, found.userId, "changeMedia")) return; const item = found.room.queue.find((entry) => entry.queueId === queueId); if (!item) return; const serverNow = Date.now(); found.room.playback = { media: item, currentTime: 0, paused: true, playbackRate: 1, updatedAt: serverNow, revision: found.room.playback.revision + 1 }; found.room.queue = found.room.queue.filter((entry) => entry.queueId !== queueId); io.to(roomId).emit("queue:update", found.room.queue); io.to(roomId).emit("playback:state", { ...found.room.playback, serverNow, action: "media", originUserId: found.userId }); });
+  socket.on("queue:play", ({ roomId, queueId }: { roomId: string; queueId: string }) => { const found = roomForSocket(roomId, socket.id); if (!found || !permitted(found.room, found.userId, "changeMedia")) return; const item = found.room.queue.find((entry) => entry.queueId === queueId); if (!item || isExpiredPartyMedia(item)) return; const serverNow = Date.now(); found.room.playback = { media: item, currentTime: 0, paused: true, playbackRate: 1, updatedAt: serverNow, revision: found.room.playback.revision + 1 }; found.room.queue = found.room.queue.filter((entry) => entry.queueId !== queueId); io.to(roomId).emit("queue:update", found.room.queue); io.to(roomId).emit("playback:state", { ...found.room.playback, serverNow, action: "media", originUserId: found.userId }); });
 
   socket.on("chat:send", ({ roomId, text }: { roomId: string; text: string }) => { if (!allowSocketEvent(socket, "chat:send", 12, 10_000)) return; const found = roomForSocket(roomId, socket.id); if (!found || !permitted(found.room, found.userId, "chat")) return; const participant = found.room.participants.get(found.userId)!; const clean = String(text || "").trim().slice(0, 600); if (!clean) return; const message: PartyChatMessage = { id: randomUUID(), userId: found.userId, name: participant.name, avatarUrl: participant.avatarUrl, text: clean, createdAt: Date.now() }; found.room.chat.push(message); found.room.chat = found.room.chat.slice(-100); io.to(roomId).emit("chat:message", message); });
   socket.on("reaction:send", ({ roomId, emoji }: { roomId: string; emoji: string }) => { if (!allowSocketEvent(socket, "reaction:send", 20, 10_000)) return; const found = roomForSocket(roomId, socket.id); if (!found || !permitted(found.room, found.userId, "react")) return; const participant = found.room.participants.get(found.userId)!; const allowed = ["❤️", "😂", "👏", "🔥", "😮", "😢"]; if (!allowed.includes(emoji)) return; io.to(roomId).emit("reaction", { id: randomUUID(), userId: found.userId, name: participant.name, avatarUrl: participant.avatarUrl, emoji, createdAt: Date.now() }); });
@@ -510,7 +735,28 @@ io.on("connection", (socket) => {
   });
 });
 
-setInterval(() => { const cutoff = Date.now() - 12 * 60 * 60 * 1000; for (const [id, room] of rooms) if (room.lastActiveAt < cutoff && ![...room.participants.values()].some((participant) => participant.connected)) rooms.delete(id); }, 60_000).unref();
+setInterval(() => {
+  const now = Date.now();
+  const cutoff = now - 12 * 60 * 60 * 1000;
+  for (const [id, room] of rooms) {
+    if (room.lastActiveAt < cutoff && ![...room.participants.values()].some((participant) => participant.connected)) {
+      rooms.delete(id);
+      continue;
+    }
+    const previousQueueSize = room.queue.length;
+    room.queue = room.queue.filter((item) => !isExpiredPartyMedia(item, now));
+    if (room.queue.length !== previousQueueSize) io.to(room.id).emit("queue:update", room.queue);
+    if (isExpiredPartyMedia(room.playback.media, now) && !room.playback.paused) {
+      room.playback.currentTime = currentTime(room.playback, now);
+      room.playback.paused = true;
+      room.playback.updatedAt = now;
+      room.playback.revision += 1;
+      io.to(room.id).emit("playback:state", { ...room.playback, serverNow: now, action: "expired" });
+    }
+  }
+  for (const [token, grant] of tempMediaUploadGrants) if (grant.expiresAt <= now) tempMediaUploadGrants.delete(token);
+  void cleanupExpiredTempPartyMedia(now).catch((error) => console.error("Temporary party media cleanup failed", error));
+}, 60_000).unref();
 
 // Load the two compact indexes before accepting production traffic. This avoids
 // making the first real search request pay the JSON read/parse cost.

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AiSearchPanel } from "@/components/ai-search-panel";
-import { BannerCarousel } from "@/components/banner-carousel";
+import { FilmLandingHero } from "@/components/film-landing-hero";
 import { FocusRail } from "@/components/focus-rail";
 import { GradientMenu, type MegaMenuItem } from "@/components/gradient-menu";
 import { NewsRail } from "@/components/news-rail";
@@ -11,12 +11,11 @@ import { PeopleRail } from "@/components/people-rail";
 import { PosterRail } from "@/components/poster-rail";
 import { ReleaseUpdatesRail } from "@/components/release-updates-rail";
 import { WideRail as WideRailComponent } from "@/components/wide-rail";
-import { SearchSuggest } from "@/components/search-suggest";
 import { PublicPartyRooms } from "@/components/public-party-rooms";
 import { aiSearch } from "@/lib/ai-search";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import { loadVodNews } from "@/lib/news";
-import { loadReleaseUpdates } from "@/lib/release-updates";
+import { loadReleaseUpdates, type ReleaseUpdate } from "@/lib/release-updates";
 import { getLocale } from "@/lib/server-locale";
 import { loadTopPeople } from "@/lib/top-people";
 import { loadMusicIndex } from "@/lib/music";
@@ -41,101 +40,91 @@ export default async function HomePage() {
     heroBanners,
     midBanners,
     initialAiResults,
-    persianSection,
+    landingRails,
     megaSections,
     megaFeaturedItems,
     wideItems,
-    extraSections,
   } = await buildHomePageData(locale);
 
   const aiPrompt = t.home.aiPrompt;
 
   return (
-    <main className="shell">
-      <section className="hero home-hero">
+    <main className="shell film-spotify-page">
+      <section className="film-landing-shell">
         <GradientMenu
           totalTitles={index.totalTitles}
           locale={locale}
           menuSections={megaSections}
           featuredItems={megaFeaturedItems}
         />
-
-        <BannerCarousel items={heroBanners} locale={locale} />
-
-        <div className="hero-tools wrap">
-          <form className="hero-search" action="/browse">
-            <SearchSuggest placeholder={t.home.searchPlaceholder} locale={locale} />
-            <button type="submit">{t.common.search}</button>
-          </form>
-          <div className="quick-tabs">
-            {quickLinks(locale).map((item) => (
-              <Link key={item.href} href={item.href}>{item.label}</Link>
-            ))}
-          </div>
+        <div className="wrap">
+          <FilmLandingHero items={heroBanners} locale={locale} />
         </div>
       </section>
 
-      <section className="home-stack wrap">
+      <section className="home-stack wrap film-landing-content">
         <DownloadHistory />
         <ContinueWatching />
         <PublicPartyRooms mode="watch" locale={locale} />
+        <NewsRail items={news.items} locale={locale} />
         <ReleaseUpdatesRail items={updates.items} locale={locale} />
         <MusicRail tracks={music.tracks} />
-        <HomeRail section={localizeSection(index.sections[0], locale)} locale={locale} />
-        {persianSection && <HomeRail section={localizeSection(persianSection, locale)} locale={locale} />}
         <FocusRail items={midBanners} locale={locale} />
         <WideRailComponent items={wideItems} locale={locale} />
         <AiSearchPanel locale={locale} initialQuery={aiPrompt} initialResults={initialAiResults} />
-        {extraSections.map((section) => (
-          <HomeRail key={section.id} section={section} locale={locale} />
-        ))}
-        <PeopleRail people={topPeople.people} locale={locale} />
-        <NewsRail items={news.items} locale={locale} />
-        {index.sections.filter((section) => section.id !== "top-imdb" && section.id !== "persian-movies").map((section) => (
+        {landingRails.map((section) => (
           <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />
         ))}
+        <PeopleRail people={topPeople.people} locale={locale} />
       </section>
     </main>
   );
 }
 
 async function buildHomePageData(locale: Locale) {
-  const [index, news, topPeople, updates, music] = await Promise.all([
+  const [index, rawNews, topPeople, rawUpdates, music] = await Promise.all([
     loadVodHomeIndex(),
     loadVodNews(),
     loadTopPeople(),
     loadReleaseUpdates(),
     loadMusicIndex(),
   ]);
+  const news = { ...rawNews, items: prioritizeNews(rawNews.items) };
+  const updates = { ...rawUpdates, items: prioritizeReleaseUpdates(rawUpdates.items) };
   const t = getDictionary(locale);
-  const heroBanners = uniqueBackdropCards([
+  const seen = new Set<string>();
+  const heroBanners = takeFreshVisual([
     ...(index.sections.find((section) => section.id === "recent-films")?.items ?? []).slice(0, 5),
     ...(index.sections.find((section) => section.id === "best-movies")?.items ?? []).slice(0, 5),
     ...(index.sections.find((section) => section.id === "top-imdb")?.items ?? []).slice(0, 5),
-  ]).slice(0, 10);
-  const midBanners = uniqueVisualCards([
+  ], seen, 10);
+  const midBanners = takeFreshVisual([
     ...(index.sections.find((section) => section.id === "top-imdb")?.items ?? []).slice(5, 11),
     ...(index.sections.find((section) => section.id === "animation")?.items ?? []).slice(0, 4),
-  ]).slice(0, 10);
+  ], seen, 10);
   const aiPrompt = t.home.aiPrompt;
-  const initialAiResults = aiSearch(index.items, aiPrompt, 10).map(({ item, score, reasons }) => ({
-    item: {
-      title: item.title,
-      imdbCode: item.imdbCode,
-      backdropUrl: item.backdropUrl,
-      posterUrl: item.posterUrl,
-    },
-    score,
-    reasons,
-  }));
-  const persianSection = index.sections.find((section) => section.id === "persian-movies");
+  const initialAiResults = aiSearch(index.items, aiPrompt, 30)
+    .filter(({ item }) => !seen.has(item.imdbCode))
+    .slice(0, 10)
+    .map(({ item, score, reasons }) => {
+      seen.add(item.imdbCode);
+      return {
+        item: {
+          title: item.title,
+          imdbCode: item.imdbCode,
+          backdropUrl: item.backdropUrl,
+          posterUrl: item.posterUrl,
+        },
+        score,
+        reasons,
+      };
+    });
   const { sections: megaSections, featuredItems: megaFeaturedItems } = buildGenreMenu(index.items);
-  const wideItems = uniqueCards(
-    index.items
-      .filter((item) => item.backdropUrl && item.overview && (item.imdbRating ?? 0) >= 7.2)
-      .sort((a, b) => (b.imdbRating ?? 0) - (a.imdbRating ?? 0) || (b.year ?? 0) - (a.year ?? 0))
-  ).slice(0, 10);
-  const extraSections: HomeRailSection[] = [
+  const wideCandidates = index.items
+    .filter((item) => item.backdropUrl && item.overview && (item.imdbRating ?? 0) >= 7.2)
+    .sort((a, b) => (b.imdbRating ?? 0) - (a.imdbRating ?? 0) || (b.year ?? 0) - (a.year ?? 0));
+  const wideItems = takeFreshCards(wideCandidates, seen, 10);
+  const generatedSections: HomeRailSection[] = [
     makeSection(
       "recent-trailers",
       t.home.sections["recent-trailers"].title,
@@ -167,6 +156,14 @@ async function buildHomePageData(locale: Locale) {
     ),
   ];
 
+  const landingRails = rotateDaily([...index.sections, ...generatedSections])
+    .map((section) => ({
+      ...section,
+      items: takeFreshCards(section.items, seen, 10),
+    }))
+    .filter((section) => section.items.length > 0)
+    .map((section) => ({ ...section, total: section.items.length }));
+
   return {
     index,
     news,
@@ -176,12 +173,69 @@ async function buildHomePageData(locale: Locale) {
     heroBanners,
     midBanners,
     initialAiResults,
-    persianSection,
+    landingRails,
     megaSections,
     megaFeaturedItems,
     wideItems,
-    extraSections,
   };
+}
+
+function takeFreshCards(items: VodCard[], seen: Set<string>, limit: number) {
+  const fresh: VodCard[] = [];
+  for (const item of uniqueCards(items)) {
+    if (seen.has(item.imdbCode)) continue;
+    seen.add(item.imdbCode);
+    fresh.push(item);
+    if (fresh.length >= limit) break;
+  }
+  return fresh;
+}
+
+function takeFreshVisual(items: VodCard[], seen: Set<string>, limit: number) {
+  const images = new Set<string>();
+  const fresh: VodCard[] = [];
+  for (const item of uniqueCards(items)) {
+    const image = item.backdropUrl ?? item.posterUrl;
+    if (!image || seen.has(item.imdbCode) || images.has(image)) continue;
+    seen.add(item.imdbCode);
+    images.add(image);
+    fresh.push(item);
+    if (fresh.length >= limit) break;
+  }
+  return fresh;
+}
+
+function rotateDaily<T>(items: T[]) {
+  if (items.length < 2) return items;
+  const day = Math.floor(Date.now() / 86_400_000);
+  const offset = day % items.length;
+  return items.slice(offset).concat(items.slice(0, offset));
+}
+
+function prioritizeNews<T extends { id: string; url: string; title: string; category: string; publishedAt: string }>(items: T[]) {
+  const seen = new Set<string>();
+  return [...items]
+    .filter((item) => {
+      const key = `${item.url}|${item.title}`.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => {
+      const categoryRank = (category: string) => category === "release" ? 0 : category === "episodes" ? 1 : category === "imdb" ? 2 : 3;
+      return categoryRank(a.category) - categoryRank(b.category) || Date.parse(b.publishedAt) - Date.parse(a.publishedAt);
+    })
+    .slice(0, 15);
+}
+
+function prioritizeReleaseUpdates(items: ReleaseUpdate[]) {
+  return [...items]
+    .sort((a, b) => {
+      const statusRank = (status: ReleaseUpdate["status"]) => status === "coming-soon" ? 0 : 1;
+      const kindRank = (kind: ReleaseUpdate["kind"]) => kind === "episode" ? 0 : kind === "series" ? 1 : 2;
+      return statusRank(a.status) - statusRank(b.status) || Date.parse(b.eventAt) - Date.parse(a.eventAt) || kindRank(a.kind) - kindRank(b.kind);
+    })
+    .slice(0, 16);
 }
 
 function uniqueCards(items: VodCard[]) {
@@ -276,19 +330,6 @@ function toMegaMenuItem(item: VodCard): MegaMenuItem {
 
 function yearSort(a: VodCard, b: VodCard) {
   return (b.year ?? 0) - (a.year ?? 0) || (b.imdbRating ?? 0) - (a.imdbRating ?? 0);
-}
-
-function quickLinks(locale: Locale) {
-  const t = getDictionary(locale);
-  return [
-    { href: "/browse?section=top-imdb", label: t.common.topImdb },
-    { href: "/browse?section=persian-movies", label: t.common.persianMovies },
-    { href: "/browse?section=recent-films", label: t.common.recentFilm },
-    { href: "/browse?section=best-movies", label: t.common.bestMovies },
-    { href: "/browse?section=best-series", label: t.common.bestSeries },
-    { href: "/browse?section=kids", label: t.common.kids },
-    { href: "/browse?section=animation", label: t.common.animation },
-  ];
 }
 
 function localizeSection(section: HomeRailSection, locale: Locale): HomeRailSection {

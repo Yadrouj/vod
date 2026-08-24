@@ -44,6 +44,8 @@
     "enrich-rozmusic-details": "node scripts/scrape-rozmusic.mjs --details-only --detail-limit=250 --concurrency=1 --delay-ms=1800",
     "scrape-musics-fa": "node scripts/scrape-musics-fa.mjs",
     "scrape-musics-fa:full": "node scripts/scrape-musics-fa.mjs --full",
+    "scrape-musics-fa:remix": "node scripts/scrape-musics-fa.mjs --category-path=remix --pages=35 --detail-limit=0 --concurrency=2 --delay-ms=550",
+    "scrape-remiixbaz": "node scripts/scrape-remiixbaz.mjs",
     "scrape-persian-classics": "node scripts/scrape-persian-classics.mjs --merge",
     "scrape-aftab-foreign": "node scripts/scrape-aftab-foreign.mjs --pages=18 --merge",
     "clean-music-catalog": "node scripts/clean-music-catalog.mjs",
@@ -54,6 +56,7 @@
     "enrich-vod-images": "node scripts/enrich-vod-images.mjs"
   },
   "dependencies": {
+    "busboy": "^1.6.0",
     "fflate": "^0.8.2",
     "lucide-react": "^1.24.0",
     "next": "16.2.9",
@@ -64,6 +67,7 @@
     "tsx": "^4.23.1"
   },
   "devDependencies": {
+    "@types/busboy": "^1.5.4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -7,8 +7,11 @@ const OUTPUT = path.join(".media-cache", "music", "musics-fa-source.json");
 const STATUS = path.join("data", "musics-fa-status.json");
 const args = new Set(process.argv.slice(2));
 const value = (name, fallback) => { const raw = process.argv.find((argument) => argument.startsWith(`${name}=`)); return Math.max(1, Number(raw?.slice(name.length + 1) ?? fallback) || fallback); };
-const pages = args.has("--full") ? 1247 : value("--pages", 3);
-const detailLimit = value("--detail-limit", args.has("--full") ? 0 : 80);
+const categoryPath = process.argv.find((argument) => argument.startsWith("--category-path="))?.slice("--category-path=".length).replace(/^\/+|\/+$/g, "") || "";
+const forcedCategory = categoryPath.toLocaleLowerCase() === "remix" ? "\u0631\u06cc\u0645\u06cc\u06a9\u0633" : "";
+const pages = args.has("--full") ? (forcedCategory ? 35 : 1247) : value("--pages", forcedCategory ? 35 : 3);
+const rawDetailLimit = process.argv.find((argument) => argument.startsWith("--detail-limit="));
+const detailLimit = rawDetailLimit ? Math.max(0, Number(rawDetailLimit.slice("--detail-limit=".length)) || 0) : (args.has("--full") ? 0 : 80);
 const onlyId = process.argv.find((argument) => argument.startsWith("--only-id="))?.slice("--only-id=".length) ?? "";
 const concurrency = Math.min(4, value("--concurrency", 3));
 const delayMs = Math.max(180, value("--delay-ms", 400));
@@ -21,7 +24,7 @@ async function main() {
   await pool(Array.from({ length: pages }, (_, index) => index + 1), concurrency, async (page) => {
     status.current = `archive page ${page}`; await saveStatus();
     try {
-      const discovered = parseListing(await fetchText(page === 1 ? ROOT : `${ROOT}/page/${page}/`));
+      const discovered = parseListing(await fetchText(listingUrl(page)), forcedCategory);
       for (const track of discovered) { const before = tracks.has(track.id); tracks.set(track.id, mergeTrack(tracks.get(track.id), track)); before ? status.tracks.updated++ : status.tracks.new++; }
       status.tracks.discovered += discovered.length; status.pages.complete++;
     } catch (error) { status.tracks.failures++; status.warnings.push(`page ${page}: ${message(error)}`); }
@@ -45,12 +48,18 @@ async function main() {
   console.log(JSON.stringify({ source: "musics-fa", tracks: data.length, ...status.tracks, details: status.details.complete }, null, 2));
 }
 
-function parseListing(html) {
-  const entries = html.match(/<article\b[\s\S]*?<\/article>/gi) ?? [];
-  return entries.map(parseArticle).filter(Boolean);
+function listingUrl(page) {
+  if (forcedCategory) return page === 1 ? `${ROOT}/${categoryPath}/` : `${ROOT}/${categoryPath}/page/${page}/`;
+  return page === 1 ? ROOT : `${ROOT}/page/${page}/`;
 }
 
-function parseArticle(article) {
+function parseListing(html, categoryOverride = "") {
+  const entries = html.match(/<article\b[\s\S]*?<\/article>/gi) ?? [];
+  const tracks = entries.map((article) => parseArticle(article, categoryOverride)).filter(Boolean);
+  return categoryOverride ? tracks.map((track) => ({ ...track, category: categoryOverride })) : tracks;
+}
+
+function parseArticle(article, categoryOverride = "") {
   const url = first(article, /<h2[^>]*>\s*<a[^>]+href=["']([^"']+)["']/i);
   if (!url || !/\/download-song\//.test(url)) return null;
   const title = cleanTitle(clean(first(article, /<h2[^>]*>\s*<a[^>]*>([\s\S]*?)<\/a>/i)));
@@ -74,10 +83,12 @@ async function parseDetail(htmlPromise, track) {
   const direct = media.find((item) => item.kind === "download");
   if (direct && !media.some((item) => item.kind === "stream")) media.unshift({ ...direct, label: "Online stream", kind: "stream" });
   const artistList = extractPrimaryArtist(html, track);
+  const remixArtist = track.category === "\u0631\u06cc\u0645\u06cc\u06a9\u0633" ? track.artist : null;
+  const selectedArtist = remixArtist ?? artistList[0] ?? track.artist;
   const image = first(html, /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/i);
   const description = clean(first(html, /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)/i));
   const publishedAt = first(html, /<meta[^>]+property=["']article:published_time["'][^>]+content=["']([^"']+)/i);
-  return { ...track, title: cleanTitle(track.title), persianTitle: cleanTitle(track.persianTitle || track.title), coverUrl: image || track.coverUrl, description: description || track.description, publishedAt: publishedAt || track.publishedAt, artist: artistList[0] ?? track.artist, artists: artistList.length ? artistList : track.artists, sources: media.length ? media : track.sources, folder: parseFolder(media[0]?.url ?? ""), detailCheckedAt: new Date().toISOString() };
+  return { ...track, title: cleanTitle(track.title), persianTitle: cleanTitle(track.persianTitle || track.title), coverUrl: image || track.coverUrl, description: description || track.description, publishedAt: publishedAt || track.publishedAt, artist: selectedArtist, artists: selectedArtist ? [selectedArtist] : track.artists, sources: media.length ? media : track.sources, folder: parseFolder(media[0]?.url ?? ""), detailCheckedAt: new Date().toISOString() };
 }
 
 function extractArtist(html) {

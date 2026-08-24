@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, Search } from "lucide-react";
+import { MusicArtistCard } from "@/components/music-artist-card";
 import { loadMusicIndex } from "@/lib/music";
 
 export const revalidate = 300;
@@ -19,7 +20,7 @@ export default async function MusicArtistsPage({ searchParams }: Props) {
   return <main className="shell music-artists-page" dir="rtl"><section className="wrap">
     <Link href="/music" className="music-back"><ArrowLeft size={16} /> بازگشت به موسیقی</Link>
     <header className="music-directory-head"><div><p>ARTIST DIRECTORY</p><h1>همهٔ خواننده‌ها</h1><span>{artists.length.toLocaleString("fa-IR")} پروفایل از آرشیو موسیقی سرو‌نما</span></div><form action="/music/artists" className="music-directory-search"><Search size={16} /><input name="q" defaultValue={query} placeholder="نام خواننده…" /><button type="submit">جستجو</button></form></header>
-    <div className="music-directory-grid">{visible.map((artist) => <Link href={`/music/artists/${encodeURIComponent(artist.slug)}`} key={artist.slug} className="music-directory-artist"><span style={(artist.profileImageUrl || artist.coverUrl) ? { backgroundImage: `url(${artist.profileImageUrl || artist.coverUrl})` } : undefined}>{!(artist.profileImageUrl || artist.coverUrl) && artist.name.slice(0, 1)}</span><strong>{artist.name}</strong><small>{artist.trackIds.length.toLocaleString("fa-IR")} اثر</small></Link>)}</div>
+    <div className="music-directory-grid">{visible.map((artist, index) => <MusicArtistCard artist={artist} priority={index < 12} key={artist.slug} />)}</div>
     {pages > 1 && <nav className="music-directory-pages" aria-label="Artist pages">{page > 1 && <Link href={href(query, page - 1)}>بعدی</Link>}<span>{page.toLocaleString("fa-IR")} از {pages.toLocaleString("fa-IR")}</span>{page < pages && <Link href={href(query, page + 1)}>قبلی</Link>}</nav>}
   </section></main>;
 }

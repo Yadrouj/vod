@@ -8,6 +8,7 @@ const OUTPUT = path.join("public", "data", "music-index.json");
 const MUSICS_FA_OUTPUT = path.join(".media-cache", "music", "musics-fa-source.json");
 const CLASSICS_OUTPUT = path.join(".media-cache", "music", "persian-classics-source.json");
 const FOREIGN_OUTPUT = path.join(".media-cache", "music", "aftab-foreign-source.json");
+const REMIIXBAZ_OUTPUT = path.join(".media-cache", "music", "remiixbaz-source.json");
 const REPORT = path.join("data", "rozmusic-status.json");
 const CACHE = path.join(".media-cache", "rozmusic", "detail-cache.json");
 const LISTING_CACHE = path.join(".media-cache", "rozmusic", "catalog-checkpoint.json");
@@ -57,12 +58,13 @@ let completedSinceCheckpoint = 0;
 let nextRequestAt = 0;
 
 async function main() {
-  const [previous, detailCache, musicsFaSource, classicsSource, foreignSource, checkpoint] = await Promise.all([
+  const [previous, detailCache, musicsFaSource, classicsSource, foreignSource, remiixbazSource, checkpoint] = await Promise.all([
     readJson(OUTPUT, emptyIndex()),
     readJson(CACHE, {}),
     readJson(MUSICS_FA_OUTPUT, []),
     readJson(CLASSICS_OUTPUT, { tracks: [] }),
     readJson(FOREIGN_OUTPUT, { tracks: [] }),
+    readJson(REMIIXBAZ_OUTPUT, { tracks: [], artistProfiles: [] }),
     readJson(LISTING_CACHE, emptyCheckpoint()),
   ]);
   const tracks = new Map(Object.entries(checkpoint.tracks ?? {}).map(([id, track]) => [id, track]));
@@ -134,16 +136,29 @@ async function main() {
     });
   }
 
-  const trackList = mergeProviderTracks([...tracks.values()], musicsFaSource, classicsSource.tracks ?? [], foreignSource.tracks ?? [])
+  const trackList = mergeProviderTracks([...tracks.values()], musicsFaSource, classicsSource.tracks ?? [], foreignSource.tracks ?? [], remiixbazSource.tracks ?? [])
     .map((track) => canonicalizeTrackArtists(track, track.sourceUrl))
     .sort((left, right) => (right.publishedAt ?? "").localeCompare(left.publishedAt ?? "") || right.id.localeCompare(left.id));
+  const profileBySlug = new Map((remiixbazSource.artistProfiles ?? []).map((profile) => [profile.slug, profile]));
+  const artists = buildCanonicalArtists(trackList).map((artist) => {
+    const profile = profileBySlug.get(artist.slug);
+    if (!profile) return artist;
+    return {
+      ...artist,
+      name: profile.name || artist.name,
+      sourceUrl: profile.sourceUrl || artist.sourceUrl,
+      profileSourceUrl: profile.profileSourceUrl || artist.profileSourceUrl,
+      profileImageUrl: profile.profileImageUrl || artist.profileImageUrl,
+      bio: profile.bio || artist.bio,
+    };
+  });
   const index = {
     version: 1,
     source: "multi-source",
     updatedAt: new Date().toISOString(),
     scanned: { musicPages, videoPages, full },
     tracks: trackList,
-    artists: buildCanonicalArtists(trackList),
+    artists,
     categories: [...new Set(trackList.map((track) => track.category).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fa")),
   };
   status.state = "complete";
@@ -280,7 +295,8 @@ function mergeProviderTracks(rozTracks, ...providerTrackLists) {
   }
   for (const sourceTrack of providerTrackLists.flat()) {
     const key = trackIdentity(sourceTrack);
-    const existing = byIdentity.get(key) ?? byTitle.get(normalizeComparable(sourceTrack.title));
+    const titleMatch = byTitle.get(normalizeComparable(sourceTrack.title));
+    const existing = byIdentity.get(key) ?? (titleMatch && compatibleArtists(titleMatch, sourceTrack) ? titleMatch : null);
     if (existing) {
       const merged = mergeTrack(existing, sourceTrack);
       byIdentity.set(trackIdentity(existing), merged);
@@ -294,6 +310,12 @@ function mergeProviderTracks(rozTracks, ...providerTrackLists) {
 }
 
 function trackIdentity(track) { return track.matchKey || normalizeComparable(`${track.title} ${track.artists?.[0]?.name ?? track.artist?.name ?? ""}`); }
+function compatibleArtists(left, right) {
+  const leftArtists = [left.artist?.name, ...(left.artists ?? []).map((artist) => artist?.name)].filter(Boolean).map(normalizeComparable);
+  const rightArtists = [right.artist?.name, ...(right.artists ?? []).map((artist) => artist?.name)].filter(Boolean).map(normalizeComparable);
+  if (!leftArtists.length || !rightArtists.length) return true;
+  return leftArtists.some((artist) => rightArtists.includes(artist));
+}
 function normalizeComparable(value) { return normalizeCatalogText(value); }
 function splitArtistAndTitle(value) {
   const cleaned = value.replace(/\s+With Text.*$/i, "").replace(/\s+On Music-fa.*$/i, "").trim();

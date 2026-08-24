@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
+import { MusicArtistCard } from "@/components/music-artist-card";
 import { MusicCard } from "@/components/music-card";
+import { MusicHorizontalRail } from "@/components/music-horizontal-rail";
 import { MusicLandingHero, type MusicHeroTrack } from "@/components/music-landing-hero";
 import { MusicPlaylistLeaderboard } from "@/components/music-playlist-leaderboard";
+import { PersonalListenLauncher } from "@/components/personal-listen-launcher";
 import { PublicPartyRooms } from "@/components/public-party-rooms";
-import { loadMusicIndex, searchMusic } from "@/lib/music";
+import { loadMusicIndex, searchMusic, selectMusicShelfTracks } from "@/lib/music";
 import { getLocale } from "@/lib/server-locale";
+
+const REMIX_CATEGORY = "\u0631\u06cc\u0645\u06cc\u06a9\u0633";
+const REMIX_DESCRIPTION = "\u0631\u06cc\u0645\u06cc\u06a9\u0633\u200c\u0647\u0627\u06cc \u0634\u0627\u062f\u060c \u067e\u0627\u062f\u06a9\u0633\u062a \u0648 \u0627\u0646\u062a\u062e\u0627\u0628\u200c\u0647\u0627\u06cc \u062a\u0627\u0632\u0647";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -13,23 +19,27 @@ export const revalidate = 300;
 
 export default async function MusicPage({ searchParams }: Props) {
   const [locale, index, params] = await Promise.all([getLocale(), loadMusicIndex(), searchParams]);
+  const category = asText(params.category);
   const q = asText(params.q);
   const kind = asText(params.kind) || "all";
-  const allMatches = searchMusic(index, q, kind);
-  const tracks = allMatches.slice(0, q ? 80 : 24);
-  const recentTracks = index.tracks.filter((track) => track.kind === "track").slice(0, 14);
-  const recentVideos = index.tracks.filter((track) => track.kind === "video").slice(0, 12);
-  const classics = index.tracks.filter((track) => track.category === "موسیقی قدیمی فارسی").slice(0, 12);
-  const foreign = index.tracks.filter((track) => track.category === "موسیقی خارجی").slice(0, 12);
+  const filterLabel = q || category || kind;
+  const hasFilter = Boolean(q || category);
+  const allMatches = searchMusic(index, q, kind, category);
+  const tracks = allMatches.slice(0, hasFilter ? 80 : 24);
+  const recentTracks = selectMusicShelfTracks(index.tracks.filter((track) => track.kind === "track"), 16);
+  const recentVideos = selectMusicShelfTracks(index.tracks.filter((track) => track.kind === "video"), 16);
+  const classics = selectMusicShelfTracks(index.tracks.filter((track) => track.category === "موسیقی قدیمی فارسی"), 16);
+  const foreign = selectMusicShelfTracks(index.tracks.filter((track) => track.category === "موسیقی خارجی"), 16);
+  const remixes = selectMusicShelfTracks(index.tracks.filter((track) => track.category === REMIX_CATEGORY), 16);
   const artistOfMoment = index.artists.find((artist) => artist.trackIds.length >= 8) ?? index.artists[0];
   const artistTracks = artistOfMoment
-    ? index.tracks.filter((track) => track.artists.some((artist) => artist.slug === artistOfMoment.slug)).slice(0, 12)
+    ? selectMusicShelfTracks(index.tracks.filter((track) => track.artists.some((artist) => artist.slug === artistOfMoment.slug)), 16)
     : [];
   const featuredArtists = pickFeaturedArtists(index.artists, 14);
   // Music-video artwork is generally larger and more reliable than the tiny
   // archive thumbnails, so it leads the visual hero while the shelves keep
   // their chronological catalog order.
-  const heroSourceTracks = q && tracks.length ? tracks : [...recentVideos, ...recentTracks];
+  const heroSourceTracks = hasFilter && tracks.length ? tracks : [...recentVideos, ...remixes, ...recentTracks];
   const heroTracks: MusicHeroTrack[] = [...heroSourceTracks]
     .sort((left, right) => Number(Boolean(right.coverUrl)) - Number(Boolean(left.coverUrl)))
     .slice(0, 8)
@@ -42,9 +52,10 @@ export default async function MusicPage({ searchParams }: Props) {
       artists: track.artists.map((artist) => ({ name: artist.name })),
     }));
   const discovery = [
+    { href: `/music?category=${encodeURIComponent(REMIX_CATEGORY)}`, label: REMIX_CATEGORY, description: REMIX_DESCRIPTION, coverUrl: remixes[0]?.coverUrl ?? null },
     { href: "/music/playlists", label: "پلی‌لیست خودت", description: "صف شخصی، پخش پشت‌سرهم و Shuffle", coverUrl: heroTracks[0]?.coverUrl ?? null },
     { href: "/music?kind=video", label: "موزیک‌ویدیو", description: "تصویر، صدا و اجرای زنده", coverUrl: recentVideos[0]?.coverUrl ?? null },
-    { href: "/music?q=موسیقی%20قدیمی%20فارسی", label: "خاطره‌ها", description: "گلچین موسیقی قدیمی فارسی", coverUrl: classics[0]?.coverUrl ?? null },
+    { href: "/music?category=%D9%85%D9%88%D8%B3%DB%8C%D9%82%DB%8C%20%D9%82%D8%AF%DB%8C%D9%85%DB%8C%20%D9%81%D8%A7%D8%B1%D8%B3%DB%8C", label: "خاطره‌ها", description: "گلچین موسیقی قدیمی فارسی", coverUrl: classics[0]?.coverUrl ?? null },
     { href: "/music?q=موسیقی%20خارجی", label: "Foreign picks", description: "چند انتخاب تازه از آرشیو خارجی", coverUrl: foreign[0]?.coverUrl ?? null },
   ];
 
@@ -55,6 +66,7 @@ export default async function MusicPage({ searchParams }: Props) {
           <header className="topbar music-landing-topbar">
             <BrandLogo locale={locale} compact />
             <div className="topbar-actions">
+              <PersonalListenLauncher />
               <Link className="pill" href="/">خانه</Link>
               <Link className="pill active" href="/music">موسیقی</Link>
             </div>
@@ -64,10 +76,10 @@ export default async function MusicPage({ searchParams }: Props) {
       </section>
 
       <section className="wrap music-content music-landing-content">
-        {q ? (
+        {hasFilter ? (
           <>
             <div className="music-section-head music-search-results-head">
-              <div><p>نتایج جست‌وجو</p><h2>{allMatches.length.toLocaleString("fa-IR")} نتیجه برای «{q}»</h2></div>
+              <div><p>نتایج جست‌وجو</p><h2>{allMatches.length.toLocaleString("fa-IR")} نتیجه برای «{filterLabel}»</h2></div>
               <span>{index.tracks.length.toLocaleString("fa-IR")} عنوان در آرشیو</span>
             </div>
             <div className="music-grid">{tracks.map((track, trackIndex) => <MusicCard key={track.id} track={track} priority={trackIndex < 8} />)}</div>
@@ -88,10 +100,11 @@ export default async function MusicPage({ searchParams }: Props) {
             </nav>
             <PublicPartyRooms mode="listen" locale={locale} />
             <MusicPlaylistLeaderboard />
+            {remixes.length > 0 && <MusicShelf eyebrow={REMIX_CATEGORY} title={REMIX_CATEGORY} tracks={remixes} viewAll={`/music?category=${encodeURIComponent(REMIX_CATEGORY)}`} />}
             <MusicShelf eyebrow="تازه از آرشیو" title="جدیدترین آهنگ‌ها" tracks={recentTracks} viewAll="/music?kind=track" preload />
             {artistOfMoment && <MusicShelf eyebrow="انتخاب امروز" title={`گلچین ${artistOfMoment.name}`} tracks={artistTracks} viewAll={`/music/artists/${encodeURIComponent(artistOfMoment.slug)}`} />}
             {recentVideos.length > 0 && <MusicShelf eyebrow="تصویر و صدا" title="موزیک‌ویدیوهای تازه" tracks={recentVideos} viewAll="/music?kind=video" />}
-            {classics.length > 0 && <MusicShelf eyebrow="آرشیو خاطره‌ها" title="موسیقی قدیمی فارسی" tracks={classics} viewAll="/music?q=موسیقی%20قدیمی%20فارسی" />}
+            {classics.length > 0 && <MusicShelf eyebrow="آرشیو خاطره‌ها" title="موسیقی قدیمی فارسی" tracks={classics} viewAll="/music?category=%D9%85%D9%88%D8%B3%DB%8C%D9%82%DB%8C%20%D9%82%D8%AF%DB%8C%D9%85%DB%8C%20%D9%81%D8%A7%D8%B1%D8%B3%DB%8C" />}
             {foreign.length > 0 && <MusicShelf eyebrow="برای کشف بیشتر" title="موسیقی خارجی" tracks={foreign} viewAll="/music?q=موسیقی%20خارجی" />}
           </>
         )}
@@ -100,17 +113,11 @@ export default async function MusicPage({ searchParams }: Props) {
           <div><p>خواننده‌ها</p><h2>صفحهٔ اختصاصی هنرمندان</h2></div>
           <Link className="music-view-all" href="/music/artists">نمایش همه <span>←</span></Link>
         </div>
-        <div className="music-artists music-artist-rail">
+        <MusicHorizontalRail className="music-artist-card-list" label="خواننده‌های منتخب">
           {featuredArtists.map((artist) => (
-            <Link href={`/music/artists/${encodeURIComponent(artist.slug)}`} key={artist.slug} className="music-artist">
-              <span style={(artist.profileImageUrl || artist.coverUrl) ? { backgroundImage: `url(${artist.profileImageUrl || artist.coverUrl})` } : undefined}>
-                {!(artist.profileImageUrl || artist.coverUrl) && artist.name.slice(0, 1)}
-              </span>
-              <strong>{artist.name}</strong>
-              <small>{artist.trackIds.length.toLocaleString("fa-IR")} اثر</small>
-            </Link>
+            <MusicArtistCard artist={artist} key={artist.slug} />
           ))}
-        </div>
+        </MusicHorizontalRail>
       </section>
     </main>
   );
@@ -124,7 +131,7 @@ function MusicShelf({ eyebrow, title, tracks, viewAll, preload = false }: { eyeb
         <div><p>{eyebrow}</p><h2>{title}</h2></div>
         <Link className="music-view-all" href={viewAll}>نمایش همه <span>←</span></Link>
       </div>
-      <div className="music-shelf-list">{tracks.map((track, index) => <MusicCard key={track.id} track={track} priority={preload && index < 3} />)}</div>
+      <MusicHorizontalRail className="music-shelf-list" label={title}>{tracks.map((track, index) => <MusicCard key={track.id} track={track} priority={preload && index < 3} />)}</MusicHorizontalRail>
     </section>
   );
 }

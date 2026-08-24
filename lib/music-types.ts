@@ -5,7 +5,7 @@ export type MusicSource = {
   label: string;
   quality?: string | null;
   kind: "stream" | "download";
-  provider?: "rozmusic" | "musics-fa" | "download1music" | "sevilmusics" | "aftabmusic" | "musics-mehr";
+  provider?: "rozmusic" | "musics-fa" | "remiixbaz" | "download1music" | "sevilmusics" | "aftabmusic" | "musics-mehr";
   basePath?: string | null;
   available?: boolean;
   checkedAt?: string;

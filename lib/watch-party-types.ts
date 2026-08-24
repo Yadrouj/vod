@@ -7,7 +7,7 @@ export type PartyProfile = {
   telegramId?: string | null;
 };
 
-export type PartyCapability = "playback" | "seek" | "changeSource" | "changeMedia" | "queue" | "chat" | "react" | "subtitles" | "camera" | "liveCaptions" | "interpreter" | "shareLocalAudio";
+export type PartyCapability = "playback" | "seek" | "changeSource" | "changeMedia" | "queue" | "addPersonalMedia" | "chat" | "react" | "subtitles" | "camera" | "liveCaptions" | "interpreter" | "shareLocalAudio";
 
 export type PartyPermissions = Record<PartyCapability, boolean>;
 
@@ -18,6 +18,9 @@ export type PartyMediaSource = {
   episode?: number | null;
   season?: number | null;
   subtitleUrl?: string | null;
+  /** Temporary personal media is automatically unavailable after this time. */
+  expiresAt?: number | null;
+  origin?: "catalogue" | "personal-upload" | "external-link";
 };
 
 export type PartyMediaCredit = {
@@ -57,7 +60,7 @@ export type PartyMedia = {
    * Existing rooms omit this field and therefore stay video rooms.
    */
   mediaKind?: "video" | "audio";
-  catalogue?: "vod" | "music";
+  catalogue?: "vod" | "music" | "personal";
   artistName?: string | null;
 };
 
@@ -112,7 +115,7 @@ export type PartyPublicRoom = {
   title: string;
   posterUrl: string | null;
   mediaKind: "video" | "audio";
-  catalogue: "vod" | "music";
+  catalogue: "vod" | "music" | "personal";
   artistName: string | null;
   participantCount: number;
   createdAt: number;
@@ -155,6 +158,7 @@ export const DEFAULT_PARTY_PERMISSIONS: PartyPermissions = {
   changeSource: false,
   changeMedia: false,
   queue: false,
+  addPersonalMedia: false,
   chat: true,
   react: true,
   subtitles: true,

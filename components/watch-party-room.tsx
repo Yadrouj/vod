@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Captions, Check, Clock3, Copy, Disc3, ExternalLink, Film, Globe2, Maximize2, MessageCircle, Minimize2, Pause, Play, Send, Settings, Share2, SmilePlus, Star, Users, X } from "lucide-react";
+import { Captions, Check, Clock3, Copy, Disc3, ExternalLink, FileUp, Film, Globe2, Link2, LoaderCircle, Maximize2, MessageCircle, Minimize2, Pause, Play, Send, Settings, Share2, SmilePlus, Star, Upload, Users, Video, Volume2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import type { PartyCapability, PartyChatMessage, PartyMedia, PartyParticipant, PartyPermissions, PartyProfile, PartyQueueItem, PartyReaction, PartySnapshot } from "@/lib/watch-party-types";
@@ -14,6 +14,7 @@ import { BRAND_MARK } from "@/lib/brand";
 import { sizedImageUrl } from "@/lib/image-url";
 import { showAppMessage } from "@/lib/app-messages";
 import type { SubtitleSelection } from "@/lib/subtitle-types";
+import { inferPersonalMediaKind, isSupportedPersonalMediaFile, type PersonalMediaFields, type PersonalMediaKind, type PersonalMediaMode } from "@/lib/watch-party-personal-media";
 
 type SearchItem = { title: string; imdbCode: string; year: number | null; type: string; posterUrl: string | null; imdbRating: number | null };
 type PlaybackState = PartySnapshot["playback"] & {
@@ -27,7 +28,7 @@ declare global { interface Window { onTelegramPartyAuth?: (user: Record<string, 
 
 const CAPABILITIES: { id: PartyCapability; label: string }[] = [
   { id: "playback", label: "Play / pause" }, { id: "seek", label: "Seek" }, { id: "changeSource", label: "Change source" },
-  { id: "changeMedia", label: "Change movie" }, { id: "queue", label: "Manage queue" }, { id: "chat", label: "Chat" }, { id: "react", label: "Reactions" },
+  { id: "changeMedia", label: "Change movie" }, { id: "queue", label: "Manage queue" }, { id: "addPersonalMedia", label: "Add personal media" }, { id: "chat", label: "Chat" }, { id: "react", label: "Reactions" },
   { id: "subtitles", label: "Change room subtitles" }, { id: "camera", label: "Stream camera" },
   { id: "liveCaptions", label: "Share live captions" }, { id: "interpreter", label: "Sign interpreter" }, { id: "shareLocalAudio", label: "Share local music" },
 ];
@@ -72,6 +73,17 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const [stagePanel, setStagePanel] = useState<"chat" | "reactions" | null>(null);
   const [stageFullscreen, setStageFullscreen] = useState(false);
   const [pseudoFullscreen, setPseudoFullscreen] = useState(false);
+  const personalFileInputRef = useRef<HTMLInputElement>(null);
+  const [personalMediaOpen, setPersonalMediaOpen] = useState(false);
+  const [personalMediaTab, setPersonalMediaTab] = useState<"upload" | "link">("upload");
+  const [personalFile, setPersonalFile] = useState<File | null>(null);
+  const [personalUrl, setPersonalUrl] = useState("");
+  const [personalTitle, setPersonalTitle] = useState("");
+  const [personalKind, setPersonalKind] = useState<PersonalMediaKind>("video");
+  const [personalSeason, setPersonalSeason] = useState("");
+  const [personalEpisode, setPersonalEpisode] = useState("");
+  const [personalMediaBusy, setPersonalMediaBusy] = useState(false);
+  const [personalMediaError, setPersonalMediaError] = useState("");
 
   const me = snapshot?.participants.find((participant) => participant.id === profile?.id);
   const isHost = snapshot?.ownerId === profile?.id;
@@ -329,6 +341,88 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     return response.json() as Promise<PartyMedia>;
   }
   async function queueMedia(itemId: string, playNow = false) { const media = await loadMedia(itemId); if (!media) return; socketRef.current?.emit(playNow ? "playback:command" : "queue:add", playNow ? { roomId, action: "media", media } : { roomId, media }); setQuery(""); setResults([]); }
+  function personalFields() {
+    const normalizeNumber = (value: string) => {
+      const number = Number(value);
+      return Number.isInteger(number) && number > 0 ? number : null;
+    };
+    return { title: personalTitle.trim(), mediaKind: personalKind, season: normalizeNumber(personalSeason), episode: normalizeNumber(personalEpisode) };
+  }
+  function resetPersonalMediaForm() {
+    setPersonalFile(null);
+    setPersonalUrl("");
+    setPersonalTitle("");
+    setPersonalSeason("");
+    setPersonalEpisode("");
+    setPersonalMediaError("");
+    if (personalFileInputRef.current) personalFileInputRef.current.value = "";
+  }
+  function choosePersonalFile(file: File | null) {
+    if (!file) return;
+    const kind = inferPersonalMediaKind(file.name, file.type);
+    if (!kind || !isSupportedPersonalMediaFile(file.name, file.type)) {
+      setPersonalFile(null);
+      setPersonalMediaError("Choose a browser-playable audio or video file (MP3, M4A, WAV, OGG, MP4, WebM, or OGV).");
+      return;
+    }
+    setPersonalMediaError("");
+    setPersonalFile(file);
+    setPersonalKind(kind);
+    if (!personalTitle.trim()) setPersonalTitle(file.name.replace(/\.[a-z0-9]{2,8}$/i, ""));
+  }
+  async function addPersonalMedia(mode: PersonalMediaMode) {
+    const socket = socketRef.current;
+    if (!socket || !connected) {
+      setPersonalMediaError("The room is still connecting. Try again in a moment.");
+      return;
+    }
+    if (!can("addPersonalMedia")) {
+      setPersonalMediaError("Ask the host to enable Add personal media in room permissions.");
+      return;
+    }
+    if (mode === "now" && !can("changeMedia")) {
+      setPersonalMediaError("You can queue your media, but the host controls what plays now.");
+      return;
+    }
+    setPersonalMediaBusy(true);
+    setPersonalMediaError("");
+    try {
+      if (personalMediaTab === "link") {
+        if (!personalUrl.trim()) throw new Error("Paste a public HTTPS media link first.");
+        const result = await emitPersonalLink(socket, roomId, { url: personalUrl, fields: personalFields(), mode });
+        if (!result.ok) throw new Error(result.error ?? "The room could not use that link.");
+      } else {
+        const file = personalFile;
+        if (!file) throw new Error("Choose an audio or video file first.");
+        const kind = inferPersonalMediaKind(file.name, file.type);
+        if (!kind) throw new Error("That file is not browser-playable.");
+        const grant = await emitPersonalUploadGrant(socket, roomId, kind);
+        if (!grant.ok || !grant.grant || !grant.endpoint) throw new Error(grant.error ?? "The room could not prepare a temporary upload.");
+        if (typeof grant.maxBytes === "number" && file.size > grant.maxBytes) {
+          throw new Error(`This file is larger than the room's ${kind === "audio" ? "audio" : "video"} upload limit.`);
+        }
+        const form = new FormData();
+        form.set("file", file);
+        form.set("title", personalTitle.trim());
+        form.set("mediaKind", kind);
+        form.set("season", personalSeason.trim());
+        form.set("episode", personalEpisode.trim());
+        const response = await fetch(grant.endpoint, { method: "POST", headers: { "x-party-upload-grant": grant.grant }, body: form });
+        const uploaded = await response.json().catch(() => ({})) as { ok?: boolean; error?: string; mediaId?: string };
+        if (!response.ok || !uploaded.ok || !uploaded.mediaId) throw new Error(uploaded.error ?? "The temporary upload did not finish.");
+        const result = await emitPersonalUploadApply(socket, roomId, uploaded.mediaId, mode);
+        if (!result.ok) throw new Error(result.error ?? "The room could not use that temporary upload.");
+      }
+      const action = mode === "now" ? "is now ready for everyone" : "joined the room queue";
+      showAppMessage({ title: "Personal media added", message: `Your temporary media ${action}. It automatically disappears in 3 hours.`, tone: "success" });
+      resetPersonalMediaForm();
+      setPersonalMediaOpen(false);
+    } catch (reason) {
+      setPersonalMediaError(reason instanceof Error ? reason.message : "The room media could not be added.");
+    } finally {
+      setPersonalMediaBusy(false);
+    }
+  }
   async function copyInvite() {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -391,6 +485,8 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const cinemaFullscreen = stageFullscreen || pseudoFullscreen;
   const roomChat = chat.filter((message) => !mutedLocally.has(message.userId));
   const latestChat = roomChat.at(-1);
+  const queueTitle = isListeningRoom ? "Listen queue" : "Watch queue";
+  const queueDescription = isListeningRoom ? "Add tracks, personal audio, or a direct media link for everyone." : "Search, add, or switch movies, episodes, and personal media for everyone.";
   return <div className="party-layout">
     <Link className="party-sarvnema-corner" href="/" aria-label="Back to SarvNema" title="SarvNema">
       <img src={BRAND_MARK} alt="" />
@@ -472,7 +568,50 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
         {settingsOpen && <div className="party-player-settings" data-player-ui="true"><label>{isListeningRoom ? "Audio source" : "Source"}<select className="select" value={playback.media.source.url} disabled={!can("changeSource")} onChange={(event) => { const source = playback.media.sources.find((item) => item.url === event.target.value); if (source) command("source", { source, time: (isListeningRoom ? audioRef.current : videoRef.current)?.currentTime }); }}>{playback.media.sources.map((source) => <option value={source.url} key={source.url}>{source.label}</option>)}</select></label><label>Speed<select className="select" value={playback.playbackRate} disabled={!can("playback")} onChange={(event) => command("rate", { rate: Number(event.target.value) })}>{[.5,.75,1,1.25,1.5,2].map((rate) => <option key={rate} value={rate}>{rate}x</option>)}</select></label></div>}
         {!isListeningRoom && <PlayerSubtitles videoRef={videoRef} itemId={playback.media.itemId} title={playback.media.title} sourceKey={playback.media.source.url} sourceLabel={playback.media.source.label} sourceSubtitleUrl={playback.media.source.subtitleUrl ?? null} open={subtitlesOpen} onClose={() => setSubtitlesOpen(false)} selection={snapshot.subtitle} onSelectionChange={changeSubtitle} canChange={can("subtitles")} shared />}
       </div>
-      <section className="party-queue"><div className="section-head"><div><h2>Watch queue</h2><p className="muted">Search, add, or switch movies for everyone.</p></div></div><div className="party-media-search"><input className="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search movie or series…" />{results.length > 0 && <div className="party-search-results">{results.map((item) => <div key={item.imdbCode}><span><strong>{item.title}</strong><small>{item.year ?? ""} · IMDb {item.imdbRating ?? "-"}</small></span><button disabled={!can("queue")} onClick={() => queueMedia(item.imdbCode)}>Queue</button><button disabled={!can("changeMedia")} onClick={() => queueMedia(item.imdbCode, true)}>Play now</button></div>)}</div>}</div><div className="party-queue-list">{snapshot.queue.map((item) => <article key={item.queueId}><strong>{item.title}</strong><span>{item.source.label}</span><div><button disabled={!can("changeMedia")} onClick={() => socketRef.current?.emit("queue:play", { roomId, queueId: item.queueId })}>Play</button><button disabled={!can("queue")} onClick={() => socketRef.current?.emit("queue:remove", { roomId, queueId: item.queueId })}>Remove</button></div></article>)}</div></section>
+      <section className="party-queue">
+        <div className="section-head"><div><h2>{queueTitle}</h2><p className="muted">{queueDescription}</p></div></div>
+        <section className={`party-personal-media ${personalMediaOpen ? "is-open" : ""}`} aria-label="Personal room media">
+          <header>
+            <div><span><FileUp size={17} /> Your media, room-safe</span><small>Upload a browser-playable file or paste a direct HTTPS link. Temporary uploads disappear after 3 hours.</small></div>
+            <button type="button" className="party-personal-media-toggle" aria-expanded={personalMediaOpen} onClick={() => { setPersonalMediaOpen((value) => !value); setPersonalMediaError(""); }}>
+              {personalMediaOpen ? "Close" : "Add personal media"}
+            </button>
+          </header>
+          {personalMediaOpen && (
+            <div className="party-personal-media-form">
+              <div className="party-personal-media-tabs" role="tablist" aria-label="Personal media source">
+                <button type="button" role="tab" aria-selected={personalMediaTab === "upload"} className={personalMediaTab === "upload" ? "is-active" : ""} onClick={() => { setPersonalMediaTab("upload"); setPersonalMediaError(""); }}><Upload size={15} /> Upload file</button>
+                <button type="button" role="tab" aria-selected={personalMediaTab === "link"} className={personalMediaTab === "link" ? "is-active" : ""} onClick={() => { setPersonalMediaTab("link"); setPersonalMediaError(""); }}><Link2 size={15} /> Paste link</button>
+              </div>
+              {personalMediaTab === "upload" ? (
+                <>
+                  <input ref={personalFileInputRef} className="party-personal-file-input" type="file" accept="audio/*,video/*,.mp3,.m4a,.aac,.ogg,.oga,.opus,.wav,.flac,.mp4,.m4v,.webm,.ogv" onChange={(event) => choosePersonalFile(event.currentTarget.files?.[0] ?? null)} />
+                  <button type="button" className="party-personal-dropzone" onClick={() => personalFileInputRef.current?.click()} disabled={!can("addPersonalMedia") || personalMediaBusy}>
+                    {personalFile ? (personalKind === "audio" ? <Volume2 size={22} /> : <Video size={22} />) : <Upload size={22} />}
+                    <span><strong>{personalFile?.name ?? "Choose a file from this device"}</strong><small>{personalFile ? `${Math.max(.1, personalFile.size / 1024 / 1024).toFixed(1)} MB · ${personalKind}` : "MP3, M4A, WAV, OGG, MP4, WebM, or OGV"}</small></span>
+                  </button>
+                </>
+              ) : (
+                <label className="party-personal-field"><span>Direct HTTPS media link</span><input className="search" value={personalUrl} onChange={(event) => setPersonalUrl(event.target.value)} placeholder="https://example.com/shared-track.mp3" inputMode="url" autoComplete="url" /></label>
+              )}
+              <div className="party-personal-fields">
+                <label className="party-personal-field"><span>Title <i>optional</i></span><input className="search" value={personalTitle} onChange={(event) => setPersonalTitle(event.target.value)} placeholder="Give the room a useful name" maxLength={120} /></label>
+                <label className="party-personal-field"><span>Type</span><select className="select" value={personalKind} onChange={(event) => setPersonalKind(event.target.value as PersonalMediaKind)}><option value="audio">Audio</option><option value="video">Video / episode</option></select></label>
+                {personalKind === "video" && <><label className="party-personal-field party-personal-coordinate"><span>Season <i>optional</i></span><input className="search" value={personalSeason} onChange={(event) => setPersonalSeason(event.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="S" /></label><label className="party-personal-field party-personal-coordinate"><span>Episode <i>optional</i></span><input className="search" value={personalEpisode} onChange={(event) => setPersonalEpisode(event.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="E" /></label></>}
+              </div>
+              {personalMediaError && <p className="party-personal-media-error">{personalMediaError}</p>}
+              <div className="party-personal-media-actions">
+                <button type="button" className="party-personal-queue" disabled={!can("addPersonalMedia") || personalMediaBusy} onClick={() => void addPersonalMedia("queue")}>{personalMediaBusy ? <LoaderCircle className="is-spinning" size={16} /> : <FileUp size={16} />} Add to queue</button>
+                <button type="button" className="party-personal-play" disabled={!can("addPersonalMedia") || !can("changeMedia") || personalMediaBusy} onClick={() => void addPersonalMedia("now")}>{personalMediaBusy ? <LoaderCircle className="is-spinning" size={16} /> : <Play size={16} fill="currentColor" />} Play for everyone</button>
+                <button type="button" className="party-personal-reset" disabled={personalMediaBusy} onClick={resetPersonalMediaForm}>Reset</button>
+              </div>
+              {!can("addPersonalMedia") && <p className="party-personal-media-note">The host can enable this under Room &amp; chat → Guest permissions.</p>}
+            </div>
+          )}
+        </section>
+        <div className="party-media-search"><input className="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={isListeningRoom ? "Search music…" : "Search movie or series…"} />{results.length > 0 && <div className="party-search-results">{results.map((item) => <div key={item.imdbCode}><span><strong>{item.title}</strong><small>{item.year ?? ""} · IMDb {item.imdbRating ?? "-"}</small></span><button disabled={!can("queue")} onClick={() => queueMedia(item.imdbCode)}>Queue</button><button disabled={!can("changeMedia")} onClick={() => queueMedia(item.imdbCode, true)}>Play now</button></div>)}</div>}</div>
+        <div className="party-queue-list">{snapshot.queue.map((item) => <article key={item.queueId}><strong>{item.title}</strong><span>{item.source.label}{item.source.season && item.source.episode ? ` · S${item.source.season}E${item.source.episode}` : ""}</span><div><button disabled={!can("changeMedia")} onClick={() => socketRef.current?.emit("queue:play", { roomId, queueId: item.queueId })}>Play</button><button disabled={!can("queue")} onClick={() => socketRef.current?.emit("queue:remove", { roomId, queueId: item.queueId })}>Remove</button></div></article>)}</div>
+      </section>
       <PartyTitleDetails media={playback.media} />
     </section>
     <button className={`party-mobile-scrim ${peopleOpen ? "is-open" : ""}`} type="button" aria-label="Close room panel" onClick={() => setPeopleOpen(false)} />
@@ -484,8 +623,41 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   </div>;
 }
 
+type PartyEventAck = { ok?: boolean; error?: string };
+type PersonalUploadGrantAck = PartyEventAck & { grant?: string; endpoint?: string; expiresAt?: number; maxBytes?: number };
+
+function emitPartyAck<T extends PartyEventAck>(socket: Socket, event: string, payload: Record<string, unknown>) {
+  return new Promise<T>((resolve) => {
+    let settled = false;
+    const timer = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      resolve({ ok: false, error: "The room did not respond. Check your connection and try again." } as T);
+    }, 12_000);
+    socket.emit(event, payload, (result: T | undefined) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      resolve(result ?? ({ ok: false, error: "The room could not finish that action." } as T));
+    });
+  });
+}
+
+function emitPersonalUploadGrant(socket: Socket, roomId: string, mediaKind: PersonalMediaKind) {
+  return emitPartyAck<PersonalUploadGrantAck>(socket, "personal-media:upload-grant", { roomId, mediaKind });
+}
+
+function emitPersonalLink(socket: Socket, roomId: string, payload: { url: string; fields: PersonalMediaFields; mode: PersonalMediaMode }) {
+  return emitPartyAck<PartyEventAck>(socket, "personal-media:link", { roomId, ...payload });
+}
+
+function emitPersonalUploadApply(socket: Socket, roomId: string, mediaId: string, mode: PersonalMediaMode) {
+  return emitPartyAck<PartyEventAck>(socket, "personal-media:apply-upload", { roomId, mediaId, mode });
+}
+
 function PartyTitleDetails({ media }: { media: PartyMedia }) {
   const isMusic = media.catalogue === "music";
+  const isPersonal = media.catalogue === "personal";
   const details = media.details;
   const year = details?.year
     ? details.endYear && details.endYear !== details.year
@@ -504,7 +676,7 @@ function PartyTitleDetails({ media }: { media: PartyMedia }) {
         <h2 id="party-title-details-heading">{media.title}</h2>
         {meta.length > 0 && <p className="party-title-kicker">{meta.join(" · ")}</p>}
         {details?.tagline && <blockquote>{details.tagline}</blockquote>}
-        <p className="party-title-overview">{details?.overview ?? "Open the full title page for story, cast, subtitles, and every available source."}</p>
+        <p className="party-title-overview">{details?.overview ?? (isPersonal ? "This room-only media is available for a limited time." : "Open the full title page for story, cast, subtitles, and every available source.")}</p>
 
         <div className="party-title-stats">
           <span><Star size={16} /><small>IMDb</small><strong>{details?.imdbRating?.toFixed(1) ?? "—"}</strong>{details?.imdbVotes ? <em>{formatCompact(details.imdbVotes)} votes</em> : null}</span>
@@ -516,10 +688,10 @@ function PartyTitleDetails({ media }: { media: PartyMedia }) {
         {(details?.genres.length ?? 0) > 0 && <div className="party-title-genres">{details?.genres.map((genre) => <span key={genre}>{genre}</span>)}</div>}
         {(details?.languages.length ?? 0) > 0 && <p className="party-title-languages"><strong>Languages</strong> {details?.languages.join(" · ")}</p>}
 
-        <div className="party-title-actions">
+        {!isPersonal && <div className="party-title-actions">
           <Link href={isMusic ? `/music/${encodeURIComponent(media.itemId)}` : `/${encodeURIComponent(media.itemId)}`}>{isMusic ? "Open track page" : "Full title details"} <ExternalLink size={14} /></Link>
           {details?.imdbUrl && <a href={details.imdbUrl} target="_blank" rel="noreferrer">Open IMDb <ExternalLink size={14} /></a>}
-        </div>
+        </div>}
       </div>
 
       {(details?.credits.length ?? 0) > 0 && (
