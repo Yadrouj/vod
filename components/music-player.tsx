@@ -42,7 +42,9 @@ export function MusicPlayer({
   const [queueOpen, setQueueOpen] = useState(false);
   const [liked, setLiked] = useState(false);
   const [sourceIssue, setSourceIssue] = useState("");
+  const [useDirectSource, setUseDirectSource] = useState(false);
   const hasVideo = activeTrack.kind === "video" || /\.(?:mp4|mkv|webm)(?:$|\?)/i.test(source?.url ?? "");
+  const playbackUrl = source ? (useDirectSource ? source.url : musicPlaybackUrl(activeTrack.id, source.url)) : "";
 
   useEffect(() => {
     setActiveIndex(0);
@@ -55,6 +57,7 @@ export function MusicPlayer({
     setDuration(0);
     setBuffered(0);
     setPlaying(false);
+    setUseDirectSource(false);
   }, [activeTrack.id, activeTrack.kind, streams]);
 
   useEffect(() => {
@@ -69,7 +72,7 @@ export function MusicPlayer({
     if (player.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) start();
     else player.addEventListener("canplay", start, { once: true });
     return () => player.removeEventListener("canplay", start);
-  }, [activeTrack.id, source?.url]);
+  }, [activeTrack.id, playbackUrl]);
 
   useEffect(() => {
     if (!playRequest || playRequest === handledPlayRequest.current) return;
@@ -92,7 +95,7 @@ export function MusicPlayer({
     }
 
     return () => player.removeEventListener("canplay", start);
-  }, [activeTrack.id, playRequest, source?.url]);
+  }, [activeTrack.id, playRequest, playbackUrl]);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(PLAYBACK_KEY);
@@ -123,7 +126,7 @@ export function MusicPlayer({
     player.volume = volume;
     player.muted = muted;
     player.playbackRate = rate;
-  }, [activeTrack.id, muted, rate, source?.url, volume]);
+  }, [activeTrack.id, muted, playbackUrl, rate, volume]);
 
   useEffect(() => {
     const player = media.current;
@@ -147,7 +150,7 @@ export function MusicPlayer({
     };
   // Media Session needs the latest commands, not an extra player abstraction.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTrack.id, source?.url]);
+  }, [activeTrack.id, playbackUrl]);
 
   if (!source) return <div className="music-player music-player-unavailable">No playable source is available for this release yet.</div>;
 
@@ -227,10 +230,22 @@ export function MusicPlayer({
   }
 
   function handleMediaError() {
+    if (!useDirectSource && source?.url) {
+      setSourceIssue("Trying the original source…");
+      setUseDirectSource(true);
+      window.setTimeout(() => {
+        const player = media.current;
+        if (!player) return;
+        player.load();
+        void player.play().catch(() => undefined);
+      }, 0);
+      return;
+    }
     const nextIndex = nextSourceIndex(streams, sourceIndex);
     if (nextIndex >= 0) {
       setSourceIssue("This quality is unavailable. Trying another source…");
       setSourceIndex(nextIndex);
+      setUseDirectSource(false);
       window.setTimeout(() => void media.current?.play().catch(() => undefined), 80);
       return;
     }
@@ -253,12 +268,12 @@ export function MusicPlayer({
     <section className={`music-player music-player-pro ${hasVideo ? "music-player-video" : "music-player-audio"}`} dir="auto">
       {hasVideo ? (
         <div className="music-player-video-stage">
-          <video ref={media as RefObject<HTMLVideoElement>} className="music-player-video-frame" poster={activeTrack.coverUrl ?? undefined} preload="metadata" playsInline src={source.url} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={syncProgress} onCanPlay={() => setSourceIssue("")} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} onError={handleMediaError} />
+          <video ref={media as RefObject<HTMLVideoElement>} className="music-player-video-frame" poster={activeTrack.coverUrl ?? undefined} preload="metadata" playsInline src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={syncProgress} onCanPlay={() => setSourceIssue("")} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} onError={handleMediaError} />
           <button className={`music-video-play-overlay ${playing ? "is-playing" : ""}`} type="button" onClick={togglePlayback} aria-label={playing ? "Pause video" : "Play video"}>{playing ? <Pause size={23} fill="currentColor" /> : <Play size={25} fill="currentColor" />}</button>
           <span className="music-video-quality">{source.quality || "Video"}</span>
         </div>
       ) : (
-        <audio ref={media as RefObject<HTMLAudioElement>} preload="metadata" src={source.url} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={syncProgress} onCanPlay={() => setSourceIssue("")} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} onError={handleMediaError} />
+        <audio ref={media as RefObject<HTMLAudioElement>} preload="metadata" src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={syncProgress} onCanPlay={() => setSourceIssue("")} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} onError={handleMediaError} />
       )}
 
       <div className="music-player-shell">
@@ -282,7 +297,7 @@ export function MusicPlayer({
         <span>{formatTime(currentTime)}</span>
         <div className="music-progress-wrap" style={{ "--music-progress": `${percent(currentTime, duration)}%` } as CSSProperties}><span className="music-progress-buffer" style={{ width: `${percent(buffered, duration)}%` }} /><input aria-label="Seek" type="range" min="0" max={duration || 0} value={Math.min(currentTime, duration || 0)} step="0.1" onChange={(event) => seek(Number(event.target.value))} /></div>
         <span>{formatTime(duration)}</span>
-        <label className="music-source"><select aria-label={hasVideo ? "Video quality" : "Audio quality"} value={source.url} onChange={(event) => { setSourceIssue(""); setSourceIndex(Math.max(0, streams.findIndex((item) => item.url === event.target.value))); }}>{streams.map((item) => <option value={item.url} key={item.url}>{item.quality || item.label}</option>)}</select></label>
+        <label className="music-source"><select aria-label={hasVideo ? "Video quality" : "Audio quality"} value={source.url} onChange={(event) => { setSourceIssue(""); setUseDirectSource(false); setSourceIndex(Math.max(0, streams.findIndex((item) => item.url === event.target.value))); }}>{streams.map((item) => <option value={item.url} key={item.url}>{item.quality || item.label}</option>)}</select></label>
         <label className="music-volume"><button type="button" onClick={() => setMuted((value) => !value)} aria-label={muted ? "Unmute" : "Mute"}>{muted ? <VolumeX size={15} /> : <Volume2 size={15} />}</button><input aria-label="Volume" type="range" min="0" max="1" step="0.05" value={volume} onChange={(event) => setVolume(Number(event.target.value))} /></label>
         <label className="music-rate"><select aria-label="Playback speed" value={rate} onChange={(event) => setRate(Number(event.target.value))}>{[0.75, 1, 1.25, 1.5, 2].map((value) => <option key={value} value={value}>{value}×</option>)}</select></label>
         <button className={`music-icon-button ${queueOpen ? "is-active" : ""}`} type="button" onClick={() => setQueueOpen((value) => !value)} aria-label="Listening queue"><ListMusic size={18} /></button>
@@ -296,6 +311,10 @@ export function MusicPlayer({
 function uniqueSources(sources: MusicSource[]) {
   const seen = new Set<string>();
   return sources.filter((source) => source.url && !seen.has(source.url) && Boolean(seen.add(source.url)));
+}
+
+function musicPlaybackUrl(trackId: string, sourceUrl: string) {
+  return `/api/music/media?id=${encodeURIComponent(trackId)}&url=${encodeURIComponent(sourceUrl)}`;
 }
 
 function preferredSourceIndex(sources: MusicSource[], kind: MusicTrack["kind"]) {
