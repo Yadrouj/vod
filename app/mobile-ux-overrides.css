@@ -881,3 +881,69 @@ html[dir="rtl"] .suggest-result-arrow {
 
   .music-spotify-page .music-landing-now-playing { justify-self: stretch !important; }
 }
+
+/* Keep horizontal browsing inside the rail. The cards remain swipeable and
+   arrow-controlled, but the page and the music landing never expose a
+   browser scrollbar. Older music rules set `scrollbar-width: thin` later in
+   the cascade, so these final selectors intentionally win. */
+.music-horizontal-viewport,
+.music-spotify-page .music-shelf,
+.music-spotify-page .music-rail-home {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.music-horizontal-track,
+.music-horizontal-track.music-rail-list,
+.music-horizontal-track.music-shelf-list,
+.music-horizontal-track.music-artist-card-list {
+  min-width: 0;
+  max-width: 100%;
+  scrollbar-width: none !important;
+}
+
+.music-horizontal-track::-webkit-scrollbar,
+.music-horizontal-track.music-rail-list::-webkit-scrollbar,
+.music-horizontal-track.music-shelf-list::-webkit-scrollbar,
+.music-horizontal-track.music-artist-card-list::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* The room builder is a vertical sheet. A long label or a grid child must
+   wrap inside it, never create a second horizontal page. */
+.watch-builder {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.watch-builder > *,
+.watch-builder-header,
+.watch-builder-header > *,
+.watch-builder-section,
+.watch-builder-actions,
+.watch-builder-actions > *,
+.watch-builder-access-options,
+.watch-builder-access-options > *,
+.watch-builder-feature-list {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.watch-builder-header h2,
+.watch-builder-intro,
+.watch-builder-section-title,
+.watch-builder-access-options strong,
+.watch-builder-access-options small,
+.watch-builder-actions button {
+  overflow-wrap: anywhere;
+}
+
+.watch-builder-access-options button > span,
+.watch-builder-actions button {
+  min-width: 0;
+}
