@@ -5,7 +5,7 @@ export type MusicSource = {
   label: string;
   quality?: string | null;
   kind: "stream" | "download";
-  provider?: "rozmusic" | "musics-fa" | "remiixbaz" | "download1music" | "sevilmusics" | "aftabmusic" | "musics-mehr";
+  provider?: "rozmusic" | "musics-fa" | "remiixbaz" | "worldofmusic" | "download1music" | "sevilmusics" | "aftabmusic" | "musics-mehr";
   basePath?: string | null;
   available?: boolean;
   checkedAt?: string;
@@ -32,6 +32,16 @@ export type MusicTrack = {
   publishedAt: string | null;
   detailCheckedAt?: string;
   category: string;
+  moods?: string[];
+  album?: {
+    id: string;
+    title: string;
+    sourceUrl: string;
+    coverUrl: string | null;
+    publishedAt?: string | null;
+    genres?: string[];
+    moods?: string[];
+  };
   folder: {
     root: "Music" | "Music Video" | "Unknown";
     year: string | null;

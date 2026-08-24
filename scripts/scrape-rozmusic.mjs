@@ -9,6 +9,7 @@ const MUSICS_FA_OUTPUT = path.join(".media-cache", "music", "musics-fa-source.js
 const CLASSICS_OUTPUT = path.join(".media-cache", "music", "persian-classics-source.json");
 const FOREIGN_OUTPUT = path.join(".media-cache", "music", "aftab-foreign-source.json");
 const REMIIXBAZ_OUTPUT = path.join(".media-cache", "music", "remiixbaz-source.json");
+const WORLDOFMUSIC_OUTPUT = path.join(".media-cache", "music", "worldofmusic-source.json");
 const REPORT = path.join("data", "rozmusic-status.json");
 const CACHE = path.join(".media-cache", "rozmusic", "detail-cache.json");
 const LISTING_CACHE = path.join(".media-cache", "rozmusic", "catalog-checkpoint.json");
@@ -58,13 +59,14 @@ let completedSinceCheckpoint = 0;
 let nextRequestAt = 0;
 
 async function main() {
-  const [previous, detailCache, musicsFaSource, classicsSource, foreignSource, remiixbazSource, checkpoint] = await Promise.all([
+  const [previous, detailCache, musicsFaSource, classicsSource, foreignSource, remiixbazSource, worldofmusicSource, checkpoint] = await Promise.all([
     readJson(OUTPUT, emptyIndex()),
     readJson(CACHE, {}),
     readJson(MUSICS_FA_OUTPUT, []),
     readJson(CLASSICS_OUTPUT, { tracks: [] }),
     readJson(FOREIGN_OUTPUT, { tracks: [] }),
     readJson(REMIIXBAZ_OUTPUT, { tracks: [], artistProfiles: [] }),
+    readJson(WORLDOFMUSIC_OUTPUT, { tracks: [], artists: [] }),
     readJson(LISTING_CACHE, emptyCheckpoint()),
   ]);
   const tracks = new Map(Object.entries(checkpoint.tracks ?? {}).map(([id, track]) => [id, track]));
@@ -136,10 +138,13 @@ async function main() {
     });
   }
 
-  const trackList = mergeProviderTracks([...tracks.values()], musicsFaSource, classicsSource.tracks ?? [], foreignSource.tracks ?? [], remiixbazSource.tracks ?? [])
+  const trackList = mergeProviderTracks([...tracks.values()], musicsFaSource, classicsSource.tracks ?? [], foreignSource.tracks ?? [], remiixbazSource.tracks ?? [], worldofmusicSource.tracks ?? [])
     .map((track) => canonicalizeTrackArtists(track, track.sourceUrl))
     .sort((left, right) => (right.publishedAt ?? "").localeCompare(left.publishedAt ?? "") || right.id.localeCompare(left.id));
-  const profileBySlug = new Map((remiixbazSource.artistProfiles ?? []).map((profile) => [profile.slug, profile]));
+  const profileBySlug = new Map([
+    ...(remiixbazSource.artistProfiles ?? []),
+    ...(worldofmusicSource.artists ?? []),
+  ].map((profile) => [profile.slug, profile]));
   const artists = buildCanonicalArtists(trackList).map((artist) => {
     const profile = profileBySlug.get(artist.slug);
     if (!profile) return artist;
