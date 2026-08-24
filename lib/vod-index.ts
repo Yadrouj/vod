@@ -5,6 +5,7 @@ import type { VodCard, VodCatalogIndex } from "./types";
 export const HOME_SECTIONS = [
   "top-imdb",
   "recent-films",
+  "old-iranian-films",
   "best-series",
   "best-movies",
   "kids",
@@ -14,6 +15,7 @@ export const HOME_SECTIONS = [
 export const SECTION_LABELS: Record<string, string> = {
   "top-imdb": "Top 250 IMDb",
   "persian-movies": "Persian Movies",
+  "old-iranian-films": "Old Iranian Films",
   "recent-films": "Recent Films",
   "best-series": "Best Series",
   "best-movies": "Best Movies",
@@ -130,6 +132,9 @@ function selectSection(items: VodCard[], section: string) {
   }
   if (section === "persian-movies") {
     return [...items].filter(isPersianMovie).sort(yearSort);
+  }
+  if (section === "old-iranian-films") {
+    return [...items].filter((item) => item.source === "old-iranian-archive").sort(yearSort);
   }
   if (section === "best-series") {
     return [...items].filter((item) => item.type === "series").sort(ratingSort);

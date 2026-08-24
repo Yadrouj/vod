@@ -40,6 +40,7 @@ export default async function DetailPage({ params }: Props) {
   if (!item) notFound();
 
   const best = item.links[0];
+  const sourceOnly = !best && Boolean(item.sourcePageUrl);
   const seasons = buildSeasonSummaries(item.links);
   const isSeries = normalizeVodType(item.type) === "series" && seasons.length > 0;
   const movieFiles = isSeries ? [] : movieDownloadSources(item.links);
@@ -109,7 +110,7 @@ export default async function DetailPage({ params }: Props) {
                 <i className="dot" />
                 <span>{item.runtimeMinutes ? `${item.runtimeMinutes}m` : `${item.links.length} ${t.common.files}`}</span>
                 <i className="dot" />
-                <span>{item.source === "mihandownload" ? t.common.persianMovies : item.imdbCode}</span>
+                <span>{item.source === "old-iranian-archive" ? "Old Iranian Film" : item.source === "mihandownload" ? t.common.persianMovies : item.imdbCode}</span>
               </div>
               <h1>{displayTitle}</h1>
               {item.originalTitle && item.originalTitle !== displayTitle && (
@@ -117,9 +118,15 @@ export default async function DetailPage({ params }: Props) {
               )}
               {displayOverview && <p className="detail-overview">{displayOverview}</p>}
               <div className="chips detail-primary-actions">
-                <Link className="play-glow detail-play-button" href={`/watch/${item.imdbCode}`}>
-                  <span className="play-dot" /> {t.common.playOnline}
-                </Link>
+                {best ? (
+                  <Link className="play-glow detail-play-button" href={`/watch/${item.imdbCode}`}>
+                    <span className="play-dot" /> {t.common.playOnline}
+                  </Link>
+                ) : sourceOnly ? (
+                  <a className="hover-button" href={item.sourcePageUrl ?? undefined} target="_blank" rel="noreferrer">
+                    {t.common.source}
+                  </a>
+                ) : null}
                 <WatchTogetherLauncher
                   locale={locale}
                   placement="inline"
@@ -137,10 +144,6 @@ export default async function DetailPage({ params }: Props) {
                 {item.imdbUrl ? (
                   <a className="hover-button" href={item.imdbUrl} target="_blank" rel="noreferrer">
                     {t.common.viewImdb}
-                  </a>
-                ) : item.sourcePageUrl ? (
-                  <a className="hover-button" href={item.sourcePageUrl} target="_blank" rel="noreferrer">
-                    {t.common.source}
                   </a>
                 ) : null}
               </div>

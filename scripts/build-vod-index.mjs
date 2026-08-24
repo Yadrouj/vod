@@ -19,6 +19,11 @@ const SECTIONS = [
     subtitle: "Iranian cinema from MihanDownload with Persian metadata",
   },
   {
+    id: "old-iranian-films",
+    title: "Old Iranian Films",
+    subtitle: "Classic Iranian cinema collected from the old-film archive",
+  },
+  {
     id: "recent-films",
     title: "Recent Films",
     subtitle: "Newer movie releases from the archive",
@@ -101,6 +106,9 @@ function sectionItems(items, id) {
   if (id === "persian-movies") {
     return [...items].filter(isPersianMovie).sort(yearSort);
   }
+  if (id === "old-iranian-films") {
+    return [...items].filter((item) => item.source === "old-iranian-archive").sort(yearSort);
+  }
   if (id === "best-series") {
     return [...items].filter((item) => item.type === "series").sort(ratingSort);
   }
@@ -140,8 +148,8 @@ async function main() {
   });
   const index = {
     sourceUrl: archive.sourceUrl,
-    totalTitles: archive.totalTitles ?? items.length,
-    totalLinks: archive.totalLinks ?? items.reduce((sum, item) => sum + item.linksCount, 0),
+    totalTitles: items.length,
+    totalLinks: items.reduce((sum, item) => sum + item.linksCount, 0),
     generatedAt: new Date().toISOString(),
     filters: {
       genres: uniqueSorted(items.flatMap((item) => item.genres)),

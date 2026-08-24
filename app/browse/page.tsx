@@ -86,6 +86,7 @@ export default async function BrowsePage({ searchParams }: Props) {
           <div className="quick-tabs">
             <Link href="/browse?section=top-imdb">{t.common.topImdb}</Link>
             <Link href="/browse?section=persian-movies">{t.common.persianMovies}</Link>
+            <Link href="/browse?section=old-iranian-films">Old Iranian Films</Link>
             <Link href="/browse?section=recent-films">{t.common.recentFilm}</Link>
             <Link href="/browse?section=best-movies">{t.common.bestMovies}</Link>
             <Link href="/browse?section=best-series">{t.common.bestSeries}</Link>
