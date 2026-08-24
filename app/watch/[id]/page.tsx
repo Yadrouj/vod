@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
@@ -5,11 +6,13 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { VodPlayer } from "@/components/vod-player";
 import { WatchTogetherInvite } from "@/components/watch-together-invite";
 import { SubtitleList } from "@/components/subtitle-list";
+import { StructuredData } from "@/components/structured-data";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { getDictionary } from "@/lib/i18n";
 import { playbackSourceLabel, playableLinks } from "@/lib/link-labels";
 import { getLocale } from "@/lib/server-locale";
 import { subzoneSearchUrl } from "@/lib/subtitles";
+import { absoluteUrl, titleMetadata, videoJsonLd } from "@/lib/seo";
 import { watchPartyDetails } from "@/lib/watch-party-media";
 
 type Props = {
@@ -17,6 +20,19 @@ type Props = {
 };
 
 export const revalidate = 300;
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const item = await findVodItem(id);
+  if (!item) return { title: "Watch page not found" };
+  return titleMetadata({
+    title: `Watch ${item.title} online | SarvNema`,
+    description: `Watch ${item.title} online with available quality, subtitles and synchronized watch-together options.`,
+    pathname: `/watch/${item.imdbCode}`,
+    image: item.backdropUrl || item.posterUrl,
+    keywords: ["تماشای آنلاین", `Watch ${item.title}`, "watch together", "online player", "subtitle"],
+  });
+}
 
 export default async function WatchPage({ params }: Props) {
   const locale = await getLocale();
@@ -44,9 +60,11 @@ export default async function WatchPage({ params }: Props) {
     sources: partySources,
     details: watchPartyDetails(item),
   } : null;
+  const videoData = videoJsonLd(item, links[0]?.url ?? null);
 
   return (
     <main className="shell watch-page">
+      <StructuredData data={{ "@context": "https://schema.org", "@graph": [videoData, { "@type": "WebPage", url: absoluteUrl(`/watch/${item.imdbCode}`), name: `Watch ${item.title} online` }].filter(Boolean) }} />
       <section className="watch-page-hero">
         {heroImage && <div className="watch-page-hero-art" aria-hidden="true" style={{ backgroundImage: `url(${JSON.stringify(heroImage)})` }} />}
         <div className="wrap">

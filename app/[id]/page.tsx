@@ -5,14 +5,15 @@ import { BrandLogo } from "@/components/brand-logo";
 import { DeferredBackgroundVideo } from "@/components/deferred-background-video";
 import { DownloadButton } from "@/components/ui/download-animation";
 import { LanguageToggle } from "@/components/language-toggle";
+import { StructuredData } from "@/components/structured-data";
 import { TitleTabs, type TitleTabsItem } from "@/components/title-tabs";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { buildSeasonSummaries, movieDownloadSources } from "@/lib/downloads";
 import { formatNumber, getDictionary, typeLabel } from "@/lib/i18n";
 import { getLocale } from "@/lib/server-locale";
+import { vodJsonLd, vodMetadata } from "@/lib/seo";
 import { subzoneSearchUrl } from "@/lib/subtitles";
-import { BRAND_NAME } from "@/lib/brand";
 import { sizedImageUrl } from "@/lib/image-url";
 import type { VodItem } from "@/lib/types";
 
@@ -26,10 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const item = await findVodItem(id);
   if (!item) return { title: "Title not found" };
-  return {
-    title: item.title,
-    description: `${item.title} metadata and direct file links on ${BRAND_NAME}.`
-  };
+  return vodMetadata(item);
 }
 
 export default async function DetailPage({ params }: Props) {
@@ -52,6 +50,7 @@ export default async function DetailPage({ params }: Props) {
 
   return (
     <div className="shell">
+      <StructuredData data={vodJsonLd(item)} />
       <section
         className="detail-hero"
         style={

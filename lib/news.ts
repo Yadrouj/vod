@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
 export type VodNewsItem = {
@@ -24,11 +24,17 @@ const fallbackNews: VodNewsPayload = {
   sources: [],
   items: [],
 };
-let newsPromise: Promise<VodNewsPayload> | null = null;
+const newsFile = path.join(process.cwd(), "public", "data", "vod-news.json");
+let cachedNews: { modifiedAt: number; value: VodNewsPayload } | null = null;
 
-export function loadVodNews(): Promise<VodNewsPayload> {
-  newsPromise ??= readFile(path.join(process.cwd(), "public", "data", "vod-news.json"), "utf8")
-    .then((data) => JSON.parse(data) as VodNewsPayload)
-    .catch(() => fallbackNews);
-  return newsPromise;
+export async function loadVodNews(): Promise<VodNewsPayload> {
+  try {
+    const info = await stat(newsFile);
+    if (cachedNews?.modifiedAt === info.mtimeMs) return cachedNews.value;
+    const value = JSON.parse(await readFile(newsFile, "utf8")) as VodNewsPayload;
+    cachedNews = { modifiedAt: info.mtimeMs, value };
+    return value;
+  } catch {
+    return fallbackNews;
+  }
 }

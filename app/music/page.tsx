@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { MusicArtistCard } from "@/components/music-artist-card";
@@ -9,6 +10,7 @@ import { PersonalListenLauncher } from "@/components/personal-listen-launcher";
 import { PublicPartyRooms } from "@/components/public-party-rooms";
 import { loadMusicIndex, searchMusic, selectMusicShelfTracks } from "@/lib/music";
 import { getLocale } from "@/lib/server-locale";
+import { titleMetadata } from "@/lib/seo";
 
 const REMIX_CATEGORY = "\u0631\u06cc\u0645\u06cc\u06a9\u0633";
 const REMIX_DESCRIPTION = "\u0631\u06cc\u0645\u06cc\u06a9\u0633\u200c\u0647\u0627\u06cc \u0634\u0627\u062f\u060c \u067e\u0627\u062f\u06a9\u0633\u062a \u0648 \u0627\u0646\u062a\u062e\u0627\u0628\u200c\u0647\u0627\u06cc \u062a\u0627\u0632\u0647";
@@ -16,6 +18,13 @@ const REMIX_DESCRIPTION = "\u0631\u06cc\u0645\u06cc\u06a9\u0633\u200c\u0647\u062
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 export const revalidate = 300;
+
+export const metadata: Metadata = titleMetadata({
+  title: "موسیقی سرونما؛ دانلود آهنگ و پخش آنلاین",
+  description: "جستجو و پخش آنلاین آهنگ، موزیک ویدیو، موسیقی قدیمی، ریمیکس و آثار خوانندگان ایرانی با پلی‌لیست و شنیدن همزمان.",
+  pathname: "/music",
+  keywords: ["دانلود آهنگ", "پخش آنلاین آهنگ", "موزیک ویدیو", "موسیقی قدیمی ایرانی", "ریمیکس", "پلی‌لیست موسیقی", "شنیدن همزمان موسیقی"],
+});
 
 export default async function MusicPage({ searchParams }: Props) {
   const [locale, index, params] = await Promise.all([getLocale(), loadMusicIndex(), searchParams]);

@@ -1,12 +1,21 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { MusicPlayer } from "@/components/music-player";
+import { StructuredData } from "@/components/structured-data";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import { findMusicTrack, loadMusicIndex, relatedMusic } from "@/lib/music";
 import { musicPartyMedia } from "@/lib/watch-party-music";
+import { musicJsonLd, musicMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 
 export const revalidate = 300;
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const [{ id }, index] = await Promise.all([params, loadMusicIndex()]);
+  const track = findMusicTrack(index, id);
+  return track ? musicMetadata(track) : { title: "Music track not found" };
+}
 
 export default async function MusicDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const [{ id }, index] = await Promise.all([params, loadMusicIndex()]);
@@ -18,6 +27,7 @@ export default async function MusicDetailPage({ params }: { params: Promise<{ id
 
   return (
     <main className="shell music-detail" dir="rtl">
+      <StructuredData data={musicJsonLd(track)} />
       <div className="wrap">
         <Link href="/music" className="music-back"><ArrowLeft size={16} /> بازگشت به موسیقی</Link>
         <section className="music-detail-hero" style={track.coverUrl ? { "--music-cover": `url(${track.coverUrl})` } as React.CSSProperties : undefined}>
