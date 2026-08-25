@@ -5,11 +5,13 @@ import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { VodPlayer } from "@/components/vod-player";
 import { WatchTogetherInvite } from "@/components/watch-together-invite";
+import { YouTubePlayer } from "@/components/youtube-player";
 import { SubtitleList } from "@/components/subtitle-list";
 import { StructuredData } from "@/components/structured-data";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { getDictionary } from "@/lib/i18n";
 import { playbackSourceLabel, playableLinks } from "@/lib/link-labels";
+import { getOldIranianFilmMedia } from "@/lib/old-iranian-media";
 import { getLocale } from "@/lib/server-locale";
 import { subzoneSearchUrl } from "@/lib/subtitles";
 import { absoluteUrl, titleMetadata, videoJsonLd } from "@/lib/seo";
@@ -43,6 +45,8 @@ export default async function WatchPage({ params }: Props) {
 
   const isSeries = normalizeVodType(item.type) === "series";
   const links = playableLinks(item.links);
+  const oldFilmMedia = getOldIranianFilmMedia(item.id) ?? getOldIranianFilmMedia(item.imdbCode);
+  const youtubeSource = !links.length ? oldFilmMedia?.youtubeVideos[0] ?? null : null;
   const partySources = links.map((link, index) => ({
     url: link.url,
     label: playbackSourceLabel(link, index, isSeries),
@@ -51,7 +55,7 @@ export default async function WatchPage({ params }: Props) {
     episode: isSeries ? link.episode ?? null : null,
     subtitleUrl: link.subtitleUrl ?? null,
   }));
-  const heroImage = item.backdropUrl ?? item.posterUrl ?? null;
+  const heroImage = item.backdropUrl ?? item.posterUrl ?? oldFilmMedia?.backdropUrl ?? null;
   const partyMedia = partySources[0] ? {
     itemId: item.imdbCode,
     title: item.title,
@@ -92,7 +96,7 @@ export default async function WatchPage({ params }: Props) {
                   </>
                 )}
                 <i className="dot" />
-                <span>{links.length} {t.player.sources}</span>
+                <span>{youtubeSource ? "YouTube" : `${links.length} ${t.player.sources}`}</span>
               </div>
               <h1>{item.title}</h1>
             </div>
@@ -113,14 +117,18 @@ export default async function WatchPage({ params }: Props) {
       </section>
 
       <section className="wrap watch-player-section">
-        <VodPlayer
-          itemId={item.imdbCode}
-          title={item.title}
-          posterUrl={heroImage}
-          links={links}
-          isSeries={isSeries}
-          locale={locale}
-        />
+        {youtubeSource ? (
+          <YouTubePlayer source={youtubeSource} title={item.title} />
+        ) : (
+          <VodPlayer
+            itemId={item.imdbCode}
+            title={item.title}
+            posterUrl={heroImage}
+            links={links}
+            isSeries={isSeries}
+            locale={locale}
+          />
+        )}
         <SubtitleList imdbCode={item.imdbCode} title={item.title} />
       </section>
     </main>

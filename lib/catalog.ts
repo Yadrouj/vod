@@ -2,6 +2,7 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { cache } from "react";
 import { applyDownloadBaseToItem } from "./download-settings";
+import { enrichOldIranianFilm } from "./old-iranian-media";
 import type { VodArchive, VodItem } from "./types";
 
 const DATA_DIR = path.resolve(process.env.VOD_DATA_DIR || path.join(process.cwd(), "public", "data"));
@@ -27,7 +28,7 @@ async function loadArchiveFile(): Promise<VodArchive> {
 
 export const findVodItem = cache(async (id: string): Promise<VodItem | null> => {
   const item = await findVodTitleFile(id);
-  return item ? applyDownloadBaseToItem(item) : null;
+  return item ? applyDownloadBaseToItem(enrichOldIranianFilm(item)) : null;
 });
 
 export function normalizeVodType(type: string): "movie" | "series" {

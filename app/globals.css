@@ -4124,6 +4124,190 @@ html { scroll-behavior: smooth; }
 @keyframes music-cover-turn { to { transform:rotate(360deg); } } @keyframes music-eq { from { transform:scaleY(.35); } to { transform:scaleY(1); } } @keyframes party-wave { from { transform:scaleY(.38); } to { transform:scaleY(1); } }
 @media (max-width:680px) { .music-player-pro .music-player-shell { grid-template-columns:54px minmax(0,1fr) auto; padding:13px; }.music-player-pro .music-player-art { width:54px; }.music-player-pro .music-download { display:none; }.music-player-pro .music-player-controls { grid-template-columns:auto minmax(55px,1fr) auto auto; padding:5px 12px 13px; }.music-source,.music-player-pro .music-volume { display:none; }.party-listening-stage { min-height:min(74svh,590px); }.party-listening-art>div { width:min(64vw,260px); transform:translate(-50%,-61%); }.party-listening-copy { bottom:91px; }.party-listening-copy p { font-size:13px; }.party-listening-wave { right:8%; bottom:160px; left:8%; }.party-listening-stage .party-controls { grid-template-columns:auto minmax(0,1fr) repeat(3,auto); } }
 
+/* Public YouTube fallback for legacy source-only films. The iframe is loaded
+   only after the visitor presses play, keeping detail pages fast. */
+.youtube-player-card {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  margin: 0 0 28px;
+  padding: clamp(16px, 2.4vw, 26px);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(25, 25, 27, 0.96), rgba(10, 10, 11, 0.98));
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
+}
+
+.youtube-player-card::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 12% 0%, rgba(255, 53, 53, 0.12), transparent 32%), radial-gradient(circle at 95% 100%, rgba(255, 255, 255, 0.06), transparent 35%);
+}
+
+.youtube-player-heading,
+.youtube-player-stage,
+.youtube-player-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.youtube-player-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.youtube-player-kicker,
+.youtube-player-footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #ff7777;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.youtube-player-heading h2 {
+  margin: 7px 0 6px;
+  font-size: clamp(22px, 3vw, 36px);
+  line-height: 1;
+}
+
+.youtube-player-heading p {
+  max-width: 760px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.youtube-source-link {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 119, 119, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 70, 70, 0.08);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.youtube-source-link:hover {
+  border-color: rgba(255, 119, 119, 0.66);
+  background: rgba(255, 70, 70, 0.18);
+  transform: translateY(-1px);
+}
+
+.youtube-player-stage {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 10px;
+  background: #050505;
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.44);
+}
+
+.youtube-player-stage iframe,
+.youtube-player-poster {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.youtube-player-poster {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  overflow: hidden;
+  background-color: #141414;
+  background-position: center;
+  background-size: cover;
+  color: #fff;
+  cursor: pointer;
+  isolation: isolate;
+}
+
+.youtube-player-poster::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.78)), radial-gradient(circle, transparent 0 23%, rgba(0, 0, 0, 0.48) 100%);
+  transition: background 180ms ease;
+}
+
+.youtube-player-poster:hover::before {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.66)), radial-gradient(circle, transparent 0 29%, rgba(0, 0, 0, 0.38) 100%);
+}
+
+.youtube-play-control {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  padding-left: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: 50%;
+  background: rgba(255, 42, 42, 0.92);
+  color: #fff;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.48), 0 0 0 10px rgba(255, 255, 255, 0.11);
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.youtube-player-poster:hover .youtube-play-control {
+  background: #ff3f3f;
+  transform: scale(1.08);
+}
+
+.youtube-poster-copy {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  left: 18px;
+  display: grid;
+  gap: 4px;
+  text-align: start;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.76);
+}
+
+.youtube-poster-copy strong { font-size: 15px; }
+.youtube-poster-copy small { color: rgba(255, 255, 255, 0.68); font-size: 11px; }
+
+.youtube-player-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.youtube-player-footer span { color: rgba(255, 255, 255, 0.82); letter-spacing: 0; text-transform: none; }
+.youtube-player-footer small { color: rgba(255, 255, 255, 0.45); font-size: 11px; }
+
+@media (max-width: 680px) {
+  .youtube-player-card { margin-bottom: 18px; padding: 14px; border-radius: 11px; }
+  .youtube-player-heading { display: grid; gap: 11px; }
+  .youtube-player-heading h2 { font-size: 25px; }
+  .youtube-player-heading p { font-size: 12px; }
+  .youtube-source-link { justify-self: start; min-height: 36px; }
+  .youtube-play-control { width: 58px; height: 58px; }
+  .youtube-player-footer { align-items: flex-start; flex-direction: column; }
+}
+
 /* Music listening rooms and a compact Spotify-style player. */
 .music-detail-party { margin: 18px 0 0; }
 .watch-together-listen { border-color: rgba(131, 238, 172, .38); background: linear-gradient(120deg, rgba(35, 93, 62, .56), rgba(22, 25, 24, .92)); color: #eafff1; }
@@ -5690,7 +5874,8 @@ html[dir="rtl"] .mega-menu-shell:focus-within .mega-panel {
 
 .music-card-copy { min-width: 0; }
 .music-card-copy strong,
-.music-card-copy span {
+.music-card-copy span,
+.music-card-copy small {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5698,6 +5883,7 @@ html[dir="rtl"] .mega-menu-shell:focus-within .mega-panel {
 }
 .music-card-copy strong { font-size: 13px; font-weight: 900; }
 .music-card-copy span { margin-top: 3px; color: rgba(255, 255, 255, 0.58); font-size: 11px; }
+.music-card-copy small { margin-top: 3px; color: rgba(255, 255, 255, 0.36); font-size: 9px; }
 
 .music-page,
 .music-detail,
@@ -7565,6 +7751,7 @@ html[dir="rtl"] .mega-menu-shell:focus-within .mega-panel {
 .music-spotify-page .music-card-copy { padding: 1px 2px 3px; }
 .music-spotify-page .music-card-copy strong { color: rgba(255, 255, 255, 0.94); font-size: 12px; font-weight: 900; }
 .music-spotify-page .music-card-copy span { margin-top: 4px; color: rgba(223, 255, 234, 0.5); font-size: 10px; }
+.music-spotify-page .music-card-copy small { margin-top: 3px; color: rgba(223, 255, 234, 0.34); font-size: 9px; }
 
 .music-search-results-head { margin: 8px 0 25px; padding: 23px; border: 1px solid rgba(159, 245, 194, 0.14); border-radius: 17px !important; background: linear-gradient(110deg, rgba(21, 50, 34, 0.54), rgba(15, 18, 16, 0.82)); }
 .music-spotify-page .music-grid { gap: 17px; }

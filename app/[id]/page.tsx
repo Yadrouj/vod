@@ -8,9 +8,11 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { StructuredData } from "@/components/structured-data";
 import { TitleTabs, type TitleTabsItem } from "@/components/title-tabs";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
+import { YouTubePlayer } from "@/components/youtube-player";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { buildSeasonSummaries, movieDownloadSources } from "@/lib/downloads";
 import { formatNumber, getDictionary, typeLabel } from "@/lib/i18n";
+import { getOldIranianFilmMedia } from "@/lib/old-iranian-media";
 import { getLocale } from "@/lib/server-locale";
 import { vodJsonLd, vodMetadata } from "@/lib/seo";
 import { subzoneSearchUrl } from "@/lib/subtitles";
@@ -43,6 +45,10 @@ export default async function DetailPage({ params }: Props) {
   const isSeries = normalizeVodType(item.type) === "series" && seasons.length > 0;
   const movieFiles = isSeries ? [] : movieDownloadSources(item.links);
   const heroVideo = detailHeroVideo(item);
+  const oldFilmMedia = getOldIranianFilmMedia(item.id) ?? getOldIranianFilmMedia(item.imdbCode);
+  const youtubeSource = !best ? oldFilmMedia?.youtubeVideos[0] ?? null : null;
+  const heroBackdrop = item.backdropUrl ?? oldFilmMedia?.backdropUrl ?? null;
+  const posterUrl = item.posterUrl ?? oldFilmMedia?.posterUrl ?? null;
   const tabsItem = toTitleTabsItem(item);
   const displayTitle = locale === "fa" ? item.persianTitle || item.title : item.title;
   const displayOverview = locale === "fa" ? item.persianOverview || item.overview : item.overview;
@@ -54,9 +60,9 @@ export default async function DetailPage({ params }: Props) {
       <section
         className="detail-hero"
         style={
-          item.backdropUrl
+            heroBackdrop
             ? {
-                backgroundImage: `linear-gradient(90deg, rgba(5,5,5,0.96), rgba(5,5,5,0.56)), url(${sizedImageUrl(item.backdropUrl, 1600)})`,
+                backgroundImage: `linear-gradient(90deg, rgba(5,5,5,0.96), rgba(5,5,5,0.56)), url(${sizedImageUrl(heroBackdrop, 1600)})`,
                 backgroundPosition: "center",
                 backgroundSize: "cover",
               }
@@ -66,7 +72,7 @@ export default async function DetailPage({ params }: Props) {
         {heroVideo && (
           <DeferredBackgroundVideo
             src={heroVideo}
-            poster={sizedImageUrl(item.backdropUrl ?? item.posterUrl, 1600)}
+            poster={sizedImageUrl(heroBackdrop ?? posterUrl, 1600)}
           />
         )}
         <div className="wrap">
@@ -121,6 +127,10 @@ export default async function DetailPage({ params }: Props) {
                   <Link className="play-glow detail-play-button" href={`/watch/${item.imdbCode}`}>
                     <span className="play-dot" /> {t.common.playOnline}
                   </Link>
+                ) : youtubeSource ? (
+                  <Link className="play-glow detail-play-button" href="#youtube-player">
+                    <span className="play-dot" /> تماشای فیلم
+                  </Link>
                 ) : sourceOnly ? (
                   <a className="hover-button" href={item.sourcePageUrl ?? undefined} target="_blank" rel="noreferrer">
                     {t.common.source}
@@ -145,14 +155,19 @@ export default async function DetailPage({ params }: Props) {
                     {t.common.viewImdb}
                   </a>
                 ) : null}
+                {oldFilmMedia?.metadataUrl ? (
+                  <a className="hover-button" href={oldFilmMedia.metadataUrl} target="_blank" rel="noreferrer">
+                    اطلاعات فیلم
+                  </a>
+                ) : null}
               </div>
             </div>
 
             <aside className="detail-card">
-              {item.posterUrl && (
+              {posterUrl && (
                 <img
                   className="detail-poster"
-                  src={sizedImageUrl(item.posterUrl, 500) ?? item.posterUrl}
+                  src={sizedImageUrl(posterUrl, 500) ?? posterUrl}
                   alt={`${displayTitle} poster`}
                   loading="eager"
                   decoding="async"
@@ -178,6 +193,9 @@ export default async function DetailPage({ params }: Props) {
       </section>
 
       <main className="wrap">
+        {youtubeSource && oldFilmMedia && (
+          <YouTubePlayer source={youtubeSource} title={displayTitle} />
+        )}
         <TitleTabs
           item={tabsItem}
           isSeries={isSeries}

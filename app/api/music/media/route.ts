@@ -34,6 +34,7 @@ export async function GET(request: Request) {
   if (range) upstreamHeaders.set("Range", range);
 
   let upstream: Response;
+  let resolvedSourceUrl = source.url;
   try {
     upstream = await fetch(source.url, {
       cache: "no-store",
@@ -42,7 +43,19 @@ export async function GET(request: Request) {
       signal: AbortSignal.timeout(30_000),
     });
   } catch {
-    return Response.json({ error: "The music source could not be reached." }, { status: 502 });
+    const fallbackUrl = worldOfMusicHttpFallback(source.url, source.provider);
+    if (!fallbackUrl) return Response.json({ error: "The music source could not be reached." }, { status: 502 });
+    try {
+      resolvedSourceUrl = fallbackUrl;
+      upstream = await fetch(fallbackUrl, {
+        cache: "no-store",
+        headers: upstreamHeaders,
+        redirect: "follow",
+        signal: AbortSignal.timeout(30_000),
+      });
+    } catch {
+      return Response.json({ error: "The music source could not be reached." }, { status: 502 });
+    }
   }
 
   if (!upstream.ok && upstream.status !== 206) {
@@ -52,8 +65,8 @@ export async function GET(request: Request) {
   const headers = new Headers();
   const upstreamContentType = upstream.headers.get("content-type")?.split(";")[0].trim().toLocaleLowerCase() ?? "";
   const contentType = isGenericContentType(upstreamContentType)
-    ? inferMediaContentType(source.url, track?.kind === "video")
-    : upstreamContentType || inferMediaContentType(source.url, track?.kind === "video");
+    ? inferMediaContentType(resolvedSourceUrl, track?.kind === "video")
+    : upstreamContentType || inferMediaContentType(resolvedSourceUrl, track?.kind === "video");
   if (contentType) headers.set("Content-Type", contentType.split(";")[0]);
   for (const name of ["content-length", "content-range", "accept-ranges", "etag", "last-modified"]) {
     const value = upstream.headers.get(name);
@@ -61,8 +74,20 @@ export async function GET(request: Request) {
   }
   headers.set("Cache-Control", "public, max-age=300, s-maxage=900");
   headers.set("X-Content-Type-Options", "nosniff");
+  if (resolvedSourceUrl !== source.url) headers.set("X-Sarvnema-Source-Fallback", "http");
 
   return new Response(upstream.body, { status: upstream.status, headers });
+}
+
+function worldOfMusicHttpFallback(value: string, provider?: string) {
+  try {
+    const url = new URL(value);
+    if (provider !== "worldofmusic" || url.protocol !== "https:" || url.hostname !== "dl2.worldofmusic.ir") return null;
+    url.protocol = "http:";
+    return url.toString();
+  } catch {
+    return null;
+  }
 }
 
 function isHttpUrl(value: string) {

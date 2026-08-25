@@ -14,6 +14,7 @@ export function MusicCard({ track, priority = false }: { track: MusicTrack; prio
       <div className="music-card-copy">
         <strong>{track.title}</strong>
         <span>{track.artists.map((artist) => artist.name).join(" • ")}</span>
+        {track.album?.title && <small>{track.album.title}</small>}
       </div>
     </Link>
   );

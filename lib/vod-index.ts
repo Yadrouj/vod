@@ -1,5 +1,6 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { enrichOldIranianCard } from "./old-iranian-media";
 import type { VodCard, VodCatalogIndex } from "./types";
 
 export const HOME_SECTIONS = [
@@ -42,12 +43,22 @@ const indexCache: FileCache<VodCatalogIndex> = {};
 const homeIndexCache: FileCache<VodCatalogIndex> = {};
 
 export async function loadVodIndex(): Promise<VodCatalogIndex> {
-  return loadFreshJson(path.join(DATA_DIR, "vod-index.json"), indexCache);
+  const index = await loadFreshJson(path.join(DATA_DIR, "vod-index.json"), indexCache);
+  return enrichLegacyCards(index);
 }
 
 export async function loadVodHomeIndex(): Promise<VodCatalogIndex> {
   return loadFreshJson(path.join(DATA_DIR, "vod-home.json"), homeIndexCache)
+    .then(enrichLegacyCards)
     .catch(() => loadVodIndex());
+}
+
+function enrichLegacyCards(index: VodCatalogIndex): VodCatalogIndex {
+  return {
+    ...index,
+    items: index.items.map(enrichOldIranianCard),
+    sections: index.sections.map((section) => ({ ...section, items: section.items.map(enrichOldIranianCard) })),
+  };
 }
 
 export function pickHero(index: VodCatalogIndex): VodCard | null {

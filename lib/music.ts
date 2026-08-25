@@ -4,7 +4,7 @@ import type { MusicArtist, MusicIndex, MusicTrack } from "@/lib/music-types";
 
 const DATA_FILE = path.join(process.cwd(), "public", "data", "music-index.json");
 const CHECK_INTERVAL = 30_000;
-let cache: { checkedAt?: number; mtimeMs?: number; value?: Promise<MusicIndex>; refreshing?: Promise<MusicIndex> } = {};
+const cache: { checkedAt?: number; mtimeMs?: number; value?: Promise<MusicIndex>; refreshing?: Promise<MusicIndex> } = {};
 
 const emptyIndex: MusicIndex = {
   version: 1,
@@ -42,22 +42,44 @@ export async function loadMusicIndex(): Promise<MusicIndex> {
 }
 
 export function findMusicTrack(index: MusicIndex, id: string): MusicTrack | null {
-  return index.tracks.find((track) => track.id === id) ?? null;
+  const track = index.tracks.find((item) => item.id === id);
+  return track ? normalizeMusicTrack(track) : null;
 }
 
 export function findMusicArtist(index: MusicIndex, slug: string): MusicArtist | null {
-  return index.artists.find((artist) => artist.slug === slug || artist.aliases?.includes(slug)) ?? null;
+  const direct = index.artists.find((artist) => artist.slug === slug || artist.aliases?.includes(slug));
+  if (direct) return direct;
+
+  const normalizedSlug = musicSlug(slug);
+  const matchingTracks = index.tracks.map(normalizeMusicTrack).filter((track) => track.artists.some((artist) => artist.slug === normalizedSlug || artist.aliases?.some((alias) => musicSlug(alias) === normalizedSlug)));
+  const firstMatch = matchingTracks[0]?.artists.find((artist) => artist.slug === normalizedSlug || artist.aliases?.some((alias) => musicSlug(alias) === normalizedSlug));
+  if (!firstMatch) return null;
+  return {
+    ...firstMatch,
+    coverUrl: matchingTracks.find((track) => track.coverUrl)?.coverUrl ?? null,
+    profileImageUrl: matchingTracks.find((track) => track.coverUrl)?.coverUrl ?? null,
+    profileSourceUrl: firstMatch.sourceUrl,
+    trackIds: matchingTracks.filter((track) => track.artists.some((artist) => artist.slug === normalizedSlug || artist.aliases?.some((alias) => musicSlug(alias) === normalizedSlug))).map((track) => track.id),
+    categories: [...new Set(matchingTracks.map((track) => track.category).filter(Boolean))],
+  };
 }
 
 export function musicForArtist(index: MusicIndex, slug: string) {
   const artist = findMusicArtist(index, slug);
-  const identity = new Set([slug, artist?.slug, ...(artist?.aliases ?? [])].filter(Boolean));
-  return index.tracks.filter((track) => track.artists.some((item) => identity.has(item.slug) || item.aliases?.some((alias) => identity.has(alias))));
+  const identity = new Set([musicSlug(slug), artist?.slug, ...(artist?.aliases ?? [])].filter((value): value is string => Boolean(value)).map(musicSlug));
+  const tracks = index.tracks
+    .filter((rawTrack) => {
+      const normalizedTrack = normalizeMusicTrack(rawTrack);
+      return rawTrack.artists.some((item) => identity.has(musicSlug(item.slug)) || item.aliases?.some((alias) => identity.has(musicSlug(alias))))
+        || normalizedTrack.artists.some((item) => identity.has(musicSlug(item.slug)) || item.aliases?.some((alias) => identity.has(musicSlug(alias))));
+    })
+    .map(normalizeMusicTrack);
+  return diversifyMusicTracks(tracks);
 }
 
 export function searchMusic(index: MusicIndex, query: string, kind = "all", category = "all") {
   const needle = normalizeSearchValue(query);
-  return index.tracks.filter((track) => {
+  return index.tracks.map(normalizeMusicTrack).filter((track) => {
     const matchesKind = kind === "all" || track.kind === kind;
     const matchesCategory = category === "all" || !category || track.category === category;
     const matchesQuery = !needle || normalizeSearchValue([
@@ -72,26 +94,23 @@ export function searchMusic(index: MusicIndex, query: string, kind = "all", cate
 }
 
 export function selectMusicShelfTracks(tracks: MusicTrack[], limit = 15) {
-  const seen = new Set<string>();
-  return [...tracks]
+  const candidates = [...tracks]
+    .map(normalizeMusicTrack)
     .filter((track) => track.sources.some((source) => source.kind === "stream" && source.available !== false))
     .sort((left, right) => (
       Number(Boolean(right.coverUrl)) - Number(Boolean(left.coverUrl))
       || (right.publishedAt ?? "").localeCompare(left.publishedAt ?? "")
-    ))
-    .filter((track) => {
-      if (seen.has(track.id)) return false;
-      seen.add(track.id);
-      return true;
-    })
-    .slice(0, limit);
+    ));
+  return diversifyMusicTracks(candidates, limit);
 }
 
 export function relatedMusic(index: MusicIndex, track: MusicTrack, limit = 12) {
+  track = normalizeMusicTrack(track);
   const currentArtists = new Set(track.artists.flatMap((artist) => [artist.slug, ...(artist.aliases ?? [])]));
   const titleTerms = new Set(normalizeTrackText(track.title).split(" ").filter((term) => term.length > 3));
 
   return index.tracks
+    .map(normalizeMusicTrack)
     .filter((candidate) => candidate.id !== track.id && candidate.kind === track.kind)
     .map((candidate) => {
       const candidateArtists = candidate.artists.flatMap((artist) => [artist.slug, ...(artist.aliases ?? [])]);
@@ -108,6 +127,90 @@ export function relatedMusic(index: MusicIndex, track: MusicTrack, limit = 12) {
     .sort((left, right) => right.score - left.score || (right.candidate.publishedAt ?? "").localeCompare(left.candidate.publishedAt ?? ""))
     .slice(0, limit)
     .map((item) => item.candidate);
+}
+
+/**
+ * World of Music sometimes publishes a multi-artist album under the single
+ * artist "Various Artists" and puts the real performer before `---` in the
+ * track title. Normalize that legacy shape at read time so old catalogs are
+ * immediately useful without requiring a full re-scrape.
+ */
+export function normalizeMusicTrack(track: MusicTrack): MusicTrack {
+  const isVarious = track.artists.length === 1 && musicSlug(track.artists[0]?.slug || track.artists[0]?.name) === "various-artists";
+  const match = isVarious ? track.title.match(/^\s*(.+?)\s+---\s+(.+?)\s*$/u) : null;
+  if (!match) return track;
+
+  const names = match[1]
+    .split(/\s*;\s*|\s+&\s+|\s+\band\b\s+/iu)
+    .map((value) => value.trim())
+    .filter(Boolean);
+  if (!names.length) return track;
+
+  const artists = names.map((name) => ({
+    name,
+    slug: musicSlug(name),
+    sourceUrl: track.sourceUrl,
+    aliases: [],
+  }));
+  const title = match[2].trim();
+  return {
+    ...track,
+    title,
+    persianTitle: track.persianTitle === track.title ? title : track.persianTitle,
+    artist: artists[0],
+    artists,
+  };
+}
+
+/**
+ * Selects a shelf in round-robin order by artist and prefers a new cover or
+ * album before reusing an image. This prevents one album/artist from filling
+ * an entire landing rail while preserving every track for full pages.
+ */
+export function diversifyMusicTracks(tracks: MusicTrack[], limit = tracks.length) {
+  const normalized = tracks.map(normalizeMusicTrack);
+  const groups = new Map<string, MusicTrack[]>();
+  const seenIds = new Set<string>();
+  for (const track of normalized) {
+    if (seenIds.has(track.id)) continue;
+    seenIds.add(track.id);
+    const key = track.artists.map((artist) => musicSlug(artist.slug || artist.name)).sort().join("|") || track.album?.id || track.id;
+    const group = groups.get(key) ?? [];
+    group.push(track);
+    groups.set(key, group);
+  }
+
+  const buckets = [...groups.values()].sort((left, right) => artistGroupPriority(left) - artistGroupPriority(right));
+  const selected: MusicTrack[] = [];
+  const usedCovers = new Set<string>();
+  const usedTrackIds = new Set<string>();
+  const target = Math.max(0, Math.min(limit, normalized.length));
+
+  while (selected.length < target) {
+    let added = false;
+    for (const bucket of buckets) {
+      const candidate = bucket.find((track) => !usedTrackIds.has(track.id) && !usedCovers.has(artKey(track)));
+      if (!candidate) continue;
+      selected.push(candidate);
+      usedTrackIds.add(candidate.id);
+      usedCovers.add(artKey(candidate));
+      added = true;
+      if (selected.length >= target) break;
+    }
+    if (added) continue;
+
+    // Once all distinct artwork is represented, continue round-robin so a
+    // full artist page still contains every track instead of dropping items.
+    for (const bucket of buckets) {
+      const candidate = bucket.find((track) => !usedTrackIds.has(track.id));
+      if (!candidate) continue;
+      selected.push(candidate);
+      usedTrackIds.add(candidate.id);
+      if (selected.length >= target) break;
+    }
+    if (!added && selected.length >= normalized.length) break;
+  }
+  return selected;
 }
 
 export function relatedMusicArtists(index: MusicIndex, artist: MusicArtist, limit = 12) {
@@ -128,6 +231,26 @@ export function relatedMusicArtists(index: MusicIndex, artist: MusicArtist, limi
 
 function normalizeTrackText(value: string) {
   return value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+
+function artKey(track: MusicTrack) {
+  return track.coverUrl || track.album?.id || track.id;
+}
+
+function artistGroupPriority(bucket: MusicTrack[]) {
+  const name = bucket[0]?.artists.map((artist) => artist.name).join(" ") ?? "";
+  return /^(?:various artists|unknown(?: artist)?|هنرمند نامشخص|srv[a-z]*|\d+|full\b|best\s+of\b|remix\b|mix\b)/iu.test(name.trim()) ? 1 : 0;
+}
+
+function musicSlug(value: string) {
+  return String(value ?? "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u064a\u0649]/g, "\u06cc")
+    .replace(/\u0643/g, "\u06a9")
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function normalizeSearchValue(value: string) {
