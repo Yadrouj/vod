@@ -50,7 +50,7 @@ export default async function MusicDetailPage({ params }: { params: Promise<{ id
           </div>
         )}
 
-        <MusicPlayer track={track} queue={more} />
+        <MusicPlayer track={track} queue={more} lyricsAutoOpen />
 
         {more.length > 0 && (
           <section className="music-more">

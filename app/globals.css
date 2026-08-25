@@ -5975,6 +5975,23 @@ html[dir="rtl"] .mega-menu-shell:focus-within .mega-panel {
 .music-player-now > span { color: #f3cb68; font-size: 9px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; }
 .music-player-now strong { margin-top: 2px; color: #fff; font-size: 14px; }
 .music-player-now small { margin-top: 3px; color: rgba(255, 255, 255, 0.56); font-size: 11px; }
+.music-lyrics-toggle { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 5px 8px; border: 1px solid rgba(154, 245, 191, 0.18); border-radius: 999px; background: rgba(154, 245, 191, 0.06); color: rgba(210, 255, 226, 0.7); font: inherit; font-size: 10px; font-weight: 850; cursor: pointer; transition: background 160ms ease, color 160ms ease, border-color 160ms ease; }
+.music-lyrics-toggle:hover, .music-lyrics-toggle.is-active { border-color: rgba(154, 245, 191, 0.5); background: rgba(154, 245, 191, 0.16); color: #a2f6c5; }
+.music-lyrics-panel { position: relative; z-index: 1; display: grid; gap: 12px; max-height: 280px; overflow: auto; border-top: 1px solid rgba(255,255,255,.08); border-bottom: 1px solid rgba(255,255,255,.08); background: rgba(5, 9, 7, .5); }
+.music-lyrics-panel header { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 18px 8px; background: linear-gradient(rgba(8,14,11,.98), rgba(8,14,11,.82)); }
+.music-lyrics-panel header div { display: grid; gap: 3px; min-width: 0; }
+.music-lyrics-panel header span { color: #8ff0b8; font-size: 9px; font-weight: 950; letter-spacing: .08em; }
+.music-lyrics-panel header strong { overflow: hidden; color: rgba(255,255,255,.74); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.music-lyrics-panel header button { display: grid; width: 28px; height: 28px; place-items: center; border: 0; border-radius: 50%; background: rgba(255,255,255,.06); color: rgba(255,255,255,.6); cursor: pointer; }
+.music-lyrics-lines { display: grid; gap: 5px; margin: 0; padding: 0 18px 16px; list-style: none; }
+.music-lyrics-lines li { padding: 8px 10px; border-radius: 7px; color: rgba(255,255,255,.48); font-size: 12px; line-height: 1.75; text-align: right; transition: background 180ms ease, color 180ms ease, transform 180ms ease; }
+.music-lyrics-lines li.is-active { background: rgba(142, 240, 181, .13); color: #effff4; transform: translateX(-3px); }
+.music-lyrics-status { display: grid; justify-items: center; gap: 7px; padding: 25px 18px 30px; color: rgba(255,255,255,.55); font-size: 11px; text-align: center; }
+.music-lyrics-status strong { color: rgba(255,255,255,.8); font-size: 12px; }
+.music-lyrics-status span { max-width: 440px; line-height: 1.65; }
+.music-lyrics-status a { color: #a2f6c5; font-weight: 850; }
+.music-lyrics-spinner { animation: music-lyrics-spin 900ms linear infinite; color: #9af5bf; }
+@keyframes music-lyrics-spin { to { transform: rotate(360deg); } }
 .music-play-toggle { display: grid; width: 40px; height: 40px; place-items: center; border: 0; border-radius: 50%; background: #f3cb68; color: #16130d; cursor: pointer; }
 .music-download { display: inline-flex; align-items: center; gap: 6px; padding: 12px 14px; border: 1px solid rgba(243, 203, 104, 0.64); color: #f8dc89; font-size: 11px; font-weight: 900; }
 .music-player-controls { position: relative; z-index: 1; display: grid; grid-template-columns: auto minmax(80px, 1fr) auto auto auto; align-items: center; gap: 10px; padding: 0 14px 14px; background: #171719; color: rgba(255, 255, 255, 0.58); font-size: 10px; font-weight: 800; direction: ltr; }
@@ -7306,6 +7323,11 @@ html[dir="rtl"] .mega-menu-shell:focus-within .mega-panel {
   font-size: 14px;
   line-height: 1.9;
 }
+
+.music-landing-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 19px; }
+.music-landing-stats span { display: grid; min-width: 82px; gap: 2px; padding: 8px 11px; border: 1px solid rgba(166, 247, 195, .14); border-radius: 10px; background: rgba(5, 12, 8, .38); }
+.music-landing-stats strong { color: #a6f6c7; font-size: 16px; line-height: 1; }
+.music-landing-stats small { color: rgba(236, 255, 243, .52); font-size: 9px; font-weight: 850; }
 
 .music-landing-search {
   display: grid;

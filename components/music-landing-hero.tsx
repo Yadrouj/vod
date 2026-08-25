@@ -23,15 +23,22 @@ export type MusicHeroTrack = {
   artists: Array<{ name: string }>;
 };
 
+export type MusicArchiveStats = {
+  tracks: number;
+  artists: number;
+  videos: number;
+};
+
 type Props = {
   tracks: MusicHeroTrack[];
+  archiveStats?: MusicArchiveStats;
   initialQuery?: string;
   initialKind?: string;
 };
 
 const WAVE_BARS = [0.54, 0.76, 0.42, 0.95, 0.64, 0.82, 0.5, 0.98, 0.7, 0.39, 0.88, 0.57, 0.75, 0.46, 0.92, 0.6, 0.84, 0.48, 0.73, 0.56];
 
-export function MusicLandingHero({ tracks, initialQuery = "", initialKind = "all" }: Props) {
+export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", initialKind = "all" }: Props) {
   const featuredTracks = useMemo(() => tracks.filter((track) => track.id), [tracks]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isVisualPlaying, setIsVisualPlaying] = useState(true);
@@ -66,6 +73,12 @@ export function MusicLandingHero({ tracks, initialQuery = "", initialKind = "all
           <p className="music-landing-eyebrow">{initialQuery ? `نتیجه‌های جست‌وجوی «${initialQuery}»` : "هر لحظه، یک حال تازه"}</p>
           <h1>{initialQuery ? "همان قطعه‌ای که دنبالش بودی." : "صدای امروزت را پیدا کن."}</h1>
           <p className="music-landing-description">آهنگ، موزیک‌ویدیو، پلی‌لیست و شنیدن هم‌زمان؛ سریع، مرتب و بدون گم شدن بین صدها لینک.</p>
+
+          {archiveStats && <div className="music-landing-stats" aria-label="آمار آرشیو موسیقی">
+            <span><strong>{archiveStats.tracks.toLocaleString("fa-IR")}</strong><small>آهنگ</small></span>
+            <span><strong>{archiveStats.artists.toLocaleString("fa-IR")}</strong><small>هنرمند</small></span>
+            <span><strong>{archiveStats.videos.toLocaleString("fa-IR")}</strong><small>موزیک‌ویدیو</small></span>
+          </div>}
 
           <form className="music-landing-search" action="/music" role="search">
             <Search size={18} aria-hidden="true" />

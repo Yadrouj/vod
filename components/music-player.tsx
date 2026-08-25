@@ -1,8 +1,9 @@
 "use client";
 
-import { Download, Heart, ListMusic, Pause, Play, Repeat2, Shuffle, SkipBack, SkipForward, Volume2, VolumeX, X } from "lucide-react";
+import { Captions, Download, Heart, ListMusic, Pause, Play, Repeat2, Shuffle, SkipBack, SkipForward, Volume2, VolumeX, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
 import type { MusicSource, MusicTrack } from "@/lib/music-types";
+import { MusicLyrics } from "@/components/music-lyrics";
 
 const PLAYBACK_KEY = "sarvnema-music-playback";
 const LIKES_KEY = "sarvnema-music-likes";
@@ -14,12 +15,14 @@ export function MusicPlayer({
   queue = [],
   onTrackPlay,
   playRequest = 0,
+  lyricsAutoOpen = false,
 }: {
   track: MusicTrack;
   queue?: MusicTrack[];
   onTrackPlay?: (track: MusicTrack) => void;
   /** Increment this from a parent click to begin playback without a DOM ref. */
   playRequest?: number;
+  lyricsAutoOpen?: boolean;
 }) {
   const media = useRef<HTMLAudioElement | HTMLVideoElement>(null);
   const autoplayTrackId = useRef<string | null>(null);
@@ -43,6 +46,7 @@ export function MusicPlayer({
   const [liked, setLiked] = useState(false);
   const [sourceIssue, setSourceIssue] = useState("");
   const [useDirectSource, setUseDirectSource] = useState(false);
+  const [lyricsOpen, setLyricsOpen] = useState(lyricsAutoOpen);
   const hasVideo = activeTrack.kind === "video" || /\.(?:mp4|mkv|webm)(?:$|\?)/i.test(source?.url ?? "");
   const playbackUrl = source ? (useDirectSource ? source.url : musicPlaybackUrl(activeTrack.id, source.url)) : "";
 
@@ -59,6 +63,10 @@ export function MusicPlayer({
     setPlaying(false);
     setUseDirectSource(false);
   }, [activeTrack.id, activeTrack.kind, streams]);
+
+  useEffect(() => {
+    setLyricsOpen(lyricsAutoOpen);
+  }, [activeTrack.id, lyricsAutoOpen]);
 
   useEffect(() => {
     if (autoplayTrackId.current !== activeTrack.id) return;
@@ -278,12 +286,14 @@ export function MusicPlayer({
 
       <div className="music-player-shell">
         <div className={`music-player-art ${playing ? "is-spinning" : ""}`} style={activeTrack.coverUrl ? { backgroundImage: `url(${activeTrack.coverUrl})` } : undefined} />
-        <div className="music-player-now" dir="auto"><span>{activeTrack.kind === "video" ? "Music video" : "Now playing"}</span><strong>{activeTrack.persianTitle || activeTrack.title}</strong><small>{activeTrack.artists.map((artist) => artist.name).join(" · ")}</small></div>
+        <div className="music-player-now" dir="auto"><span>{activeTrack.kind === "video" ? "Music video" : "Now playing"}</span><strong>{activeTrack.persianTitle || activeTrack.title}</strong><small>{activeTrack.artists.map((artist) => artist.name).join(" · ")}</small><button className={`music-lyrics-toggle ${lyricsOpen ? "is-active" : ""}`} type="button" onClick={() => setLyricsOpen((value) => !value)}><Captions size={14} /> متن آهنگ</button></div>
         <button className={`music-icon-button ${liked ? "is-active" : ""}`} type="button" onClick={toggleLiked} aria-label={liked ? "Remove from liked songs" : "Add to liked songs"}><Heart size={18} fill={liked ? "currentColor" : "none"} /></button>
         <a className="music-download" href={activeTrack.sources.find((item) => item.kind === "download")?.url ?? source.url} target="_blank" rel="noreferrer"><Download size={16} /> Download</a>
       </div>
 
       {sourceIssue && <p className="music-player-source-issue" role="status">{sourceIssue}</p>}
+
+      <MusicLyrics key={activeTrack.id} trackId={activeTrack.id} title={activeTrack.persianTitle || activeTrack.title} artist={activeTrack.artists.map((item) => item.name).join(" · ")} currentTime={currentTime} duration={duration} open={lyricsOpen} onClose={() => setLyricsOpen(false)} />
 
       <div className="music-player-transport">
         <button className={`music-icon-button ${shuffle ? "is-active" : ""}`} type="button" onClick={() => setShuffle((value) => !value)} aria-label="Shuffle"><Shuffle size={17} /></button>

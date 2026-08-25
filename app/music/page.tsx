@@ -4,11 +4,11 @@ import { BrandLogo } from "@/components/brand-logo";
 import { MusicArtistCard } from "@/components/music-artist-card";
 import { MusicCard } from "@/components/music-card";
 import { MusicHorizontalRail } from "@/components/music-horizontal-rail";
-import { MusicLandingHero, type MusicHeroTrack } from "@/components/music-landing-hero";
+import { MusicLandingHero, type MusicArchiveStats, type MusicHeroTrack } from "@/components/music-landing-hero";
 import { MusicPlaylistLeaderboard } from "@/components/music-playlist-leaderboard";
 import { PersonalListenLauncher } from "@/components/personal-listen-launcher";
 import { PublicPartyRooms } from "@/components/public-party-rooms";
-import { loadMusicIndex, searchMusic, selectMusicShelfTracks } from "@/lib/music";
+import { loadMusicIndex, normalizeMusicTrack, searchMusic, selectMusicShelfTracks } from "@/lib/music";
 import { getLocale } from "@/lib/server-locale";
 import { titleMetadata } from "@/lib/seo";
 
@@ -40,6 +40,11 @@ export default async function MusicPage({ searchParams }: Props) {
   const classics = selectMusicShelfTracks(index.tracks.filter((track) => track.category === "موسیقی قدیمی فارسی"), 16);
   const foreign = selectMusicShelfTracks(index.tracks.filter((track) => track.category === "موسیقی خارجی"), 16);
   const remixes = selectMusicShelfTracks(index.tracks.filter((track) => track.category === REMIX_CATEGORY), 16);
+  const archiveStats: MusicArchiveStats = {
+    tracks: index.tracks.filter((track) => track.kind === "track").length,
+    artists: new Set(index.tracks.flatMap((track) => normalizeMusicTrack(track).artists.map((artist) => artist.slug))).size,
+    videos: index.tracks.filter((track) => track.kind === "video").length,
+  };
   const artistOfMoment = index.artists.find((artist) => artist.trackIds.length >= 8) ?? index.artists[0];
   const artistTracks = artistOfMoment
     ? selectMusicShelfTracks(index.tracks.filter((track) => track.artists.some((artist) => artist.slug === artistOfMoment.slug)), 16)
@@ -80,7 +85,7 @@ export default async function MusicPage({ searchParams }: Props) {
               <Link className="pill active" href="/music">موسیقی</Link>
             </div>
           </header>
-          <MusicLandingHero tracks={heroTracks} initialQuery={q} initialKind={kind} />
+          <MusicLandingHero tracks={heroTracks} archiveStats={archiveStats} initialQuery={q} initialKind={kind} />
         </div>
       </section>
 
