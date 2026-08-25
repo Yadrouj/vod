@@ -6339,6 +6339,272 @@ html[dir="rtl"] .mega-menu-shell:focus-within .mega-panel {
   }
 }
 
+/* Netflix-inspired VOD player: the picture stays in view while the controls
+   behave as a short-lived cinema HUD instead of covering the film forever. */
+.watch-player-section {
+  position: relative;
+}
+
+.watch-player-section .player-shell {
+  position: sticky;
+  top: 14px;
+  z-index: 32;
+  margin-bottom: 20px;
+}
+
+.pro-player {
+  isolation: isolate;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.55);
+}
+
+.pro-player:fullscreen {
+  width: 100vw;
+  height: 100svh;
+  min-height: 0;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+}
+
+.player-center {
+  width: 76px;
+  height: 76px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  background: rgba(10, 10, 12, 0.58);
+  box-shadow: 0 12px 38px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease, background 180ms ease;
+}
+
+.pro-player.is-paused .player-center,
+.pro-player.is-controls-visible .player-center {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pro-player.is-controls-hidden .player-center {
+  transform: translate(-50%, -50%) scale(0.9);
+}
+
+.player-center:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.player-top-glass,
+.player-bar {
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.pro-player.is-controls-hidden .player-top-glass {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+}
+
+.pro-player.is-controls-hidden .player-bar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+}
+
+.player-top-glass {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  background: linear-gradient(180deg, rgba(7, 7, 9, 0.78), rgba(7, 7, 9, 0.22));
+  box-shadow: none;
+}
+
+.player-bar {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(11, 11, 13, 0.18), rgba(7, 7, 9, 0.84));
+  box-shadow: none;
+}
+
+.player-actions {
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: nowrap;
+}
+
+.player-actions-start,
+.player-actions-end {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.player-actions-end {
+  flex: 0 0 auto;
+}
+
+.player-btn.player-btn-icon,
+.player-icon-btn {
+  position: relative;
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  place-items: center;
+  flex: 0 0 auto;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.player-btn.player-btn-icon:hover,
+.player-icon-btn:hover,
+.player-icon-btn.is-active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.player-btn.player-btn-primary {
+  background: #fff;
+  color: #080809;
+}
+
+.player-btn.player-btn-primary:hover {
+  background: #f2cf67;
+  color: #080809;
+}
+
+.player-btn-icon small {
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  padding: 1px 2px;
+  border-radius: 3px;
+  background: rgba(5, 5, 6, 0.75);
+  color: currentColor;
+  font-size: 8px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.player-time {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.86);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.player-time i {
+  margin: 0 3px;
+  color: rgba(255, 255, 255, 0.4);
+  font-style: normal;
+}
+
+.player-volume {
+  min-height: 34px;
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+}
+
+.player-volume button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.88);
+  cursor: pointer;
+}
+
+.player-volume button:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.player-volume input {
+  width: 74px;
+}
+
+@media (max-width: 760px) {
+  .watch-player-section .player-shell {
+    top: 0;
+    margin-right: -12px;
+    margin-left: -12px;
+  }
+
+  .watch-player-section .pro-player {
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .player-top-glass {
+    top: 9px;
+    right: 9px;
+    left: 9px;
+    min-height: 0;
+    padding: 7px 9px;
+  }
+
+  .player-top-glass span {
+    display: none;
+  }
+
+  .player-bar {
+    right: 7px;
+    bottom: 7px;
+    left: 7px;
+    padding: 8px;
+  }
+
+  .player-actions {
+    gap: 6px;
+  }
+
+  .player-actions-start,
+  .player-actions-end {
+    gap: 2px;
+  }
+
+  .player-btn.player-btn-icon,
+  .player-icon-btn {
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+  }
+
+  .player-volume input {
+    display: none;
+  }
+
+  .player-volume {
+    gap: 0;
+  }
+
+  .player-frame-preview {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .player-actions-start > .player-btn:nth-child(2),
+  .player-actions-start > .player-btn:nth-child(3),
+  .player-volume {
+    display: none;
+  }
+
+  .player-time {
+    font-size: 10px;
+  }
+}
+
 /* Search-friendly editorial pages: compact, readable and deliberately calmer
    than the discovery rails so the article copy remains the primary content. */
 .seo-hub,

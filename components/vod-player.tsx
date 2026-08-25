@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Captions, Settings } from "lucide-react";
+import { Captions, Cast, Maximize, Minimize, Pause, PictureInPicture2, Play, RotateCcw, RotateCw, Settings, Volume2, VolumeX } from "lucide-react";
 import { BrandLoader } from "@/components/brand-loader";
 import { PlayerSubtitles } from "@/components/player-subtitles";
 import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
@@ -32,6 +32,8 @@ export function VodPlayer({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewRef = useRef<HTMLVideoElement>(null);
+  const playerFrameRef = useRef<HTMLDivElement>(null);
+  const controlsTimerRef = useRef<number | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [speed, setSpeed] = useState("1");
   const [volume, setVolume] = useState("0.85");
@@ -45,9 +47,13 @@ export function VodPlayer({
   const [selectionOpen, setSelectionOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [buffering, setBuffering] = useState(true);
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [muted, setMuted] = useState(false);
   const lastSavedAt = useRef(0);
   const active = links[activeIndex] ?? links[0];
   const t = getDictionary(locale);
+  const controlsShowing = paused || settingsOpen || subtitlesOpen || selectionOpen || controlsVisible;
 
   useEffect(() => {
     let current = true;
@@ -66,6 +72,21 @@ export function VodPlayer({
     });
     return () => { current = false; };
   }, [links]);
+
+  useEffect(() => {
+    const syncFullscreen = () => setFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
+  }, []);
+
+  useEffect(() => {
+    if (controlsTimerRef.current) window.clearTimeout(controlsTimerRef.current);
+    if (paused || settingsOpen || subtitlesOpen || selectionOpen) return;
+    controlsTimerRef.current = window.setTimeout(() => setControlsVisible(false), 2600);
+    return () => {
+      if (controlsTimerRef.current) window.clearTimeout(controlsTimerRef.current);
+    };
+  }, [active?.url, paused, selectionOpen, settingsOpen, subtitlesOpen]);
 
   function readProgress(): Record<string, { title: string; itemId?: string; url: string; time: number; at: number } | number> {
     try {
@@ -93,6 +114,7 @@ export function VodPlayer({
   function togglePlay() {
     const video = videoRef.current;
     if (!video) return;
+    revealControls();
     if (video.paused) {
       setBuffering(true);
       video.play().catch(() => {
@@ -128,6 +150,14 @@ export function VodPlayer({
     if (videoRef.current) videoRef.current.volume = Number(value);
   }
 
+  function toggleMuted() {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setMuted(video.muted);
+    revealControls();
+  }
+
   function changeSource(value: string) {
     setActiveIndex(Number(value));
     setPaused(true);
@@ -136,7 +166,7 @@ export function VodPlayer({
   }
 
   async function toggleFullscreen() {
-    const el = videoRef.current?.parentElement;
+    const el = playerFrameRef.current;
     if (!el) return;
     if (document.fullscreenElement) {
       await document.exitFullscreen();
@@ -176,9 +206,31 @@ export function VodPlayer({
     }
   }
 
+  function revealControls() {
+    setControlsVisible(true);
+    if (controlsTimerRef.current) window.clearTimeout(controlsTimerRef.current);
+    if (!paused && !settingsOpen && !subtitlesOpen && !selectionOpen) {
+      controlsTimerRef.current = window.setTimeout(() => setControlsVisible(false), 2600);
+    }
+  }
+
+  function handlePointerLeave() {
+    if (!paused && !settingsOpen && !subtitlesOpen && !selectionOpen) {
+      if (controlsTimerRef.current) window.clearTimeout(controlsTimerRef.current);
+      controlsTimerRef.current = window.setTimeout(() => setControlsVisible(false), 850);
+    }
+  }
+
   return (
     <div className="player-shell">
-      <div className="pro-player">
+      <div
+        ref={playerFrameRef}
+        className={`pro-player ${paused ? "is-paused" : "is-playing"} ${controlsShowing ? "is-controls-visible" : "is-controls-hidden"}`}
+        onMouseMove={revealControls}
+        onMouseLeave={handlePointerLeave}
+        onFocusCapture={revealControls}
+        onTouchStart={revealControls}
+      >
         <video
           ref={videoRef}
           key={active?.url}
@@ -213,8 +265,10 @@ export function VodPlayer({
           }}
           onEnded={() => { if (active?.url) { const progress = readProgress(); delete progress[active.url]; document.cookie = `sarvnema_progress=${encodeURIComponent(JSON.stringify(progress))}; path=/; max-age=2592000; SameSite=Lax`; } }}
           onPlaying={() => setBuffering(false)}
-          onPlay={() => setPaused(false)}
-          onPause={() => setPaused(true)}
+          onPlay={() => { setPaused(false); setControlsVisible(true); }}
+          onPause={() => { setPaused(true); setControlsVisible(true); }}
+          onVolumeChange={(event) => setMuted(event.currentTarget.muted)}
+          onClick={revealControls}
           onError={() => {
             setBuffering(false);
             setMessage(t.player.sourceError);
@@ -260,30 +314,35 @@ export function VodPlayer({
           </div>
 
           <div className="player-actions">
-            <button type="button" className="player-btn" onClick={togglePlay}>{paused ? t.common.play : t.player.pause}</button>
-            <button type="button" className="player-btn" onClick={() => skip(-10)}>-10</button>
-            <button type="button" className="player-btn" onClick={() => skip(10)}>+10</button>
-            <span className="player-time">{formatTime(time)} / {formatTime(duration)}</span>
-            <label className="player-volume">
-              <span>{t.player.volume}</span>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={volume}
-                onChange={(event) => updateVolume(event.target.value)}
-              />
-            </label>
-            <button type="button" className="player-btn" onClick={castVideo}>{t.player.cast}</button>
-            <button type="button" className="player-btn" onClick={openPictureInPicture}>PiP</button>
-            <button type="button" className="player-btn" onClick={toggleFullscreen}>{t.player.full}</button>
-            <button type="button" className={`player-icon-btn ${subtitlesOpen ? "is-active" : ""}`} onClick={() => { setSubtitlesOpen((value) => !value); setSettingsOpen(false); }} aria-label="Subtitles" title="Subtitles">
-              <Captions size={17} />
-            </button>
-            <button type="button" className={`player-icon-btn ${settingsOpen ? "is-active" : ""}`} onClick={() => { setSettingsOpen((value) => !value); setSubtitlesOpen(false); }} aria-label={t.player.settings} title={t.player.settings}>
-              <Settings size={17} />
-            </button>
+            <div className="player-actions-start">
+              <button type="button" className="player-btn player-btn-primary player-btn-icon" onClick={togglePlay} aria-label={paused ? t.common.play : t.player.pause} title={paused ? t.common.play : t.player.pause}>{paused ? <Play size={18} fill="currentColor" /> : <Pause size={18} fill="currentColor" />}</button>
+              <button type="button" className="player-btn player-btn-icon" onClick={() => skip(-10)} aria-label="Back 10 seconds" title="Back 10 seconds"><RotateCcw size={17} /><small>10</small></button>
+              <button type="button" className="player-btn player-btn-icon" onClick={() => skip(10)} aria-label="Forward 10 seconds" title="Forward 10 seconds"><RotateCw size={17} /><small>10</small></button>
+              <span className="player-time">{formatTime(time)} <i>/</i> {formatTime(duration)}</span>
+              <label className="player-volume" title={t.player.volume}>
+                <button type="button" onClick={toggleMuted} aria-label={muted ? "Unmute" : "Mute"}>{muted || Number(volume) === 0 ? <VolumeX size={17} /> : <Volume2 size={17} />}</button>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={volume}
+                  onChange={(event) => updateVolume(event.target.value)}
+                  aria-label={t.player.volume}
+                />
+              </label>
+            </div>
+            <div className="player-actions-end">
+              <button type="button" className="player-btn player-btn-icon" onClick={castVideo} aria-label={t.player.cast} title={t.player.cast}><Cast size={17} /></button>
+              <button type="button" className="player-btn player-btn-icon" onClick={openPictureInPicture} aria-label="Picture in picture" title="Picture in picture"><PictureInPicture2 size={17} /></button>
+              <button type="button" className={`player-icon-btn ${subtitlesOpen ? "is-active" : ""}`} onClick={() => { setSubtitlesOpen((value) => !value); setSettingsOpen(false); }} aria-label="Subtitles" title="Subtitles">
+                <Captions size={17} />
+              </button>
+              <button type="button" className={`player-icon-btn ${settingsOpen ? "is-active" : ""}`} onClick={() => { setSettingsOpen((value) => !value); setSubtitlesOpen(false); }} aria-label={t.player.settings} title={t.player.settings}>
+                <Settings size={17} />
+              </button>
+              <button type="button" className="player-btn player-btn-icon" onClick={toggleFullscreen} aria-label={fullscreen ? "Exit fullscreen" : t.player.full} title={fullscreen ? "Exit fullscreen" : t.player.full}>{fullscreen ? <Minimize size={17} /> : <Maximize size={17} />}</button>
+            </div>
           </div>
         </div>
 
