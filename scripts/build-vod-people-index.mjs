@@ -1,5 +1,6 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
+import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 
 const IN_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
 const OUT_FILE = process.argv[3] || path.join("public", "data", "vod-people.json");
@@ -33,10 +34,9 @@ function toCard(item) {
 }
 
 async function main() {
-  const archive = JSON.parse(await readFile(IN_FILE, "utf8"));
   const people = new Map();
 
-  for (const item of archive.items) {
+  await streamVodArchiveItems(IN_FILE, async (item) => {
     const credits = Array.isArray(item.credits) ? item.credits : [];
     for (const credit of credits) {
       if (!credit.name_id || !credit.name_text) continue;
@@ -52,7 +52,7 @@ async function main() {
       if (!existing.items.some((card) => card.imdbCode === item.imdbCode)) existing.items.push(toCard(item));
       people.set(credit.name_id, existing);
     }
-  }
+  });
 
   const payload = {
     generatedAt: new Date().toISOString(),
