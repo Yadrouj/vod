@@ -7,14 +7,24 @@ import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 const IN_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
 const ENRICHMENT_FILE = process.argv[3] || path.join(".media-cache", "vod-sync", "old-iranian-wikidata.json");
 const OUT_FILE = process.argv[4] || path.join(".media-cache", "vod-sync", "vod-catalog-old-iranian-enriched.json");
+const MIN_MATCH_SCORE = 100;
 
 async function main() {
   const enrichment = JSON.parse(await readFile(ENRICHMENT_FILE, "utf8"));
-  const byId = new Map((enrichment.items ?? []).filter((item) => item.status === "matched").map((item) => [item.id, item]));
+  const accepted = (enrichment.items ?? []).filter((item) => item.status === "matched" && item.matchScore >= MIN_MATCH_SCORE);
+  const byId = new Map(accepted.map((item) => [item.id, item]));
   const output = `${OUT_FILE}.tmp-${process.pid}`;
   await mkdir(path.dirname(OUT_FILE), { recursive: true });
   const stream = createWriteStream(output, { encoding: "utf8" });
-  const stats = { scanned: 0, enriched: 0, posters: 0, backdrops: 0, casts: 0, castImages: 0 };
+  const stats = {
+    scanned: 0,
+    enriched: 0,
+    skippedLowConfidence: (enrichment.items ?? []).filter((item) => item.status === "matched" && item.matchScore < MIN_MATCH_SCORE).length,
+    posters: 0,
+    backdrops: 0,
+    casts: 0,
+    castImages: 0,
+  };
   const write = async (value) => {
     if (!stream.write(value, "utf8")) await once(stream, "drain");
   };

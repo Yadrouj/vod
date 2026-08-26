@@ -22,6 +22,7 @@ const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
 const USER_AGENT = "SarvNemaCatalogBot/1.0 (classic Iranian cinema metadata; contact@sarvnema.ir)";
 const FILM_QID = "Q11424";
 const MAX_CAST = 16;
+const MIN_MATCH_SCORE = 100;
 
 let requestCounter = 0;
 
@@ -271,7 +272,7 @@ function chooseFilm(item, entities) {
   const winner = candidates.sort((a, b) => b.score - a.score)[0] ?? null;
   // An exact name alone can point to a song, book, or person. Do not enrich a
   // title unless Wikidata also identifies the candidate as a film.
-  return winner && isFilm(winner.entity) && winner.score >= 70 ? winner : null;
+  return winner && isFilm(winner.entity) && winner.score >= MIN_MATCH_SCORE ? winner : null;
 }
 
 function scoreFilm(item, entity) {
