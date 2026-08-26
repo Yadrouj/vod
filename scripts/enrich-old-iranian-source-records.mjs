@@ -7,14 +7,17 @@ const valueOf = (name, fallback) => {
 };
 
 const INPUT_FILE = valueOf("--input", path.join(".media-cache", "vod-sync", "old-iranian-metadata-final-merged.json"));
-const RECORDS_FILE = valueOf("--records", path.join("scripts", "data", "old-iranian-source-verified.json"));
+const RECORDS_FILES = valueOf("--records", path.join("scripts", "data", "old-iranian-source-verified.json"))
+  .split(",")
+  .map((file) => file.trim())
+  .filter(Boolean);
 const OUT_FILE = valueOf("--out", path.join(".media-cache", "vod-sync", "old-iranian-metadata-source-verified.json"));
 const IDS = new Set(valueOf("--ids", "").split(",").map((value) => value.trim()).filter(Boolean));
 
 async function main() {
-  const [baseline, recordFile] = await Promise.all([readJson(INPUT_FILE), readJson(RECORDS_FILE)]);
+  const [baseline, ...recordFiles] = await Promise.all([readJson(INPUT_FILE), ...RECORDS_FILES.map(readJson)]);
   const records = new Map(
-    (recordFile.records ?? [])
+    recordFiles.flatMap((recordFile) => recordFile.records ?? [])
       .filter((record) => record?.id)
       .filter((record) => !IDS.size || IDS.has(record.id))
       .map((record) => [record.id, record]),
@@ -54,7 +57,7 @@ async function main() {
     items,
   };
   await save(OUT_FILE, payload);
-  console.log(JSON.stringify({ outFile: OUT_FILE, applied, matchedTitles: payload.matchedTitles, unmatchedTitles: payload.unmatchedTitles }, null, 2));
+  console.log(JSON.stringify({ outFile: OUT_FILE, recordFiles: RECORDS_FILES, applied, matchedTitles: payload.matchedTitles, unmatchedTitles: payload.unmatchedTitles }, null, 2));
 }
 
 async function readJson(file) {
