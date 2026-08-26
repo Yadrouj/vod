@@ -2093,6 +2093,150 @@ html { scroll-behavior: smooth; }
   align-items: start;
 }
 
+.old-iranian-youtube-collections {
+  position: relative;
+  margin: 0 0 30px;
+  padding: clamp(18px, 3vw, 34px);
+  overflow: hidden;
+  border: 1px solid rgba(211, 175, 92, 0.24);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 94% 0%, rgba(178, 133, 53, 0.2), transparent 34%),
+    linear-gradient(135deg, rgba(31, 23, 13, 0.9), rgba(14, 14, 15, 0.98) 58%);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.22);
+}
+
+.old-iranian-youtube-collections::after {
+  position: absolute;
+  inset: auto -80px -130px auto;
+  width: 260px;
+  height: 260px;
+  border: 1px solid rgba(228, 192, 104, 0.15);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.old-iranian-youtube-collections-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 22px;
+  margin-bottom: 22px;
+}
+
+.old-iranian-youtube-collections-head h2 {
+  margin: 7px 0;
+  color: #fff8e8;
+  font-size: clamp(24px, 3vw, 38px);
+  line-height: 1.05;
+}
+
+.old-iranian-youtube-collections-head p {
+  max-width: 700px;
+  margin: 0;
+  color: rgba(255, 247, 225, 0.68);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.75;
+}
+
+.old-iranian-youtube-collections-head > a {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 15px;
+  border: 1px solid rgba(228, 192, 104, 0.52);
+  border-radius: 5px;
+  color: #f7d86b;
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 13px;
+  font-weight: 900;
+  transition: transform 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.old-iranian-youtube-collections-head > a:hover,
+.old-iranian-youtube-collections-head > a:focus-visible {
+  color: #161009;
+  background: #f7d86b;
+  transform: translateY(-2px);
+}
+
+.old-iranian-youtube-collections-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.old-iranian-youtube-collection {
+  min-height: 145px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 16px;
+  border: 1px solid rgba(255, 240, 202, 0.1);
+  border-radius: 7px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.035);
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.old-iranian-youtube-collection:hover,
+.old-iranian-youtube-collection:focus-visible {
+  border-color: rgba(232, 195, 92, 0.7);
+  background: rgba(187, 140, 49, 0.13);
+  transform: translateY(-3px);
+}
+
+.old-iranian-youtube-collection > span {
+  color: #d8bd70;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
+.old-iranian-youtube-collection strong {
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.old-iranian-youtube-collection small {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.old-iranian-youtube-collection b {
+  color: #f7d86b;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.old-iranian-youtube-collection i {
+  font-style: normal;
+}
+
+@media (max-width: 1120px) {
+  .old-iranian-youtube-collections-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 800px) {
+  .old-iranian-youtube-collections-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .pagination {
   display: flex;
   align-items: center;

@@ -5,6 +5,10 @@ import { PosterCard } from "@/components/poster-card";
 import { SearchSuggest } from "@/components/search-suggest";
 import { formatNumber, getDictionary, interpolate, type Locale } from "@/lib/i18n";
 import { getLocale } from "@/lib/server-locale";
+import {
+  OLD_IRANIAN_YOUTUBE_CHANNEL_URL,
+  OLD_IRANIAN_YOUTUBE_COLLECTIONS,
+} from "@/lib/old-iranian-youtube-collections";
 import { browseVodIndex, loadVodIndex, queryString, SECTION_LABELS } from "@/lib/vod-index";
 
 type Props = {
@@ -97,6 +101,41 @@ export default async function BrowsePage({ searchParams }: Props) {
       </section>
 
       <section className="section wrap">
+        {result.section === "old-iranian-films" && (
+          <section className="old-iranian-youtube-collections" dir="rtl" aria-labelledby="old-iranian-youtube-title">
+            <div className="old-iranian-youtube-collections-head">
+              <div>
+                <span className="label">YOUTUBE COLLECTIONS</span>
+                <h2 id="old-iranian-youtube-title">مجموعه‌های فیلم قدیمی ایرانی</h2>
+                <p>
+                  لینک‌های عمومیِ فهرست‌شده در توضیحات کانال FilmFarsi؛ برای تماشا در YouTube باز می‌شوند و بخشی از
+                  فایل‌های میزبانی‌شده در سرونما نیستند.
+                </p>
+              </div>
+              <a href={OLD_IRANIAN_YOUTUBE_CHANNEL_URL} target="_blank" rel="noreferrer">
+                کانال FilmFarsi <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+
+            <div className="old-iranian-youtube-collections-grid">
+              {OLD_IRANIAN_YOUTUBE_COLLECTIONS.map((collection) => (
+                <a
+                  key={collection.id}
+                  className="old-iranian-youtube-collection"
+                  href={collection.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>{collection.kind === "scenes" ? "گزیده صحنه‌ها" : "فهرست پخش"}</span>
+                  <strong>{collection.title}</strong>
+                  <small>{collection.description}</small>
+                  <b>باز کردن در YouTube <i aria-hidden="true">↗</i></b>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
         <div className="grid browse-grid">
           {result.items.map((item, index) => (
             <PosterCard key={item.imdbCode} item={item} locale={locale} priority={index < 6} />

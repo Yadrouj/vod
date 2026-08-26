@@ -442,6 +442,32 @@
     gap: 10px;
   }
 
+  .old-iranian-youtube-collections {
+    margin-bottom: 20px;
+    padding: 16px;
+  }
+
+  .old-iranian-youtube-collections-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .old-iranian-youtube-collections-head > a {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .old-iranian-youtube-collections-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .old-iranian-youtube-collection {
+    min-height: 112px;
+    padding: 14px;
+  }
+
   .browse-grid .poster-title,
   html[lang="en"] .browse-grid .poster-title {
     font-size: 15px;
