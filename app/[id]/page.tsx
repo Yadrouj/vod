@@ -46,7 +46,7 @@ export default async function DetailPage({ params }: Props) {
   const movieFiles = isSeries ? [] : movieDownloadSources(item.links);
   const heroVideo = detailHeroVideo(item);
   const oldFilmMedia = getOldIranianFilmMedia(item.id) ?? getOldIranianFilmMedia(item.imdbCode);
-  const youtubeSource = !best ? oldFilmMedia?.youtubeVideos[0] ?? null : null;
+  const youtubeSource = !best ? oldFilmMedia?.youtubeVideos[0] ?? item.youtubeVideos?.[0] ?? null : null;
   const heroBackdrop = item.backdropUrl ?? oldFilmMedia?.backdropUrl ?? null;
   const posterUrl = item.posterUrl ?? oldFilmMedia?.posterUrl ?? null;
   const tabsItem = toTitleTabsItem(item);

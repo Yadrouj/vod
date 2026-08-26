@@ -46,7 +46,7 @@ export default async function WatchPage({ params }: Props) {
   const isSeries = normalizeVodType(item.type) === "series";
   const links = playableLinks(item.links);
   const oldFilmMedia = getOldIranianFilmMedia(item.id) ?? getOldIranianFilmMedia(item.imdbCode);
-  const youtubeSource = !links.length ? oldFilmMedia?.youtubeVideos[0] ?? null : null;
+  const youtubeSource = !links.length ? oldFilmMedia?.youtubeVideos[0] ?? item.youtubeVideos?.[0] ?? null : null;
   const partySources = links.map((link, index) => ({
     url: link.url,
     label: playbackSourceLabel(link, index, isSeries),

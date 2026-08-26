@@ -12,6 +12,7 @@ const OUT_FILE = valueOf("--out", path.join(".media-cache", "vod-sync", "old-ira
 const CACHE_FILE = valueOf("--cache", path.join(".media-cache", "vod-sync", "old-iranian-wikidata-cache.json"));
 const REPORT_FILE = valueOf("--report", path.join(".media-cache", "vod-sync", "old-iranian-wikidata-report.json"));
 const LIMIT = Math.max(0, Number(valueOf("--limit", "0")) || 0);
+const IDS = new Set(valueOf("--ids", "").split(",").map((value) => value.trim()).filter(Boolean));
 const CONCURRENCY = Math.max(1, Math.min(4, Number(valueOf("--concurrency", "2")) || 2));
 const DELAY_MS = Math.max(120, Number(valueOf("--delay-ms", "420")) || 420);
 const RETRIES = Math.max(0, Number(valueOf("--retries", "2")) || 2);
@@ -35,6 +36,7 @@ async function main() {
 
   const input = source.items ?? [];
   const selected = (LIMIT ? input.slice(0, LIMIT) : input).filter((item) => {
+    if (IDS.size && !IDS.has(item.id)) return false;
     const cached = cache.entries[item.id];
     return REFRESH || !cached || (RETRY_UNMATCHED && cached.status === "unmatched");
   });
@@ -417,6 +419,9 @@ function canonicalPersian(value) {
     .replace(/[ؤ]/gu, "و")
     .replace(/[ةۀ]/gu, "ه")
     .replace(/[ك]/gu, "ک")
+    .replace(/\u0622\u06cc\u06cc\u0646\u0647/gu, "\u0622\u06cc\u0646\u0647")
+    .replace(/\u0645\u0631\u062f\u06cc\s*\u06a9\u0647\s*\u0631\u062c\s*\u0645\u06cc\s*\u0628\u0631\u062f/gu, "\u0645\u0631\u062f\u06cc \u06a9\u0647 \u0631\u0646\u062c \u0645\u06cc \u0628\u0631\u062f")
+    .replace(/\u062c\u0647\u0646\u0645\s*\u0628\u0647\s*\u0627\u0636\u0627\u0641\u0647\s*\u0645\u0646/gu, "\u062c\u0647\u0646\u0645 + \u0645\u0646")
     // Common spellings and OCR errors in the scanned classic-film index.
     .replace(/طالئی|طالی/gu, "طلایی")
     .replace(/ارسالن/gu, "ارسلان")

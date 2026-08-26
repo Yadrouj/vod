@@ -1,12 +1,6 @@
 import type { VodCard, VodItem } from "./types";
 
-export type YouTubeSource = {
-  videoId: string;
-  title: string;
-  channel: string;
-  sourceUrl: string;
-  thumbnailUrl: string;
-};
+export type YouTubeSource = NonNullable<VodItem["youtubeVideos"]>[number];
 
 export type OldIranianFilmMedia = {
   id: string;

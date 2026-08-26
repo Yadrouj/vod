@@ -78,6 +78,14 @@ export type VodItem = {
     thumbnail_url?: string | null;
     playback_urls?: { url: string; quality?: string | null; mime_type?: string | null }[];
   }[];
+  /** A public YouTube reference verified for legacy source-only titles. */
+  youtubeVideos?: {
+    videoId: string;
+    title: string;
+    channel: string;
+    sourceUrl: string;
+    thumbnailUrl: string;
+  }[];
   credits?: {
     category: string;
     name_id?: string;

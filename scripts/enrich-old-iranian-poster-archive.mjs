@@ -31,6 +31,16 @@ const VERIFIED_ARCHIVE_OVERRIDES = new Map([
   ["old-iranian-1356055", "Q11303686"], // گلگو 13 → گلگو ۱۳
 ]);
 
+for (const [sourceId, archiveId] of [
+  ["old-iranian-1345044", "Q14757373"],
+  ["old-iranian-1351057", "Q14756992"],
+  ["old-iranian-1355055", "Q14756784"],
+  ["old-iranian-1356035", "Q5880241"],
+  ["old-iranian-1356038", "Q14756690"],
+]) {
+  VERIFIED_ARCHIVE_OVERRIDES.set(sourceId, archiveId);
+}
+
 async function main() {
   const [previous, source, db] = await Promise.all([
     readJson(INPUT_FILE),

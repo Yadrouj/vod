@@ -78,7 +78,7 @@ function merge(item, extra) {
   for (const field of scalarFields) {
     if (extra[field] !== undefined && extra[field] !== null && extra[field] !== "") merged[field] = extra[field];
   }
-  const listFields = ["genres", "persianGenres", "countries", "persianCountries", "languages", "persianLanguages", "imdbImages", "imdbVideos", "credits", "companies", "keywords"];
+  const listFields = ["genres", "persianGenres", "countries", "persianCountries", "languages", "persianLanguages", "imdbImages", "imdbVideos", "youtubeVideos", "credits", "companies", "keywords"];
   for (const field of listFields) {
     if (Array.isArray(extra[field]) && extra[field].length) merged[field] = extra[field];
   }
