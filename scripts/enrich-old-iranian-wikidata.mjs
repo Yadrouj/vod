@@ -17,6 +17,7 @@ const DELAY_MS = Math.max(120, Number(valueOf("--delay-ms", "420")) || 420);
 const RETRIES = Math.max(0, Number(valueOf("--retries", "2")) || 2);
 const USE_IMDB_API = !args.has("--no-imdb-api");
 const REFRESH = args.has("--refresh");
+const RETRY_UNMATCHED = args.has("--retry-unmatched");
 const IMDB_API_BASE = process.env.IMDB_DATA_API_BASE || "http://185.203.118.87:8026";
 const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
 const USER_AGENT = "SarvNemaCatalogBot/1.0 (classic Iranian cinema metadata; contact@sarvnema.ir)";
@@ -33,7 +34,10 @@ async function main() {
   cache.people ??= {};
 
   const input = source.items ?? [];
-  const selected = (LIMIT ? input.slice(0, LIMIT) : input).filter((item) => REFRESH || !cache.entries[item.id]);
+  const selected = (LIMIT ? input.slice(0, LIMIT) : input).filter((item) => {
+    const cached = cache.entries[item.id];
+    return REFRESH || !cached || (RETRY_UNMATCHED && cached.status === "unmatched");
+  });
   let completed = 0;
   let matched = 0;
   let imdbEnriched = 0;
@@ -294,8 +298,12 @@ function isFilm(entity) {
 }
 
 async function searchEntities(title) {
-  const payload = await wikidata({ action: "wbsearchentities", search: title, language: "fa", limit: "10" });
-  return payload.search ?? [];
+  const matches = [];
+  for (const query of titleVariants(title)) {
+    const payload = await wikidata({ action: "wbsearchentities", search: query, language: "fa", limit: "10" });
+    matches.push(...(payload.search ?? []));
+  }
+  return Array.from(new Map(matches.map((match) => [match.id, match])).values());
 }
 
 async function getEntities(ids) {
@@ -388,13 +396,36 @@ function commonsImage(fileName, width) {
 }
 
 function normalize(value) {
-  return String(value ?? "")
+  return canonicalPersian(value)
     .toLowerCase()
     .replace(/[آأإ]/gu, "ا")
     .replace(/[ىي]/gu, "ی")
     .replace(/\u200c/gu, " ")
     .replace(/[^\p{L}\p{N}]+/gu, "")
     .trim();
+}
+
+function titleVariants(value) {
+  const original = String(value ?? "").trim();
+  const canonical = canonicalPersian(original).trim();
+  return [...new Set([original, canonical].filter(Boolean))];
+}
+
+function canonicalPersian(value) {
+  return String(value ?? "")
+    .replace(/[ئ]/gu, "ی")
+    .replace(/[ؤ]/gu, "و")
+    .replace(/[ةۀ]/gu, "ه")
+    .replace(/[ك]/gu, "ک")
+    // Common spellings and OCR errors in the scanned classic-film index.
+    .replace(/طالئی|طالی/gu, "طلایی")
+    .replace(/ارسالن/gu, "ارسلان")
+    .replace(/گیالن/gu, "گیلان")
+    .replace(/النه/gu, "لانه")
+    .replace(/کاله/gu, "کلاه")
+    .replace(/ناقال/gu, "نقال")
+    .replace(/تامرگ/gu, "تا مرگ")
+    .replace(/\s+/gu, " ");
 }
 
 function summarize(items) {
