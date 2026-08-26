@@ -20,6 +20,16 @@ const FILM_POSTERS_DB = "https://filmposters.ir/db.json";
 const WIKIDATA_API = "https://www.wikidata.org/w/api.php";
 const MAX_CREDITS = 16;
 const ARCHIVE_MATCH_SCORE = 130;
+// Verified against the FilmPosters Iran record and the source year/title. These
+// have larger OCR differences than the automatic fuzzy threshold, so keeping
+// them explicit prevents a broad, error-prone fallback from being introduced.
+const VERIFIED_ARCHIVE_OVERRIDES = new Map([
+  ["old-iranian-1345011", "Q14757358"], // سه ناقال در ژاپن → سه ناقلا در ژاپن
+  ["old-iranian-1351013", "Q14757012"], // صالح الدین ایوبی → صلاح‌الدین ایوبی
+  ["old-iranian-1351031", "Q6743934"], // سرزمین دالوران → سرزمین دلاوران
+  ["old-iranian-1353016", "Q14756863"], // دختران بال، مردان ناقال → دختران بلا، مردان ناقلا
+  ["old-iranian-1356055", "Q11303686"], // گلگو 13 → گلگو ۱۳
+]);
 
 async function main() {
   const [previous, source, db] = await Promise.all([
@@ -32,19 +42,20 @@ async function main() {
   const candidates = (previous.items ?? [])
     .filter((item) => item.status === "unmatched")
     .map((item) => ({ item, source: sourceById.get(item.id) ?? item }))
-    .map(({ item, source: sourceItem }) => ({ item, sourceItem, film: chooseArchiveFilm(sourceItem, archiveIndex) }))
-    .filter((entry) => entry.film);
+    .map(({ item, source: sourceItem }) => ({ item, sourceItem, archiveMatch: chooseArchiveFilm(sourceItem, archiveIndex) }))
+    .filter((entry) => entry.archiveMatch);
 
   const personIds = new Set();
-  for (const { film } of candidates) {
+  for (const { archiveMatch } of candidates) {
+    const { film } = archiveMatch;
     for (const id of [...(film.directors ?? []), ...(film.cast ?? [])].slice(0, MAX_CREDITS)) personIds.add(id);
   }
   const wikidataPeople = await getWikidataEntities([...personIds]);
   const results = new Map();
   let imdbEnriched = 0;
 
-  await mapPool(candidates, async ({ item, sourceItem, film }) => {
-    const record = await enrichFromPosterArchive(item, sourceItem, film, db.secondary ?? {}, wikidataPeople);
+  await mapPool(candidates, async ({ item, sourceItem, archiveMatch }) => {
+    const record = await enrichFromPosterArchive(item, sourceItem, archiveMatch.film, db.secondary ?? {}, wikidataPeople, archiveMatch.matchScore, archiveMatch.matchType);
     if (record.imdbEnriched) imdbEnriched += 1;
     results.set(item.id, record);
   }, CONCURRENCY);
@@ -76,7 +87,7 @@ async function main() {
   }, null, 2));
 }
 
-async function enrichFromPosterArchive(item, sourceItem, film, secondary, wikidataPeople) {
+async function enrichFromPosterArchive(item, sourceItem, film, secondary, wikidataPeople, matchScore = ARCHIVE_MATCH_SCORE, matchType = "exact") {
   const imdbCode = (film.imdb ?? []).find((value) => /^tt\d+$/u.test(value)) ?? null;
   const poster = (film.posters ?? []).find((entry) => entry?.image) ?? null;
   const posterUrl = poster ? posterArchiveUrl(poster.image, poster.hash ?? "", 960) : null;
@@ -111,7 +122,8 @@ async function enrichFromPosterArchive(item, sourceItem, film, secondary, wikida
     checkedAt: new Date().toISOString(),
     wikidataId: film.id,
     wikidataUrl: `https://www.wikidata.org/wiki/${film.id}`,
-    matchScore: ARCHIVE_MATCH_SCORE,
+    matchScore,
+    posterArchiveMatchType: matchType,
     imdbExternalCode: imdbCode,
     posterArchiveEnriched: true,
   };
@@ -121,8 +133,14 @@ async function enrichFromPosterArchive(item, sourceItem, film, secondary, wikida
 
 function buildArchiveIndex(films) {
   const byTitle = new Map();
+  const entries = [];
   for (const film of Object.values(films)) {
     const names = [film.labels?.fa, ...(film.aliases?.fa ?? [])].filter(Boolean);
+    entries.push({
+      film,
+      names: names.map(normalize).filter(Boolean),
+      year: filmYear(film),
+    });
     for (const name of names) {
       const key = normalize(name);
       if (!key) continue;
@@ -131,17 +149,62 @@ function buildArchiveIndex(films) {
       byTitle.set(key, values);
     }
   }
-  return byTitle;
+  return { byTitle, entries };
 }
 
 function chooseArchiveFilm(sourceItem, archiveIndex) {
-  const choices = archiveIndex.get(normalize(sourceItem.title)) ?? [];
+  const overrideId = VERIFIED_ARCHIVE_OVERRIDES.get(sourceItem.id);
+  if (overrideId) {
+    const entry = archiveIndex.entries.find((candidate) => candidate.film.id === overrideId);
+    if (entry) return { film: entry.film, matchScore: 108, matchType: "verified-archive-override" };
+  }
+  const target = normalize(sourceItem.title);
+  const choices = archiveIndex.byTitle.get(target) ?? [];
   const unique = [...new Map(choices.map((film) => [film.id, film])).values()];
-  if (unique.length !== 1) return null;
-  const film = unique[0];
-  const year = filmYear(film);
-  if (sourceItem.year && year && Math.abs(sourceItem.year - year) > 4) return null;
-  return film;
+  if (unique.length === 1) {
+    const film = unique[0];
+    const year = filmYear(film);
+    if (!sourceItem.year || !year || Math.abs(sourceItem.year - year) <= 4) {
+      return { film, matchScore: ARCHIVE_MATCH_SCORE, matchType: "exact" };
+    }
+  }
+
+  // The scanned index contains one- and two-character OCR errors. A fuzzy
+  // match is safe only when its title is distinctive, the release year nearly
+  // agrees, and there is no equally plausible candidate.
+  if (target.length < 6 || !sourceItem.year) return null;
+  const maximumDistance = target.length >= 16 ? Math.min(4, Math.floor(target.length * 0.18)) : 2;
+  const candidates = archiveIndex.entries
+    .filter((entry) => entry.year && Math.abs(sourceItem.year - entry.year) <= 1)
+    .map((entry) => ({
+      ...entry,
+      distance: Math.min(...entry.names.map((name) => levenshtein(target, name))),
+      yearDifference: Math.abs(sourceItem.year - entry.year),
+    }))
+    .filter((entry) => entry.distance <= maximumDistance)
+    .sort((left, right) => left.distance - right.distance || left.yearDifference - right.yearDifference);
+  const winner = candidates[0];
+  const runnerUp = candidates[1];
+  if (!winner || (runnerUp && runnerUp.distance === winner.distance && runnerUp.yearDifference === winner.yearDifference)) return null;
+  return { film: winner.film, matchScore: 112, matchType: "fuzzy-year-verified" };
+}
+
+function levenshtein(left, right) {
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    let diagonal = previous[0];
+    previous[0] = leftIndex;
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      const saved = previous[rightIndex];
+      previous[rightIndex] = Math.min(
+        previous[rightIndex] + 1,
+        previous[rightIndex - 1] + 1,
+        diagonal + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1),
+      );
+      diagonal = saved;
+    }
+  }
+  return previous[right.length];
 }
 
 function creditsFor(film, secondary, wikidataPeople) {
@@ -297,6 +360,7 @@ function normalize(value) {
     .replace(/کاله/gu, "کلاه")
     .replace(/ناقال/gu, "نقال")
     .replace(/تامرگ/gu, "تا مرگ")
+    .replace(/عالء/gu, "علاء")
     .toLowerCase()
     .replace(/\u200c/gu, " ")
     .replace(/[^\p{L}\p{N}]+/gu, "")
