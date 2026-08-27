@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -5,6 +6,7 @@ import { PosterCard } from "@/components/poster-card";
 import { SearchSuggest } from "@/components/search-suggest";
 import { formatNumber, getDictionary, interpolate, type Locale } from "@/lib/i18n";
 import { getLocale } from "@/lib/server-locale";
+import { titleMetadata } from "@/lib/seo";
 import {
   OLD_IRANIAN_YOUTUBE_CHANNEL_URL,
   OLD_IRANIAN_YOUTUBE_COLLECTIONS,
@@ -16,6 +18,13 @@ type Props = {
 };
 
 export const revalidate = 300;
+
+export const metadata: Metadata = titleMetadata({
+  title: "فهرست فیلم و سریال؛ جستجو بر اساس ژانر، سال و امتیاز IMDb",
+  description: "جستجو و فیلتر فیلم و سریال بر اساس ژانر، سال ساخت، کشور، زبان، کیفیت و امتیاز IMDb در آرشیو سرونما.",
+  pathname: "/browse",
+  keywords: ["فهرست فیلم", "فهرست سریال", "جستجوی فیلم", "جستجوی سریال", "دانلود فیلم", "دانلود سریال", "فیلم جدید", "سریال جدید", "امتیاز IMDb"],
+});
 
 export default async function BrowsePage({ searchParams }: Props) {
   const locale = await getLocale();

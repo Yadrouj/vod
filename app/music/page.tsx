@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
+import { LandingSeoContent } from "@/components/landing-seo-content";
 import { MusicArtistCard } from "@/components/music-artist-card";
 import { MusicCard } from "@/components/music-card";
 import { MusicHorizontalRail } from "@/components/music-horizontal-rail";
@@ -8,6 +9,8 @@ import { MusicLandingHero, type MusicArchiveStats, type MusicHeroTrack } from "@
 import { MusicPlaylistLeaderboard } from "@/components/music-playlist-leaderboard";
 import { PersonalListenLauncher } from "@/components/personal-listen-launcher";
 import { PublicPartyRooms } from "@/components/public-party-rooms";
+import { StructuredData } from "@/components/structured-data";
+import { MUSIC_LANDING_SEO, landingJsonLd } from "@/lib/landing-seo";
 import { loadMusicIndex, normalizeMusicTrack, searchMusic, selectMusicShelfTracks } from "@/lib/music";
 import { getLocale } from "@/lib/server-locale";
 import { titleMetadata } from "@/lib/seo";
@@ -20,10 +23,10 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 export const revalidate = 300;
 
 export const metadata: Metadata = titleMetadata({
-  title: "موسیقی سرونما؛ دانلود آهنگ و پخش آنلاین",
-  description: "جستجو و پخش آنلاین آهنگ، موزیک ویدیو، موسیقی قدیمی، ریمیکس و آثار خوانندگان ایرانی با پلی‌لیست و شنیدن همزمان.",
+  title: MUSIC_LANDING_SEO.metaTitle,
+  description: MUSIC_LANDING_SEO.description,
   pathname: "/music",
-  keywords: ["دانلود آهنگ", "پخش آنلاین آهنگ", "موزیک ویدیو", "موسیقی قدیمی ایرانی", "ریمیکس", "پلی‌لیست موسیقی", "شنیدن همزمان موسیقی"],
+  keywords: MUSIC_LANDING_SEO.keywords,
 });
 
 export default async function MusicPage({ searchParams }: Props) {
@@ -75,6 +78,7 @@ export default async function MusicPage({ searchParams }: Props) {
 
   return (
     <main className="shell music-page music-spotify-page" dir="rtl">
+      <StructuredData data={landingJsonLd(MUSIC_LANDING_SEO, "/music")} />
       <section className="music-landing-shell">
         <div className="wrap">
           <header className="topbar music-landing-topbar">
@@ -132,6 +136,7 @@ export default async function MusicPage({ searchParams }: Props) {
             <MusicArtistCard artist={artist} key={artist.slug} />
           ))}
         </MusicHorizontalRail>
+        <LandingSeoContent content={MUSIC_LANDING_SEO} />
       </section>
     </main>
   );

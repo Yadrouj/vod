@@ -27,13 +27,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const item = await findVodItem(id);
   if (!item) return { title: "Watch page not found" };
-  return titleMetadata({
+  return {
+    ...titleMetadata({
     title: `Watch ${item.title} online | SarvNema`,
     description: `Watch ${item.title} online with available quality, subtitles and synchronized watch-together options.`,
     pathname: `/watch/${item.imdbCode}`,
     image: item.backdropUrl || item.posterUrl,
     keywords: ["تماشای آنلاین", `Watch ${item.title}`, "watch together", "online player", "subtitle"],
-  });
+    }),
+    robots: { index: false, follow: false },
+  };
 }
 
 export default async function WatchPage({ params }: Props) {

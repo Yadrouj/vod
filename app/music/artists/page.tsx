@@ -8,7 +8,7 @@ import { titleMetadata } from "@/lib/seo";
 export const revalidate = 300;
 
 export const metadata: Metadata = titleMetadata({
-  title: "فهرست خوانندگان ایرانی و هنرمندان موسیقی | سرونما",
+  title: "فهرست خوانندگان ایرانی و هنرمندان موسیقی",
   description: "فهرست خوانندگان ایرانی، صفحه هنرمندان، آهنگ‌های جدید، آلبوم‌ها، موزیک ویدیو و پلی‌لیست‌های مرتبط در سرونما.",
   pathname: "/music/artists",
   keywords: ["خوانندگان ایرانی", "لیست خوانندگان", "آهنگ خوانندگان", "پروفایل هنرمندان", "آهنگ جدید ایرانی", "موزیک ویدیو"],

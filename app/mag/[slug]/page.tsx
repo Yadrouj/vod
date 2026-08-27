@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const definition = getEditorial(slug);
   if (!definition) return { title: "Guide not found" };
   return titleMetadata({
-    title: `${definition.title} | سرونما`,
+    title: definition.title,
     description: definition.description,
     pathname: `/mag/${definition.slug}`,
     keywords: definition.keywords,

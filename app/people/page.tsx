@@ -1,10 +1,19 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { PersonCard } from "@/components/person-card";
 import { formatNumber, getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/server-locale";
+import { titleMetadata } from "@/lib/seo";
 import { loadTopPeople } from "@/lib/top-people";
+
+export const metadata: Metadata = titleMetadata({
+  title: "بازیگران و عوامل محبوب فیلم و سریال",
+  description: "فهرست بازیگران، کارگردان‌ها و عوامل محبوب از آرشیو فیلم و سریال سرونما؛ همراه با صفحه و آثار مرتبط هر فرد.",
+  pathname: "/people",
+  keywords: ["بازیگران فیلم", "بازیگران سریال", "کارگردان فیلم", "عوامل فیلم و سریال", "بازیگران محبوب"],
+});
 
 export default async function PeoplePage() {
   const locale = await getLocale();

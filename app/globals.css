@@ -6483,6 +6483,130 @@ html[dir="rtl"] .mega-menu-shell:focus-within .mega-panel {
   }
 }
 
+/* Search-friendly landing copy: concise, visible, and keyboard accessible. */
+.landing-seo-content {
+  display: grid;
+  grid-template-columns: minmax(0, 0.88fr) minmax(320px, 1.12fr);
+  gap: 24px;
+  margin: 8px 0 0;
+  padding: clamp(22px, 3vw, 42px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 90% 0%, rgba(149, 255, 187, 0.1), transparent 38%),
+    linear-gradient(135deg, rgba(20, 20, 23, 0.97), rgba(8, 8, 10, 0.98));
+  color: #f8f8f8;
+}
+
+.landing-seo-intro > p {
+  margin: 0 0 8px;
+  color: #9cf1bb;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.landing-seo-intro h2 {
+  margin: 0;
+  font-size: clamp(25px, 3vw, 38px);
+  line-height: 1.12;
+}
+
+.landing-seo-intro > div {
+  max-width: 640px;
+  margin-top: 14px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 15px;
+  line-height: 1.95;
+}
+
+.landing-seo-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.landing-seo-links a {
+  padding: 9px 12px;
+  border: 1px solid rgba(156, 241, 187, 0.26);
+  border-radius: 999px;
+  color: #c9ffdc;
+  background: rgba(143, 240, 180, 0.06);
+  font-size: 12px;
+  font-weight: 800;
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.landing-seo-links a:hover,
+.landing-seo-links a:focus-visible {
+  background: rgba(143, 240, 180, 0.16);
+  transform: translateY(-1px);
+}
+
+.landing-seo-faq {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+}
+
+.landing-seo-faq details {
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.landing-seo-faq summary {
+  position: relative;
+  padding: 16px 42px 16px 18px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1.5;
+  cursor: pointer;
+  list-style: none;
+}
+
+.landing-seo-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.landing-seo-faq summary::after {
+  position: absolute;
+  top: 50%;
+  right: 17px;
+  color: #9cf1bb;
+  content: "+";
+  font-size: 22px;
+  font-weight: 400;
+  transform: translateY(-52%);
+}
+
+.landing-seo-faq details[open] summary::after {
+  content: "−";
+}
+
+.landing-seo-faq p {
+  margin: 0;
+  padding: 0 18px 17px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+@media (max-width: 760px) {
+  .landing-seo-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  .landing-seo-intro > div {
+    font-size: 14px;
+  }
+}
+
 /* Netflix-inspired VOD player: the picture stays in view while the controls
    behave as a short-lived cinema HUD instead of covering the film forever. */
 .watch-player-section {

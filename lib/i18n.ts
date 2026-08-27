@@ -1,5 +1,5 @@
 export const LOCALE_COOKIE = "vod_locale";
-export const DEFAULT_LOCALE = "en";
+export const DEFAULT_LOCALE = "fa";
 export const SUPPORTED_LOCALES = ["en", "fa"] as const;
 
 export type Locale = (typeof SUPPORTED_LOCALES)[number];

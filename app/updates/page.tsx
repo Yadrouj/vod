@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -5,8 +6,16 @@ import { ReleaseUpdateCard } from "@/components/release-updates-rail";
 import { getDictionary } from "@/lib/i18n";
 import { loadReleaseUpdates } from "@/lib/release-updates";
 import { getLocale } from "@/lib/server-locale";
+import { titleMetadata } from "@/lib/seo";
 
 export const revalidate = 300;
+
+export const metadata: Metadata = titleMetadata({
+  title: "فیلم، سریال و قسمت‌های جدید",
+  description: "آخرین فیلم‌ها، سریال‌ها و قسمت‌های جدید با وضعیت به‌روزرسانی آرشیو و لینک‌های منبع در سرونما.",
+  pathname: "/updates",
+  keywords: ["فیلم جدید", "سریال جدید", "قسمت جدید سریال", "اخبار فیلم", "اخبار سریال", "انتشار جدید"],
+});
 
 export default async function UpdatesPage() {
   const [locale, updates] = await Promise.all([getLocale(), loadReleaseUpdates()]);

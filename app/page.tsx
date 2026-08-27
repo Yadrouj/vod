@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AiSearchPanel } from "@/components/ai-search-panel";
 import { FilmLandingHero } from "@/components/film-landing-hero";
 import { FocusRail } from "@/components/focus-rail";
 import { GradientMenu, type MegaMenuItem } from "@/components/gradient-menu";
+import { LandingSeoContent } from "@/components/landing-seo-content";
 import { NewsRail } from "@/components/news-rail";
 import { MusicRail } from "@/components/music-rail";
 import { DownloadHistory } from "@/components/download-history";
@@ -10,6 +12,7 @@ import { ContinueWatching } from "@/components/continue-watching";
 import { PeopleRail } from "@/components/people-rail";
 import { PosterRail } from "@/components/poster-rail";
 import { ReleaseUpdatesRail } from "@/components/release-updates-rail";
+import { StructuredData } from "@/components/structured-data";
 import { WideRail as WideRailComponent } from "@/components/wide-rail";
 import { PublicPartyRooms } from "@/components/public-party-rooms";
 import { aiSearch } from "@/lib/ai-search";
@@ -19,6 +22,8 @@ import { loadReleaseUpdates, type ReleaseUpdate } from "@/lib/release-updates";
 import { getLocale } from "@/lib/server-locale";
 import { loadTopPeople } from "@/lib/top-people";
 import { loadMusicIndex } from "@/lib/music";
+import { FILM_LANDING_SEO, landingJsonLd } from "@/lib/landing-seo";
+import { titleMetadata } from "@/lib/seo";
 import { loadVodHomeIndex } from "@/lib/vod-index";
 import type { VodCard, VodHomeSection } from "@/lib/types";
 
@@ -27,6 +32,13 @@ type HomeRailSection = VodHomeSection & {
 };
 
 export const revalidate = 300;
+
+export const metadata: Metadata = titleMetadata({
+  title: FILM_LANDING_SEO.metaTitle,
+  description: FILM_LANDING_SEO.description,
+  pathname: "/",
+  keywords: FILM_LANDING_SEO.keywords,
+});
 
 export default async function HomePage() {
   const locale = await getLocale();
@@ -54,6 +66,7 @@ export default async function HomePage() {
 
   return (
     <main className="shell film-spotify-page">
+      <StructuredData data={landingJsonLd(FILM_LANDING_SEO, "/")} />
       <section className="film-landing-shell">
         <GradientMenu
           totalTitles={index.totalTitles}
@@ -82,6 +95,7 @@ export default async function HomePage() {
         ))}
         <PeopleRail people={topPeople.people} locale={locale} />
         <ReleaseUpdatesRail items={updates.items} locale={locale} />
+        <LandingSeoContent content={FILM_LANDING_SEO} />
         <NewsRail items={news.items} locale={locale} />
       </section>
     </main>

@@ -101,7 +101,7 @@ export function vodMetadata(item: VodItem): Metadata {
     P.watchTogether,
     "watch together فارسی",
   ]);
-  return titleMetadata({ title: `${displayTitle}; ${hasFiles ? P.download : P.info} ${typeLabel} | ${BRAND_NAME}`, description, pathname: `/${item.imdbCode}`, image: item.posterUrl || item.backdropUrl, keywords });
+  return titleMetadata({ title: `${displayTitle}; ${hasFiles ? P.download : P.info} ${typeLabel}`, description, pathname: `/${item.imdbCode}`, image: item.posterUrl || item.backdropUrl, keywords });
 }
 
 export function musicMetadata(track: MusicTrack): Metadata {
@@ -119,7 +119,7 @@ export function musicMetadata(track: MusicTrack): Metadata {
     "listen together فارسی",
     fa("0634-0646-06cc-062f-0646-0020-0647-0645-0632-0645-0627-0646-0020-0622-0647-0646-06af-0020-0628-0627-0020-062f-0648-0633-062a-0627-0646"),
   ]);
-  return titleMetadata({ title: `${title}; ${kindLabel} و پخش آنلاین | ${BRAND_NAME}`, description, pathname: `/music/${track.id}`, image: track.coverUrl, keywords });
+  return titleMetadata({ title: `${title}; ${kindLabel} و پخش آنلاین`, description, pathname: `/music/${track.id}`, image: track.coverUrl, keywords });
 }
 
 export function artistMetadata(artist: MusicArtist, trackCount: number): Metadata {
@@ -134,7 +134,7 @@ export function artistMetadata(artist: MusicArtist, trackCount: number): Metadat
     `${P.bestSongs} ${name}`,
     "شنیدن همزمان موسیقی",
   ]);
-  return titleMetadata({ title: `${P.songs} ${name}; ${P.downloadSong} و پخش آنلاین | ${BRAND_NAME}`, description, pathname: `/music/artists/${encodeURIComponent(artist.slug)}`, image: artist.profileImageUrl || artist.coverUrl, keywords });
+  return titleMetadata({ title: `${P.songs} ${name}; ${P.downloadSong} و پخش آنلاین`, description, pathname: `/music/artists/${encodeURIComponent(artist.slug)}`, image: artist.profileImageUrl || artist.coverUrl, keywords });
 }
 
 export function breadcrumbJsonLd(items: { name: string; pathname: string }[]) {
