@@ -1,10 +1,14 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import type { MusicArtist, MusicIndex, MusicTrack } from "@/lib/music-types";
+import type { MusicArtist, MusicIndex, MusicLandingIndex, MusicTrack } from "@/lib/music-types";
 
 const DATA_FILE = path.join(process.cwd(), "public", "data", "music-index.json");
+const LANDING_DATA_FILE = path.join(process.cwd(), "public", "data", "music-landing.json");
+const HOME_DATA_FILE = path.join(process.cwd(), "public", "data", "music-home.json");
 const CHECK_INTERVAL = 30_000;
 const cache: { checkedAt?: number; mtimeMs?: number; value?: Promise<MusicIndex>; refreshing?: Promise<MusicIndex> } = {};
+const landingCache: FileCache<MusicLandingIndex> = {};
+const homeCache: FileCache<MusicLandingIndex> = {};
 
 const emptyIndex: MusicIndex = {
   version: 1,
@@ -44,6 +48,16 @@ export async function loadMusicIndex(): Promise<MusicIndex> {
 export function findMusicTrack(index: MusicIndex, id: string): MusicTrack | null {
   const track = index.tracks.find((item) => item.id === id);
   return track ? normalizeMusicTrack(track) : null;
+}
+
+/** Lightweight payload used by /music before a visitor starts a full search. */
+export async function loadMusicLandingIndex(): Promise<MusicLandingIndex> {
+  return loadCompactMusicIndex(LANDING_DATA_FILE, landingCache);
+}
+
+/** Minimal selection used on the film landing's music rail. */
+export async function loadMusicHomeIndex(): Promise<MusicLandingIndex> {
+  return loadCompactMusicIndex(HOME_DATA_FILE, homeCache);
 }
 
 export function findMusicArtist(index: MusicIndex, slug: string): MusicArtist | null {
@@ -242,6 +256,10 @@ function artistGroupPriority(bucket: MusicTrack[]) {
   return /^(?:various artists|unknown(?: artist)?|هنرمند نامشخص|srv[a-z]*|\d+|full\b|best\s+of\b|remix\b|mix\b)/iu.test(name.trim()) ? 1 : 0;
 }
 
+export function artistTrackCount(artist: Pick<MusicArtist, "trackIds" | "trackCount">) {
+  return artist.trackCount ?? artist.trackIds.length;
+}
+
 function musicSlug(value: string) {
   return String(value ?? "")
     .normalize("NFKD")
@@ -262,4 +280,39 @@ function normalizeSearchValue(value: string) {
     .replace(/\u0643/g, "\u06a9")
     .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim();
+}
+
+type FileCache<T> = {
+  checkedAt?: number;
+  mtimeMs?: number;
+  value?: Promise<T>;
+  refreshing?: Promise<T>;
+};
+
+async function loadCompactMusicIndex(file: string, compactCache: FileCache<MusicLandingIndex>): Promise<MusicLandingIndex> {
+  const now = Date.now();
+  if (compactCache.value && compactCache.checkedAt && now - compactCache.checkedAt < CHECK_INTERVAL) return compactCache.value;
+  if (compactCache.refreshing) return compactCache.value ?? compactCache.refreshing;
+  compactCache.refreshing = (async () => {
+    try {
+      const info = await stat(file);
+      if (!compactCache.value || compactCache.mtimeMs !== info.mtimeMs) {
+        compactCache.mtimeMs = info.mtimeMs;
+        compactCache.value = readFile(file, "utf8").then((data) => JSON.parse(data) as MusicLandingIndex);
+      }
+      return await compactCache.value;
+    } catch {
+      // A catalog refresh can briefly precede the compact index write. The
+      // correct fallback keeps the landing available instead of failing.
+      return {
+        ...emptyIndex,
+        archiveStats: { tracks: 0, artists: 0, videos: 0 },
+        scope: "landing",
+      };
+    } finally {
+      compactCache.checkedAt = Date.now();
+      compactCache.refreshing = undefined;
+    }
+  })();
+  return compactCache.refreshing;
 }

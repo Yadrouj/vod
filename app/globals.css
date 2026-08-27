@@ -11528,10 +11528,25 @@ img.news-card-backdrop {
 
 .home-stack > .section,
 .home-stack > .focus-rail,
-.home-stack > .ai-search-panel {
+.home-stack > .ai-search-panel,
+.home-stack > .music-rail-home,
+.home-stack > .people-rail,
+.home-stack > .release-updates-rail,
+.home-stack > .news-rail {
   content-visibility: auto;
   contain: layout paint style;
   contain-intrinsic-size: 360px;
+}
+
+/* Keep the first music viewport responsive while the shelf cards below it
+   stay out of layout/paint work until the visitor reaches them. */
+.music-spotify-page .music-shelf,
+.music-spotify-page .music-artist-heading,
+.music-spotify-page .music-artist-card-list,
+.music-spotify-page .landing-seo-content {
+  content-visibility: auto;
+  contain: layout paint style;
+  contain-intrinsic-size: 420px;
 }
 
 .home-stack .section-head {

@@ -21,7 +21,7 @@ import { loadVodNews } from "@/lib/news";
 import { loadReleaseUpdates, type ReleaseUpdate } from "@/lib/release-updates";
 import { getLocale } from "@/lib/server-locale";
 import { loadTopPeople } from "@/lib/top-people";
-import { loadMusicIndex } from "@/lib/music";
+import { loadMusicHomeIndex } from "@/lib/music";
 import { FILM_LANDING_SEO, landingJsonLd } from "@/lib/landing-seo";
 import { titleMetadata } from "@/lib/seo";
 import { loadVodHomeIndex } from "@/lib/vod-index";
@@ -108,7 +108,7 @@ async function buildHomePageData(locale: Locale) {
     loadVodNews(),
     loadTopPeople(),
     loadReleaseUpdates(),
-    loadMusicIndex(),
+    loadMusicHomeIndex(),
   ]);
   const news = { ...rawNews, items: prioritizeNews(rawNews.items) };
   const updates = { ...rawUpdates, items: prioritizeReleaseUpdates(rawUpdates.items) };
@@ -269,16 +269,6 @@ function uniqueCards(items: VodCard[]) {
   return items.filter((item) => {
     if (seen.has(item.imdbCode)) return false;
     seen.add(item.imdbCode);
-    return true;
-  });
-}
-
-function uniqueBackdropCards(items: VodCard[]) {
-  const seen = new Set<string>();
-  return uniqueCards(items).filter((item) => {
-    const image = item.backdropUrl ?? item.posterUrl;
-    if (!image || seen.has(image)) return false;
-    seen.add(image);
     return true;
   });
 }

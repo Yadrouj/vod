@@ -23,7 +23,7 @@ export function MusicArtistCard({ artist, priority = false }: { artist: MusicArt
             referrerPolicy="no-referrer"
           />
         )}
-        <em>{artist.trackIds.length.toLocaleString("fa-IR")} اثر</em>
+        <em>{(artist.trackCount ?? artist.trackIds.length).toLocaleString("fa-IR")} اثر</em>
         <i aria-hidden="true"><ArrowUpLeft /></i>
       </div>
       <div className="music-artist-card-copy">

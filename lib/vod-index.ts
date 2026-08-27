@@ -41,6 +41,7 @@ const DATA_DIR = path.resolve(process.env.VOD_DATA_DIR || path.join(process.cwd(
 const FILE_CHECK_INTERVAL_MS = Math.max(5_000, Number(process.env.VOD_DATA_CHECK_INTERVAL_MS || 30_000));
 const indexCache: FileCache<VodCatalogIndex> = {};
 const homeIndexCache: FileCache<VodCatalogIndex> = {};
+const oldIranianIndexCache: FileCache<VodCatalogIndex> = {};
 
 export async function loadVodIndex(): Promise<VodCatalogIndex> {
   const index = await loadFreshJson(path.join(DATA_DIR, "vod-index.json"), indexCache);
@@ -49,6 +50,13 @@ export async function loadVodIndex(): Promise<VodCatalogIndex> {
 
 export async function loadVodHomeIndex(): Promise<VodCatalogIndex> {
   return loadFreshJson(path.join(DATA_DIR, "vod-home.json"), homeIndexCache)
+    .then(enrichLegacyCards)
+    .catch(() => loadVodIndex());
+}
+
+/** Avoid parsing the complete 21k-title catalog for the 901-title classic collection. */
+export async function loadOldIranianVodIndex(): Promise<VodCatalogIndex> {
+  return loadFreshJson(path.join(DATA_DIR, "vod-old-iranian.json"), oldIranianIndexCache)
     .then(enrichLegacyCards)
     .catch(() => loadVodIndex());
 }

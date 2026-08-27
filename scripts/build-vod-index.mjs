@@ -1,10 +1,12 @@
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { streamVodArchiveItems } from "./vod-json-stream.mjs";
+import { buildOldIranianVodIndex } from "./build-vod-old-iranian-index.mjs";
 
 const IN_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
 const OUT_FILE = process.argv[3] || path.join("public", "data", "vod-index.json");
 const HOME_OUT_FILE = process.argv[4] || path.join("public", "data", "vod-home.json");
+const OLD_IRANIAN_OUT_FILE = process.argv[5] || path.join("public", "data", "vod-old-iranian.json");
 const SECTION_LIMIT = Number(process.env.VOD_INDEX_SECTION_LIMIT || 15);
 
 const SECTIONS = [
@@ -189,10 +191,12 @@ async function main() {
     sections: index.sections,
     items: homeItems,
   };
+  const oldIranianIndex = buildOldIranianVodIndex(index);
 
   await Promise.all([
     writeFile(OUT_FILE, JSON.stringify(index)),
     writeFile(HOME_OUT_FILE, JSON.stringify(homeIndex)),
+    writeFile(OLD_IRANIAN_OUT_FILE, JSON.stringify(oldIranianIndex)),
   ]);
   console.log(
     JSON.stringify(
@@ -203,6 +207,7 @@ async function main() {
         totalLinks: index.totalLinks,
         indexBytes: Buffer.byteLength(JSON.stringify(index)),
         homeBytes: Buffer.byteLength(JSON.stringify(homeIndex)),
+        oldIranianBytes: Buffer.byteLength(JSON.stringify(oldIranianIndex)),
       },
       null,
       2

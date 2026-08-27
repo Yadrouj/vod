@@ -11,7 +11,7 @@ import { PersonalListenLauncher } from "@/components/personal-listen-launcher";
 import { PublicPartyRooms } from "@/components/public-party-rooms";
 import { StructuredData } from "@/components/structured-data";
 import { MUSIC_LANDING_SEO, landingJsonLd } from "@/lib/landing-seo";
-import { loadMusicIndex, normalizeMusicTrack, searchMusic, selectMusicShelfTracks } from "@/lib/music";
+import { artistTrackCount, loadMusicIndex, loadMusicLandingIndex, normalizeMusicTrack, searchMusic, selectMusicShelfTracks } from "@/lib/music";
 import { getLocale } from "@/lib/server-locale";
 import { titleMetadata } from "@/lib/seo";
 
@@ -30,25 +30,30 @@ export const metadata: Metadata = titleMetadata({
 });
 
 export default async function MusicPage({ searchParams }: Props) {
-  const [locale, index, params] = await Promise.all([getLocale(), loadMusicIndex(), searchParams]);
+  const params = await searchParams;
   const category = asText(params.category);
   const q = asText(params.q);
   const kind = asText(params.kind) || "all";
   const filterLabel = q || category || kind;
-  const hasFilter = Boolean(q || category);
-  const allMatches = searchMusic(index, q, kind, category);
+  const hasFilter = Boolean(q || category || kind !== "all");
+  const [locale, index] = await Promise.all([
+    getLocale(),
+    hasFilter ? loadMusicIndex() : loadMusicLandingIndex(),
+  ]);
+  const allMatches = hasFilter ? searchMusic(index, q, kind, category) : [];
   const tracks = allMatches.slice(0, hasFilter ? 80 : 24);
   const recentTracks = selectMusicShelfTracks(index.tracks.filter((track) => track.kind === "track"), 16);
   const recentVideos = selectMusicShelfTracks(index.tracks.filter((track) => track.kind === "video"), 16);
   const classics = selectMusicShelfTracks(index.tracks.filter((track) => track.category === "موسیقی قدیمی فارسی"), 16);
   const foreign = selectMusicShelfTracks(index.tracks.filter((track) => track.category === "موسیقی خارجی"), 16);
   const remixes = selectMusicShelfTracks(index.tracks.filter((track) => track.category === REMIX_CATEGORY), 16);
-  const archiveStats: MusicArchiveStats = {
+  const compactArchiveStats = "archiveStats" in index && isMusicArchiveStats(index.archiveStats) ? index.archiveStats : null;
+  const archiveStats: MusicArchiveStats = compactArchiveStats ?? {
     tracks: index.tracks.filter((track) => track.kind === "track").length,
     artists: new Set(index.tracks.flatMap((track) => normalizeMusicTrack(track).artists.map((artist) => artist.slug))).size,
     videos: index.tracks.filter((track) => track.kind === "video").length,
   };
-  const artistOfMoment = index.artists.find((artist) => artist.trackIds.length >= 8) ?? index.artists[0];
+  const artistOfMoment = index.artists.find((artist) => artistTrackCount(artist) >= 8) ?? index.artists[0];
   const artistTracks = artistOfMoment
     ? selectMusicShelfTracks(index.tracks.filter((track) => track.artists.some((artist) => artist.slug === artistOfMoment.slug)), 16)
     : [];
@@ -159,13 +164,13 @@ function asText(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
-function pickFeaturedArtists<T extends { slug: string; trackIds: string[]; profileImageUrl?: string | null; coverUrl: string | null }>(artists: T[], limit: number) {
+function pickFeaturedArtists<T extends { slug: string; trackIds: string[]; trackCount?: number; profileImageUrl?: string | null; coverUrl: string | null }>(artists: T[], limit: number) {
   const day = new Date().toISOString().slice(0, 10);
   const pool = artists
-    .filter((artist) => artist.trackIds.length > 1)
+    .filter((artist) => artistTrackCount(artist) > 1)
     .sort((left, right) => (
       Number(Boolean(right.profileImageUrl || right.coverUrl)) - Number(Boolean(left.profileImageUrl || left.coverUrl))
-      || right.trackIds.length - left.trackIds.length
+      || artistTrackCount(right) - artistTrackCount(left)
     ))
     .slice(0, Math.max(limit * 5, 70));
 
@@ -183,4 +188,10 @@ function hashArtist(value: string) {
     hash = Math.imul(hash, 16777619);
   }
   return hash >>> 0;
+}
+
+function isMusicArchiveStats(value: unknown): value is MusicArchiveStats {
+  if (!value || typeof value !== "object") return false;
+  const stats = value as Record<string, unknown>;
+  return [stats.tracks, stats.artists, stats.videos].every((item) => typeof item === "number" && Number.isFinite(item));
 }

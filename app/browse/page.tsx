@@ -11,7 +11,7 @@ import {
   OLD_IRANIAN_YOUTUBE_CHANNEL_URL,
   OLD_IRANIAN_YOUTUBE_COLLECTIONS,
 } from "@/lib/old-iranian-youtube-collections";
-import { browseVodIndex, loadVodIndex, queryString, SECTION_LABELS } from "@/lib/vod-index";
+import { browseVodIndex, loadOldIranianVodIndex, loadVodIndex, queryString, SECTION_LABELS } from "@/lib/vod-index";
 
 type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -30,7 +30,7 @@ export default async function BrowsePage({ searchParams }: Props) {
   const locale = await getLocale();
   const t = getDictionary(locale);
   const params = normalizeParams(await searchParams);
-  const index = await loadVodIndex();
+  const index = params.section === "old-iranian-films" ? await loadOldIranianVodIndex() : await loadVodIndex();
   const result = browseVodIndex(index, params);
   const sectionTitle = t.home.sections[result.section as keyof typeof t.home.sections]?.title;
   const title = sectionTitle ?? SECTION_LABELS[result.section] ?? t.browse.titleFallback;

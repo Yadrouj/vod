@@ -57,6 +57,8 @@ export type MusicArtist = MusicArtistRef & {
   bio?: string | null;
   profileSourceUrl?: string | null;
   trackIds: string[];
+  /** Compact landing indexes keep this count without serializing every ID. */
+  trackCount?: number;
   categories: string[];
 };
 
@@ -68,4 +70,15 @@ export type MusicIndex = {
   tracks: MusicTrack[];
   artists: MusicArtist[];
   categories: string[];
+};
+
+export type MusicArchiveStats = {
+  tracks: number;
+  artists: number;
+  videos: number;
+};
+
+export type MusicLandingIndex = MusicIndex & {
+  archiveStats: MusicArchiveStats;
+  scope: "home" | "landing";
 };
