@@ -14,6 +14,9 @@ const LEGACY_ROMAN_ARTISTS = ["Aghasi", "Ahmad Azad", "Alireza Eftekhari", "Ebi"
 const SOURCE_PAGES = [
   { provider: "download1music", url: "https://download1music.ir/old/", kind: "page" },
   { provider: "sevilmusics", url: "https://sevilmusics.com/topic/ghadimi/", kind: "article" },
+  // Artist archives need an explicit credit: their SEO copy can mention many
+  // unrelated performers in the page footer and must not become track data.
+  { provider: "sevilmusics", url: "https://sevilmusics.com/singer/habibmusic/", kind: "article", artist: "حبیب" },
   { provider: "aftabmusic", url: "https://aftabmusic.com/%D8%A2%D9%87%D9%86%DA%AF-%D9%87%D8%A7%DB%8C-%D9%82%D8%AF%DB%8C%D9%85%DB%8C-%D8%A7%D8%B2-%D8%AE%D9%88%D8%A7%D9%86%D9%86%D8%AF%DA%AF%D8%A7%D9%86-%D8%B2%D9%86/", kind: "jsonld" },
   { provider: "musics-mehr", url: "https://musics-mehr.com/%D8%B1%DB%8C%D9%85%DB%8C%DA%A9%D8%B3-%D8%AE%D9%88%D8%A7%D9%86%D9%86%D8%AF%D9%87-%D9%87%D8%A7%DB%8C-%D9%82%D8%AF%DB%8C%D9%85%DB%8C/", kind: "jsonld" },
   { provider: "aftabmusic", url: "https://aftabmusic.com/%D8%A8%D9%87%D8%AA%D8%B1%DB%8C%D9%86-%D8%A2%D9%87%D9%86%DA%AF-%D9%87%D8%A7%DB%8C-%D9%85%D8%B9%DB%8C%D9%86%D8%8C-%D8%A7%D8%A8%DB%8C-%D9%88-%D8%AF%D8%A7%D8%B1%DB%8C%D9%88%D8%B4/", kind: "jsonld" },
@@ -60,7 +63,7 @@ function parseSevil(html, source, fallbackCover) {
     if (!url) continue;
     const title = cleanText(first(article, /<h2[^>]*>[\s\S]*?<a[^>]*>([\s\S]*?)<\/a>/i)) || cleanText(first(article, /<strong[^>]*>([\s\S]*?)<\/strong>/i)) || titleFromUrl(url);
     const cover = first(article, /<img[^>]+(?:data-src|src)=["']([^"']+)/i) || fallbackCover;
-    tracks.push(makeTrack({ title, url, source, cover, artist: resolveClassicArtist(title, url), description: OLD_PERSIAN_DESCRIPTION }));
+    tracks.push(makeTrack({ title, url, source, cover, artist: source.artist || resolveClassicArtist(title, url), description: OLD_PERSIAN_DESCRIPTION }));
   }
   return tracks;
 }
