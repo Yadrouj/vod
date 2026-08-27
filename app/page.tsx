@@ -47,6 +47,10 @@ export default async function HomePage() {
   } = await buildHomePageData(locale);
 
   const aiPrompt = t.home.aiPrompt;
+  // Keep the first viewport film-first: spotlight, signature frames, and
+  // two complete catalogue rails land before music or editorial content.
+  const primaryLandingRails = landingRails.slice(0, 2);
+  const remainingLandingRails = landingRails.slice(2);
 
   return (
     <main className="shell film-spotify-page">
@@ -63,19 +67,22 @@ export default async function HomePage() {
       </section>
 
       <section className="home-stack wrap film-landing-content">
+        <FocusRail items={midBanners} locale={locale} />
+        <WideRailComponent items={wideItems} locale={locale} />
+        {primaryLandingRails.map((section) => (
+          <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />
+        ))}
+        <MusicRail tracks={music.tracks} />
         <DownloadHistory />
         <ContinueWatching />
         <PublicPartyRooms mode="watch" locale={locale} />
-        <NewsRail items={news.items} locale={locale} />
-        <ReleaseUpdatesRail items={updates.items} locale={locale} />
-        <MusicRail tracks={music.tracks} />
-        <FocusRail items={midBanners} locale={locale} />
-        <WideRailComponent items={wideItems} locale={locale} />
         <AiSearchPanel locale={locale} initialQuery={aiPrompt} initialResults={initialAiResults} />
-        {landingRails.map((section) => (
+        {remainingLandingRails.map((section) => (
           <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />
         ))}
         <PeopleRail people={topPeople.people} locale={locale} />
+        <ReleaseUpdatesRail items={updates.items} locale={locale} />
+        <NewsRail items={news.items} locale={locale} />
       </section>
     </main>
   );
