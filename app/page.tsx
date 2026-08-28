@@ -140,7 +140,11 @@ async function buildHomePageData(locale: Locale) {
         reasons,
       };
     });
-  const { sections: megaSections, featuredItems: megaFeaturedItems } = buildGenreMenu(index.items);
+  const { sections: megaSections, featuredItems: megaFeaturedItems } = buildGenreMenu(
+    index.items,
+    index.sections.find((section) => section.id === "old-iranian-films"),
+    locale,
+  );
   const wideCandidates = index.items
     .filter((item) => item.backdropUrl && item.overview && (item.imdbRating ?? 0) >= 7.2)
     .sort((a, b) => (b.imdbRating ?? 0) - (a.imdbRating ?? 0) || (b.year ?? 0) - (a.year ?? 0));
@@ -178,6 +182,7 @@ async function buildHomePageData(locale: Locale) {
   ];
 
   const landingRails = rotateDaily([...index.sections, ...generatedSections])
+    .filter((section) => section.id !== "old-iranian-films")
     .map((section) => ({
       ...section,
       // Keep each category complete. The old global `seen` filter consumed
@@ -294,12 +299,12 @@ function makeSection(id: string, title: string, subtitle: string, items: VodCard
   };
 }
 
-function buildGenreMenu(items: VodCard[]) {
+function buildGenreMenu(items: VodCard[], oldIranianSection: VodHomeSection | undefined, locale: Locale) {
   const counts = new Map<string, number>();
   const usedImages = new Set<string>();
   const usedIds = new Set<string>();
   for (const item of items) for (const genre of item.genres ?? []) counts.set(genre, (counts.get(genre) ?? 0) + 1);
-  const sections = [...counts.entries()]
+  const genreSections = [...counts.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, 7)
     .map(([genre, total], genreIndex) => {
@@ -325,6 +330,18 @@ function buildGenreMenu(items: VodCard[]) {
         total,
       };
     });
+  const oldIranianItems = uniqueCards(oldIranianSection?.items ?? []).slice(0, 10);
+  const oldIranianMenuSection = oldIranianItems.length
+    ? [{
+        id: "old-iranian-films",
+        title: locale === "fa" ? "فیلم‌های قدیمی ایرانی" : "Old Iranian Films",
+        href: "/browse?section=old-iranian-films",
+        items: oldIranianItems.map(toMegaMenuItem),
+        artUrl: oldIranianItems[0]?.backdropUrl ?? oldIranianItems[0]?.posterUrl ?? null,
+        total: oldIranianSection?.total ?? oldIranianItems.length,
+      }]
+    : [];
+  const sections = [...oldIranianMenuSection, ...genreSections];
   const featuredItems = uniqueVisualCards(
     [...items].sort((a, b) => (b.imdbRating ?? 0) - (a.imdbRating ?? 0) || (b.imdbVotes ?? 0) - (a.imdbVotes ?? 0))
   )
