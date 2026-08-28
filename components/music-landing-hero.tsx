@@ -13,6 +13,7 @@ import {
   Volume2,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { SearchSuggest } from "@/components/search-suggest";
 
 export type MusicHeroTrack = {
   id: string;
@@ -44,10 +45,6 @@ export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", init
   const [isVisualPlaying, setIsVisualPlaying] = useState(true);
   const total = featuredTracks.length;
   const activeTrack = featuredTracks[total ? activeIndex % total : 0];
-
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [total]);
 
   useEffect(() => {
     if (!isVisualPlaying || total < 2) return;
@@ -82,7 +79,16 @@ export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", init
 
           <form className="music-landing-search" action="/music" role="search">
             <Search size={18} aria-hidden="true" />
-            <input name="q" defaultValue={initialQuery} placeholder="نام خواننده، آهنگ یا آلبوم…" autoComplete="off" />
+            <SearchSuggest
+              defaultValue={initialQuery}
+              placeholder="نام خواننده، آهنگ یا آلبوم…"
+              locale="fa"
+              endpoint="/api/music/search"
+              hrefForItem={(item) => `/music/${item.imdbCode}`}
+              viewAllHref={(query) => `/music?q=${encodeURIComponent(query)}`}
+              portal
+              maxItems={8}
+            />
             <select name="kind" defaultValue={initialKind} aria-label="نوع محتوا">
               <option value="all">همه</option>
               <option value="track">آهنگ‌ها</option>

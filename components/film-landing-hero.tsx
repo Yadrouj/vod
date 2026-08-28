@@ -18,10 +18,6 @@ export function FilmLandingHero({ items, locale }: { items: VodCard[]; locale: L
   const activeItem = featuredItems[total ? activeIndex % total : 0];
 
   useEffect(() => {
-    setActiveIndex(0);
-  }, [total]);
-
-  useEffect(() => {
     if (!isAutoPlaying || total < 2) return;
     const timer = window.setInterval(() => setActiveIndex((current) => (current + 1) % total), 7200);
     return () => window.clearInterval(timer);
@@ -49,7 +45,7 @@ export function FilmLandingHero({ items, locale }: { items: VodCard[]; locale: L
 
           <form className="film-landing-search" action="/browse" role="search">
             <Search size={18} aria-hidden="true" />
-            <SearchSuggest placeholder={t.home.searchPlaceholder} locale={locale} />
+            <SearchSuggest placeholder={t.home.searchPlaceholder} locale={locale} portal maxItems={8} />
             <button type="submit">{t.common.search}</button>
           </form>
 

@@ -3,7 +3,8 @@
 import { ArrowUpRight, LoaderCircle, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { DEFAULT_LOCALE, getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
 
@@ -21,11 +22,21 @@ export function SearchSuggest({
   defaultValue = "",
   placeholder = "Search films, series, IMDb ID...",
   locale = DEFAULT_LOCALE,
+  endpoint = "/api/suggest",
+  hrefForItem = (item) => `/${item.imdbCode}`,
+  viewAllHref = (query) => `/browse?q=${encodeURIComponent(query)}`,
+  portal = false,
+  maxItems = 8,
 }: {
   name?: string;
   defaultValue?: string;
   placeholder?: string;
   locale?: Locale;
+  endpoint?: string;
+  hrefForItem?: (item: Suggestion) => string;
+  viewAllHref?: (query: string) => string;
+  portal?: boolean;
+  maxItems?: number;
 }) {
   const [query, setQuery] = useState(defaultValue);
   const [items, setItems] = useState<Suggestion[]>([]);
@@ -33,12 +44,15 @@ export function SearchSuggest({
   const [loading, setLoading] = useState(defaultValue.trim().length >= 2);
   const [activeIndex, setActiveIndex] = useState(-1);
   const boxRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listId = useId();
   const router = useRouter();
   const t = getDictionary(locale);
   const searchable = query.trim().length >= 2;
   const menuOpen = open && searchable;
+  const visibleItems = items.slice(0, Math.max(6, maxItems));
+  const [portalPosition, setPortalPosition] = useState<CSSProperties | null>(null);
   const copy = locale === "fa"
     ? {
         close: "بستن جستجو",
@@ -62,7 +76,7 @@ export function SearchSuggest({
 
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      fetch(`/api/suggest?q=${encodeURIComponent(query.trim())}`, { signal: controller.signal })
+      fetch(`${endpoint}?q=${encodeURIComponent(query.trim())}`, { signal: controller.signal })
         .then((res) => {
           if (!res.ok) throw new Error(`Suggest ${res.status}`);
           return res.json() as Promise<{ items?: Suggestion[] }>;
@@ -85,11 +99,12 @@ export function SearchSuggest({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [query, searchable]);
+  }, [endpoint, query, searchable]);
 
   useEffect(() => {
     function onClick(event: MouseEvent) {
-      if (boxRef.current && !boxRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (!boxRef.current?.contains(target) && !menuRef.current?.contains(target)) {
         setOpen(false);
       }
     }
@@ -102,6 +117,28 @@ export function SearchSuggest({
     document.documentElement.classList.add("mobile-search-open");
     return () => document.documentElement.classList.remove("mobile-search-open");
   }, [menuOpen]);
+
+  useLayoutEffect(() => {
+    if (!menuOpen || !portal) return;
+
+    const updatePosition = () => {
+      const anchor = boxRef.current?.getBoundingClientRect();
+      if (!anchor) return;
+      setPortalPosition({
+        top: `${Math.round(anchor.bottom + 8)}px`,
+        left: `${Math.round(anchor.left)}px`,
+        width: `${Math.round(anchor.width)}px`,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [menuOpen, portal]);
 
   function closeSearch() {
     setOpen(false);
@@ -125,19 +162,75 @@ export function SearchSuggest({
       return;
     }
 
-    if (!items.length || !menuOpen) return;
+    if (!visibleItems.length || !menuOpen) return;
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setActiveIndex((current) => (current + 1) % items.length);
+      setActiveIndex((current) => (current + 1) % visibleItems.length);
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
-      setActiveIndex((current) => (current <= 0 ? items.length - 1 : current - 1));
+      setActiveIndex((current) => (current <= 0 ? visibleItems.length - 1 : current - 1));
     } else if (event.key === "Enter" && activeIndex >= 0) {
       event.preventDefault();
-      router.push(`/${items[activeIndex].imdbCode}`);
+      router.push(hrefForItem(visibleItems[activeIndex]));
       closeSearch();
     }
   }
+
+  const menu = menuOpen ? (
+    <div
+      ref={menuRef}
+      className={`suggest-menu ${portal ? "suggest-menu-portal" : ""}`}
+      style={portal ? portalPosition ?? undefined : undefined}
+    >
+      <div className="suggest-menu-head">
+        <strong>{copy.heading}</strong>
+        {!loading && <span>{visibleItems.length}</span>}
+      </div>
+
+      <div id={listId} className="suggest-results" role="listbox">
+        {visibleItems.map((item, index) => (
+          <Link
+            id={`${listId}-${index}`}
+            key={item.imdbCode}
+            className={`suggest-item ${activeIndex === index ? "is-active" : ""}`}
+            href={hrefForItem(item)}
+            role="option"
+            aria-selected={activeIndex === index}
+            onMouseEnter={() => setActiveIndex(index)}
+            onClick={closeSearch}
+          >
+            {item.posterUrl ? (
+              <img
+                src={sizedImageUrl(item.posterUrl, 120) ?? item.posterUrl}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              <span className="suggest-poster-fallback" aria-hidden="true">{item.title.slice(0, 1)}</span>
+            )}
+            <span className="suggest-result-copy">
+              <strong>{item.title}</strong>
+              <small>
+                {[item.year ?? "-", typeLabel(item.type, locale), item.imdbRating ? `${t.common.imdb} ${item.imdbRating.toFixed(1)}` : null]
+                  .filter(Boolean)
+                  .join(" / ")}
+              </small>
+            </span>
+            <ArrowUpRight className="suggest-result-arrow" size={17} aria-hidden="true" />
+          </Link>
+        ))}
+        {!loading && visibleItems.length === 0 && <p className="suggest-empty">{copy.empty}</p>}
+      </div>
+
+      {visibleItems.length > 0 && (
+        <Link className="suggest-view-all" href={viewAllHref(query.trim())} onClick={closeSearch}>
+          <span>{copy.viewAll}</span>
+          <ArrowUpRight size={17} aria-hidden="true" />
+        </Link>
+      )}
+    </div>
+  ) : null;
 
   return (
     <div ref={boxRef} className={`suggest-box ${menuOpen ? "is-open" : ""}`}>
@@ -188,57 +281,8 @@ export function SearchSuggest({
         ) : null}
       </div>
 
-      {menuOpen && (
-        <div className="suggest-menu">
-          <div className="suggest-menu-head">
-            <strong>{copy.heading}</strong>
-            {!loading && <span>{items.length}</span>}
-          </div>
-
-          <div id={listId} className="suggest-results" role="listbox">
-            {items.map((item, index) => (
-              <Link
-                id={`${listId}-${index}`}
-                key={item.imdbCode}
-                className={`suggest-item ${activeIndex === index ? "is-active" : ""}`}
-                href={`/${item.imdbCode}`}
-                role="option"
-                aria-selected={activeIndex === index}
-                onMouseEnter={() => setActiveIndex(index)}
-                onClick={closeSearch}
-              >
-                {item.posterUrl ? (
-                  <img
-                    src={sizedImageUrl(item.posterUrl, 120) ?? item.posterUrl}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                  />
-                ) : (
-                  <span className="suggest-poster-fallback" aria-hidden="true">{item.title.slice(0, 1)}</span>
-                )}
-                <span className="suggest-result-copy">
-                  <strong>{item.title}</strong>
-                  <small>
-                    {[item.year ?? "-", typeLabel(item.type, locale), item.imdbRating ? `${t.common.imdb} ${item.imdbRating.toFixed(1)}` : null]
-                      .filter(Boolean)
-                      .join(" / ")}
-                  </small>
-                </span>
-                <ArrowUpRight className="suggest-result-arrow" size={17} aria-hidden="true" />
-              </Link>
-            ))}
-            {!loading && items.length === 0 && <p className="suggest-empty">{copy.empty}</p>}
-          </div>
-
-          {items.length > 0 && (
-            <Link className="suggest-view-all" href={`/browse?q=${encodeURIComponent(query.trim())}`} onClick={closeSearch}>
-              <span>{copy.viewAll}</span>
-              <ArrowUpRight size={17} aria-hidden="true" />
-            </Link>
-          )}
-        </div>
-      )}
+      {!portal && menu}
+      {portal && portalPosition && typeof document !== "undefined" ? createPortal(menu, document.body) : null}
     </div>
   );
 }
