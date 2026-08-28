@@ -59,10 +59,14 @@ export default async function HomePage() {
   } = await buildHomePageData(locale);
 
   const aiPrompt = t.home.aiPrompt;
-  // Keep the first viewport film-first: spotlight, signature frames, and
-  // two complete catalogue rails land before music or editorial content.
-  const primaryLandingRails = landingRails.slice(0, 2);
-  const remainingLandingRails = landingRails.slice(2);
+  // The first rails are intentional anchors, not part of the daily rotation:
+  // a visitor sees releases, their own activity, then the core film and
+  // series shelves. Everything after that can keep a fresh daily rhythm.
+  const anchorRailIds = ["best-movies", "best-series"];
+  const primaryLandingRails = anchorRailIds
+    .map((id) => landingRails.find((section) => section.id === id))
+    .filter((section): section is HomeRailSection => Boolean(section));
+  const remainingLandingRails = landingRails.filter((section) => !anchorRailIds.includes(section.id));
 
   return (
     <main className="shell film-spotify-page">
@@ -80,21 +84,21 @@ export default async function HomePage() {
       </section>
 
       <section className="home-stack wrap film-landing-content">
-        <FocusRail items={midBanners} locale={locale} />
-        <WideRailComponent items={wideItems} locale={locale} />
+        <ReleaseUpdatesRail items={updates.items} locale={locale} />
+        <ContinueWatching />
+        <DownloadHistory />
         {primaryLandingRails.map((section) => (
           <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />
         ))}
+        <FocusRail items={midBanners} locale={locale} />
+        <WideRailComponent items={wideItems} locale={locale} />
         <MusicRail tracks={music.tracks} />
-        <DownloadHistory />
-        <ContinueWatching />
         <PublicPartyRooms mode="watch" locale={locale} />
         <AiSearchPanel locale={locale} initialQuery={aiPrompt} initialResults={initialAiResults} />
         {remainingLandingRails.map((section) => (
           <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />
         ))}
         <PeopleRail people={topPeople.people} locale={locale} />
-        <ReleaseUpdatesRail items={updates.items} locale={locale} />
         <LandingSeoContent content={FILM_LANDING_SEO} />
         <NewsRail items={news.items} locale={locale} />
       </section>
