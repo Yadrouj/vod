@@ -38,9 +38,10 @@ type SerializedDownload = ReturnType<typeof serializeDownload>;
 type SerializedEpisode = ReturnType<typeof serializeEpisode>;
 
 export function botOrigin(request: Request) {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim() || process.env.BOT_SITE_URL?.trim();
   if (configured) return configured.replace(/\/$/, "");
   const url = new URL(request.url);
+  if (url.hostname === "0.0.0.0" || url.hostname === "::") return `http://localhost${url.port ? `:${url.port}` : ""}`;
   return `${url.protocol}//${url.host}`;
 }
 

@@ -13,6 +13,8 @@ export async function GET(request: Request) {
     endpoints: {
       filters: `${origin}/api/bot/filters`,
       search: `${origin}/api/bot/search?q=break&type=series&minImdb=8`,
+      music: `${origin}/api/bot/music?q=ابی&kind=track`,
+      musicFilters: `${origin}/api/bot/music?mode=filters`,
       title: `${origin}/api/bot/title/tt0903747`,
       season: `${origin}/api/bot/title/tt0903747?season=1`,
     },

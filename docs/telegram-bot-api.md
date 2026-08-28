@@ -15,6 +15,7 @@ GET /api/bot
 GET /api/bot/filters
 GET /api/bot/search
 GET /api/bot/title/:imdbCode
+GET /api/bot/music
 ```
 
 ## Filters And Menus
@@ -40,6 +41,17 @@ q, type, genre, country, language, year, yearFrom, yearTo, quality, minImdb, max
 ```
 
 Types are `movie`, `series`, or `all`. Sort can be `relevance`, `rating`, `year`, or `title`. The response includes `telegram.text` and `telegram.buttons` for each result.
+
+## Music
+
+```text
+GET /api/bot/music?mode=filters
+GET /api/bot/music?q=ابی&kind=track&limit=10
+GET /api/bot/music?kind=video&category=موزیک%20ویدیو
+GET /api/bot/music?id=classic-7c557a96fb6886
+```
+
+Music results are paginated in the same shape as VOD results. The item endpoint returns the SarvNema page, original source page, and all available stream/download URLs so Telegram can show the original links and generate a text-file list for the user.
 
 ## Title Detail
 
