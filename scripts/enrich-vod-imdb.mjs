@@ -1,10 +1,12 @@
 import { createGunzip } from "node:zlib";
 import { createReadStream, createWriteStream } from "node:fs";
-import { mkdir, readFile, rename, stat, unlink, writeFile } from "node:fs/promises";
+import { mkdir, rename, stat, unlink } from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
+import { once } from "node:events";
+import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 
 const DATASETS = {
   basics: "https://datasets.imdbws.com/title.basics.tsv.gz",
@@ -117,10 +119,12 @@ function parseRatings(headers, cols) {
 }
 
 async function main() {
-  const archive = JSON.parse(await readFile(IN_FILE, "utf8"));
-  const wantedIds = new Set(
-    archive.items.map((item) => item.imdbCode).filter((id) => /^tt\d+$/.test(id))
-  );
+  const wantedIds = new Set();
+  let sourceTitles = 0;
+  await streamVodArchiveItems(IN_FILE, async (item) => {
+    sourceTitles += 1;
+    if (/^tt\d+$/.test(item.imdbCode ?? "")) wantedIds.add(item.imdbCode);
+  });
 
   const basicsFile = await ensureDataset("title.basics", DATASETS.basics);
   const ratingsFile = await ensureDataset("title.ratings", DATASETS.ratings);
@@ -131,41 +135,12 @@ async function main() {
     readWantedRows(ratingsFile, wantedIds, parseRatings),
   ]);
 
-  const items = archive.items.map((item) => {
-    const imdbBasics = basics.get(item.imdbCode) ?? null;
-    const imdbRatings = ratings.get(item.imdbCode) ?? null;
-    const imdb = imdbBasics || imdbRatings ? { ...imdbBasics, ...imdbRatings } : null;
-    return {
-      ...item,
-      title: imdbBasics?.primaryTitle ?? item.title,
-      type: imdbBasics?.titleType ?? item.type,
-      year: imdbBasics?.startYear ?? item.year,
-      imdbVotes: imdbRatings?.numVotes ?? item.imdbVotes,
-      imdbRating: imdbRatings?.averageRating ?? item.imdbRating,
-      imdb,
-      genres: imdbBasics?.genres ?? item.genres ?? [],
-      runtimeMinutes: imdbBasics?.runtimeMinutes ?? item.runtimeMinutes ?? null,
-      originalTitle: imdbBasics?.originalTitle ?? item.originalTitle ?? null,
-      endYear: imdbBasics?.endYear ?? item.endYear ?? null,
-    };
-  });
-
-  const payload = {
-    ...archive,
-    enrichedAt: new Date().toISOString(),
-    imdbDatasetSource: "https://developer.imdb.com/non-commercial-datasets/",
-    imdbMatchedTitles: basics.size,
-    imdbMatchedRatings: ratings.size,
-    items,
-  };
-
-  await mkdir(path.dirname(OUT_FILE), { recursive: true });
-  await writeFile(OUT_FILE, JSON.stringify(payload));
+  await writeEnrichedArchive(basics, ratings);
   console.log(
     JSON.stringify(
       {
         outFile: OUT_FILE,
-        sourceTitles: archive.items.length,
+        sourceTitles,
         imdbMatchedTitles: basics.size,
         imdbMatchedRatings: ratings.size,
       },
@@ -173,6 +148,67 @@ async function main() {
       2
     )
   );
+}
+
+function enrichItem(item, basics, ratings) {
+  const imdbBasics = basics.get(item.imdbCode) ?? null;
+  const imdbRatings = ratings.get(item.imdbCode) ?? null;
+  const imdb = imdbBasics || imdbRatings ? { ...imdbBasics, ...imdbRatings } : null;
+  return {
+    ...item,
+    title: imdbBasics?.primaryTitle ?? item.title,
+    type: imdbBasics?.titleType ?? item.type,
+    year: imdbBasics?.startYear ?? item.year,
+    imdbVotes: imdbRatings?.numVotes ?? item.imdbVotes,
+    imdbRating: imdbRatings?.averageRating ?? item.imdbRating,
+    imdb,
+    genres: imdbBasics?.genres ?? item.genres ?? [],
+    runtimeMinutes: imdbBasics?.runtimeMinutes ?? item.runtimeMinutes ?? null,
+    originalTitle: imdbBasics?.originalTitle ?? item.originalTitle ?? null,
+    endYear: imdbBasics?.endYear ?? item.endYear ?? null,
+  };
+}
+
+async function writeEnrichedArchive(basics, ratings) {
+  const temporary = `${OUT_FILE}.tmp-${process.pid}`;
+  await mkdir(path.dirname(temporary), { recursive: true });
+  const output = createWriteStream(temporary, { encoding: "utf8" });
+  let first = true;
+  const write = async (value) => {
+    if (output.write(value)) return;
+    await once(output, "drain");
+  };
+  try {
+    await streamVodArchiveItems(
+      IN_FILE,
+      async (item) => {
+        await write(`${first ? "" : ","}${JSON.stringify(enrichItem(item, basics, ratings))}`);
+        first = false;
+      },
+      {
+        onMetadata: async (metadata) => {
+          const header = JSON.stringify({
+            ...metadata,
+            enrichedAt: new Date().toISOString(),
+            imdbDatasetSource: "https://developer.imdb.com/non-commercial-datasets/",
+            imdbMatchedTitles: basics.size,
+            imdbMatchedRatings: ratings.size,
+          });
+          await write(`${header.slice(0, -1)},"items":[`);
+        },
+      },
+    );
+    await write("]}");
+    await new Promise((resolve, reject) => {
+      output.once("error", reject);
+      output.end(resolve);
+    });
+    await rename(temporary, OUT_FILE);
+  } catch (error) {
+    output.destroy();
+    await unlink(temporary).catch(() => undefined);
+    throw error;
+  }
 }
 
 main().catch((error) => {

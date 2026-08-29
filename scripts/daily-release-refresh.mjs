@@ -8,6 +8,7 @@ const DATA_DIR = path.join(ROOT, "data");
 const STATUS_FILE = path.join(DATA_DIR, "daily-release-bot-status.json");
 const LOCK_FILE = path.join(DATA_DIR, "daily-release-refresh.lock");
 const MONITOR_ONLY = args.has("--monitor-only");
+const FULL = args.has("--full");
 
 async function main() {
   const lock = await acquireLock();
@@ -23,12 +24,18 @@ async function main() {
       await runStep("Review DonyayeSerial, series feed and Moviesho", "scripts/sync-vod-catalog.mjs", steps, startedAt);
     }
     if (!MONITOR_ONLY && process.env.DAILY_RELEASE_SKIP_F2MY !== "1") {
-      await runStep("Review F2MY movies and series", "scripts/scrape-f2my-catalog.mjs", steps, startedAt, ["--skip-imdb-lookup"]);
+      await runStep(
+        FULL ? "Deep-review the complete F2MY movie and series archive" : "Review F2MY movies and series",
+        "scripts/scrape-f2my-catalog.mjs",
+        steps,
+        startedAt,
+        [...(FULL ? ["--full"] : []), "--skip-imdb-lookup"],
+      );
     }
     await runStep("Compare IMDb discoveries with every source", "scripts/release-monitor.mjs", steps, startedAt);
     await runStep("Publish release-aware news", "scripts/scrape-vod-news.mjs", steps, startedAt);
     await writeStatus({ state: "completed", startedAt, finishedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), phase: "Daily update section published", steps, error: null });
-    console.log(JSON.stringify({ completed: true, monitorOnly: MONITOR_ONLY, steps }, null, 2));
+    console.log(JSON.stringify({ completed: true, monitorOnly: MONITOR_ONLY, full: FULL, steps }, null, 2));
   } catch (error) {
     await writeStatus({ state: "failed", startedAt, finishedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), phase: "Daily review stopped", steps, error: error instanceof Error ? error.message : String(error) }).catch(() => undefined);
     throw error;

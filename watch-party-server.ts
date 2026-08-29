@@ -41,8 +41,11 @@ const MAX_CAMERA_PARTICIPANTS = positiveInteger(process.env.WATCH_PARTY_MAX_CAME
 const MAX_SHARED_SUBTITLE_CHARS = 340 * 1024;
 const TEMP_MEDIA_UPLOAD_GRANT_TTL_MS = 5 * 60_000;
 const TEMP_MEDIA_UPLOAD_TIMEOUT_MS = Math.max(30_000, Number(process.env.WATCH_PARTY_UPLOAD_TIMEOUT_MS) || 5 * 60_000);
+const HTTP_TRAFFIC_WINDOW_MS = 5 * 60_000;
+const HTTP_TRAFFIC_BUCKET_MS = 60_000;
 let ready = false;
 let shuttingDown = false;
+const httpRequestBuckets = new Map<number, number>();
 
 type TempMediaUploadGrant = {
   roomId: string;
@@ -80,6 +83,24 @@ const capabilityForAction: Record<string, PartyCapability> = { play: "playback",
 function positiveInteger(value: string | undefined, fallback: number) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function recordHttpRequest() {
+  const now = Date.now();
+  const bucket = Math.floor(now / HTTP_TRAFFIC_BUCKET_MS) * HTTP_TRAFFIC_BUCKET_MS;
+  httpRequestBuckets.set(bucket, (httpRequestBuckets.get(bucket) ?? 0) + 1);
+  for (const startedAt of httpRequestBuckets.keys()) {
+    if (startedAt < now - HTTP_TRAFFIC_WINDOW_MS - HTTP_TRAFFIC_BUCKET_MS) httpRequestBuckets.delete(startedAt);
+  }
+}
+
+function recentHttpRequests(windowMs = HTTP_TRAFFIC_WINDOW_MS) {
+  const cutoff = Date.now() - windowMs;
+  let count = 0;
+  for (const [startedAt, requests] of httpRequestBuckets) {
+    if (startedAt >= cutoff - HTTP_TRAFFIC_BUCKET_MS) count += requests;
+  }
+  return count;
 }
 
 function allowedSocketOrigin(origin: string | undefined, callback: (error: Error | null, allowed?: boolean) => void) {
@@ -286,6 +307,7 @@ function roomForSocket(roomId: string, socketId: string) {
 async function start() {
 await Promise.all([app.prepare(), initializeTempPartyMediaStore()]);
 const httpServer = createServer((request, response) => {
+  recordHttpRequest();
   const pathname = request.url?.split("?", 1)[0];
   if (request.method === "POST" && pathname === "/api/watch-party/personal-media/upload") {
     void handleTempMediaUploadRequest(request, response);
@@ -308,6 +330,7 @@ const httpServer = createServer((request, response) => {
       status: status === 200 ? "ready" : "not-ready",
       rooms: rooms.size,
       memoryMb: { rss: Math.round(memory.rss / 1024 / 1024), heapUsed: Math.round(memory.heapUsed / 1024 / 1024) },
+      recentRequests5m: recentHttpRequests(),
     }));
     return;
   }

@@ -1,5 +1,8 @@
-import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
+import { createWriteStream } from "node:fs";
+import { once } from "node:events";
+import { mkdir, readFile, rename, rm, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 
 const IN_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
 const OUT_FILE = process.argv[3] || IN_FILE;
@@ -285,6 +288,16 @@ function mergeExpandedLinks(existingLinks, expandedLinks) {
   });
 }
 
+function sourceDirectoryLinks(item) {
+  const byIdentity = new Map();
+  for (const link of [...(item.sourceDirectoryLinks ?? []), ...(item.links ?? [])]) {
+    if (isConcreteDownloadLink(link)) continue;
+    const key = String(link.url ?? "");
+    if (key) byIdentity.set(key, link);
+  }
+  return Array.from(byIdentity.values());
+}
+
 function isConcreteDownloadLink(link) {
   return (
     (link?.episode != null && Number.isFinite(Number(link.episode))) ||
@@ -383,35 +396,12 @@ function cacheEntryIsFresh(entry) {
 }
 
 async function main() {
-  const archive = JSON.parse(await readFile(IN_FILE, "utf8"));
   const cache = await readCache();
   cache.roots ??= {};
   cache.items ??= {};
   const requestedIds = await readRequestedIds();
-  const allSeriesItems = archive.items.filter(isSeries);
-  const byRequestedId = new Map();
-
-  if (requestedIds.size || RECENT_LIMIT > 0) {
-    for (const item of allSeriesItems) {
-      const key = String(item.imdbCode || item.id);
-      if (requestedIds.has(key)) byRequestedId.set(key, item);
-    }
-    const recent = [...allSeriesItems]
-      .sort(
-        (a, b) =>
-          (b.year ?? 0) - (a.year ?? 0) ||
-          Date.parse(a.seriesLinksExpandedAt ?? "1970-01-01") -
-            Date.parse(b.seriesLinksExpandedAt ?? "1970-01-01"),
-      )
-      .slice(0, RECENT_LIMIT || 0);
-    for (const item of recent) byRequestedId.set(String(item.imdbCode || item.id), item);
-  } else {
-    for (const item of allSeriesItems) {
-      byRequestedId.set(String(item.imdbCode || item.id), item);
-    }
-  }
-
-  const seriesItems = Array.from(byRequestedId.values()).slice(0, LIMIT || undefined);
+  const selection = await selectSeriesItems(requestedIds);
+  const seriesItems = selection.items.slice(0, LIMIT || undefined);
   let processed = 0;
   let expandedItems = 0;
   let expandedLinks = 0;
@@ -420,7 +410,7 @@ async function main() {
   let linksAdded = 0;
   let cacheWrite = Promise.resolve();
 
-  const byKey = new Map(archive.items.map((item) => [item.imdbCode || item.id, item]));
+  const byKey = new Map(seriesItems.map((item) => [String(item.imdbCode || item.id), item]));
 
   await mapLimit(seriesItems, CONCURRENCY, async (item) => {
     const key = item.imdbCode || item.id;
@@ -456,13 +446,16 @@ async function main() {
     const nextItem = {
       ...item,
       links,
+      // Direct files are the only links exposed to the player/download UI after
+      // expansion, while source folders remain available for future refreshes.
+      sourceDirectoryLinks: sourceDirectoryLinks(item),
       groups: Array.from(new Set(links.map((link) => link.group).filter(Boolean))).sort(),
       qualities: Array.from(new Set(links.map((link) => link.quality).filter(Boolean))).sort(sortQuality),
       seriesLinksExpandedAt: new Date().toISOString(),
       seriesLinksExpanded: hasEpisodeFiles,
     };
 
-    byKey.set(key, nextItem);
+    byKey.set(String(key), nextItem);
     cache.items[key] = {
       roots,
       checkedAt: new Date().toISOString(),
@@ -488,33 +481,110 @@ async function main() {
     }
   });
 
-  const items = archive.items.map((item) => byKey.get(item.imdbCode || item.id) ?? item);
-  const payload = {
-    ...archive,
-    seriesLinksRescrapedAt: new Date().toISOString(),
-    seriesLinksExpandedTitles: expandedItems,
-    totalTitles: items.length,
-    totalLinks: items.reduce((sum, item) => sum + (item.links?.length ?? 0), 0),
-    items,
-  };
-
   await cacheWrite;
   await writeCache(cache);
-  await writeAtomic(OUT_FILE, JSON.stringify(payload));
+  const changedLinkDelta = seriesItems.reduce(
+    (sum, item) => sum + ((byKey.get(String(item.imdbCode || item.id))?.links?.length ?? 0) - (item.links?.length ?? 0)),
+    0,
+  );
+  const summary = await writeExpandedArchive({
+    metadata: selection.metadata,
+    totalTitles: selection.totalTitles,
+    totalLinks: selection.totalLinks + changedLinkDelta,
+    updates: byKey,
+    expandedItems,
+  });
   const report = {
     outFile: OUT_FILE,
     processed,
     expandedItems,
     changedItems,
     linksAdded,
-    totalTitles: payload.totalTitles,
-    totalLinks: payload.totalLinks,
+    totalTitles: summary.totalTitles,
+    totalLinks: summary.totalLinks,
     totalRequests,
   };
   if (REPORT_FILE) await writeAtomic(REPORT_FILE, JSON.stringify(report, null, 2));
   console.log(
     JSON.stringify(report, null, 2)
   );
+}
+
+async function selectSeriesItems(requestedIds) {
+  const selected = new Map();
+  const allSeries = [];
+  const recent = [];
+  let metadata = null;
+  let totalTitles = 0;
+  let totalLinks = 0;
+  await streamVodArchiveItems(
+    IN_FILE,
+    async (item) => {
+      totalTitles += 1;
+      totalLinks += item.links?.length ?? 0;
+      if (!isSeries(item)) return;
+      const key = String(item.imdbCode || item.id);
+      if (requestedIds.has(key)) selected.set(key, item);
+      if (RECENT_LIMIT > 0) addRecent(recent, item, RECENT_LIMIT);
+      if (!requestedIds.size && RECENT_LIMIT <= 0) allSeries.push(item);
+    },
+    { onMetadata: async (value) => { metadata = value; } },
+  );
+  for (const item of recent) selected.set(String(item.imdbCode || item.id), item);
+  if (!requestedIds.size && RECENT_LIMIT <= 0) {
+    for (const item of allSeries) selected.set(String(item.imdbCode || item.id), item);
+  }
+  return { metadata, totalTitles, totalLinks, items: Array.from(selected.values()) };
+}
+
+function addRecent(entries, item, limit) {
+  entries.push(item);
+  entries.sort(
+    (left, right) =>
+      (right.year ?? 0) - (left.year ?? 0) ||
+      Date.parse(left.seriesLinksExpandedAt ?? "1970-01-01") - Date.parse(right.seriesLinksExpandedAt ?? "1970-01-01"),
+  );
+  if (entries.length > limit) entries.length = limit;
+}
+
+async function writeExpandedArchive({ metadata, totalTitles, totalLinks, updates, expandedItems }) {
+  const temporary = `${OUT_FILE}.tmp-${process.pid}`;
+  await mkdir(path.dirname(temporary), { recursive: true });
+  const output = createWriteStream(temporary, { encoding: "utf8" });
+  let first = true;
+  const write = async (value) => {
+    if (output.write(value)) return;
+    await once(output, "drain");
+  };
+  await streamVodArchiveItems(
+    IN_FILE,
+    async (item) => {
+      const key = String(item.imdbCode || item.id);
+      await write(`${first ? "" : ","}${JSON.stringify(updates.get(key) ?? item)}`);
+      first = false;
+    },
+    {
+      onMetadata: async (current) => {
+        const next = {
+          ...(metadata ?? current),
+          seriesLinksRescrapedAt: new Date().toISOString(),
+          seriesLinksExpandedTitles: expandedItems,
+          totalTitles,
+          totalLinks,
+        };
+        const json = JSON.stringify(next);
+        await write(`${json.slice(0, -1)},"items":[`);
+      },
+    },
+  );
+  await write("]}");
+  await new Promise((resolve, reject) => {
+    output.once("error", reject);
+    output.end(resolve);
+  });
+  await rm(OUT_FILE, { force: true });
+  await rename(temporary, OUT_FILE);
+  return { totalTitles, totalLinks };
 }
 
 main().catch((error) => {

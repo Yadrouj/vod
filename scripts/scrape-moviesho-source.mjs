@@ -18,6 +18,7 @@ import {
   sourceEvidenceScore,
   subtitleLanguage,
 } from "./moviesho-source-lib.mjs";
+import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 
 const CATALOG_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
 const OUT_FILE = process.argv[3] || path.join(".media-cache", "vod-sync", "moviesho-source.json");
@@ -63,9 +64,14 @@ const directoryCache = new Map();
 let nextSiteRequestAt = 0;
 
 async function main() {
-  const catalog = JSON.parse(await readFile(CATALOG_FILE, "utf8"));
-  if (!Array.isArray(catalog?.items)) throw new Error(`Invalid VOD catalog: ${CATALOG_FILE}`);
-  const existingIds = new Set(catalog.items.map((item) => item.imdbCode || item.id).filter(Boolean));
+  // Only the identity set is needed for exact-match de-duplication. Stream the
+  // archive so this daily task remains safe once the catalog grows past Node's
+  // maximum JSON string size.
+  const existingIds = new Set();
+  await streamVodArchiveItems(CATALOG_FILE, async (item) => {
+    const id = item.imdbCode || item.id;
+    if (id) existingIds.add(id);
+  });
   const cache = await readCache();
   const matcher = createMatcher(cache);
 

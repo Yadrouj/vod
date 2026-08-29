@@ -35,7 +35,7 @@ services:
       start_period: 30s
       retries: 3
 
-  catalog-sync:
+  maintenance:
     image: sarvnema-app
     depends_on:
       app:
@@ -43,22 +43,37 @@ services:
     environment:
       NODE_ENV: production
       VOD_DATA_DIR: /app/public/data
-      VOD_SYNC_INTERVAL_MS: ${VOD_SYNC_INTERVAL_MS:-21600000}
-      VOD_SYNC_INITIAL_DELAY_MS: ${VOD_SYNC_INITIAL_DELAY_MS:-90000}
+      MAINTENANCE_TIME_ZONE: ${MAINTENANCE_TIME_ZONE:-Asia/Tehran}
+      MAINTENANCE_IDLE_START_HOUR: ${MAINTENANCE_IDLE_START_HOUR:-2}
+      MAINTENANCE_IDLE_END_HOUR: ${MAINTENANCE_IDLE_END_HOUR:-6}
+      MAINTENANCE_POLL_MS: ${MAINTENANCE_POLL_MS:-900000}
+      MAINTENANCE_READY_URL: http://app:3004/readyz
+      MAINTENANCE_MAX_RECENT_REQUESTS: ${MAINTENANCE_MAX_RECENT_REQUESTS:-12}
+      MAINTENANCE_MAX_ACTIVE_ROOMS: ${MAINTENANCE_MAX_ACTIVE_ROOMS:-1}
+      MAINTENANCE_MAX_MEMORY_MB: ${MAINTENANCE_MAX_MEMORY_MB:-1350}
+      MAINTENANCE_MAX_LOAD_AVG: ${MAINTENANCE_MAX_LOAD_AVG:-1.25}
       VOD_SOURCE_URL: ${VOD_SOURCE_URL:-https://dls2.aparatchi-dlcenter.top/DonyayeSerial/donyaye_serial_all_archive.html}
       MOVIESHO_DOWNLOAD_BASE: ${MOVIESHO_DOWNLOAD_BASE:-https://sr1.moviesho.com/}
       MOVIESHO_SITE_BASE: ${MOVIESHO_SITE_BASE:-https://www.moviesho.com/}
       MOVIESHO_MOVIE_YEARS: ${MOVIESHO_MOVIE_YEARS:-2025,2026}
       MOVIESHO_SITE_REQUEST_INTERVAL_MS: ${MOVIESHO_SITE_REQUEST_INTERVAL_MS:-220}
       MOVIESHO_SITE_RETRIES: ${MOVIESHO_SITE_RETRIES:-7}
+      CURATED_VOD_CONCURRENCY: ${CURATED_VOD_CONCURRENCY:-1}
+      CURATED_VOD_REQUEST_GAP_MS: ${CURATED_VOD_REQUEST_GAP_MS:-1000}
+      VOD_SERIES_EXPAND_CONCURRENCY: ${VOD_SERIES_EXPAND_CONCURRENCY:-1}
+      VOD_SERIES_EXPAND_CHANGED_LIMIT: ${VOD_SERIES_EXPAND_CHANGED_LIMIT:-100}
+      # IMDb release/news discovery remains daily; the large title dataset scan is weekly.
+      VOD_SYNC_METADATA_INTERVAL_MS: ${VOD_SYNC_METADATA_INTERVAL_MS:-604800000}
+      MUSIC_REFRESH_REQUEST_GAP_MS: ${MUSIC_REFRESH_REQUEST_GAP_MS:-1200}
       IMDB_DATA_API_BASE: ${IMDB_DATA_API_BASE:-http://185.203.118.87:8026}
       NODE_OPTIONS: --max-old-space-size=3072
-    command: ["node", "scripts/catalog-sync-daemon.mjs"]
+    command: ["node", "scripts/maintenance-scheduler.mjs", "--daemon"]
     restart: unless-stopped
     mem_limit: 3g
     cpus: 1.0
     volumes:
       - ./public/data:/app/public/data
+      - ./data:/app/data
       - vod_imdb_cache:/app/.media-cache
 
   nginx:

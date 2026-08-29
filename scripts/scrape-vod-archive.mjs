@@ -110,6 +110,8 @@ function parseArchive(html) {
         group: currentGroup,
         quality: inferQuality(label, href),
         release: inferRelease(label, href),
+        sourceProvider: "donyayeserial",
+        sourceUrl: SOURCE_URL,
       });
     }
 

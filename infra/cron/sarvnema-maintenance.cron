@@ -1,0 +1,5 @@
+# Alternative to the Docker maintenance service. Install this on the Linux host
+# only when Docker Compose does not run the `maintenance` service.
+# The script itself verifies the Asia/Tehran idle window, current app traffic,
+# active watch rooms, memory and load before it starts any crawler.
+*/15 * * * * cd /srv/vod && /usr/bin/flock -n /tmp/sarvnema-maintenance.lock /usr/bin/docker compose -f docker-compose.prod.yml run --rm maintenance node scripts/maintenance-scheduler.mjs >> /var/log/sarvnema-maintenance.log 2>&1

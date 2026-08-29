@@ -30,6 +30,10 @@ const MIN_SOURCE_COVERAGE = Math.max(
 );
 const FORCE = process.env.VOD_SYNC_FORCE === "1";
 const DRY_RUN = process.env.VOD_SYNC_DRY_RUN === "1";
+const SERIES_EXPAND_CHANGED_LIMIT = Math.max(
+  0,
+  Number(process.env.VOD_SERIES_EXPAND_CHANGED_LIMIT || 100),
+);
 
 async function main() {
   await mkdir(WORK_DIR, { recursive: true });
@@ -44,7 +48,6 @@ async function main() {
   await mkdir(runDir, { recursive: true });
 
   try {
-    const current = await readCatalogHeader(CATALOG_FILE);
     const previousStatus = await readJson(STATUS_FILE);
     const sourceFile = path.join(runDir, "source.json");
     const mergeReportFile = path.join(runDir, "merge-report.json");
@@ -63,9 +66,9 @@ async function main() {
     ]);
 
     const source = await readCatalogHeader(sourceFile);
-    validateCoverage(current, source, previousStatus);
+    validateCoverage(source, previousStatus);
     const mergedFile = path.join(runDir, "catalog-merged.json");
-    await run("Merge fresh links without deleting archive history", "scripts/merge-vod-source.mjs", [
+    await run("Merge fresh links without deleting archive history", "scripts/merge-vod-source-stream.mjs", [
       CATALOG_FILE,
       sourceFile,
       mergedFile,
@@ -91,7 +94,7 @@ async function main() {
       const seriesMergedFile = path.join(runDir, "catalog-series-merged.json");
       await run(
         "Merge recent series without deleting historical episodes",
-        "scripts/merge-vod-source.mjs",
+        "scripts/merge-vod-source-stream.mjs",
         [mergedFile, seriesSourceFile, seriesMergedFile, seriesMergeReportFile],
       );
       seriesChanges = await readJson(seriesMergeReportFile);
@@ -104,10 +107,13 @@ async function main() {
     const expansionFile = path.join(runDir, "catalog-expanded.json");
     const expansionReportFile = path.join(runDir, "expansion-report.json");
     const expansionIdsFile = path.join(runDir, "series-refresh-ids.json");
-    await writeFile(
-      expansionIdsFile,
-      JSON.stringify(Array.from(new Set([...(changes.addedIds ?? []), ...(changes.updatedIds ?? [])]))),
+    const expansionIds = Array.from(
+      new Set([
+        ...(changes.addedIds ?? []),
+        ...(changes.updatedIds ?? []).slice(0, SERIES_EXPAND_CHANGED_LIMIT),
+      ]),
     );
+    await writeFile(expansionIdsFile, JSON.stringify(expansionIds));
     await run(
       "Refresh recent and changed series episode directories",
       "scripts/expand-series-episode-links.mjs",
@@ -121,6 +127,8 @@ async function main() {
           path.join(WORK_DIR, "series-expansion-cache.json"),
         VOD_SERIES_EXPAND_CACHE_MAX_AGE_MS:
           process.env.VOD_SERIES_EXPAND_CACHE_MAX_AGE_MS || "21600000",
+        VOD_SERIES_EXPAND_CONCURRENCY:
+          process.env.VOD_SERIES_EXPAND_CONCURRENCY || "1",
       },
     );
     const expansion = await readJson(expansionReportFile);
@@ -146,7 +154,7 @@ async function main() {
       const movieshoMergedFile = path.join(runDir, "catalog-moviesho-merged.json");
       await run(
         "Merge only newly matched Moviesho titles",
-        "scripts/merge-vod-source.mjs",
+        "scripts/merge-vod-source-stream.mjs",
         [expansionFile, movieshoSourceFile, movieshoMergedFile, movieshoMergeReportFile],
       );
       movieshoChanges = await readJson(movieshoMergeReportFile);
@@ -216,7 +224,7 @@ async function main() {
         message: "Source checked; no catalog changes were found.",
       });
       console.log(
-        JSON.stringify({ published: false, metadataDue, changes, expansion }, null, 2),
+        JSON.stringify({ published: false, metadataDue, changes: changeSummary(changes), expansion }, null, 2),
       );
       return;
     }
@@ -320,7 +328,7 @@ async function main() {
         : "Catalog, title pages, search indexes and cast indexes were published atomically.",
     });
     console.log(
-      JSON.stringify({ published: !DRY_RUN, metadataDue, changes, expansion }, null, 2),
+      JSON.stringify({ published: !DRY_RUN, metadataDue, changes: changeSummary(changes), expansion }, null, 2),
     );
   } catch (error) {
     await writeStatus({
@@ -364,10 +372,24 @@ function combineChanges(first, second) {
   };
 }
 
-function validateCoverage(current, source, previousStatus) {
+function changeSummary(changes) {
+  return {
+    ...changes,
+    addedIds: undefined,
+    updatedIds: undefined,
+    addedIdCount: changes.addedIds?.length ?? 0,
+    updatedIdCount: changes.updatedIds?.length ?? 0,
+  };
+}
+
+function validateCoverage(source, previousStatus) {
   const sourceTitles = Number(source.totalTitles ?? 0);
   const sourceLinks = Number(source.totalLinks ?? 0);
-  const currentTitles = Number(current.totalTitles ?? 0);
+  // The public catalog is multi-source (F2MY, Moviesho, ZardFilm and more),
+  // while this archive is only DonyayeSerial. Comparing it with the complete
+  // catalog rejects a healthy source whenever other providers have increased
+  // the catalog size. The safety check must compare like-for-like snapshots.
+  const previousSourceTitles = Number(previousStatus?.sourceTitles ?? 0);
   const previousSourceLinks = Number(previousStatus?.sourceLinks ?? 0);
 
   if (sourceTitles < 100 || sourceLinks < 1_000) {
@@ -375,11 +397,11 @@ function validateCoverage(current, source, previousStatus) {
   }
   if (
     process.env.ALLOW_LARGE_ARCHIVE_SHRINK !== "1" &&
-    (sourceTitles < currentTitles * MIN_SOURCE_COVERAGE ||
+    ((previousSourceTitles > 0 && sourceTitles < previousSourceTitles * MIN_SOURCE_COVERAGE) ||
       (previousSourceLinks > 0 && sourceLinks < previousSourceLinks * MIN_SOURCE_COVERAGE))
   ) {
     throw new Error(
-      `Source coverage is unsafe (${sourceTitles}/${sourceLinks} vs ${currentTitles} catalog titles / ${previousSourceLinks || "no"} previous raw links). Existing data was preserved.`,
+      `Source coverage is unsafe (${sourceTitles}/${sourceLinks} vs ${previousSourceTitles || "no"} previous source titles / ${previousSourceLinks || "no"} previous source links). Existing data was preserved.`,
     );
   }
 }
