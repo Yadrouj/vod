@@ -53,6 +53,9 @@ async function main() {
     const movieshoSourceFile = path.join(runDir, "moviesho-source.json");
     const movieshoReportFile = path.join(runDir, "moviesho-report.json");
     const movieshoMergeReportFile = path.join(runDir, "moviesho-merge-report.json");
+    const curatedSourceFile = path.join(runDir, "curated-vod-source.json");
+    const curatedReportFile = path.join(runDir, "curated-vod-report.json");
+    const curatedMergeReportFile = path.join(runDir, "curated-vod-merge-report.json");
 
     await run("Scrape and validate DonyayeSerial", "scripts/scrape-vod-archive.mjs", [
       SOURCE_URL,
@@ -153,6 +156,36 @@ async function main() {
       catalogAfterSourcesFile = movieshoMergedFile;
       changes = combineChanges(changes, movieshoChanges);
     }
+    await run(
+      "Review curated Moviesho and ZardFilm categories for new or refreshed links",
+      "scripts/scrape-curated-vod-sources.mjs",
+      [],
+      {
+        CURATED_VOD_OUTPUT: curatedSourceFile,
+        CURATED_VOD_REPORT: curatedReportFile,
+        CURATED_VOD_CACHE: process.env.CURATED_VOD_CACHE || path.join(WORK_DIR, "curated-vod-cache.json"),
+        CURATED_VOD_CONCURRENCY: process.env.CURATED_VOD_CONCURRENCY || "2",
+        CURATED_VOD_REQUEST_GAP_MS: process.env.CURATED_VOD_REQUEST_GAP_MS || "350",
+      },
+    );
+    const curated = await readJson(curatedReportFile);
+    const curatedSource = await readJson(curatedSourceFile);
+    if (!curated || !curatedSource) {
+      throw new Error("Curated source review completed without a validation report.");
+    }
+    let curatedChanges = emptyChanges(changes);
+    if ((curatedSource.items?.length ?? 0) > 0) {
+      const curatedMergedFile = path.join(runDir, "catalog-curated-merged.json");
+      await run(
+        "Merge verified curated source links and timestamps",
+        "scripts/merge-curated-vod-source.mjs",
+        [catalogAfterSourcesFile, curatedSourceFile, curatedMergedFile, curatedMergeReportFile],
+      );
+      curatedChanges = await readJson(curatedMergeReportFile);
+      if (!curatedChanges) throw new Error("Curated source merge completed without a validation report.");
+      catalogAfterSourcesFile = curatedMergedFile;
+      changes = combineChanges(changes, curatedChanges);
+    }
     const metadataDue =
       FORCE ||
       !previousStatus?.metadataEnrichedAt ||
@@ -176,6 +209,8 @@ async function main() {
         seriesFeedLinks: seriesSource?.totalLinks ?? 0,
         moviesho,
         movieshoChanges,
+        curated,
+        curatedChanges,
         changes,
         expansion,
         message: "Source checked; no catalog changes were found.",
@@ -207,8 +242,9 @@ async function main() {
       metadataEnrichedAt = new Date().toISOString();
     }
 
-    if (changes.addedIds.length > 0) {
-      await writeFile(idsFile, JSON.stringify(changes.addedIds));
+    const imdbAddedIds = changes.addedIds.filter((id) => /^tt\d{5,12}$/i.test(String(id)));
+    if (imdbAddedIds.length > 0) {
+      await writeFile(idsFile, JSON.stringify(imdbAddedIds));
       await run(
         "Fetch rich metadata for newly discovered titles",
         "scripts/enrich-vod-api.mjs",
@@ -273,6 +309,8 @@ async function main() {
       seriesFeedLinks: seriesSource?.totalLinks ?? 0,
       moviesho,
       movieshoChanges,
+      curated,
+      curatedChanges,
       catalogTitles: finalSummary.totalTitles,
       catalogLinks: finalSummary.totalLinks,
       changes,

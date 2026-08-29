@@ -77,6 +77,8 @@ function toCard(item) {
     linksCount: Array.isArray(item.links) ? item.links.length : 0,
     source: item.source ?? null,
     sourcePageUrl: item.sourcePageUrl ?? null,
+    sourceUpdatedAt: item.sourceUpdatedAt ?? item.movieshoModifiedAt ?? item.f2myModifiedAt ?? null,
+    catalogUpdatedAt: item.catalogUpdatedAt ?? null,
     persianTitle: item.persianTitle ?? null,
     persianOverview: item.persianOverview ? item.persianOverview.slice(0, 220) : null,
     persianGenres: item.persianGenres ?? [],
@@ -153,6 +155,8 @@ async function main() {
     totalTitles: items.length,
     totalLinks: items.reduce((sum, item) => sum + item.linksCount, 0),
     generatedAt: new Date().toISOString(),
+    updatedAt: archive.updatedAt ?? archive.scrapedAt ?? null,
+    curatedSourcesUpdatedAt: archive.curatedSourcesUpdatedAt ?? null,
     filters: {
       genres: uniqueSorted(items.flatMap((item) => item.genres)),
       countries: uniqueSorted(items.flatMap((item) => item.countries)),
@@ -178,6 +182,8 @@ async function main() {
     totalTitles: index.totalTitles,
     totalLinks: index.totalLinks,
     generatedAt: index.generatedAt,
+    updatedAt: index.updatedAt,
+    curatedSourcesUpdatedAt: index.curatedSourcesUpdatedAt,
     // The landing page never uses browse filters. Keeping the 11k+ group names
     // here made this otherwise small bootstrap file almost one megabyte larger.
     filters: {

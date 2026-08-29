@@ -128,6 +128,12 @@ export type VodItem = {
   f2myPostId?: number | null;
   f2myModifiedAt?: string | null;
   f2myExtraLinks?: VodLink[];
+  /** Exact source pages used by the curated source synchronizer. */
+  curatedSourcePages?: string[];
+  /** Last modification date reported by a curated source page. */
+  sourceUpdatedAt?: string | null;
+  /** Last time SarvNema merged source data for this title. */
+  catalogUpdatedAt?: string | null;
 };
 
 export type VodArchive = {
@@ -140,6 +146,8 @@ export type VodArchive = {
   imageProvider?: string;
   apiProvider?: string;
   apiMatchedTitles?: number;
+  updatedAt?: string;
+  curatedSourcesUpdatedAt?: string;
   items: VodItem[];
 };
 
@@ -163,6 +171,10 @@ export type VodCard = {
   linksCount: number;
   source?: string | null;
   sourcePageUrl?: string | null;
+  /** Latest timestamp received from a curated source page. */
+  sourceUpdatedAt?: string | null;
+  /** Last time SarvNema merged curated source data into this title. */
+  catalogUpdatedAt?: string | null;
   persianTitle?: string | null;
   persianOverview?: string | null;
   persianGenres?: string[];
@@ -183,6 +195,8 @@ export type VodCatalogIndex = {
   totalTitles: number;
   totalLinks: number;
   generatedAt: string;
+  updatedAt?: string;
+  curatedSourcesUpdatedAt?: string;
   filters: {
     genres: string[];
     countries: string[];
