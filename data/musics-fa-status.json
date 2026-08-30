@@ -1,21 +1,57 @@
 {
-  "state": "complete",
-  "startedAt": "2026-08-24T07:32:41.094Z",
-  "updatedAt": "2026-08-24T07:37:21.324Z",
+  "state": "interrupted",
+  "startedAt": "2026-08-29T20:02:26.605Z",
+  "updatedAt": "2026-08-29T22:45:21.037Z",
+  "finishedAt": "2026-08-30T02:07:13.788Z",
+  "error": "Stopped after the source stopped responding during detail enrichment; completed page discovery and preserved the prior published catalog.",
   "pages": {
-    "total": 35,
-    "complete": 35
+    "total": 1247,
+    "complete": 1216
   },
   "tracks": {
-    "discovered": 688,
-    "new": 687,
-    "updated": 1,
-    "failures": 0
+    "discovered": 24320,
+    "new": 23629,
+    "updated": 691,
+    "failures": 31
   },
   "details": {
-    "requested": 687,
-    "complete": 687
+    "requested": 23629,
+    "complete": 3680
   },
-  "current": null,
-  "warnings": []
+  "current": "details: Bebakhsh Age",
+  "warnings": [
+    "page 1216: 429 Too Many Requests",
+    "page 1217: 429 Too Many Requests",
+    "page 1218: 429 Too Many Requests",
+    "page 1219: 429 Too Many Requests",
+    "page 1220: 429 Too Many Requests",
+    "page 1222: 429 Too Many Requests",
+    "page 1223: 429 Too Many Requests",
+    "page 1224: 429 Too Many Requests",
+    "page 1225: 429 Too Many Requests",
+    "page 1226: 429 Too Many Requests",
+    "page 1227: 429 Too Many Requests",
+    "page 1228: 429 Too Many Requests",
+    "page 1229: 429 Too Many Requests",
+    "page 1230: 429 Too Many Requests",
+    "page 1231: 429 Too Many Requests",
+    "page 1232: 429 Too Many Requests",
+    "page 1233: 429 Too Many Requests",
+    "page 1234: 429 Too Many Requests",
+    "page 1235: 429 Too Many Requests",
+    "page 1236: 429 Too Many Requests",
+    "page 1237: 429 Too Many Requests",
+    "page 1238: 429 Too Many Requests",
+    "page 1239: 429 Too Many Requests",
+    "page 1240: 429 Too Many Requests",
+    "page 1241: 429 Too Many Requests",
+    "page 1242: 429 Too Many Requests",
+    "page 1243: 429 Too Many Requests",
+    "page 1244: 429 Too Many Requests",
+    "page 1245: 429 Too Many Requests",
+    "page 1246: 429 Too Many Requests",
+    "page 1247: 429 Too Many Requests",
+    "detail https://musics-fa.com/download-song/121692/: fetch failed",
+    "detail https://musics-fa.com/download-song/111773/: fetch failed"
+  ]
 }

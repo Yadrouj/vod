@@ -1,77 +1,2214 @@
 {
-  "generatedAt": "2026-08-12T23:44:11.826Z",
+  "generatedAt": "2026-08-29T09:23:48.119Z",
   "sources": [
-    "https://www.imdb.com/search/title/?title_type=feature&release_date=2026-08-05,2026-08-12&sort=release_date,desc",
-    "https://www.imdb.com/search/title/?title_type=tv_series%2Ctv_miniseries&release_date=2026-08-05,2026-08-12&sort=release_date,desc"
+    "https://www.imdb.com/search/title/?title_type=feature&release_date=2026-08-22,2026-08-29&sort=release_date,desc",
+    "https://www.imdb.com/search/title/?title_type=tv_series%2Ctv_miniseries&release_date=2026-08-22,2026-08-29&sort=release_date,desc"
   ],
-  "bootstrap": true,
+  "bootstrap": false,
   "summary": {
-    "catalogTitles": 20101,
-    "available": 0,
-    "comingSoon": 3,
-    "newEvents": 3,
-    "imdbCandidates": 28
+    "catalogTitles": 21899,
+    "available": 80,
+    "comingSoon": 0,
+    "newEvents": 14528,
+    "imdbCandidates": 26
   },
   "items": [
     {
-      "id": "coming-soon-tt27165187",
-      "eventAt": "2026-08-12T23:44:11.826Z",
-      "status": "coming-soon",
+      "id": "available-tt0111161-3e6671c321b1ff5665306b84f1b3a22ace05e8c8cb8aa8fa9ecc2b7541b3cd4e",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
       "kind": "film",
-      "title": "The End of Oak Street",
-      "baseTitle": "The End of Oak Street",
-      "imdbCode": "tt27165187",
-      "year": 2026,
-      "releaseDate": "2026-08-14",
+      "title": "The Shawshank Redemption",
+      "baseTitle": "The Shawshank Redemption",
+      "imdbCode": "tt0111161",
+      "year": 1994,
+      "releaseDate": "1994-10-14",
       "season": null,
       "episode": null,
-      "href": null,
-      "imdbUrl": "https://www.imdb.com/title/tt27165187/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZGI0YmRjNWYtYTliYy00YzdjLTkzNzQtZWExNjA2ZDU5MzAwXkEyXkFqcGc@._V1_QL75_UY133_CR8,0,90,133_.jpg",
-      "sourceNames": [],
-      "qualities": [],
-      "linksCount": 0,
-      "reason": "IMDb release found — source scan is queued."
+      "href": "/tt0111161",
+      "imdbUrl": "https://www.imdb.com/title/tt0111161/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTM0NjUxMDk5MF5BMl5BanBnXkFtZTcwNDMxNDY3Mw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 20,
+      "reason": "New files or qualities were found in a configured source."
     },
     {
-      "id": "coming-soon-tt37959966",
-      "eventAt": "2026-08-12T23:44:11.826Z",
-      "status": "coming-soon",
+      "id": "available-tt0468569-baf4b857c77d7e35772d70caa95c52bf55ea960dc20a56e8de447b38bb01f52c",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
       "kind": "film",
-      "title": "Chiranjeevi Hanuman: The Eternal",
-      "baseTitle": "Chiranjeevi Hanuman: The Eternal",
-      "imdbCode": "tt37959966",
-      "year": 2026,
-      "releaseDate": "2026-09-25",
+      "title": "The Dark Knight",
+      "baseTitle": "The Dark Knight",
+      "imdbCode": "tt0468569",
+      "year": 2008,
+      "releaseDate": "2008-07-18",
       "season": null,
       "episode": null,
-      "href": null,
-      "imdbUrl": "https://www.imdb.com/title/tt37959966/",
-      "imageUrl": null,
-      "sourceNames": [],
-      "qualities": [],
-      "linksCount": 0,
-      "reason": "IMDb release found — source scan is queued."
+      "href": "/tt0468569",
+      "imdbUrl": "https://www.imdb.com/title/tt0468569/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTAxNzI0NDE1NF5BMl5BanBnXkFtZTcwNjczMTk2Mw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 20,
+      "reason": "New files or qualities were found in a configured source."
     },
     {
-      "id": "coming-soon-tt39305139",
-      "eventAt": "2026-08-12T23:44:11.826Z",
-      "status": "coming-soon",
+      "id": "available-tt1375666-b8e3a77d625f837613a20a3d8f7946c139cf2dba28b9bbb9df992f10ae93b23d",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
       "kind": "film",
-      "title": "The Wanted Part II",
-      "baseTitle": "The Wanted Part II",
-      "imdbCode": "tt39305139",
-      "year": 2026,
-      "releaseDate": "2026-08-28",
+      "title": "Inception",
+      "baseTitle": "Inception",
+      "imdbCode": "tt1375666",
+      "year": 2010,
+      "releaseDate": "2010-07-16",
       "season": null,
       "episode": null,
-      "href": null,
-      "imdbUrl": "https://www.imdb.com/title/tt39305139/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOGI0YmE3NWQtODY4Yy00ZDNkLTk1YzMtOTQ2ZjBmNWM3MTJjXkEyXkFqcGc@._V1_QL75_UX90_CR0,1,90,133_.jpg",
-      "sourceNames": [],
-      "qualities": [],
-      "linksCount": 0,
-      "reason": "IMDb release found — source scan is queued."
+      "href": "/tt1375666",
+      "imdbUrl": "https://www.imdb.com/title/tt1375666/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjIyNjk1OTgzNV5BMl5BanBnXkFtZTcwOTU0OTk1Mw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 18,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0903747-7914a21293719400308117a905be5f9f640a6d906e5e3f72456700885787bf94",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Breaking Bad",
+      "baseTitle": "Breaking Bad",
+      "imdbCode": "tt0903747",
+      "year": 2008,
+      "releaseDate": "2008-01-20",
+      "season": null,
+      "episode": null,
+      "href": "/tt0903747",
+      "imdbUrl": "https://www.imdb.com/title/tt0903747/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjE1OTMwNTA5NV5BMl5BanBnXkFtZTgwMDkzOTA1NjM@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "moviesho"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 991,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0137523-a08e90604fd88918cf8de7e9fb0b2c4499136e67da3ec486601aa08438057c97",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Fight Club",
+      "baseTitle": "Fight Club",
+      "imdbCode": "tt0137523",
+      "year": 1999,
+      "releaseDate": "1999-10-15",
+      "season": null,
+      "episode": null,
+      "href": "/tt0137523",
+      "imdbUrl": "https://www.imdb.com/title/tt0137523/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNDY1MzE3MTI0Nl5BMl5BanBnXkFtZTcwNDIwNTI5Mw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 20,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0816692-a6e9e35c0ae3b251797c2ae2741529fa06acab664e4b0f01b89be4eb4fe4dcb7",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Interstellar",
+      "baseTitle": "Interstellar",
+      "imdbCode": "tt0816692",
+      "year": 2014,
+      "releaseDate": "2014-11-07",
+      "season": null,
+      "episode": null,
+      "href": "/tt0816692",
+      "imdbUrl": "https://www.imdb.com/title/tt0816692/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTc0NDQ4MjkyOF5BMl5BanBnXkFtZTgwNDE2NzUzOTE@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 22,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0109830-39d16d66596ce5ebf8ec863a280c4da977e062876ebee84fabd52540a7a558da",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Forrest Gump",
+      "baseTitle": "Forrest Gump",
+      "imdbCode": "tt0109830",
+      "year": 1994,
+      "releaseDate": "1994-07-06",
+      "season": null,
+      "episode": null,
+      "href": "/tt0109830",
+      "imdbUrl": "https://www.imdb.com/title/tt0109830/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZTk0ZmUxZTktMDBlNC00YmZhLWJlNzgtMmY4M2NlNWIyYWZhXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 21,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0110912-6866e8e75fe136e6e7d9adc2d768406c158968e95c6812a1d2828d3d0a39c980",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Pulp Fiction",
+      "baseTitle": "Pulp Fiction",
+      "imdbCode": "tt0110912",
+      "year": 1994,
+      "releaseDate": "1994-10-14",
+      "season": null,
+      "episode": null,
+      "href": "/tt0110912",
+      "imdbUrl": "https://www.imdb.com/title/tt0110912/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNTY1MzgzOTYxNV5BMl5BanBnXkFtZTgwMDI4OTEwMjE@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 19,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0133093-048c5c5a9806cff1b5fb86ad60a08cf5e52291d62e6745ce11e3c0953c703c57",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Matrix",
+      "baseTitle": "The Matrix",
+      "imdbCode": "tt0133093",
+      "year": 1999,
+      "releaseDate": "1999-03-31",
+      "season": null,
+      "episode": null,
+      "href": "/tt0133093",
+      "imdbUrl": "https://www.imdb.com/title/tt0133093/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMDEwMGVlODAtYmU5Zi00OGM3LTg1N2YtMjEyNDMxYWY1ZGY2XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 15,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0068646-911e450a85fc33dc7c31e51955cfd12da61db8c320fbf3b1825837d6a0061c43",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Godfather",
+      "baseTitle": "The Godfather",
+      "imdbCode": "tt0068646",
+      "year": 1972,
+      "releaseDate": "1972-03-24",
+      "season": null,
+      "episode": null,
+      "href": "/tt0068646",
+      "imdbUrl": "https://www.imdb.com/title/tt0068646/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMDY0Yzc3MzAtZjczNi00MmE4LWIyN2MtOTRjMGRmM2QwYWNiXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 18,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0120737-597dd391d9c0b9857aaad3002208ef9c3c62608b9f969f619aeac9e218858107",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Lord of the Rings: The Fellowship of the Ring",
+      "baseTitle": "The Lord of the Rings: The Fellowship of the Ring",
+      "imdbCode": "tt0120737",
+      "year": 2001,
+      "releaseDate": "2001-12-19",
+      "season": null,
+      "episode": null,
+      "href": "/tt0120737",
+      "imdbUrl": "https://www.imdb.com/title/tt0120737/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjQ4NDg5MTQwNl5BMl5BanBnXkFtZTgwNTQwMTk2MTI@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 25,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0167260-2577d967a43001bf0eff03deb9ccdc654edb1886c19adfc8284aee73f17af21e",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Lord of the Rings: The Return of the King",
+      "baseTitle": "The Lord of the Rings: The Return of the King",
+      "imdbCode": "tt0167260",
+      "year": 2003,
+      "releaseDate": "2003-12-17",
+      "season": null,
+      "episode": null,
+      "href": "/tt0167260",
+      "imdbUrl": "https://www.imdb.com/title/tt0167260/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTk1ODY0NDg2M15BMl5BanBnXkFtZTcwNTU2MTk2Mw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 24,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0114369-118c52623149b3f2d217c374f1a98f2b43318e3aba8a4db0fb2615703558b58c",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Seven",
+      "baseTitle": "Seven",
+      "imdbCode": "tt0114369",
+      "year": 1995,
+      "releaseDate": "1995-09-22",
+      "season": null,
+      "episode": null,
+      "href": "/tt0114369",
+      "imdbUrl": "https://www.imdb.com/title/tt0114369/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjI3MTU0ODQ2MF5BMl5BanBnXkFtZTcwNTQzNTIwNA@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 22,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt1345836-ad9cab5b53ec8a10293a32aaab97ed01e04951c560a31ab045e483dc4f13533a",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Dark Knight Rises",
+      "baseTitle": "The Dark Knight Rises",
+      "imdbCode": "tt1345836",
+      "year": 2012,
+      "releaseDate": "2012-07-20",
+      "season": null,
+      "episode": null,
+      "href": "/tt1345836",
+      "imdbUrl": "https://www.imdb.com/title/tt1345836/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTU0OTg2MTE2Ml5BMl5BanBnXkFtZTcwNTUwMzQxOA@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 20,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0167261-bee32b639e510a794f59f57d3cdc2f4d09af0f256c1acffff1c74731f8b527e0",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Lord of the Rings: The Two Towers",
+      "baseTitle": "The Lord of the Rings: The Two Towers",
+      "imdbCode": "tt0167261",
+      "year": 2002,
+      "releaseDate": "2002-12-18",
+      "season": null,
+      "episode": null,
+      "href": "/tt0167261",
+      "imdbUrl": "https://www.imdb.com/title/tt0167261/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjA3NDk3NjI5MF5BMl5BanBnXkFtZTcwMTI2MjY0NA@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 22,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt1853728-eb33b42951b1a8b93057a5c6ef02aa4e6fa8bb2f5a508428986c3de4e3549530",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Django Unchained",
+      "baseTitle": "Django Unchained",
+      "imdbCode": "tt1853728",
+      "year": 2012,
+      "releaseDate": "2012-12-25",
+      "season": null,
+      "episode": null,
+      "href": "/tt1853728",
+      "imdbUrl": "https://www.imdb.com/title/tt1853728/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTY2Mzg1ODYyOF5BMl5BanBnXkFtZTcwOTgwMzQ3OA@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 20,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0172495-1d5d047b9ac90a4141aa8cd3e2859fae926c5bb3961c95826262853650d1e9d5",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Gladiator",
+      "baseTitle": "Gladiator",
+      "imdbCode": "tt0172495",
+      "year": 2000,
+      "releaseDate": "2000-05-05",
+      "season": null,
+      "episode": null,
+      "href": "/tt0172495",
+      "imdbUrl": "https://www.imdb.com/title/tt0172495/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZDlhOWZmODctMmJkNy00M2E0LWE3NjAtMGQ3MWQxNDk4ZTA4XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 16,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0993846-3be201345215200b4781861372d314022acd5c4b6b27578ff886e0062a0a1886",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Wolf of Wall Street",
+      "baseTitle": "The Wolf of Wall Street",
+      "imdbCode": "tt0993846",
+      "year": 2013,
+      "releaseDate": "2013-12-25",
+      "season": null,
+      "episode": null,
+      "href": "/tt0993846",
+      "imdbUrl": "https://www.imdb.com/title/tt0993846/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjA4NjQ5MDI2MV5BMl5BanBnXkFtZTgwNjg0MzQ4MDE@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 19,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0361748-7b05f712b4a675543087e1ad610d26ff5f8a9f61805c3b3171e79a93018b2f8f",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Inglourious Basterds",
+      "baseTitle": "Inglourious Basterds",
+      "imdbCode": "tt0361748",
+      "year": 2009,
+      "releaseDate": "2009-08-21",
+      "season": null,
+      "episode": null,
+      "href": "/tt0361748",
+      "imdbUrl": "https://www.imdb.com/title/tt0361748/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTAxNTIyMTIxMzReQTJeQWpwZ15BbWU4MDk3Mjc5NzEy._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 21,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0102926-aa57ebf9b85a2d2fd2385d5390e1b2bb77b670f34215d36b6dc881a429f7f90f",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Silence of the Lambs",
+      "baseTitle": "The Silence of the Lambs",
+      "imdbCode": "tt0102926",
+      "year": 1991,
+      "releaseDate": "1991-02-14",
+      "season": null,
+      "episode": null,
+      "href": "/tt0102926",
+      "imdbUrl": "https://www.imdb.com/title/tt0102926/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNWFmYTUyN2YtODBhNy00ZjliLWJhOTMtOWMxMGQxYmMzZTIwXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 10,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0372784-2344b54d8e1128a9ef692dcc87d2ac74da22967d9aade52810be7b2087e8661e",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Batman Begins",
+      "baseTitle": "Batman Begins",
+      "imdbCode": "tt0372784",
+      "year": 2005,
+      "releaseDate": "2005-06-15",
+      "season": null,
+      "episode": null,
+      "href": "/tt0372784",
+      "imdbUrl": "https://www.imdb.com/title/tt0372784/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTM3MDM4NjExMV5BMl5BanBnXkFtZTcwNTk4OTIyNw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 20,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt4574334-39ae741aad4574ec3d10d9369d18e5c0da3267618c24a4545b7b83f19ea16c16",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Stranger Things",
+      "baseTitle": "Stranger Things",
+      "imdbCode": "tt4574334",
+      "year": 2016,
+      "releaseDate": "2016-07-15",
+      "season": null,
+      "episode": null,
+      "href": "/tt4574334",
+      "imdbUrl": "https://www.imdb.com/title/tt4574334/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZjJmYjc2YTYtOTBiYy00OWY4LTkwODAtYWE0NWMxNDFmZmU3XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "moviesho"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 784,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt7286456-46148fb697eed959ef04527d6392008cf29f9a622d1cce884c28843f8b798b96",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Joker",
+      "baseTitle": "Joker",
+      "imdbCode": "tt7286456",
+      "year": 2019,
+      "releaseDate": "2019-10-04",
+      "season": null,
+      "episode": null,
+      "href": "/tt7286456",
+      "imdbUrl": "https://www.imdb.com/title/tt7286456/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BYTUxYWNhNmQtNzEyOS00YjdiLTkyZDctZWUwYmFkYzQxZGVhXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 26,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt1130884-54b2ab4ed70e56fb01ee468667df4552f3f37a0624fa2946ff3e5ac87748e8c5",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Shutter Island",
+      "baseTitle": "Shutter Island",
+      "imdbCode": "tt1130884",
+      "year": 2010,
+      "releaseDate": "2010-02-19",
+      "season": null,
+      "episode": null,
+      "href": "/tt1130884",
+      "imdbUrl": "https://www.imdb.com/title/tt1130884/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTQ0MzA4ODY2MF5BMl5BanBnXkFtZTcwMTgxNTUxMw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 19,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0120815-b083fcd04def9a9be773e08682ae5771e979f1a463ed50676a79afe35b490807",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Saving Private Ryan",
+      "baseTitle": "Saving Private Ryan",
+      "imdbCode": "tt0120815",
+      "year": 1998,
+      "releaseDate": "1998-07-24",
+      "season": null,
+      "episode": null,
+      "href": "/tt0120815",
+      "imdbUrl": "https://www.imdb.com/title/tt0120815/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNmZhNjk2NzgtOTc0Yi00ZGM1LWFhNGUtNWY3NzYxOWM0NzkzXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial",
+        "moviesho"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 16,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0482571-ac965320c1809c7b4e9886762575598c0477270216a33e75348776c88dcd4a82",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Prestige",
+      "baseTitle": "The Prestige",
+      "imdbCode": "tt0482571",
+      "year": 2006,
+      "releaseDate": "2006-10-20",
+      "season": null,
+      "episode": null,
+      "href": "/tt0482571",
+      "imdbUrl": "https://www.imdb.com/title/tt0482571/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTE0MzQ2NTk5MV5BMl5BanBnXkFtZTcwNjkzNDMyMw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 22,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0108052-ae22a0a26eaa139db197169be603c5017427f654329528de9e8f674c3ed25b85",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Schindler's List",
+      "baseTitle": "Schindler's List",
+      "imdbCode": "tt0108052",
+      "year": 1993,
+      "releaseDate": "1994-02-04",
+      "season": null,
+      "episode": null,
+      "href": "/tt0108052",
+      "imdbUrl": "https://www.imdb.com/title/tt0108052/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTgwNzg3MDkxM15BMl5BanBnXkFtZTcwMzA2MDAxMw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 16,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0076759-eb5efe5c25bc25e104cc58c60c979a19d7fbd262e874bd03e4829eac659c20a7",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Star Wars: Episode IV - A New Hope",
+      "baseTitle": "Star Wars: Episode IV - A New Hope",
+      "imdbCode": "tt0076759",
+      "year": 1977,
+      "releaseDate": "1977-05-25",
+      "season": null,
+      "episode": null,
+      "href": "/tt0076759",
+      "imdbUrl": "https://www.imdb.com/title/tt0076759/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTk3MTkzNTk3Ml5BMl5BanBnXkFtZTgwOTcyMzQyNDM@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 42,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0120689-d72f36186a25a55018124a11a96555d7bafc2dd007c4161a1472c302a76b7611",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Green Mile",
+      "baseTitle": "The Green Mile",
+      "imdbCode": "tt0120689",
+      "year": 1999,
+      "releaseDate": "1999-12-10",
+      "season": null,
+      "episode": null,
+      "href": "/tt0120689",
+      "imdbUrl": "https://www.imdb.com/title/tt0120689/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BM2IyOWE3MDAtYzYyMi00MTAxLWI1MjgtZTQ0ZDk4MGQ2OWEwXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 14,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0848228-828f25c7771895f8cce9d7d314a59fdc0c919d92d71d8e1ea31a1816b06310a3",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Avengers",
+      "baseTitle": "The Avengers",
+      "imdbCode": "tt0848228",
+      "year": 2012,
+      "releaseDate": "2012-05-04",
+      "season": null,
+      "episode": null,
+      "href": "/tt0848228",
+      "imdbUrl": "https://www.imdb.com/title/tt0848228/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTA0NjY0NzE4OTReQTJeQWpwZ15BbWU3MDczODg2Nzc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 18,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0407887-eda2f83ba87d2b0f77c25e807a9c7963b1455b10094f873ee7bf32c14365f320",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Departed",
+      "baseTitle": "The Departed",
+      "imdbCode": "tt0407887",
+      "year": 2006,
+      "releaseDate": "2006-10-06",
+      "season": null,
+      "episode": null,
+      "href": "/tt0407887",
+      "imdbUrl": "https://www.imdb.com/title/tt0407887/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjMwODU4MDU4OF5BMl5BanBnXkFtZTcwMzY4MzMyNw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 18,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0080684-c05cdbea4a586b0dff81d14b5e177caf76f371821fb3a2a18de476cf386d7e7c",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Star Wars: Episode V - The Empire Strikes Back",
+      "baseTitle": "Star Wars: Episode V - The Empire Strikes Back",
+      "imdbCode": "tt0080684",
+      "year": 1980,
+      "releaseDate": "1980-06-18",
+      "season": null,
+      "episode": null,
+      "href": "/tt0080684",
+      "imdbUrl": "https://www.imdb.com/title/tt0080684/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTU1Mjk0NTEzNV5BMl5BanBnXkFtZTgwNjI4NzUyNDM@._V1_.jpg",
+      "sourceNames": [
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 5,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0499549-3ceb48335ff3f438d5076bfdac91b35d6c08c309a932f9370b82250d247e0322",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Avatar",
+      "baseTitle": "Avatar",
+      "imdbCode": "tt0499549",
+      "year": 2009,
+      "releaseDate": "2009-12-18",
+      "season": null,
+      "episode": null,
+      "href": "/tt0499549",
+      "imdbUrl": "https://www.imdb.com/title/tt0499549/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjEyOTYyMzUxNl5BMl5BanBnXkFtZTcwNTg0MTUzNA@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 21,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0071562-08743353b81ac84bf5133aac01d1ed73fdbdc29f774b76ac2b4a76f0147dde26",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Godfather Part II",
+      "baseTitle": "The Godfather Part II",
+      "imdbCode": "tt0071562",
+      "year": 1974,
+      "releaseDate": "1974-12-18",
+      "season": null,
+      "episode": null,
+      "href": "/tt0071562",
+      "imdbUrl": "https://www.imdb.com/title/tt0071562/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNjBmNDE5ZDMtMmU1OS00NzY5LWI0YTAtNWEwNmY2Zjc0MTY5XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 15,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0088763-c5b61306846a572815c7d0cb470d95541196129859f7cfc69b29587efc767e0d",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Back to the Future",
+      "baseTitle": "Back to the Future",
+      "imdbCode": "tt0088763",
+      "year": 1985,
+      "releaseDate": "1985-07-03",
+      "season": null,
+      "episode": null,
+      "href": "/tt0088763",
+      "imdbUrl": "https://www.imdb.com/title/tt0088763/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BYTQ0MTQ4MTYtOTliMS00YjAwLWI1MjYtOWJmMTc4Mzc2MmNlXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 11,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt4154796-2056b395477c7d79ead5236d94a6cda783ce9d887b1605bcec4144eda414c23f",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Avengers: Endgame",
+      "baseTitle": "Avengers: Endgame",
+      "imdbCode": "tt4154796",
+      "year": 2019,
+      "releaseDate": "2019-04-26",
+      "season": null,
+      "episode": null,
+      "href": "/tt4154796",
+      "imdbUrl": "https://www.imdb.com/title/tt4154796/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZTNiNDMyNjQtMjU4Yy00OTBkLWJmMTMtMzY0ZjE0OGI4MWMzXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 29,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0209144-3692081ea6481c89cf52a81a51981a62692b3499774e7f5e97063333b5b59e68",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Memento",
+      "baseTitle": "Memento",
+      "imdbCode": "tt0209144",
+      "year": 2000,
+      "releaseDate": "2001-05-25",
+      "season": null,
+      "episode": null,
+      "href": "/tt0209144",
+      "imdbUrl": "https://www.imdb.com/title/tt0209144/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjc5NzUzNzAwOF5BMl5BanBnXkFtZTcwMjY0NzY2NA@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 16,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0120338-1640a1f10b5ba2037601ca7c6be680f0902fdef8ebabdae502b021b9e0748087",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Titanic",
+      "baseTitle": "Titanic",
+      "imdbCode": "tt0120338",
+      "year": 1997,
+      "releaseDate": "1997-12-19",
+      "season": null,
+      "episode": null,
+      "href": "/tt0120338",
+      "imdbUrl": "https://www.imdb.com/title/tt0120338/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNzY5MDQzOTAwNV5BMl5BanBnXkFtZTcwNTY0NTk1Nw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "4K",
+        "1080p",
+        "720p"
+      ],
+      "linksCount": 11,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0099685-e04971dda6751bc920eb5284eb75d659a20b60881b6b1f76bbe73295b7b90416",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "GoodFellas",
+      "baseTitle": "GoodFellas",
+      "imdbCode": "tt0099685",
+      "year": 1990,
+      "releaseDate": "1990-09-21",
+      "season": null,
+      "episode": null,
+      "href": "/tt0099685",
+      "imdbUrl": "https://www.imdb.com/title/tt0099685/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTkyNDA2NDU4Nl5BMl5BanBnXkFtZTcwMTMwMjMwNA@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 16,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0120382-8abf8777438cf518d34a20f41400756693279edce532d1104080cf2a11d54e6d",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Truman Show",
+      "baseTitle": "The Truman Show",
+      "imdbCode": "tt0120382",
+      "year": 1998,
+      "releaseDate": "1998-06-05",
+      "season": null,
+      "episode": null,
+      "href": "/tt0120382",
+      "imdbUrl": "https://www.imdb.com/title/tt0120382/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTM2MDM0MzA1Ml5BMl5BanBnXkFtZTcwNzU3NDU0NQ@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 12,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt4154756-96846f241fc85d151340bf8a17d7162cba3b0f1954c96970ed0bd98ce0ddbded",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Avengers: Infinity War",
+      "baseTitle": "Avengers: Infinity War",
+      "imdbCode": "tt4154756",
+      "year": 2018,
+      "releaseDate": "2018-04-27",
+      "season": null,
+      "episode": null,
+      "href": "/tt4154756",
+      "imdbUrl": "https://www.imdb.com/title/tt4154756/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNjg2MjI2MjU4NV5BMl5BanBnXkFtZTgwMjgxMjQ0NjM@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 33,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt2015381-c69e14ca506b1ce14d1c58ec70b1172071393212a2ee264725051baad7a910b5",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Guardians of the Galaxy",
+      "baseTitle": "Guardians of the Galaxy",
+      "imdbCode": "tt2015381",
+      "year": 2014,
+      "releaseDate": "2014-08-01",
+      "season": null,
+      "episode": null,
+      "href": "/tt2015381",
+      "imdbUrl": "https://www.imdb.com/title/tt2015381/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTIxMzI4NDc4MV5BMl5BanBnXkFtZTgwNTEzOTYxMTI@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 16,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0110413-04088cfb071ea015401722fa33a6af3dcd33b544f4b06e5ebe2dc36346757555",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Léon: The Professional",
+      "baseTitle": "Léon: The Professional",
+      "imdbCode": "tt0110413",
+      "year": 1994,
+      "releaseDate": "1994-11-18",
+      "season": null,
+      "episode": null,
+      "href": "/tt0110413",
+      "imdbUrl": "https://www.imdb.com/title/tt0110413/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjU2MzA5MjQ0MV5BMl5BanBnXkFtZTgwMzczMTY3MTI@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "4K",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 20,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0325980-61e32009b92ee2f2fbc1892b29991c2d97063e70749b22eefad3c342b53ff6eb",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Pirates of the Caribbean: The Curse of the Black Pearl",
+      "baseTitle": "Pirates of the Caribbean: The Curse of the Black Pearl",
+      "imdbCode": "tt0325980",
+      "year": 2003,
+      "releaseDate": "2003-07-09",
+      "season": null,
+      "episode": null,
+      "href": "/tt0325980",
+      "imdbUrl": "https://www.imdb.com/title/tt0325980/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTcyNzY2MTE4Nl5BMl5BanBnXkFtZTcwOTkyMTIyNw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 25,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0910970-789566f881ac036a7762bb67ce349b71d0fd8588a3c1e92013aefd1c54fee38e",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "WALL·E",
+      "baseTitle": "WALL·E",
+      "imdbCode": "tt0910970",
+      "year": 2008,
+      "releaseDate": "2008-06-27",
+      "season": null,
+      "episode": null,
+      "href": "/tt0910970",
+      "imdbUrl": "https://www.imdb.com/title/tt0910970/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BYWI3ZTVkZDMtY2RkNi00NmMwLWFkZDItOGVhZmQ1ZGRmNWM1XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 14,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0266697-dd9630b97d700708c60a31d9cdfa60e30c52de16f06e8b5086e33d69c1dbe192",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Kill Bill: Vol. 1",
+      "baseTitle": "Kill Bill: Vol. 1",
+      "imdbCode": "tt0266697",
+      "year": 2003,
+      "releaseDate": "2003-10-10",
+      "season": null,
+      "episode": null,
+      "href": "/tt0266697",
+      "imdbUrl": "https://www.imdb.com/title/tt0266697/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTgxNzEwNzEyN15BMl5BanBnXkFtZTgwMjc4MzA4MTI@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 14,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0103064-f80eeb64eafff9da8b8b7d5ce8092c00e874b53b5f62c81dbc7e34fd0442d8b8",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Terminator 2: Judgment Day",
+      "baseTitle": "Terminator 2: Judgment Day",
+      "imdbCode": "tt0103064",
+      "year": 1991,
+      "releaseDate": "1991-07-03",
+      "season": null,
+      "episode": null,
+      "href": "/tt0103064",
+      "imdbUrl": "https://www.imdb.com/title/tt0103064/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOWQ0N2RjMDAtYWRiNy00MjRiLWE2NzQtNjQ3NGZiYTBjN2MwXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 20,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0169547-0d4fe0e91dc0469882d0133da86b30145ac450ba5c422ee63eb8e2c6292efabe",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "American Beauty",
+      "baseTitle": "American Beauty",
+      "imdbCode": "tt0169547",
+      "year": 1999,
+      "releaseDate": "1999-10-01",
+      "season": null,
+      "episode": null,
+      "href": "/tt0169547",
+      "imdbUrl": "https://www.imdb.com/title/tt0169547/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTYzNjIwNzI0OV5BMl5BanBnXkFtZTcwNjIyODY3Mw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 5,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0120586-5b46a8448cce2fe6993bb5bc109c6dd216cfe48f98baeb299381fd91731a431f",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "American History X",
+      "baseTitle": "American History X",
+      "imdbCode": "tt0120586",
+      "year": 1998,
+      "releaseDate": "1998-11-20",
+      "season": null,
+      "episode": null,
+      "href": "/tt0120586",
+      "imdbUrl": "https://www.imdb.com/title/tt0120586/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTc0OTgyOTQ4Nl5BMl5BanBnXkFtZTcwMDIxODY3Mw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 9,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0110357-21954f58270e5bd4baf619dbcf885c8f4a13459d855a3ac1025884958aa3b84f",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Lion King",
+      "baseTitle": "The Lion King",
+      "imdbCode": "tt0110357",
+      "year": 1994,
+      "releaseDate": "1994-06-24",
+      "season": null,
+      "episode": null,
+      "href": "/tt0110357",
+      "imdbUrl": "https://www.imdb.com/title/tt0110357/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTM2ODAwNTc0NV5BMl5BanBnXkFtZTcwMjQ2NTI3Ng@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 13,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt1431045-3aeb9c3378971b7bdf69a087cfe45053339c6b1e6796a00646841717a4062efd",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Deadpool",
+      "baseTitle": "Deadpool",
+      "imdbCode": "tt1431045",
+      "year": 2016,
+      "releaseDate": "2016-02-12",
+      "season": null,
+      "episode": null,
+      "href": "/tt1431045",
+      "imdbUrl": "https://www.imdb.com/title/tt1431045/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTk3NDE5MzM3NF5BMl5BanBnXkFtZTgwNDQ3Nzk3ODE@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 17,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0434409-fe4632709b620ef5f442c8f47858771d7de54b35bb62006a45ad0711ef96818f",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "V for Vendetta",
+      "baseTitle": "V for Vendetta",
+      "imdbCode": "tt0434409",
+      "year": 2005,
+      "releaseDate": "2006-03-17",
+      "season": null,
+      "episode": null,
+      "href": "/tt0434409",
+      "imdbUrl": "https://www.imdb.com/title/tt0434409/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTUxMDM2ODM3N15BMl5BanBnXkFtZTcwNDk0MTYyNw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 14,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0264464-0e92a70c3f457dad01366f3442400ffd33ea6e0a3faf679b3129659fc164fb0e",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Catch Me If You Can",
+      "baseTitle": "Catch Me If You Can",
+      "imdbCode": "tt0264464",
+      "year": 2002,
+      "releaseDate": "2002-12-25",
+      "season": null,
+      "episode": null,
+      "href": "/tt0264464",
+      "imdbUrl": "https://www.imdb.com/title/tt0264464/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTk0NDQ5NTgwOF5BMl5BanBnXkFtZTcwMTI4OTcxNA@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 15,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0114814-9378704b169ca9d31bc784d75592d168c7a9bb3581ac1096becd88129efad560",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Usual Suspects",
+      "baseTitle": "The Usual Suspects",
+      "imdbCode": "tt0114814",
+      "year": 1995,
+      "releaseDate": "1995-08-16",
+      "season": null,
+      "episode": null,
+      "href": "/tt0114814",
+      "imdbUrl": "https://www.imdb.com/title/tt0114814/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTk5ODY2NjIwNl5BMl5BanBnXkFtZTcwNTA4Mjg3NA@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 18,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt1049413-628c72f3030b172687adb9ab4ceac72a07362c5857904854e6d8117613341596",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Up",
+      "baseTitle": "Up",
+      "imdbCode": "tt1049413",
+      "year": 2009,
+      "releaseDate": "2009-05-29",
+      "season": null,
+      "episode": null,
+      "href": "/tt1049413",
+      "imdbUrl": "https://www.imdb.com/title/tt1049413/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjIxOTI4NzkyOV5BMl5BanBnXkFtZTcwNzQ5OTIzMw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial",
+        "zardfilm"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 18,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0081505-a9d85364c9572ea1560a283ea0b60ba02ba957ade251abcec504f9b38f334556",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Shining",
+      "baseTitle": "The Shining",
+      "imdbCode": "tt0081505",
+      "year": 1980,
+      "releaseDate": "1980-06-13",
+      "season": null,
+      "episode": null,
+      "href": "/tt0081505",
+      "imdbUrl": "https://www.imdb.com/title/tt0081505/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTc5MjM4Njg3Nl5BMl5BanBnXkFtZTgwNTk1NDU2NjM@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 15,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0371746-62f577382c4fbfe69afc6e4dd1436baeafba4818354bd93f806745d761086d7e",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Iron Man",
+      "baseTitle": "Iron Man",
+      "imdbCode": "tt0371746",
+      "year": 2008,
+      "releaseDate": "2008-05-02",
+      "season": null,
+      "episode": null,
+      "href": "/tt0371746",
+      "imdbUrl": "https://www.imdb.com/title/tt0371746/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjE0NzA3NzEzNV5BMl5BanBnXkFtZTcwNzAzNTIzMw@@._V1_.jpg",
+      "sourceNames": [
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 11,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0119217-8f6d32d8296fbd3387ea5f93871e7c4de306fee61046de33047408d38e9c3548",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Good Will Hunting",
+      "baseTitle": "Good Will Hunting",
+      "imdbCode": "tt0119217",
+      "year": 1997,
+      "releaseDate": "1998-01-09",
+      "season": null,
+      "episode": null,
+      "href": "/tt0119217",
+      "imdbUrl": "https://www.imdb.com/title/tt0119217/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTM2ZjRjNTEtNTEzYi00MzI5LWFhMWYtMjYyZWIyMTZjODAzXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 16,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0086190-584ec60989a675201fcbe7fb0ce51e90fe39c8f7b2c9b9dee326a40508e42385",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Star Wars: Episode VI - Return of the Jedi",
+      "baseTitle": "Star Wars: Episode VI - Return of the Jedi",
+      "imdbCode": "tt0086190",
+      "year": 1983,
+      "releaseDate": "1983-05-25",
+      "season": null,
+      "episode": null,
+      "href": "/tt0086190",
+      "imdbUrl": "https://www.imdb.com/title/tt0086190/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BN2JkNDUwNDItYWU0My00YmViLThkMzYtZTc1MjlkMzAxZGRlXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 5,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0266543-c782f8d5c092cbeb447c5dcca77c2a549cce1148bc114e3020a4ad3a280878af",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Finding Nemo",
+      "baseTitle": "Finding Nemo",
+      "imdbCode": "tt0266543",
+      "year": 2003,
+      "releaseDate": "2003-05-30",
+      "season": null,
+      "episode": null,
+      "href": "/tt0266543",
+      "imdbUrl": "https://www.imdb.com/title/tt0266543/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjEyMzg2MzQwNV5BMl5BanBnXkFtZTgwMjk3ODQyOTE@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 14,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt1392190-2e31dbba13af67d6779aa9d77773ec875a7299e0c44d73a64887348c2bbb4d40",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Mad Max: Fury Road",
+      "baseTitle": "Mad Max: Fury Road",
+      "imdbCode": "tt1392190",
+      "year": 2015,
+      "releaseDate": "2015-05-15",
+      "season": null,
+      "episode": null,
+      "href": "/tt1392190",
+      "imdbUrl": "https://www.imdb.com/title/tt1392190/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTU3ODM0MjUzOV5BMl5BanBnXkFtZTgwNjY0NDI2MDI@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 23,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0477348-5e1f054131fb3148d64d1f405c684ae7d3e6cbbf3af58585941817d247324db0",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "No Country for Old Men",
+      "baseTitle": "No Country for Old Men",
+      "imdbCode": "tt0477348",
+      "year": 2007,
+      "releaseDate": "2007-11-21",
+      "season": null,
+      "episode": null,
+      "href": "/tt0477348",
+      "imdbUrl": "https://www.imdb.com/title/tt0477348/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTc4MDczMjkyNl5BMl5BanBnXkFtZTcwNzczODI3OA@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 7,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0338013-a53099d8c0f853233a103f0d7c19da7df1950c6f42e6091ca37e3872cd9fe728",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Eternal Sunshine of the Spotless Mind",
+      "baseTitle": "Eternal Sunshine of the Spotless Mind",
+      "imdbCode": "tt0338013",
+      "year": 2004,
+      "releaseDate": "2004-03-19",
+      "season": null,
+      "episode": null,
+      "href": "/tt0338013",
+      "imdbUrl": "https://www.imdb.com/title/tt0338013/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BODkyMTYzNDExNl5BMl5BanBnXkFtZTcwNTAwOTMyMw@@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 14,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0107290-e6c667c34ac4953d5d949f1a3469f2d5c5c8a3934fea4103b469e7a0dbfae84a",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Jurassic Park",
+      "baseTitle": "Jurassic Park",
+      "imdbCode": "tt0107290",
+      "year": 1993,
+      "releaseDate": "1993-06-11",
+      "season": null,
+      "episode": null,
+      "href": "/tt0107290",
+      "imdbUrl": "https://www.imdb.com/title/tt0107290/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZGUxODI3NTAtN2Q2My00OGI1LWEwOTItYTE5ODllOTc4NzRlXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 21,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0114709-fb2fbb66a5088f257cca5b8662b5e9511bffe45ca029aada2baf9c619629d94f",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Toy Story",
+      "baseTitle": "Toy Story",
+      "imdbCode": "tt0114709",
+      "year": 1995,
+      "releaseDate": "1995-11-22",
+      "season": null,
+      "episode": null,
+      "href": "/tt0114709",
+      "imdbUrl": "https://www.imdb.com/title/tt0114709/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOWQ0ZTJmMWMtOThkYy00OWZiLWFjNzMtNWMyMGM5YTkzMjM2XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 18,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt2267998-4fd39099bcaa549960e9d5b6551c117430e93f994ee4d93deaba3135b177b4de",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Gone Girl",
+      "baseTitle": "Gone Girl",
+      "imdbCode": "tt2267998",
+      "year": 2014,
+      "releaseDate": "2014-10-03",
+      "season": null,
+      "episode": null,
+      "href": "/tt2267998",
+      "imdbUrl": "https://www.imdb.com/title/tt2267998/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTY4MzEzMTU0OF5BMl5BanBnXkFtZTgwMjcyOTM3MjE@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 16,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt6751668-3bf4a8a9f614a3457d27b26ffe1fa10ec1b27f5096a2b128fbc427544092a43f",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Parasite",
+      "baseTitle": "Parasite",
+      "imdbCode": "tt6751668",
+      "year": 2019,
+      "releaseDate": "2019-11-08",
+      "season": null,
+      "episode": null,
+      "href": "/tt6751668",
+      "imdbUrl": "https://www.imdb.com/title/tt6751668/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMWNiMjc2ZjUtYTNhMS00NDllLWIzOTktMTQ5NmM0ZjU1ZmExXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 23,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0105236-9ceb041c1ff9dd607f2f87f1e73efd04587ad6c2f5a136575e19abf730f677bb",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Reservoir Dogs",
+      "baseTitle": "Reservoir Dogs",
+      "imdbCode": "tt0105236",
+      "year": 1992,
+      "releaseDate": "1992-09-02",
+      "season": null,
+      "episode": null,
+      "href": "/tt0105236",
+      "imdbUrl": "https://www.imdb.com/title/tt0105236/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTQ4OTkyNzM4Ml5BMl5BanBnXkFtZTgwODkxOTIwMjE@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p"
+      ],
+      "linksCount": 7,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0112573-5a639cfed7acfcac849f9cdd2d2c2c0784a1f88e2f53b56681171641f16fff99",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Braveheart",
+      "baseTitle": "Braveheart",
+      "imdbCode": "tt0112573",
+      "year": 1995,
+      "releaseDate": "1995-05-24",
+      "season": null,
+      "episode": null,
+      "href": "/tt0112573",
+      "imdbUrl": "https://www.imdb.com/title/tt0112573/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMGY4MzIzNTItZWI4Zi00NDhjLWJhNjEtMGEwMWIxYWI5NWI0XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 11,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt2582802-90d6a82f007514119a50b3da49c40c5c81884782764711ec677e2728c70f1c3f",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Whiplash",
+      "baseTitle": "Whiplash",
+      "imdbCode": "tt2582802",
+      "year": 2014,
+      "releaseDate": "2014-10-15",
+      "season": null,
+      "episode": null,
+      "href": "/tt2582802",
+      "imdbUrl": "https://www.imdb.com/title/tt2582802/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTkzNzgwOTY4NV5BMl5BanBnXkFtZTgwMTQ1NTE4MjE@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 16,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0073486-3ccf9fdb046c2096c8950174432e4ae1782e6387b03bf328c970c8bf2a4e733e",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "One Flew Over the Cuckoo's Nest",
+      "baseTitle": "One Flew Over the Cuckoo's Nest",
+      "imdbCode": "tt0073486",
+      "year": 1975,
+      "releaseDate": "1975-11-21",
+      "season": null,
+      "episode": null,
+      "href": "/tt0073486",
+      "imdbUrl": "https://www.imdb.com/title/tt0073486/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMmMwMWNjNTMtZTFlNi00Yzk2LWI3ODktNDFhMzhhM2MzMjkwXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 11,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0167404-033dc733de18fe53dd3d26987bcf568b34299e9fcd812c0c7b90288f4f9b2666",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Sixth Sense",
+      "baseTitle": "The Sixth Sense",
+      "imdbCode": "tt0167404",
+      "year": 1999,
+      "releaseDate": "1999-08-06",
+      "season": null,
+      "episode": null,
+      "href": "/tt0167404",
+      "imdbUrl": "https://www.imdb.com/title/tt0167404/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjIzMDEwOTI3MF5BMl5BanBnXkFtZTgwMTQ2MTk5NDM@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 9,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0082971-d9791ac035907a04e28d7cff122c72e57e05f8cf5032d81d5838d3e71506b176",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Raiders of the Lost Ark",
+      "baseTitle": "Raiders of the Lost Ark",
+      "imdbCode": "tt0082971",
+      "year": 1981,
+      "releaseDate": "1981-06-12",
+      "season": null,
+      "episode": null,
+      "href": "/tt0082971",
+      "imdbUrl": "https://www.imdb.com/title/tt0082971/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTA4N2U1ZDktYmE4MC00NDFkLTgwM2QtN2U3M2RlODM1YTgxXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p"
+      ],
+      "linksCount": 2,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt1475582-fd6b64f2e0a37f354e602bf29e54f19edd0045dd4cd6e97b56fc87f0e63cf677",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Sherlock",
+      "baseTitle": "Sherlock",
+      "imdbCode": "tt1475582",
+      "year": 2010,
+      "releaseDate": "2010-10-24",
+      "season": null,
+      "episode": null,
+      "href": "/tt1475582",
+      "imdbUrl": "https://www.imdb.com/title/tt1475582/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BM2E3N2RjMGEtYTkwNS00ZWRiLWIwNTctOTJiZWRkYTAxMGMzXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "moviesho"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 205,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt1392170-545ea02c062e046e68098542ea30f5b9ba44d75aafb7cd3ed4caf3405fa9f3be",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Hunger Games",
+      "baseTitle": "The Hunger Games",
+      "imdbCode": "tt1392170",
+      "year": 2012,
+      "releaseDate": "2012-03-23",
+      "season": null,
+      "episode": null,
+      "href": "/tt1392170",
+      "imdbUrl": "https://www.imdb.com/title/tt1392170/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTY4NTIzNDA3NF5BMl5BanBnXkFtZTgwNjIzNTYyNzE@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 11,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0198781-cd32982161cad9cf6d3e3a44ebff9123ceaae289a7d9641934a9eeabe4fb8e15",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Monsters, Inc.",
+      "baseTitle": "Monsters, Inc.",
+      "imdbCode": "tt0198781",
+      "year": 2001,
+      "releaseDate": "2001-11-02",
+      "season": null,
+      "episode": null,
+      "href": "/tt0198781",
+      "imdbUrl": "https://www.imdb.com/title/tt0198781/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTY4Mzg1MzI5OF5BMl5BanBnXkFtZTgwMjg2NzgxMzE@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 10,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt1160419-fd29a6d170e1f89553a098e5c93c92c229a209436ae276c82efe9607dcbe49aa",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Dune: Part One",
+      "baseTitle": "Dune: Part One",
+      "imdbCode": "tt1160419",
+      "year": 2021,
+      "releaseDate": "2021-10-22",
+      "season": null,
+      "episode": null,
+      "href": "/tt1160419",
+      "imdbUrl": "https://www.imdb.com/title/tt1160419/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZDYyZWE2MTYtOGIzNC00M2RmLTk1YjYtY2RjZjNkMmY3YjUxXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "4K",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 31,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0078748-d0221a162f9ba52f187fff9ef7dd7e9c6d198872da4a229686779ba93e273f8b",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Alien",
+      "baseTitle": "Alien",
+      "imdbCode": "tt0078748",
+      "year": 1979,
+      "releaseDate": "1979-06-22",
+      "season": null,
+      "episode": null,
+      "href": "/tt0078748",
+      "imdbUrl": "https://www.imdb.com/title/tt0078748/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTc3YWUzYjYtNmRmZS00NGVlLTg0N2ItN2Q2OTU5M2FlMDE4XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p"
+      ],
+      "linksCount": 4,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt15398776-b5ed5d9bdcfacea83301f968bd209d6b2842bcfbee71d443afc0a39e1a18bc64",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Oppenheimer",
+      "baseTitle": "Oppenheimer",
+      "imdbCode": "tt15398776",
+      "year": 2023,
+      "releaseDate": "2023-07-21",
+      "season": null,
+      "episode": null,
+      "href": "/tt15398776",
+      "imdbUrl": "https://www.imdb.com/title/tt15398776/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTdhN2ZjNjAtNGRiZC00NjUwLTkwYWUtZWViZjk4ODhmMWY1XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "2160p",
+        "4K",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 25,
+      "reason": "New files or qualities were found in a configured source."
+    },
+    {
+      "id": "available-tt0268978-f2c57487c7ebb662ab7c36239079ef6ef56b0d996a7bd7eb9b81eaca00d817c9",
+      "eventAt": "2026-08-29T09:23:48.119Z",
+      "status": "available",
+      "kind": "film",
+      "title": "A Beautiful Mind",
+      "baseTitle": "A Beautiful Mind",
+      "imdbCode": "tt0268978",
+      "year": 2001,
+      "releaseDate": "2002-01-04",
+      "season": null,
+      "episode": null,
+      "href": "/tt0268978",
+      "imdbUrl": "https://www.imdb.com/title/tt0268978/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZDFjMWZlZDAtNTRkYy00ZTBiLTk0Y2YtMjEzODViZDM5NmMwXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 11,
+      "reason": "New files or qualities were found in a configured source."
     }
   ]
 }
