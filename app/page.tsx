@@ -62,7 +62,7 @@ export default async function HomePage() {
   // The first rails are intentional anchors, not part of the daily rotation:
   // a visitor sees releases, their own activity, then the core film and
   // series shelves. Everything after that can keep a fresh daily rhythm.
-  const anchorRailIds = ["best-movies", "best-series"];
+  const anchorRailIds = ["films-2026", "best-movies", "best-series", "latest-animation", "recent-trailers"];
   const primaryLandingRails = anchorRailIds
     .map((id) => landingRails.find((section) => section.id === id))
     .filter((section): section is HomeRailSection => Boolean(section));
@@ -118,17 +118,23 @@ async function buildHomePageData(locale: Locale) {
   const updates = { ...rawUpdates, items: prioritizeReleaseUpdates(rawUpdates.items) };
   const t = getDictionary(locale);
   const seen = new Set<string>();
+  const toyStoryFive = index.sections
+    .find((section) => section.id === "latest-animation")
+    ?.items.find((item) => item.title.trim().toLowerCase() === "toy story 5");
   const heroBanners = takeFreshVisual([
+    ...(toyStoryFive ? [toyStoryFive] : []),
     ...(index.sections.find((section) => section.id === "recent-films")?.items ?? []).slice(0, 5),
     ...(index.sections.find((section) => section.id === "best-movies")?.items ?? []).slice(0, 5),
     ...(index.sections.find((section) => section.id === "top-imdb")?.items ?? []).slice(0, 5),
   ], seen, 10);
   const midBanners = takeFreshVisual([
+    ...(index.sections.find((section) => section.id === "latest-animation")?.items ?? []).slice(0, 5),
     ...(index.sections.find((section) => section.id === "top-imdb")?.items ?? []).slice(5, 11),
     ...(index.sections.find((section) => section.id === "animation")?.items ?? []).slice(0, 4),
   ], seen, 10);
   const aiPrompt = t.home.aiPrompt;
   const initialAiResults = aiSearch(index.items, aiPrompt, 30)
+    .filter(({ item }) => isLandingReady(item))
     .filter(({ item }) => !seen.has(item.imdbCode))
     .slice(0, 10)
     .map(({ item, score, reasons }) => {
@@ -150,19 +156,31 @@ async function buildHomePageData(locale: Locale) {
     locale,
   );
   const wideCandidates = index.items
-    .filter((item) => item.backdropUrl && item.overview && (item.imdbRating ?? 0) >= 7.2)
+    .filter((item) => item.backdropUrl && item.overview && (item.imdbRating ?? 0) >= 7.2 && isLandingReady(item))
     .sort((a, b) => (b.imdbRating ?? 0) - (a.imdbRating ?? 0) || (b.year ?? 0) - (a.year ?? 0));
   const wideItems = takeFreshCards(wideCandidates, seen, 10);
+  const currentYear = new Date().getUTCFullYear();
   const generatedSections: HomeRailSection[] = [
+    makeSection(
+      "films-2026",
+      locale === "fa" ? `فیلم‌های ${currentYear}` : `${currentYear} Movies`,
+      locale === "fa" ? "فیلم‌های تازه و به‌روزشده در آرشیو سرونما" : "Fresh movies and recently updated files in the SarvNema archive.",
+      uniqueCards(
+        index.items
+          .filter((item) => item.type === "movie" && item.year === currentYear && isLandingReady(item))
+          .sort(yearSort),
+      ).slice(0, 60),
+      `/browse?year=${currentYear}&type=movie`,
+    ),
     makeSection(
       "recent-trailers",
       t.home.sections["recent-trailers"].title,
       t.home.sections["recent-trailers"].subtitle,
       uniqueCards(
         index.items
-          .filter((item) => item.backdropUrl && (item.year ?? 0) >= 2020)
+          .filter((item) => item.backdropUrl && (item.year ?? 0) >= 2020 && isLandingReady(item))
           .sort(yearSort)
-      ).slice(0, 15),
+      ).slice(0, 60),
       "/browse?section=recent-films"
     ),
     makeSection(
@@ -171,33 +189,38 @@ async function buildHomePageData(locale: Locale) {
       t.home.sections["latest-series"].subtitle,
       uniqueCards(
         index.items
-          .filter((item) => item.type === "series")
+          .filter((item) => item.type === "series" && isLandingReady(item))
           .sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || b.linksCount - a.linksCount)
-      ).slice(0, 15),
+      ).slice(0, 60),
       "/browse?type=series"
     ),
     makeSection(
       "ai-curated",
       t.home.sections["ai-curated"].title,
       t.home.sections["ai-curated"].subtitle,
-      aiSearch(index.items, "dark luxury crime drama thriller above 8", 15).map((result) => result.item),
+      aiSearch(index.items, "dark luxury crime drama thriller above 8", 50)
+        .map((result) => result.item)
+        .filter(isLandingReady),
       "/browse?minScore=8&genre=Crime"
     ),
   ];
 
-  const landingRails = rotateDaily([...index.sections, ...generatedSections])
-    .filter((section) => section.id !== "old-iranian-films")
-    .map((section) => ({
-      ...section,
-      // Keep each category complete. The old global `seen` filter consumed
-      // shared titles from earlier rails and left later rails with only a few
-      // cards. Dedupe inside the rail, while allowing the same title to be
-      // discovered again in a genuinely different category.
-      items: uniqueCards(section.items).slice(0, 15),
-      total: uniqueCards(section.items).length,
-    }))
-    .filter((section) => section.items.length > 0)
-    .map((section) => ({ ...section, total: section.items.length }));
+  const railPriority = ["films-2026", "best-movies", "best-series", "latest-animation", "recent-trailers", "latest-series"];
+  const candidateRails = [...index.sections, ...generatedSections]
+    .filter((section) => section.id !== "old-iranian-films");
+  const priorityRails = railPriority
+    .map((id) => candidateRails.find((section) => section.id === id))
+    .filter((section): section is HomeRailSection => Boolean(section));
+  const remainingRails = rotateDaily(candidateRails.filter((section) => !railPriority.includes(section.id)));
+  const displayedTitles = new Set<string>();
+  const landingRails = [...priorityRails, ...remainingRails]
+    .map((section) => {
+      const candidates = uniqueCards(section.items).filter(isLandingReady);
+      const selected = candidates.filter((item) => !displayedTitles.has(item.imdbCode)).slice(0, 15);
+      selected.forEach((item) => displayedTitles.add(item.imdbCode));
+      return { ...section, items: selected };
+    })
+    .filter((section) => section.items.length > 0);
 
   return {
     index,
@@ -231,7 +254,7 @@ function takeFreshVisual(items: VodCard[], seen: Set<string>, limit: number) {
   const fresh: VodCard[] = [];
   for (const item of uniqueCards(items)) {
     const image = item.backdropUrl ?? item.posterUrl;
-    if (!image || seen.has(item.imdbCode) || images.has(image)) continue;
+    if (!isLandingReady(item) || !image || seen.has(item.imdbCode) || images.has(image)) continue;
     seen.add(item.imdbCode);
     images.add(image);
     fresh.push(item);
@@ -282,6 +305,15 @@ function uniqueCards(items: VodCard[]) {
   });
 }
 
+/**
+ * A newly indexed show can legitimately have one episode, but it should not
+ * dominate every discovery rail before the archive has a usable set of files.
+ * The detail page and direct search still expose it immediately.
+ */
+function isLandingReady(item: VodCard) {
+  return item.type !== "series" || item.linksCount >= 8;
+}
+
 function uniqueVisualCards(items: VodCard[]) {
   const seen = new Set<string>();
   return uniqueCards(items).filter((item) => {
@@ -313,7 +345,7 @@ function buildGenreMenu(items: VodCard[], oldIranianSection: VodHomeSection | un
     .slice(0, 7)
     .map(([genre, total], genreIndex) => {
       const candidates = uniqueCards(items.filter((item) =>
-        (item.genres ?? []).some((itemGenre) => itemGenre.toLowerCase() === genre.toLowerCase())
+        isLandingReady(item) && (item.genres ?? []).some((itemGenre) => itemGenre.toLowerCase() === genre.toLowerCase())
       ));
       const rotated = candidates.slice((genreIndex * 2) % Math.max(candidates.length, 1))
         .concat(candidates.slice(0, (genreIndex * 2) % Math.max(candidates.length, 1)));
@@ -347,7 +379,9 @@ function buildGenreMenu(items: VodCard[], oldIranianSection: VodHomeSection | un
     : [];
   const sections = [...oldIranianMenuSection, ...genreSections];
   const featuredItems = uniqueVisualCards(
-    [...items].sort((a, b) => (b.imdbRating ?? 0) - (a.imdbRating ?? 0) || (b.imdbVotes ?? 0) - (a.imdbVotes ?? 0))
+    [...items]
+      .filter(isLandingReady)
+      .sort((a, b) => (b.imdbRating ?? 0) - (a.imdbRating ?? 0) || (b.imdbVotes ?? 0) - (a.imdbVotes ?? 0))
   )
     .filter((item) => item.posterUrl && !usedImages.has(item.posterUrl))
     .slice(0, 8)
@@ -372,6 +406,13 @@ function yearSort(a: VodCard, b: VodCard) {
 function localizeSection(section: HomeRailSection, locale: Locale): HomeRailSection {
   const t = getDictionary(locale);
   const localized = t.home.sections[section.id as keyof typeof t.home.sections];
+  if (locale === "fa" && section.id === "latest-animation") {
+    return {
+      ...section,
+      title: "انیمیشن‌های تازه",
+      subtitle: "انیمیشن‌های جدید و مجموعه‌های کامل‌تر از آرشیو.",
+    };
+  }
   if (!localized) return section;
   return { ...section, title: localized.title, subtitle: localized.subtitle };
 }

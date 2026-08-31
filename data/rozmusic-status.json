@@ -1,16 +1,16 @@
 {
   "state": "complete",
-  "startedAt": "2026-08-29T09:23:58.002Z",
-  "updatedAt": "2026-08-29T20:02:24.610Z",
+  "startedAt": "2026-08-31T07:24:07.268Z",
+  "updatedAt": "2026-08-31T07:24:09.221Z",
   "full": false,
-  "rebuildOnly": false,
+  "rebuildOnly": true,
   "pages": {
     "music": {
-      "total": 1777,
+      "total": 3,
       "complete": 1777
     },
     "video": {
-      "total": 60,
+      "total": 3,
       "complete": 60
     }
   },
@@ -21,11 +21,11 @@
     "failures": 0
   },
   "details": {
-    "requested": 18362,
-    "complete": 18362,
+    "requested": 0,
+    "complete": 0,
     "cached": 0
   },
-  "rateLimited": 49,
+  "rateLimited": 0,
   "current": null,
   "warnings": []
 }

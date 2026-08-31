@@ -45,7 +45,7 @@ export function FilmLandingHero({ items, locale }: { items: VodCard[]; locale: L
 
           <form className="film-landing-search" action="/browse" role="search">
             <Search size={18} aria-hidden="true" />
-            <SearchSuggest placeholder={t.home.searchPlaceholder} locale={locale} portal maxItems={8} />
+            <SearchSuggest placeholder={t.home.searchPlaceholder} locale={locale} portal maxItems={14} />
             <button type="submit">{t.common.search}</button>
           </form>
 

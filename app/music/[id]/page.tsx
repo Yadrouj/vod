@@ -30,7 +30,8 @@ export default async function MusicDetailPage({ params }: { params: Promise<{ id
       <StructuredData data={musicJsonLd(track)} />
       <div className="wrap">
         <Link href="/music" className="music-back"><ArrowLeft size={16} /> بازگشت به موسیقی</Link>
-        <section className="music-detail-hero" style={track.coverUrl ? { "--music-cover": `url(${track.coverUrl})` } as React.CSSProperties : undefined}>
+        <section className="music-detail-first-fold" style={track.coverUrl ? { "--music-cover": `url(${track.coverUrl})` } as React.CSSProperties : undefined}>
+          <div className="music-detail-hero">
           <div className="music-detail-cover">{track.coverUrl && <img src={track.coverUrl} alt="" />}</div>
           <div className="music-detail-copy">
             <span>{track.kind === "video" ? "موزیک ویدیو" : "آهنگ"} · {track.category}</span>
@@ -42,15 +43,17 @@ export default async function MusicDetailPage({ params }: { params: Promise<{ id
             <p>{track.description}</p>
             <a href={track.sourceUrl} target="_blank" rel="noreferrer">منبع اثر <ExternalLink size={14} /></a>
           </div>
-        </section>
-
-        {partyMedia && (
+            {partyMedia && (
           <div className="music-detail-party">
             <WatchTogetherLauncher locale="fa" placement="inline" media={partyMedia} label="شنیدن همزمان" experience="listen" />
           </div>
-        )}
+            )}
+          </div>
 
-        <MusicPlayer track={track} queue={more} lyricsAutoOpen />
+          <div className="music-detail-player-stage">
+            <MusicPlayer track={track} queue={more} lyricsAutoOpen />
+          </div>
+        </section>
 
         {more.length > 0 && (
           <section className="music-more">

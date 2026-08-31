@@ -10,6 +10,8 @@ type Suggestion = {
   type: string;
   posterUrl: string | null;
   imdbRating: number | null;
+  updatedAt: string | null;
+  isFresh: boolean;
 };
 
 export type AiSearchPayload = {
@@ -37,27 +39,38 @@ export async function searchSuggestions(query: string, limit = 8) {
   if (cached) return { items: cached, cache: "HIT" as const };
 
   const documents = await loadSearchDocuments();
-  const startsWith: VodCard[] = [];
-  const contains: VodCard[] = [];
+  const matches: Array<{ item: VodCard; matchRank: number }> = [];
 
   for (const document of documents) {
     if (document.title.startsWith(normalized) || document.imdbCode.startsWith(normalized)) {
-      startsWith.push(document.item);
+      matches.push({ item: document.item, matchRank: 0 });
     } else if (document.haystack.includes(normalized)) {
-      contains.push(document.item);
+      matches.push({ item: document.item, matchRank: 1 });
     }
   }
 
-  const items = [...startsWith, ...contains]
-    .sort((a, b) => (b.imdbRating ?? 0) - (a.imdbRating ?? 0) || (b.imdbVotes ?? 0) - (a.imdbVotes ?? 0))
+  const currentYear = new Date().getUTCFullYear();
+  const items = matches
+    // Search is intentionally release-first: a customer looking up a familiar
+    // name sees the newest edition, sequel or fresh release before the archive.
+    // Relevance still breaks ties inside the same release year.
+    .sort((left, right) => (
+      (right.item.year ?? 0) - (left.item.year ?? 0)
+      || left.matchRank - right.matchRank
+      || (right.item.catalogUpdatedAt ?? right.item.sourceUpdatedAt ?? "").localeCompare(left.item.catalogUpdatedAt ?? left.item.sourceUpdatedAt ?? "")
+      || (right.item.imdbRating ?? 0) - (left.item.imdbRating ?? 0)
+      || (right.item.imdbVotes ?? 0) - (left.item.imdbVotes ?? 0)
+    ))
     .slice(0, limit)
-    .map((item) => ({
+    .map(({ item }) => ({
       title: item.title,
       imdbCode: item.imdbCode,
       year: item.year,
       type: item.type,
       posterUrl: item.posterUrl,
       imdbRating: item.imdbRating,
+      updatedAt: item.catalogUpdatedAt ?? item.sourceUpdatedAt ?? null,
+      isFresh: (item.year ?? 0) >= currentYear,
     }));
 
   suggestionCache.set(cacheKey, items);

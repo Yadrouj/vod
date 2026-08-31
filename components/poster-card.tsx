@@ -21,9 +21,10 @@ export function PosterCard({ item, locale = DEFAULT_LOCALE, priority = false }: 
   const t = getDictionary(locale);
   const imageUrl = item.posterUrl ?? item.backdropUrl;
   const hasPoster = Boolean(imageUrl);
+  const isFresh = (item.year ?? 0) >= new Date().getUTCFullYear();
 
   return (
-    <Link prefetch={priority ? undefined : false} href={`/${item.imdbCode || item.id}`} className={["poster", item.type === "series" ? "series-poster" : "", hasPoster ? "poster-has-image" : "poster-no-image"].filter(Boolean).join(" ")}>
+    <Link prefetch={priority ? undefined : false} href={`/${item.imdbCode || item.id}`} className={["poster", item.type === "series" ? "series-poster" : "", hasPoster ? "poster-has-image" : "poster-no-image", isFresh ? "poster-is-fresh" : ""].filter(Boolean).join(" ")}>
       <div className="poster-art">
         {imageUrl && (
           <img
@@ -37,6 +38,7 @@ export function PosterCard({ item, locale = DEFAULT_LOCALE, priority = false }: 
         )}
         <span className="poster-skeleton-layer" aria-hidden="true" />
         <span className="rating">{item.imdbRating ? `IMDb ${item.imdbRating.toFixed(1)}` : item.source === "mihandownload" ? t.common.persianMovies : item.year ?? typeLabel(item.type, locale)}</span>
+        {isFresh && <span className="poster-fresh">{locale === "fa" ? `تازه ${item.year}` : `NEW ${item.year}`}</span>}
         <span className="poster-copy">
           <strong className="poster-title">{item.title}</strong>
           <span>{item.year ?? "-"} / {typeLabel(item.type, locale)}</span>

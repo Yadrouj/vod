@@ -17,6 +17,9 @@ const concurrency = Math.min(4, value("--concurrency", 3));
 const delayMs = Math.max(180, value("--delay-ms", 400));
 const status = { state: "running", startedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), pages: { total: pages, complete: 0 }, tracks: { discovered: 0, new: 0, updated: 0, failures: 0 }, details: { requested: 0, complete: 0 }, current: null, warnings: [] };
 let writeChain = Promise.resolve();
+const refreshedTrackIds = new Set();
+const refreshedTrackRanks = new Map();
+let refreshedTrackOrder = 0;
 
 async function main() {
   const existing = await readJson(OUTPUT, []);
@@ -25,13 +28,21 @@ async function main() {
     status.current = `archive page ${page}`; await saveStatus();
     try {
       const discovered = parseListing(await fetchText(listingUrl(page)), forcedCategory);
-      for (const track of discovered) { const before = tracks.has(track.id); tracks.set(track.id, mergeTrack(tracks.get(track.id), track)); before ? status.tracks.updated++ : status.tracks.new++; }
+      for (const track of discovered) { const before = tracks.has(track.id); tracks.set(track.id, mergeTrack(tracks.get(track.id), track)); refreshedTrackIds.add(track.id); if (!refreshedTrackRanks.has(track.id)) refreshedTrackRanks.set(track.id, refreshedTrackOrder); refreshedTrackOrder++; before ? status.tracks.updated++ : status.tracks.new++; }
       status.tracks.discovered += discovered.length; status.pages.complete++;
     } catch (error) { status.tracks.failures++; status.warnings.push(`page ${page}: ${message(error)}`); }
     await saveStatus(); await sleep(delayMs);
   });
   const forceDetails = args.has("--refresh-details");
-  const detailCandidates = [...tracks.values()].filter((track) => (!onlyId || track.id === onlyId) && (forceDetails || !track.detailCheckedAt)).slice(0, detailLimit || undefined);
+  const recentDetailsOnly = args.has("--recent-details-only");
+  const detailCandidates = [...tracks.values()]
+    .filter((track) => (!onlyId || track.id === onlyId) && (recentDetailsOnly ? refreshedTrackIds.has(track.id) : forceDetails || !track.detailCheckedAt))
+    .sort((left, right) => (
+      Number(refreshedTrackIds.has(right.id)) - Number(refreshedTrackIds.has(left.id))
+      || (refreshedTrackRanks.get(left.id) ?? Number.MAX_SAFE_INTEGER) - (refreshedTrackRanks.get(right.id) ?? Number.MAX_SAFE_INTEGER)
+      || (right.publishedAt ?? "").localeCompare(left.publishedAt ?? "")
+    ))
+    .slice(0, detailLimit || undefined);
   status.details.requested = detailCandidates.length;
   await pool(detailCandidates, concurrency, async (track) => {
     status.current = `details: ${track.title}`; await saveStatus();

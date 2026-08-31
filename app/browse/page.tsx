@@ -105,6 +105,7 @@ export default async function BrowsePage({ searchParams }: Props) {
             <Link href="/browse?section=best-series">{t.common.bestSeries}</Link>
             <Link href="/browse?section=kids">{t.common.kids}</Link>
             <Link href="/browse?section=animation">{t.common.animation}</Link>
+            <Link href="/browse?section=latest-animation">{locale === "fa" ? "انیمیشن‌های جدید" : "New Animation"}</Link>
           </div>
         </div>
       </section>

@@ -9,16 +9,17 @@ const LOCK_FILE = path.join(DATA_DIR, "daily-music-refresh.lock");
 const args = new Set(process.argv.slice(2));
 const FULL = args.has("--full");
 const REBUILD_ONLY = args.has("--rebuild-only");
+const RECENT_ONLY = args.has("--recent-only");
 
 const envNumber = (name, fallback, minimum = 0) => {
   const value = Number(process.env[name] ?? fallback);
   return Number.isFinite(value) ? Math.max(minimum, value) : fallback;
 };
 
-const FRONT_PAGES = envNumber("MUSIC_REFRESH_FRONT_PAGES", FULL ? 1777 : 4, 1);
-const VIDEO_PAGES = envNumber("MUSIC_REFRESH_VIDEO_PAGES", FULL ? 60 : 2, 1);
-const MUSICS_FA_PAGES = envNumber("MUSIC_REFRESH_MUSICS_FA_PAGES", FULL ? 1247 : 4, 1);
-const REMIX_PAGES = envNumber("MUSIC_REFRESH_REMIX_PAGES", 35, 1);
+const FRONT_PAGES = envNumber("MUSIC_REFRESH_FRONT_PAGES", FULL ? 1777 : RECENT_ONLY ? 1 : 4, 1);
+const VIDEO_PAGES = envNumber("MUSIC_REFRESH_VIDEO_PAGES", FULL ? 60 : RECENT_ONLY ? 1 : 2, 1);
+const MUSICS_FA_PAGES = envNumber("MUSIC_REFRESH_MUSICS_FA_PAGES", FULL ? 1247 : RECENT_ONLY ? 1 : 4, 1);
+const REMIX_PAGES = envNumber("MUSIC_REFRESH_REMIX_PAGES", RECENT_ONLY ? 1 : 35, 1);
 const WORLDOFMUSIC_ARTISTS = envNumber("MUSIC_REFRESH_WORLDOFMUSIC_ARTISTS", FULL ? 0 : 20, 0);
 const WORLDOFMUSIC_ALBUMS = envNumber("MUSIC_REFRESH_WORLDOFMUSIC_ALBUMS", FULL ? 0 : 50, 0);
 const FOREIGN_PAGES = envNumber("MUSIC_REFRESH_FOREIGN_PAGES", 18, 1);
@@ -34,7 +35,7 @@ async function main() {
   const startedAt = new Date().toISOString();
   const steps = [];
   try {
-    await writeStatus({ state: "running", startedAt, updatedAt: startedAt, phase: "Preparing music source review", full: FULL, steps, error: null });
+    await writeStatus({ state: "running", startedAt, updatedAt: startedAt, phase: "Preparing music source review", full: FULL, recentOnly: RECENT_ONLY, steps, error: null });
     if (!REBUILD_ONLY) {
       await runStep(
         "Review newest RozMusic tracks and music videos",
@@ -43,6 +44,8 @@ async function main() {
           `--pages=${FRONT_PAGES}`,
           `--video-pages=${VIDEO_PAGES}`,
           `--detail-limit=${FULL ? 0 : 36}`,
+          "--refresh-listings",
+          "--refresh-details-only",
           "--concurrency=1",
           `--delay-ms=${DELAY_MS}`,
         ],
@@ -53,7 +56,7 @@ async function main() {
         "Review newest Musics-Fa tracks",
         "scripts/scrape-musics-fa.mjs",
         [
-          ...(FULL ? ["--full"] : [`--pages=${MUSICS_FA_PAGES}`, "--detail-limit=36"]),
+          ...(FULL ? ["--full"] : [`--pages=${MUSICS_FA_PAGES}`, `--detail-limit=${RECENT_ONLY ? 18 : 36}`, "--recent-details-only"]),
           "--concurrency=1",
           `--delay-ms=${DELAY_MS}`,
         ],
@@ -66,49 +69,34 @@ async function main() {
         [
           "--category-path=remix",
           `--pages=${REMIX_PAGES}`,
-          `--detail-limit=${FULL ? 0 : 18}`,
+          `--detail-limit=${FULL ? 0 : RECENT_ONLY ? 12 : 18}`,
+          "--recent-details-only",
           "--concurrency=1",
           `--delay-ms=${DELAY_MS}`,
         ],
         steps,
         startedAt,
       );
-      await runStep(
-        "Review WorldOfMusic artists and albums",
-        "scripts/scrape-worldofmusic.mjs",
-        [
-          "--refresh-artists",
-          "--refresh-albums",
-          ...(WORLDOFMUSIC_ARTISTS ? [`--limit-artists=${WORLDOFMUSIC_ARTISTS}`] : []),
-          ...(WORLDOFMUSIC_ALBUMS ? [`--limit-albums=${WORLDOFMUSIC_ALBUMS}`] : []),
-          ...(FULL ? ["--include-sitemap"] : []),
-          "--concurrency=1",
-          `--delay-ms=${DELAY_MS}`,
-        ],
-        steps,
-        startedAt,
-      );
-      await runStep(
-        "Review legacy Persian music collections",
-        "scripts/scrape-persian-classics.mjs",
-        [],
-        steps,
-        startedAt,
-      );
-      await runStep(
-        "Review RemiixBaz legacy playlists",
-        "scripts/scrape-remiixbaz.mjs",
-        [`--delay-ms=${DELAY_MS}`],
-        steps,
-        startedAt,
-      );
-      await runStep(
-        "Review Aftab foreign music collection",
-        "scripts/scrape-aftab-foreign.mjs",
-        [`--pages=${FOREIGN_PAGES}`],
-        steps,
-        startedAt,
-      );
+      if (!RECENT_ONLY) {
+        await runStep(
+          "Review WorldOfMusic artists and albums",
+          "scripts/scrape-worldofmusic.mjs",
+          [
+            "--refresh-artists",
+            "--refresh-albums",
+            ...(WORLDOFMUSIC_ARTISTS ? [`--limit-artists=${WORLDOFMUSIC_ARTISTS}`] : []),
+            ...(WORLDOFMUSIC_ALBUMS ? [`--limit-albums=${WORLDOFMUSIC_ALBUMS}`] : []),
+            ...(FULL ? ["--include-sitemap"] : []),
+            "--concurrency=1",
+            `--delay-ms=${DELAY_MS}`,
+          ],
+          steps,
+          startedAt,
+        );
+        await runStep("Review legacy Persian music collections", "scripts/scrape-persian-classics.mjs", [], steps, startedAt);
+        await runStep("Review RemiixBaz legacy playlists", "scripts/scrape-remiixbaz.mjs", [`--delay-ms=${DELAY_MS}`], steps, startedAt);
+        await runStep("Review Aftab foreign music collection", "scripts/scrape-aftab-foreign.mjs", [`--pages=${FOREIGN_PAGES}`], steps, startedAt);
+      }
     }
     await runStep("Rebuild music landing and artist indexes", "scripts/scrape-rozmusic.mjs", ["--rebuild-only"], steps, startedAt);
     await runStep("Rebuild compact music landing data", "scripts/build-music-landing-index.mjs", [], steps, startedAt);
@@ -119,12 +107,13 @@ async function main() {
       updatedAt: new Date().toISOString(),
       phase: "Music catalog published",
       full: FULL,
+      recentOnly: RECENT_ONLY,
       steps,
       error: null,
     });
-    console.log(JSON.stringify({ completed: true, full: FULL, steps }, null, 2));
+    console.log(JSON.stringify({ completed: true, full: FULL, recentOnly: RECENT_ONLY, steps }, null, 2));
   } catch (error) {
-    await writeStatus({ state: "failed", startedAt, finishedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), phase: "Music source review stopped", full: FULL, steps, error: message(error) }).catch(() => undefined);
+    await writeStatus({ state: "failed", startedAt, finishedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), phase: "Music source review stopped", full: FULL, recentOnly: RECENT_ONLY, steps, error: message(error) }).catch(() => undefined);
     throw error;
   } finally {
     await lock.close().catch(() => undefined);

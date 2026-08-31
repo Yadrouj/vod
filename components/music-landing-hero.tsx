@@ -87,7 +87,7 @@ export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", init
               hrefForItem={(item) => `/music/${item.imdbCode}`}
               viewAllHref={(query) => `/music?q=${encodeURIComponent(query)}`}
               portal
-              maxItems={8}
+              maxItems={14}
             />
             <select name="kind" defaultValue={initialKind} aria-label="نوع محتوا">
               <option value="all">همه</option>

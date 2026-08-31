@@ -15,6 +15,9 @@ type Suggestion = {
   type: string;
   posterUrl: string | null;
   imdbRating: number | null;
+  artists?: string[];
+  updatedAt?: string | null;
+  isFresh?: boolean;
 };
 
 export function SearchSuggest({
@@ -26,7 +29,7 @@ export function SearchSuggest({
   hrefForItem = (item) => `/${item.imdbCode}`,
   viewAllHref = (query) => `/browse?q=${encodeURIComponent(query)}`,
   portal = false,
-  maxItems = 8,
+  maxItems = 14,
 }: {
   name?: string;
   defaultValue?: string;
@@ -51,13 +54,14 @@ export function SearchSuggest({
   const t = getDictionary(locale);
   const searchable = query.trim().length >= 2;
   const menuOpen = open && searchable;
-  const visibleItems = items.slice(0, Math.max(6, maxItems));
+  const visibleItems = items.slice(0, maxItems);
   const [portalPosition, setPortalPosition] = useState<CSSProperties | null>(null);
   const copy = locale === "fa"
     ? {
         close: "بستن جستجو",
         clear: "پاک کردن",
         heading: "نتیجه‌های پیشنهادی",
+        order: "جدیدترین‌ها اول",
         empty: "چیزی پیدا نشد؛ اسم انگلیسی یا کد IMDb را امتحان کن.",
         hint: "نام فیلم، سریال یا کد IMDb را بنویس",
         viewAll: "دیدن همه نتیجه‌ها",
@@ -66,6 +70,7 @@ export function SearchSuggest({
         close: "Close search",
         clear: "Clear",
         heading: "Best matches",
+        order: "Newest first",
         empty: "No match yet. Try the English title or an IMDb ID.",
         hint: "Search by title, series or IMDb ID",
         viewAll: "View all results",
@@ -76,7 +81,11 @@ export function SearchSuggest({
 
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      fetch(`${endpoint}?q=${encodeURIComponent(query.trim())}`, { signal: controller.signal })
+      const params = new URLSearchParams({
+        q: query.trim(),
+        limit: String(maxItems),
+      });
+      fetch(`${endpoint}${endpoint.includes("?") ? "&" : "?"}${params.toString()}`, { signal: controller.signal })
         .then((res) => {
           if (!res.ok) throw new Error(`Suggest ${res.status}`);
           return res.json() as Promise<{ items?: Suggestion[] }>;
@@ -99,7 +108,7 @@ export function SearchSuggest({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [endpoint, query, searchable]);
+  }, [endpoint, maxItems, query, searchable]);
 
   useEffect(() => {
     function onClick(event: MouseEvent) {
@@ -137,6 +146,29 @@ export function SearchSuggest({
     return () => {
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [menuOpen, portal]);
+
+  useLayoutEffect(() => {
+    if (!menuOpen || !portal) return;
+
+    const bringSearchIntoView = () => {
+      const anchor = boxRef.current;
+      if (!anchor) return;
+
+      const bounds = anchor.getBoundingClientRect();
+      // Keep enough vertical room for six useful suggestions. This is only
+      // applied when the field is close to either edge of the viewport.
+      if (bounds.top < 16 || window.innerHeight - bounds.bottom < 360) {
+        anchor.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+      }
+    };
+
+    const frame = window.requestAnimationFrame(bringSearchIntoView);
+    const settledFrame = window.setTimeout(bringSearchIntoView, 280);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(settledFrame);
     };
   }, [menuOpen, portal]);
 
@@ -184,7 +216,8 @@ export function SearchSuggest({
     >
       <div className="suggest-menu-head">
         <strong>{copy.heading}</strong>
-        {!loading && <span>{visibleItems.length}</span>}
+        <span className="suggest-menu-order">{copy.order}</span>
+        {!loading && <span className="suggest-menu-count">{visibleItems.length}</span>}
       </div>
 
       <div id={listId} className="suggest-results" role="listbox">
@@ -212,11 +245,12 @@ export function SearchSuggest({
             <span className="suggest-result-copy">
               <strong>{item.title}</strong>
               <small>
-                {[item.year ?? "-", typeLabel(item.type, locale), item.imdbRating ? `${t.common.imdb} ${item.imdbRating.toFixed(1)}` : null]
+                {[item.year ?? "-", item.artists?.[0], typeLabel(item.type, locale), item.imdbRating ? `${t.common.imdb} ${item.imdbRating.toFixed(1)}` : null]
                   .filter(Boolean)
                   .join(" / ")}
               </small>
             </span>
+            {item.isFresh && <span className="suggest-fresh">{locale === "fa" ? `تازه ${item.year ?? ""}` : `NEW ${item.year ?? ""}`}</span>}
             <ArrowUpRight className="suggest-result-arrow" size={17} aria-hidden="true" />
           </Link>
         ))}

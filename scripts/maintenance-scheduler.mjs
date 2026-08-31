@@ -26,10 +26,14 @@ const MAX_RECENT_REQUESTS = number("MAINTENANCE_MAX_RECENT_REQUESTS", 12);
 const MAX_ACTIVE_ROOMS = number("MAINTENANCE_MAX_ACTIVE_ROOMS", 1);
 const MAX_MEMORY_MB = number("MAINTENANCE_MAX_MEMORY_MB", 1_350);
 const MAX_LOAD_AVG = number("MAINTENANCE_MAX_LOAD_AVG", 1.25);
+// A tiny incremental pass keeps the newest music and video listings visible
+// between the heavier once-per-day catalog refreshes.
+const MUSIC_PULSE_INTERVAL_MS = number("MUSIC_PULSE_INTERVAL_MS", 4 * 60 * 60_000, 30 * 60_000);
+const MUSIC_PULSE_ALLOW_OUTSIDE_IDLE = process.env.MUSIC_PULSE_ALLOW_OUTSIDE_IDLE === "1";
 
 async function main() {
   if (DAEMON) {
-    console.log(`[maintenance] Scheduler polling every ${Math.round(POLL_MS / 60_000)} minutes (${TIME_ZONE}, idle ${IDLE_START_HOUR}:00-${IDLE_END_HOUR}:59).`);
+    console.log(`[maintenance] Scheduler polling every ${Math.round(POLL_MS / 60_000)} minutes (${TIME_ZONE}, idle ${IDLE_START_HOUR}:00-${IDLE_END_HOUR}:59, music pulse ${Math.round(MUSIC_PULSE_INTERVAL_MS / 60_000)}m).`);
     for (;;) {
       await runCycle().catch((error) => console.error(`[maintenance] ${message(error)}`));
       await sleep(POLL_MS);
@@ -44,11 +48,13 @@ async function runCycle() {
   try {
     const local = localClock();
     const previous = await readJson(STATE_FILE, { version: 1, completedDays: {} });
-    if (!FORCE && previous.completedDays?.[local.day]) {
-      await writeStatus({ state: "skipped", checkedAt: new Date().toISOString(), reason: "Today's maintenance cycle already completed.", local });
+    const dailyDue = FORCE || !previous.completedDays?.[local.day];
+    const musicPulseDue = !FULL && pulseDue(previous.lastMusicPulseAt);
+    if (!dailyDue && !musicPulseDue) {
+      await writeStatus({ state: "skipped", checkedAt: new Date().toISOString(), reason: "Today's full refresh and the music pulse are both up to date.", local });
       return;
     }
-    if (!FORCE && !inIdleWindow(local.hour)) {
+    if (!FORCE && !inIdleWindow(local.hour) && !(musicPulseDue && MUSIC_PULSE_ALLOW_OUTSIDE_IDLE)) {
       await writeStatus({ state: "waiting", checkedAt: new Date().toISOString(), reason: "Outside configured idle window.", local });
       return;
     }
@@ -59,25 +65,38 @@ async function runCycle() {
     }
     const startedAt = new Date().toISOString();
     const steps = [];
-    await writeStatus({ state: "running", startedAt, checkedAt: startedAt, local, capacity, phase: "Daily source refresh", steps, error: null });
-    await runStep(
-      "Refresh video sources, IMDb releases and news",
-      "scripts/daily-release-refresh.mjs",
-      FULL ? ["--full"] : [],
-      steps,
-      startedAt,
-      local,
-      capacity,
-    );
-    await runStep("Refresh music sources and landing indexes", "scripts/daily-music-refresh.mjs", FULL ? ["--full"] : [], steps, startedAt, local, capacity);
+    const mode = dailyDue ? "Daily source refresh" : "Recent music and video pulse";
+    await writeStatus({ state: "running", startedAt, checkedAt: startedAt, local, capacity, phase: mode, steps, error: null });
+    if (dailyDue) {
+      await runStep(
+        "Refresh video sources, IMDb releases and news",
+        "scripts/daily-release-refresh.mjs",
+        FULL ? ["--full"] : [],
+        steps,
+        startedAt,
+        local,
+        capacity,
+      );
+      await runStep("Refresh music sources and landing indexes", "scripts/daily-music-refresh.mjs", FULL ? ["--full"] : [], steps, startedAt, local, capacity);
+    } else {
+      await runStep("Refresh newest music and music-video listings", "scripts/daily-music-refresh.mjs", ["--recent-only"], steps, startedAt, local, capacity);
+    }
     const completedAt = new Date().toISOString();
-    const completedDays = { ...(previous.completedDays ?? {}), [local.day]: completedAt };
+    const completedDays = { ...(previous.completedDays ?? {}) };
+    if (dailyDue) completedDays[local.day] = completedAt;
     for (const [day] of Object.entries(completedDays)) {
       if (day < local.dayMinus(14)) delete completedDays[day];
     }
-    await writeJsonAtomic(STATE_FILE, { version: 1, completedDays, lastCompletedAt: completedAt, lastLocalDay: local.day, lastCapacity: capacity });
-    await writeStatus({ state: "completed", startedAt, finishedAt: completedAt, checkedAt: completedAt, local, capacity, full: FULL, phase: "All source updates published", steps, error: null });
-    console.log(JSON.stringify({ completed: true, full: FULL, localDay: local.day, steps }, null, 2));
+    await writeJsonAtomic(STATE_FILE, {
+      version: 1,
+      completedDays,
+      lastCompletedAt: dailyDue ? completedAt : previous.lastCompletedAt ?? null,
+      lastLocalDay: dailyDue ? local.day : previous.lastLocalDay ?? null,
+      lastMusicPulseAt: completedAt,
+      lastCapacity: capacity,
+    });
+    await writeStatus({ state: "completed", startedAt, finishedAt: completedAt, checkedAt: completedAt, local, capacity, full: FULL, mode, phase: "Source updates published", steps, error: null });
+    console.log(JSON.stringify({ completed: true, full: FULL, mode, localDay: local.day, steps }, null, 2));
   } finally {
     await lock.close().catch(() => undefined);
     await unlink(LOCK_FILE).catch(() => undefined);
@@ -102,6 +121,11 @@ function inIdleWindow(hour) {
   return IDLE_START_HOUR < IDLE_END_HOUR
     ? hour >= IDLE_START_HOUR && hour <= IDLE_END_HOUR
     : hour >= IDLE_START_HOUR || hour <= IDLE_END_HOUR;
+}
+
+function pulseDue(lastPulseAt) {
+  const last = Date.parse(lastPulseAt ?? "");
+  return !Number.isFinite(last) || Date.now() - last >= MUSIC_PULSE_INTERVAL_MS;
 }
 
 async function checkCapacity() {

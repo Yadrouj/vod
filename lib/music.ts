@@ -93,18 +93,20 @@ export function musicForArtist(index: MusicIndex, slug: string) {
 
 export function searchMusic(index: MusicIndex, query: string, kind = "all", category = "all") {
   const needle = normalizeSearchValue(query);
-  return index.tracks.map(normalizeMusicTrack).filter((track) => {
-    const matchesKind = kind === "all" || track.kind === kind;
-    const matchesCategory = category === "all" || !category || track.category === category;
-    const matchesQuery = !needle || normalizeSearchValue([
-      track.title,
-      track.persianTitle,
-      track.category,
-      ...track.artists.map((artist) => artist.name),
-      ...track.artists.flatMap((artist) => artist.aliases ?? []),
-    ].join(" ")).includes(needle);
-    return matchesKind && matchesCategory && matchesQuery;
-  });
+  return index.tracks
+    .map(normalizeMusicTrack)
+    .filter((track) => {
+      const matchesKind = kind === "all" || track.kind === kind;
+      const matchesCategory = category === "all" || !category || track.category === category;
+      const matchesQuery = !needle || musicSearchText(track).includes(needle);
+      return matchesKind && matchesCategory && matchesQuery;
+    })
+    .sort((left, right) => (
+      (right.publishedAt ?? "").localeCompare(left.publishedAt ?? "")
+      || musicSearchRank(left, needle) - musicSearchRank(right, needle)
+      || Number(Boolean(right.coverUrl)) - Number(Boolean(left.coverUrl))
+      || left.title.localeCompare(right.title)
+    ));
 }
 
 export function selectMusicShelfTracks(tracks: MusicTrack[], limit = 15) {
@@ -245,6 +247,29 @@ export function relatedMusicArtists(index: MusicIndex, artist: MusicArtist, limi
 
 function normalizeTrackText(value: string) {
   return value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+
+function musicSearchText(track: MusicTrack) {
+  return normalizeSearchValue([
+    track.title,
+    track.persianTitle,
+    track.category,
+    ...track.artists.map((artist) => artist.name),
+    ...track.artists.flatMap((artist) => artist.aliases ?? []),
+  ].join(" "));
+}
+
+function musicSearchRank(track: MusicTrack, needle: string) {
+  if (!needle) return 0;
+  const title = normalizeSearchValue([track.title, track.persianTitle].join(" "));
+  const artists = normalizeSearchValue([
+    ...track.artists.map((artist) => artist.name),
+    ...track.artists.flatMap((artist) => artist.aliases ?? []),
+  ].join(" "));
+  if (title === needle) return 0;
+  if (title.startsWith(needle)) return 1;
+  if (artists.startsWith(needle)) return 2;
+  return 3;
 }
 
 function artKey(track: MusicTrack) {

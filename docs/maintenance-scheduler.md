@@ -41,6 +41,8 @@ MAINTENANCE_MAX_LOAD_AVG=1.25
 CURATED_VOD_CONCURRENCY=1
 CURATED_VOD_REQUEST_GAP_MS=1000
 MUSIC_REFRESH_REQUEST_GAP_MS=1200
+MUSIC_PULSE_INTERVAL_MS=14400000
+MUSIC_PULSE_ALLOW_OUTSIDE_IDLE=0
 VOD_SERIES_EXPAND_CONCURRENCY=1
 VOD_SERIES_EXPAND_CHANGED_LIMIT=100
 VOD_SYNC_METADATA_INTERVAL_MS=604800000
@@ -61,6 +63,10 @@ npm run maintenance-full-now
 
 # بازبینی موسیقی بدون VOD
 npm run daily-music-refresh
+
+# بازبینی سبکِ صفحه‌های تازهٔ آهنگ، ریمیکس و موزیک‌ویدئو؛
+# این همان چرخه‌ای است که سرویس maintenance بین refreshهای روزانه اجرا می‌کند.
+npm run music-pulse-now
 
 # full historical music scan — فقط در پنجرهٔ نگهداری، زمان‌بر است
 node scripts/daily-music-refresh.mjs --full

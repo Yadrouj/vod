@@ -11,6 +11,7 @@ export const HOME_SECTIONS = [
   "best-movies",
   "kids",
   "animation",
+  "latest-animation",
 ] as const;
 
 export const SECTION_LABELS: Record<string, string> = {
@@ -22,6 +23,7 @@ export const SECTION_LABELS: Record<string, string> = {
   "best-movies": "Best Movies",
   kids: "Kids",
   animation: "Animation",
+  "latest-animation": "New Animation",
 };
 
 export type BrowseParams = {
@@ -166,6 +168,13 @@ function selectSection(items: VodCard[], section: string) {
   }
   if (section === "animation") {
     return [...items].filter((item) => hasGenre(item, ["animation"])).sort(ratingSort);
+  }
+  if (section === "latest-animation") {
+    const animated = [...items].filter((item) => hasGenre(item, ["animation"])).sort(yearSort);
+    const toyStoryFive = animated.find((item) => item.title.trim().toLowerCase() === "toy story 5");
+    return toyStoryFive
+      ? [toyStoryFive, ...animated.filter((item) => item.imdbCode !== toyStoryFive.imdbCode)]
+      : animated;
   }
   return [...items].sort(ratingSort);
 }

@@ -34,19 +34,34 @@ export default async function MusicPage({ searchParams }: Props) {
   const category = asText(params.category);
   const q = asText(params.q);
   const kind = asText(params.kind) || "all";
-  const filterLabel = q || category || kind;
-  const hasFilter = Boolean(q || category || kind !== "all");
+  const fresh = asText(params.fresh);
+  const year = Number(asText(params.year)) || null;
+  const filterLabel = q || category || (fresh === "week" ? "تازه‌های این هفته" : "") || (year ? String(year) : "") || kind;
+  const hasFilter = Boolean(q || category || kind !== "all" || year || fresh);
   const [locale, index] = await Promise.all([
     getLocale(),
     hasFilter ? loadMusicIndex() : loadMusicLandingIndex(),
   ]);
-  const allMatches = hasFilter ? searchMusic(index, q, kind, category) : [];
+  const allMatches = hasFilter
+    ? searchMusic(index, q, kind, category)
+      .filter((track) => !year || trackPublishedYear(track) === year)
+      .filter((track) => fresh !== "week" || isMusicReleasedThisWeek(track))
+    : [];
   const tracks = allMatches.slice(0, hasFilter ? 80 : 24);
   const recentTracks = selectMusicShelfTracks(index.tracks.filter((track) => track.kind === "track"), 16);
   const recentVideos = selectMusicShelfTracks(index.tracks.filter((track) => track.kind === "video"), 16);
   const classics = selectMusicShelfTracks(index.tracks.filter((track) => track.category === "موسیقی قدیمی فارسی"), 16);
   const foreign = selectMusicShelfTracks(index.tracks.filter((track) => track.category === "موسیقی خارجی"), 16);
   const remixes = selectMusicShelfTracks(index.tracks.filter((track) => track.category === REMIX_CATEGORY), 16);
+  const currentYear = new Date().getUTCFullYear();
+  const weeklyTracks = selectMusicShelfTracks(
+    index.tracks.filter((track) => isMusicReleasedThisWeek(track)),
+    16,
+  );
+  const currentYearTracks = selectMusicShelfTracks(
+    index.tracks.filter((track) => track.kind === "track" && trackPublishedYear(track) === currentYear),
+    16,
+  );
   const compactArchiveStats = "archiveStats" in index && isMusicArchiveStats(index.archiveStats) ? index.archiveStats : null;
   const archiveStats: MusicArchiveStats = compactArchiveStats ?? {
     tracks: index.tracks.filter((track) => track.kind === "track").length,
@@ -123,6 +138,8 @@ export default async function MusicPage({ searchParams }: Props) {
             </nav>
             <PublicPartyRooms mode="listen" locale={locale} />
             <MusicPlaylistLeaderboard />
+            {weeklyTracks.length > 0 && <MusicShelf eyebrow="همین هفته" title="تازه‌های این هفته" tracks={weeklyTracks} viewAll="/music?fresh=week" preload />}
+            {currentYearTracks.length > 0 && <MusicShelf eyebrow={`${currentYear} • تازه رسیده`} title={`انتشارهای ${currentYear}`} tracks={currentYearTracks} viewAll={`/music?year=${currentYear}`} preload />}
             {remixes.length > 0 && <MusicShelf eyebrow={REMIX_CATEGORY} title={REMIX_CATEGORY} tracks={remixes} viewAll={`/music?category=${encodeURIComponent(REMIX_CATEGORY)}`} />}
             <MusicShelf eyebrow="تازه از آرشیو" title="جدیدترین آهنگ‌ها" tracks={recentTracks} viewAll="/music?kind=track" preload />
             {artistOfMoment && <MusicShelf eyebrow="انتخاب امروز" title={`گلچین ${artistOfMoment.name}`} tracks={artistTracks} viewAll={`/music/artists/${encodeURIComponent(artistOfMoment.slug)}`} />}
@@ -162,6 +179,17 @@ function MusicShelf({ eyebrow, title, tracks, viewAll, preload = false }: { eyeb
 
 function asText(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+}
+
+function trackPublishedYear(track: { publishedAt: string | null }) {
+  return Number(track.publishedAt?.match(/\b(19|20)\d{2}\b/)?.[0] ?? 0);
+}
+
+function isMusicReleasedThisWeek(track: { publishedAt: string | null; folder: { year: string | null; month: string | null; day: string | null } }) {
+  const folderDate = [track.folder.year, track.folder.month, track.folder.day].filter(Boolean).join("-");
+  const timestamp = Date.parse(track.publishedAt || folderDate);
+  const age = Date.now() - timestamp;
+  return Number.isFinite(timestamp) && age >= 0 && age <= 7 * 24 * 60 * 60 * 1_000;
 }
 
 function pickFeaturedArtists<T extends { slug: string; trackIds: string[]; trackCount?: number; profileImageUrl?: string | null; coverUrl: string | null }>(artists: T[], limit: number) {

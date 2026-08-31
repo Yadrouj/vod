@@ -64,6 +64,8 @@ services:
       # IMDb release/news discovery remains daily; the large title dataset scan is weekly.
       VOD_SYNC_METADATA_INTERVAL_MS: ${VOD_SYNC_METADATA_INTERVAL_MS:-604800000}
       MUSIC_REFRESH_REQUEST_GAP_MS: ${MUSIC_REFRESH_REQUEST_GAP_MS:-1200}
+      MUSIC_PULSE_INTERVAL_MS: ${MUSIC_PULSE_INTERVAL_MS:-14400000}
+      MUSIC_PULSE_ALLOW_OUTSIDE_IDLE: ${MUSIC_PULSE_ALLOW_OUTSIDE_IDLE:-0}
       NODE_OPTIONS: --max-old-space-size=3072
     command: ["node", "scripts/maintenance-scheduler.mjs", "--daemon"]
     volumes:

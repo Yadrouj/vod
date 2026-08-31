@@ -59,6 +59,9 @@ export default async function WatchPage({ params }: Props) {
     subtitleUrl: link.subtitleUrl ?? null,
   }));
   const heroImage = item.backdropUrl ?? item.posterUrl ?? oldFilmMedia?.backdropUrl ?? null;
+  const displayTitle = locale === "fa" ? item.persianTitle || item.title : item.title;
+  const displayOverview = locale === "fa" ? item.persianOverview || item.overview : item.overview;
+  const displayGenres = locale === "fa" && item.persianGenres?.length ? item.persianGenres : item.genres;
   const partyMedia = partySources[0] ? {
     itemId: item.imdbCode,
     title: item.title,
@@ -101,7 +104,7 @@ export default async function WatchPage({ params }: Props) {
                 <i className="dot" />
                 <span>{youtubeSource ? "YouTube" : `${links.length} ${t.player.sources}`}</span>
               </div>
-              <h1>{item.title}</h1>
+              <h1>{displayTitle}</h1>
             </div>
             {partyMedia && (
               <div className="watch-page-room-action">
@@ -120,18 +123,37 @@ export default async function WatchPage({ params }: Props) {
       </section>
 
       <section className="wrap watch-player-section">
-        {youtubeSource ? (
-          <YouTubePlayer source={youtubeSource} title={item.title} />
-        ) : (
-          <VodPlayer
-            itemId={item.imdbCode}
-            title={item.title}
-            posterUrl={heroImage}
-            links={links}
-            isSeries={isSeries}
-            locale={locale}
-          />
-        )}
+        <div className="watch-first-fold">
+          <div className="watch-player-main">
+            {youtubeSource ? (
+              <YouTubePlayer source={youtubeSource} title={item.title} />
+            ) : (
+              <VodPlayer
+                itemId={item.imdbCode}
+                title={item.title}
+                posterUrl={heroImage}
+                links={links}
+                isSeries={isSeries}
+                locale={locale}
+              />
+            )}
+          </div>
+          <aside className="watch-title-summary">
+            {item.posterUrl && <img className="watch-title-poster" src={item.posterUrl} alt="" loading="eager" decoding="async" />}
+            <div className="watch-title-summary-copy">
+              <span>NOW PLAYING</span>
+              <strong>{displayTitle}</strong>
+              <div className="watch-title-facts">
+                <b>{item.year ?? "-"}</b>
+                {item.imdbRating && <b>IMDb {item.imdbRating.toFixed(1)}</b>}
+                {item.runtimeMinutes && <b>{item.runtimeMinutes}m</b>}
+              </div>
+              {displayOverview && <p>{displayOverview}</p>}
+              {displayGenres?.length ? <div className="watch-title-genres">{displayGenres.slice(0, 4).map((genre) => <span key={genre}>{genre}</span>)}</div> : null}
+              <Link href={`/${item.imdbCode}`}>{locale === "fa" ? "جزئیات کامل فیلم" : "Full title details"}</Link>
+            </div>
+          </aside>
+        </div>
         <SubtitleList imdbCode={item.imdbCode} title={item.title} />
       </section>
     </main>

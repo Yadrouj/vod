@@ -13,6 +13,8 @@ export async function GET(request: Request) {
   const startedAt = performance.now();
   const { searchParams } = new URL(request.url);
   const query = (searchParams.get("q") ?? "").trim();
+  const requestedLimit = Number(searchParams.get("limit") ?? 8);
+  const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(Math.floor(requestedLimit), 6), 20) : 8;
 
   if (query.length < 2) {
     return Response.json(
@@ -24,7 +26,7 @@ export async function GET(request: Request) {
   const rate = checkRateLimit(`suggest:${clientIp(request)}`, 120, 60_000);
   if (!rate.allowed) return rateLimitedResponse(rate);
 
-  const result = await searchSuggestions(query, 8);
+  const result = await searchSuggestions(query, limit);
   return Response.json(
     { items: result.items },
     {

@@ -57,6 +57,9 @@ let statusWrite = Promise.resolve();
 let checkpointWrite = Promise.resolve();
 let completedSinceCheckpoint = 0;
 let nextRequestAt = 0;
+const refreshedTrackIds = new Set();
+const refreshedTrackRanks = new Map();
+let refreshedTrackOrder = 0;
 
 async function main() {
   const [previous, detailCache, musicsFaSource, classicsSource, foreignSource, remiixbazSource, worldofmusicSource, checkpoint] = await Promise.all([
@@ -98,6 +101,9 @@ async function main() {
       for (const track of parsed) {
         const existing = tracks.get(track.id);
         tracks.set(track.id, mergeTrack(existing, track));
+        refreshedTrackIds.add(track.id);
+        if (!refreshedTrackRanks.has(track.id)) refreshedTrackRanks.set(track.id, refreshedTrackOrder);
+        refreshedTrackOrder += 1;
         if (!existing) status.tracks.new += 1;
         else status.tracks.updated += 1;
       }
@@ -115,9 +121,25 @@ async function main() {
   });
 
   if (withDetails) {
+    const refreshDetails = args.has("--refresh-details");
+    const refreshDetailsOnly = args.has("--refresh-details-only");
     const candidates = [...tracks.values()]
       .filter((track) => selectedKind === "all" || track.kind === selectedKind)
-      .filter((track) => !detailCache[track.id] || Date.now() - Date.parse(detailCache[track.id].checkedAt ?? 0) > 14 * 24 * 60 * 60 * 1000)
+      .filter((track) => (
+        refreshDetailsOnly
+          ? refreshedTrackIds.has(track.id)
+          : (refreshDetails && refreshedTrackIds.has(track.id))
+        || !detailCache[track.id]
+        || Date.now() - Date.parse(detailCache[track.id].checkedAt ?? 0) > 14 * 24 * 60 * 60 * 1000
+      ))
+      // The fresh listing is the priority. Without this, a large historical
+      // cache could spend the small detail budget before new songs get their
+      // playable media URL and cover image.
+      .sort((left, right) => (
+        Number(refreshedTrackIds.has(right.id)) - Number(refreshedTrackIds.has(left.id))
+        || (refreshedTrackRanks.get(left.id) ?? Number.MAX_SAFE_INTEGER) - (refreshedTrackRanks.get(right.id) ?? Number.MAX_SAFE_INTEGER)
+        || (right.publishedAt ?? "").localeCompare(left.publishedAt ?? "")
+      ))
       .slice(0, detailLimit || undefined);
     status.details.requested = candidates.length;
     await mapPool(candidates, concurrency, async (track) => {

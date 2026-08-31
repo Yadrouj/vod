@@ -8,6 +8,9 @@ const OUT_FILE = process.argv[3] || path.join("public", "data", "vod-index.json"
 const HOME_OUT_FILE = process.argv[4] || path.join("public", "data", "vod-home.json");
 const OLD_IRANIAN_OUT_FILE = process.argv[5] || path.join("public", "data", "vod-old-iranian.json");
 const SECTION_LIMIT = Number(process.env.VOD_INDEX_SECTION_LIMIT || 15);
+// The homepage only ships a compact catalog, but it still needs enough
+// candidates to build distinct rails without repeating the same title.
+const HOME_SECTION_LIMIT = Math.max(45, Number(process.env.VOD_HOME_SECTION_LIMIT || 60));
 
 const SECTIONS = [
   {
@@ -49,6 +52,11 @@ const SECTIONS = [
     id: "animation",
     title: "Animation",
     subtitle: "Animated movies and series",
+  },
+  {
+    id: "latest-animation",
+    title: "New Animation",
+    subtitle: "Fresh animated films and series, including upcoming releases",
   },
 ];
 
@@ -125,6 +133,17 @@ function sectionItems(items, id) {
   if (id === "animation") {
     return [...items].filter((item) => hasGenre(item, ["animation"])).sort(ratingSort);
   }
+  if (id === "latest-animation") {
+    const animated = [...items]
+      .filter((item) => hasGenre(item, ["animation"]))
+      .sort(yearSort);
+    // Put the current Toy Story release at the front when it exists, without
+    // losing the rest of the genuinely new animation catalogue.
+    const toyStoryFive = animated.find((item) => item.title.trim().toLowerCase() === "toy story 5");
+    return toyStoryFive
+      ? [toyStoryFive, ...animated.filter((item) => item.imdbCode !== toyStoryFive.imdbCode)]
+      : animated;
+  }
   return items;
 }
 
@@ -176,7 +195,15 @@ async function main() {
     items,
   };
 
-  const homeItems = Array.from(new Map(index.sections.flatMap((section) => section.items).map((item) => [item.imdbCode, item])).values());
+  const homeSections = SECTIONS.map((section) => {
+    const selected = sectionItems(items, section.id);
+    return {
+      ...section,
+      total: selected.length,
+      items: selected.slice(0, HOME_SECTION_LIMIT),
+    };
+  });
+  const homeItems = Array.from(new Map(homeSections.flatMap((section) => section.items).map((item) => [item.imdbCode, item])).values());
   const homeIndex = {
     sourceUrl: index.sourceUrl,
     totalTitles: index.totalTitles,
@@ -194,7 +221,7 @@ async function main() {
       qualities: [],
       groups: [],
     },
-    sections: index.sections,
+    sections: homeSections,
     items: homeItems,
   };
   const oldIranianIndex = buildOldIranianVodIndex(index);
