@@ -138,13 +138,18 @@ export function searchMusic(index: MusicIndex, query: string, kind = "all", cate
 }
 
 export function selectMusicShelfTracks(tracks: MusicTrack[], limit = 15) {
-  const candidates = [...tracks]
+  const playable = [...tracks]
     .map(normalizeMusicTrack)
     .filter((track) => track.sources.some((source) => source.kind === "stream" && source.available !== false))
     .sort((left, right) => (
       Number(Boolean(right.coverUrl)) - Number(Boolean(left.coverUrl))
       || (right.publishedAt ?? "").localeCompare(left.publishedAt ?? "")
     ));
+  // Archive imports often contain generic "Various Artists"/unknown entries
+  // with a shared catalogue cover. Prefer named performers whenever the shelf
+  // has enough of them, while retaining that fallback for sparse categories.
+  const namedArtists = playable.filter((track) => !isLowValueMusicArtist(track));
+  const candidates = namedArtists.length >= Math.min(6, limit) ? namedArtists : playable;
   return diversifyMusicTracks(candidates, limit);
 }
 
@@ -277,6 +282,22 @@ function normalizeTrackText(value: string) {
   return value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }
 
+/** Uses compact artist metadata, so artist pages do not scan the whole archive twice. */
+export function relatedMusicArtistsIndex(index: Pick<MusicIndex, "artists">, artist: MusicArtist, limit = 12) {
+  const categories = new Set(artist.categories);
+  const identity = new Set([artist.slug, ...(artist.aliases ?? [])].map(musicSlug));
+  return index.artists
+    .filter((candidate) => ![candidate.slug, ...(candidate.aliases ?? [])].some((value) => identity.has(musicSlug(value))))
+    .map((candidate) => ({
+      candidate,
+      score: candidate.categories.filter((category) => categories.has(category)).length * 100 + Math.min(artistTrackCount(candidate), 80),
+    }))
+    .filter((item) => item.score > 0)
+    .sort((left, right) => right.score - left.score || artistTrackCount(right.candidate) - artistTrackCount(left.candidate))
+    .slice(0, limit)
+    .map((item) => item.candidate);
+}
+
 function musicSearchText(track: MusicTrack) {
   return normalizeSearchValue([
     track.title,
@@ -307,6 +328,11 @@ function artKey(track: MusicTrack) {
 function artistGroupPriority(bucket: MusicTrack[]) {
   const name = bucket[0]?.artists.map((artist) => artist.name).join(" ") ?? "";
   return /^(?:various artists|unknown(?: artist)?|هنرمند نامشخص|srv[a-z]*|\d+|full\b|best\s+of\b|remix\b|mix\b)/iu.test(name.trim()) ? 1 : 0;
+}
+
+function isLowValueMusicArtist(track: MusicTrack) {
+  const names = track.artists.map((artist) => artist.name).join(" ");
+  return /^(?:various artists|foreign artist|unknown(?: artist)?|هنرمند نامشخص|srv[a-z]*|\d+|full\b|best\s+of\b|remix\b|mix\b)/iu.test(names.trim());
 }
 
 export function artistTrackCount(artist: Pick<MusicArtist, "trackIds" | "trackCount">) {

@@ -62,6 +62,7 @@ export default async function MusicPage({ searchParams }: Props) {
     index.tracks.filter((track) => track.kind === "track" && trackPublishedYear(track) === currentYear),
     16,
   );
+  const topClassics = classics;
   const compactArchiveStats = "archiveStats" in index && isMusicArchiveStats(index.archiveStats) ? index.archiveStats : null;
   const archiveStats: MusicArchiveStats = compactArchiveStats ?? {
     tracks: index.tracks.filter((track) => track.kind === "track").length,
@@ -138,13 +139,13 @@ export default async function MusicPage({ searchParams }: Props) {
             </nav>
             <PublicPartyRooms mode="listen" locale={locale} />
             <MusicPlaylistLeaderboard />
+            {topClassics.length > 0 && <MusicShelf eyebrow={"\u0622\u0631\u0634\u06cc\u0648 \u062e\u0627\u0637\u0631\u0647\u200c\u0647\u0627"} title={"\u0645\u0648\u0633\u06cc\u0642\u06cc \u0642\u062f\u06cc\u0645\u06cc \u0641\u0627\u0631\u0633\u06cc"} tracks={topClassics} viewAll="/music?category=%D9%85%D9%88%D8%B3%DB%8C%D9%82%DB%8C%20%D9%82%D8%AF%DB%8C%D9%85%DB%8C%20%D9%81%D8%A7%D8%B1%D8%B3%DB%8C" preload />}
             {weeklyTracks.length > 0 && <MusicShelf eyebrow="همین هفته" title="تازه‌های این هفته" tracks={weeklyTracks} viewAll="/music?fresh=week" preload />}
             {currentYearTracks.length > 0 && <MusicShelf eyebrow={`${currentYear} • تازه رسیده`} title={`انتشارهای ${currentYear}`} tracks={currentYearTracks} viewAll={`/music?year=${currentYear}`} preload />}
             {remixes.length > 0 && <MusicShelf eyebrow={REMIX_CATEGORY} title={REMIX_CATEGORY} tracks={remixes} viewAll={`/music?category=${encodeURIComponent(REMIX_CATEGORY)}`} />}
             <MusicShelf eyebrow="تازه از آرشیو" title="جدیدترین آهنگ‌ها" tracks={recentTracks} viewAll="/music?kind=track" preload />
             {artistOfMoment && <MusicShelf eyebrow="انتخاب امروز" title={`گلچین ${artistOfMoment.name}`} tracks={artistTracks} viewAll={`/music/artists/${encodeURIComponent(artistOfMoment.slug)}`} />}
             {recentVideos.length > 0 && <MusicShelf eyebrow="تصویر و صدا" title="موزیک‌ویدیوهای تازه" tracks={recentVideos} viewAll="/music?kind=video" />}
-            {classics.length > 0 && <MusicShelf eyebrow="آرشیو خاطره‌ها" title="موسیقی قدیمی فارسی" tracks={classics} viewAll="/music?category=%D9%85%D9%88%D8%B3%DB%8C%D9%82%DB%8C%20%D9%82%D8%AF%DB%8C%D9%85%DB%8C%20%D9%81%D8%A7%D8%B1%D8%B3%DB%8C" />}
             {foreign.length > 0 && <MusicShelf eyebrow="برای کشف بیشتر" title="موسیقی خارجی" tracks={foreign} viewAll="/music?q=موسیقی%20خارجی" />}
           </>
         )}

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Search } from "lucide-react";
 import { MusicArtistCard } from "@/components/music-artist-card";
-import { loadMusicIndex } from "@/lib/music";
+import { loadMusicArtistIndex } from "@/lib/music";
 import { titleMetadata } from "@/lib/seo";
 
 export const revalidate = 300;
@@ -17,7 +17,7 @@ export const metadata: Metadata = titleMetadata({
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 export default async function MusicArtistsPage({ searchParams }: Props) {
-  const [index, params] = await Promise.all([loadMusicIndex(), searchParams]);
+  const [index, params] = await Promise.all([loadMusicArtistIndex(), searchParams]);
   const query = text(params.q).trim().toLocaleLowerCase();
   const requestedPage = Math.max(1, Number(text(params.page)) || 1);
   const artists = index.artists.filter((artist) => !query || `${artist.name} ${artist.aliases?.join(" ") ?? ""}`.toLocaleLowerCase().includes(query));
