@@ -1,6 +1,6 @@
 const VIDEO_EXTENSION = /\.(mkv|mp4|m4v|avi|webm|mov|wmv|ts)(?:$|[?#])/i;
 const SUBTITLE_EXTENSION = /\.(srt|vtt|ass|ssa)(?:$|[?#])/i;
-const QUALITY_TOKEN = /(?:^|[.\s_-])(2160p|1440p|1080p|720p|576p|480p|360p|4k)(?=$|[.\s_-])/i;
+const QUALITY_TOKEN = /(?:^|[.\s_-])(2160p?|1440p?|1080p?|720p?|576p?|480p?|360p?|4k)(?=$|[.\s_-])/i;
 
 export function decodeHtmlEntities(value) {
   return String(value ?? "")
@@ -112,7 +112,9 @@ export function parseSeasonEpisode(value) {
 
 export function inferQuality(value) {
   const match = QUALITY_TOKEN.exec(String(value ?? ""));
-  return match ? match[1].replace(/^4k$/i, "4K") : null;
+  if (!match) return null;
+  if (/^4k$/i.test(match[1])) return "4K";
+  return `${match[1].replace(/p$/i, "")}p`;
 }
 
 export function inferRelease(value) {

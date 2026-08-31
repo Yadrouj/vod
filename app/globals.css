@@ -2964,7 +2964,9 @@ html { scroll-behavior: smooth; }
 .player-timeline::-moz-range-progress { background: transparent; }
 .player-timeline::-moz-range-thumb { width: 13px; height: 13px; border: 0; border-radius: 50%; background: #f5c542; }
 .player-frame-preview { position: absolute; bottom: 24px; z-index: 20; width: 176px; padding: 4px; transform: translateX(-50%); border: 1px solid rgba(255,255,255,.2); border-radius: 4px; background: rgba(10,10,11,.94); box-shadow: 0 10px 30px rgba(0,0,0,.6); pointer-events: none; }
-.player-frame-preview video { display: block; width: 168px; height: 94px; object-fit: cover; background: #000; }
+.player-frame-preview-image,
+.player-frame-preview-empty { display: block; width: 168px; height: 94px; object-fit: cover; background: #000; }
+.player-frame-preview-image { background-position: center; background-repeat: no-repeat; background-size: cover; }
 .player-frame-preview span { display: block; padding: 3px 2px 0; color: #fff; font-size: 11px; font-weight: 800; text-align: center; }
 .player-icon-btn:hover { background: rgba(255,255,255,.2); }
 .player-choice-overlay { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; background: rgba(0,0,0,.62); backdrop-filter: blur(8px); }
@@ -6795,11 +6797,14 @@ html[dir="rtl"] .suggest-item img { order: initial; }
 .watch-first-fold {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(275px, 320px);
+  grid-template-areas: "player summary";
+  direction: ltr;
   align-items: start;
   gap: 16px;
 }
 
 .watch-player-main {
+  grid-area: player;
   min-width: 0;
 }
 
@@ -6808,6 +6813,7 @@ html[dir="rtl"] .suggest-item img { order: initial; }
 }
 
 .watch-title-summary {
+  grid-area: summary;
   display: grid;
   grid-template-columns: 84px minmax(0, 1fr);
   align-items: start;
@@ -6824,6 +6830,11 @@ html[dir="rtl"] .suggest-item img { order: initial; }
   aspect-ratio: 2 / 3;
   object-fit: cover;
   background: #101012;
+}
+
+html[dir="rtl"] .watch-title-summary {
+  direction: rtl;
+  text-align: right;
 }
 
 .watch-title-summary-copy {
@@ -6894,6 +6905,9 @@ html[dir="rtl"] .suggest-item img { order: initial; }
 
   .watch-first-fold {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "player"
+      "summary";
   }
 
   .watch-title-summary {

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Captions, Cast, Maximize, Minimize, Pause, PictureInPicture2, Play, RotateCcw, RotateCw, Settings, Volume2, VolumeX } from "lucide-react";
 import { BrandLoader } from "@/components/brand-loader";
 import { PlayerSubtitles } from "@/components/player-subtitles";
 import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
-import { playbackSourceLabel } from "@/lib/link-labels";
+import { playableLinks, playbackSourceLabel } from "@/lib/link-labels";
 import type { VodLink } from "@/lib/types";
 
 type CastableVideo = HTMLVideoElement & {
@@ -31,9 +31,11 @@ export function VodPlayer({
   locale?: Locale;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const previewRef = useRef<HTMLVideoElement>(null);
   const playerFrameRef = useRef<HTMLDivElement>(null);
   const controlsTimerRef = useRef<number | null>(null);
+  const previewTimeRef = useRef(Number.NaN);
+  const bufferedRef = useRef(0);
+  const playAfterSourceReadyRef = useRef(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [speed, setSpeed] = useState("1");
   const [volume, setVolume] = useState("0.85");
@@ -45,13 +47,15 @@ export function VodPlayer({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [subtitlesOpen, setSubtitlesOpen] = useState(false);
   const [selectionOpen, setSelectionOpen] = useState(false);
+  const [sourceReady, setSourceReady] = useState(false);
   const [message, setMessage] = useState("");
   const [buffering, setBuffering] = useState(true);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
   const [muted, setMuted] = useState(false);
   const lastSavedAt = useRef(0);
-  const active = links[activeIndex] ?? links[0];
+  const playableSources = useMemo(() => playableLinks(links), [links]);
+  const active = playableSources[activeIndex] ?? playableSources[0];
   const t = getDictionary(locale);
   const controlsShowing = paused || settingsOpen || subtitlesOpen || selectionOpen || controlsVisible;
 
@@ -61,17 +65,25 @@ export function VodPlayer({
       if (!current) return;
       try {
         const saved = readProgress();
-        const match = links.findIndex((link) => Boolean(saved[link.url]));
+        const match = playableSources.findIndex((link) => Boolean(saved[link.url]));
         if (match >= 0) {
           setActiveIndex(match);
           setSelectionOpen(false);
-        } else if (links.length > 1) {
+          setSourceReady(true);
+        } else if (playableSources.length > 1) {
+          setActiveIndex(0);
+          setSourceReady(false);
           setSelectionOpen(true);
+        } else {
+          setSourceReady(playableSources.length > 0);
         }
-      } catch { if (links.length > 1) setSelectionOpen(true); }
+      } catch {
+        setSourceReady(playableSources.length <= 1 && playableSources.length > 0);
+        if (playableSources.length > 1) setSelectionOpen(true);
+      }
     });
     return () => { current = false; };
-  }, [links]);
+  }, [playableSources]);
 
   useEffect(() => {
     const syncFullscreen = () => setFullscreen(Boolean(document.fullscreenElement));
@@ -104,11 +116,11 @@ export function VodPlayer({
 
   const sources = useMemo(
     () =>
-      links.map((link, index) => ({
+      playableSources.map((link, index) => ({
         ...link,
         label: playbackSourceLabel(link, index, isSeries, t.player.source),
       })),
-    [isSeries, links, t.player.source]
+    [isSeries, playableSources, t.player.source]
   );
 
   function togglePlay() {
@@ -159,10 +171,13 @@ export function VodPlayer({
   }
 
   function changeSource(value: string) {
+    const wasPlaying = Boolean(videoRef.current && !videoRef.current.paused);
     setActiveIndex(Number(value));
     setPaused(true);
     setBuffering(true);
     setTime(0);
+    setSourceReady(true);
+    playAfterSourceReadyRef.current = wasPlaying;
   }
 
   async function toggleFullscreen() {
@@ -221,11 +236,34 @@ export function VodPlayer({
     }
   }
 
+  function showTimelinePreview(event: MouseEvent<HTMLDivElement>) {
+    if (duration <= 0) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    const next = ratio * duration;
+    if (Math.abs(previewTimeRef.current - next) < 0.45) return;
+    previewTimeRef.current = next;
+    setPreview({ x: ratio * 100, time: next });
+  }
+
+  function clearTimelinePreview() {
+    previewTimeRef.current = Number.NaN;
+    setPreview(null);
+  }
+
+  function confirmSource() {
+    playAfterSourceReadyRef.current = true;
+    setMessage("");
+    setSourceReady(true);
+    setSelectionOpen(false);
+  }
+
   return (
     <div className="player-shell">
       <div
         ref={playerFrameRef}
         className={`pro-player ${paused ? "is-paused" : "is-playing"} ${controlsShowing ? "is-controls-visible" : "is-controls-hidden"}`}
+        dir="ltr"
         onMouseMove={revealControls}
         onMouseLeave={handlePointerLeave}
         onFocusCapture={revealControls}
@@ -233,14 +271,16 @@ export function VodPlayer({
       >
         <video
           ref={videoRef}
-          key={active?.url}
+          key={sourceReady ? active?.url : "awaiting-source"}
           className="player"
-          src={active?.url}
+          src={sourceReady ? active?.url : undefined}
           poster={posterUrl ?? undefined}
           playsInline
-          preload="metadata"
+          preload={sourceReady ? "metadata" : "none"}
           onLoadStart={() => setBuffering(true)}
           onLoadedMetadata={(event) => {
+            event.currentTarget.volume = Number(volume);
+            event.currentTarget.playbackRate = Number(speed);
             setDuration(event.currentTarget.duration || 0);
             const saved = readProgress()[active?.url ?? ""];
             const resumeAt = typeof saved === "number" ? saved : saved?.time;
@@ -250,10 +290,18 @@ export function VodPlayer({
               setMessage(locale === "fa" ? `ادامه پخش از ${formatTime(resumeAt)}` : `Resuming from ${formatTime(resumeAt)}`);
             }
             setBuffering(false);
+            bufferedRef.current = 0;
             setBuffered(0);
           }}
-          onCanPlay={() => setBuffering(false)}
+          onCanPlay={(event) => {
+            setBuffering(false);
+            if (playAfterSourceReadyRef.current) {
+              playAfterSourceReadyRef.current = false;
+              void event.currentTarget.play().catch(() => setMessage(t.player.playbackBlocked));
+            }
+          }}
           onWaiting={() => setBuffering(true)}
+          onStalled={() => setBuffering(true)}
           onTimeUpdate={(event) => {
             const current = event.currentTarget.currentTime;
             setTime(current);
@@ -261,7 +309,13 @@ export function VodPlayer({
           }}
           onProgress={(event) => {
             const video = event.currentTarget;
-            if (video.duration && video.buffered.length) setBuffered((video.buffered.end(video.buffered.length - 1) / video.duration) * 100);
+            if (video.duration && video.buffered.length) {
+              const next = (video.buffered.end(video.buffered.length - 1) / video.duration) * 100;
+              if (Math.abs(bufferedRef.current - next) >= 0.5) {
+                bufferedRef.current = next;
+                setBuffered(next);
+              }
+            }
           }}
           onEnded={() => { if (active?.url) { const progress = readProgress(); delete progress[active.url]; document.cookie = `sarvnema_progress=${encodeURIComponent(JSON.stringify(progress))}; path=/; max-age=2592000; SameSite=Lax`; } }}
           onPlaying={() => setBuffering(false)}
@@ -295,8 +349,8 @@ export function VodPlayer({
         </div>
 
         <div className="player-bar">
-          <div className="player-timeline-wrap" onMouseMove={(event) => { const rect = event.currentTarget.getBoundingClientRect(); const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)); const next = ratio * duration; setPreview({ x: ratio * 100, time: next }); if (previewRef.current && Number.isFinite(next)) previewRef.current.currentTime = next; }} onMouseLeave={() => setPreview(null)}>
-            {preview && duration > 0 && <div className="player-frame-preview" style={{ left: `${preview.x}%` }}><video ref={previewRef} src={active?.url} muted preload="metadata" /><span>{formatTime(preview.time)}</span></div>}
+          <div className="player-timeline-wrap" onMouseMove={showTimelinePreview} onMouseLeave={clearTimelinePreview}>
+            {preview && duration > 0 && <div className="player-frame-preview" style={{ left: `${preview.x}%` }}>{posterUrl ? <span className="player-frame-preview-image" style={{ backgroundImage: `url(${posterUrl})` }} aria-hidden="true" /> : <span className="player-frame-preview-empty" />}<span>{formatTime(preview.time)}</span></div>}
             <span className="player-timeline-track" aria-hidden="true">
               <span className="player-buffer-progress" style={{ width: `${buffered}%` }} />
               <span className="player-played-progress" style={{ width: `${duration > 0 ? Math.min(100, (time / duration) * 100) : 0}%` }} />
@@ -384,7 +438,7 @@ export function VodPlayer({
         )}
         {selectionOpen && sources.length > 1 && (
           <div className="player-choice-overlay">
-            <div className="player-choice-card">
+            <div className="player-choice-card" dir={locale === "fa" ? "rtl" : "ltr"}>
               <span className="label">Choose playback</span>
               <h3>{title}</h3>
               <p>
@@ -396,10 +450,10 @@ export function VodPlayer({
                     ? "کیفیت پخش را انتخاب کن."
                     : "Select a playback quality."}
               </p>
-              <select className="select" value={activeIndex} onChange={(event) => changeSource(event.target.value)}>
+              <select className="select" value={activeIndex} onChange={(event) => setActiveIndex(Number(event.target.value))}>
                 {sources.map((source, index) => <option key={`${source.url}-${index}`} value={index}>{source.label}</option>)}
               </select>
-              <button type="button" className="play-glow" onClick={() => setSelectionOpen(false)}>▶ Start playback</button>
+              <button type="button" className="play-glow" onClick={confirmSource}>▶ Start playback</button>
             </div>
           </div>
         )}

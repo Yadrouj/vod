@@ -21,8 +21,13 @@ export function episodeLabel(link: VodLink) {
 }
 
 export function playableLinks(links: VodLink[]) {
-  const playable = links.filter((link) => /\.(mp4|m4v|webm|mov)(\?|$)/i.test(link.url));
-  return playable.length ? playable : links;
+  const direct = links.filter((link) => /\.(mp4|m4v|webm|mov)(\?|$)/i.test(link.url));
+  const primary = direct.filter((link) => !isTrailerLink(link));
+  if (primary.length) return primary;
+  if (direct.length) return direct;
+
+  const nonTrailer = links.filter((link) => !isTrailerLink(link));
+  return nonTrailer.length ? nonTrailer : links;
 }
 
 export function playbackSourceLabel(
@@ -32,7 +37,12 @@ export function playbackSourceLabel(
   sourceLabel = "Source",
 ) {
   if (!isSeries) {
-    return link.quality || `${sourceLabel} ${index + 1}`;
+    const details = [
+      link.quality ?? inferredQuality(link.fileName ?? link.url),
+      link.release,
+      link.group && !/^(files|unknown)$/i.test(link.group) ? link.group : null,
+    ].filter(Boolean);
+    return details.join(" / ") || `${sourceLabel} ${index + 1}`;
   }
 
   return [
@@ -40,4 +50,16 @@ export function playbackSourceLabel(
     link.quality,
     link.release ?? link.group,
   ].filter(Boolean).join(" / ") || `${sourceLabel} ${index + 1}`;
+}
+
+function isTrailerLink(link: VodLink) {
+  if (link.mediaKind === "trailer") return true;
+  return /(?:^|[._/\s-])(?:trailer|teaser|preview|promo|clip)(?:[._/\s-]|$)/i.test(
+    `${link.label} ${link.fileName ?? ""} ${link.url}`,
+  );
+}
+
+function inferredQuality(value: string) {
+  const match = /(?:^|[._/\\-])(2160|1440|1080|720|576|480|360)p?(?=$|[._/?\\-])/i.exec(value);
+  return match ? `${match[1]}p` : "";
 }
