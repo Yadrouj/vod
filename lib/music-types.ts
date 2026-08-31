@@ -82,3 +82,9 @@ export type MusicLandingIndex = MusicIndex & {
   archiveStats: MusicArchiveStats;
   scope: "home" | "landing";
 };
+
+/** Compact, artist-first catalog used by the directory and artist profile pages. */
+export type MusicArtistIndex = MusicIndex & {
+  artistTrackIds: Record<string, string[]>;
+  scope: "artist";
+};

@@ -23,6 +23,10 @@ export function episodeLabel(link: VodLink) {
 export function playableLinks(links: VodLink[]) {
   const direct = links.filter((link) => /\.(mp4|m4v|webm|mov)(\?|$)/i.test(link.url));
   const primary = direct.filter((link) => !isTrailerLink(link));
+  const qualityTagged = primary.filter(hasPlaybackQuality);
+  // A generic MP4 asset on a source page is commonly its preview/trailer. When the
+  // same title exposes versioned files, only present the explicit playback versions.
+  if (qualityTagged.length) return qualityTagged;
   if (primary.length) return primary;
   if (direct.length) return direct;
 
@@ -62,4 +66,12 @@ function isTrailerLink(link: VodLink) {
 function inferredQuality(value: string) {
   const match = /(?:^|[._/\\-])(2160|1440|1080|720|576|480|360)p?(?=$|[._/?\\-])/i.exec(value);
   return match ? `${match[1]}p` : "";
+}
+
+function hasPlaybackQuality(link: VodLink) {
+  return Boolean(
+    link.quality
+    || inferredQuality(`${link.label} ${link.fileName ?? ""} ${link.url}`)
+    || /(?:4k|bluray|web[-_. ]?dl|webrip|hdr|hq)/i.test(`${link.release ?? ""} ${link.fileName ?? ""}`),
+  );
 }

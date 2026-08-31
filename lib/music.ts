@@ -1,14 +1,16 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import type { MusicArtist, MusicIndex, MusicLandingIndex, MusicTrack } from "@/lib/music-types";
+import type { MusicArtist, MusicArtistIndex, MusicIndex, MusicLandingIndex, MusicTrack } from "@/lib/music-types";
 
 const DATA_FILE = path.join(process.cwd(), "public", "data", "music-index.json");
 const LANDING_DATA_FILE = path.join(process.cwd(), "public", "data", "music-landing.json");
 const HOME_DATA_FILE = path.join(process.cwd(), "public", "data", "music-home.json");
+const ARTIST_DATA_FILE = path.join(process.cwd(), "public", "data", "music-artists.json");
 const CHECK_INTERVAL = 30_000;
 const cache: { checkedAt?: number; mtimeMs?: number; value?: Promise<MusicIndex>; refreshing?: Promise<MusicIndex> } = {};
 const landingCache: FileCache<MusicLandingIndex> = {};
 const homeCache: FileCache<MusicLandingIndex> = {};
+const artistCache: FileCache<MusicArtistIndex> = {};
 
 const emptyIndex: MusicIndex = {
   version: 1,
@@ -60,6 +62,14 @@ export async function loadMusicHomeIndex(): Promise<MusicLandingIndex> {
   return loadCompactMusicIndex(HOME_DATA_FILE, homeCache);
 }
 
+/**
+ * Artist pages need playable tracks but not every alternate source in the
+ * archive. This small index avoids parsing the full media catalog on clicks.
+ */
+export async function loadMusicArtistIndex(): Promise<MusicArtistIndex> {
+  return loadCompactMusicIndex(ARTIST_DATA_FILE, artistCache);
+}
+
 export function findMusicArtist(index: MusicIndex, slug: string): MusicArtist | null {
   const direct = index.artists.find((artist) => artist.slug === slug || artist.aliases?.includes(slug));
   if (direct) return direct;
@@ -88,6 +98,24 @@ export function musicForArtist(index: MusicIndex, slug: string) {
         || normalizedTrack.artists.some((item) => identity.has(musicSlug(item.slug)) || item.aliases?.some((alias) => identity.has(musicSlug(alias))));
     })
     .map(normalizeMusicTrack);
+  return diversifyMusicTracks(tracks);
+}
+
+export function musicForArtistIndex(index: MusicArtistIndex, slug: string) {
+  const artist = findMusicArtist(index, slug);
+  const aliases = new Set([slug, artist?.slug, ...(artist?.aliases ?? [])]
+    .filter((value): value is string => Boolean(value))
+    .map(musicSlug));
+  const ids = [...aliases].flatMap((value) => index.artistTrackIds?.[value] ?? []);
+  const byId = new Map(index.tracks.map((track) => [track.id, track]));
+  const seen = new Set<string>();
+  const tracks: MusicTrack[] = [];
+  for (const id of ids) {
+    const track = byId.get(id);
+    if (!track || seen.has(track.id)) continue;
+    seen.add(track.id);
+    tracks.push(track);
+  }
   return diversifyMusicTracks(tracks);
 }
 
@@ -314,7 +342,7 @@ type FileCache<T> = {
   refreshing?: Promise<T>;
 };
 
-async function loadCompactMusicIndex(file: string, compactCache: FileCache<MusicLandingIndex>): Promise<MusicLandingIndex> {
+async function loadCompactMusicIndex<T extends MusicLandingIndex | MusicArtistIndex>(file: string, compactCache: FileCache<T>): Promise<T> {
   const now = Date.now();
   if (compactCache.value && compactCache.checkedAt && now - compactCache.checkedAt < CHECK_INTERVAL) return compactCache.value;
   if (compactCache.refreshing) return compactCache.value ?? compactCache.refreshing;
@@ -323,7 +351,7 @@ async function loadCompactMusicIndex(file: string, compactCache: FileCache<Music
       const info = await stat(file);
       if (!compactCache.value || compactCache.mtimeMs !== info.mtimeMs) {
         compactCache.mtimeMs = info.mtimeMs;
-        compactCache.value = readFile(file, "utf8").then((data) => JSON.parse(data) as MusicLandingIndex);
+        compactCache.value = readFile(file, "utf8").then((data) => JSON.parse(data) as T);
       }
       return await compactCache.value;
     } catch {
@@ -333,7 +361,7 @@ async function loadCompactMusicIndex(file: string, compactCache: FileCache<Music
         ...emptyIndex,
         archiveStats: { tracks: 0, artists: 0, videos: 0 },
         scope: "landing",
-      };
+      } as T;
     } finally {
       compactCache.checkedAt = Date.now();
       compactCache.refreshing = undefined;

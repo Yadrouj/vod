@@ -6,6 +6,7 @@ const DATA_DIR = path.join(process.cwd(), "public", "data");
 const INPUT_FILE = path.join(DATA_DIR, "music-index.json");
 const LANDING_FILE = path.join(DATA_DIR, "music-landing.json");
 const HOME_FILE = path.join(DATA_DIR, "music-home.json");
+const ARTIST_FILE = path.join(DATA_DIR, "music-artists.json");
 const CLASSICS = "موسیقی قدیمی فارسی";
 const FOREIGN = "موسیقی خارجی";
 const REMIX = "ریمیکس";
@@ -52,8 +53,12 @@ export function buildMusicLandingIndexes(index) {
     ...pickDiverse(landingTracks.filter((track) => track.kind === "video"), 12),
   ]).map(compactTrack);
   const home = makeIndex(index, homeTracks, [], stats, "home");
+  const artist = {
+    ...makeIndex(index, tracks.map(compactTrack), artists.map(compactArtist), stats, "artist"),
+    artistTrackIds: buildArtistTrackIds(tracks, artists),
+  };
 
-  return { landing, home };
+  return { landing, home, artist };
 }
 
 function makeIndex(source, tracks, artists, archiveStats, scope) {
@@ -134,6 +139,42 @@ function compactArtistRef(artist) {
   };
 }
 
+function buildArtistTrackIds(tracks, artists) {
+  const values = new Map();
+  const append = (slug, id) => {
+    if (!slug || !id) return;
+    const key = artistKey(slug);
+    if (!key) return;
+    const ids = values.get(key) ?? [];
+    if (!ids.includes(id)) ids.push(id);
+    values.set(key, ids);
+  };
+  for (const artist of artists) {
+    for (const alias of [artist.slug, ...(artist.aliases ?? [])]) {
+      for (const id of artist.trackIds ?? []) append(alias, id);
+    }
+  }
+  for (const track of tracks) {
+    for (const artist of track.artists ?? [track.artist]) {
+      if (!artist) continue;
+      append(artist.slug, track.id);
+      for (const alias of artist.aliases ?? []) append(alias, track.id);
+    }
+  }
+  return Object.fromEntries(values);
+}
+
+function artistKey(value) {
+  return String(value ?? "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u064a\u0649]/g, "\u06cc")
+    .replace(/\u0643/g, "\u06a9")
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function pickDiverse(items, limit) {
   const ordered = [...items]
     .filter((track) => (track.sources ?? []).some((source) => source.kind === "stream" && source.available !== false))
@@ -174,14 +215,16 @@ function isLowValueArtist(value = "") {
 
 async function main() {
   const index = JSON.parse(await readFile(INPUT_FILE, "utf8"));
-  const { landing, home } = buildMusicLandingIndexes(index);
+  const { landing, home, artist } = buildMusicLandingIndexes(index);
   await Promise.all([
     writeFile(LANDING_FILE, JSON.stringify(landing)),
     writeFile(HOME_FILE, JSON.stringify(home)),
+    writeFile(ARTIST_FILE, JSON.stringify(artist)),
   ]);
   console.log(JSON.stringify({
     landing: { tracks: landing.tracks.length, artists: landing.artists.length, bytes: Buffer.byteLength(JSON.stringify(landing)) },
     home: { tracks: home.tracks.length, bytes: Buffer.byteLength(JSON.stringify(home)) },
+    artist: { tracks: artist.tracks.length, artists: artist.artists.length, bytes: Buffer.byteLength(JSON.stringify(artist)) },
   }, null, 2));
 }
 
