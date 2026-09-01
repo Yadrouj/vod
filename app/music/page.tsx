@@ -18,6 +18,8 @@ import { titleMetadata } from "@/lib/seo";
 const REMIX_CATEGORY = "\u0631\u06cc\u0645\u06cc\u06a9\u0633";
 const REMIX_DESCRIPTION = "\u0631\u06cc\u0645\u06cc\u06a9\u0633\u200c\u0647\u0627\u06cc \u0634\u0627\u062f\u060c \u067e\u0627\u062f\u06a9\u0633\u062a \u0648 \u0627\u0646\u062a\u062e\u0627\u0628\u200c\u0647\u0627\u06cc \u062a\u0627\u0632\u0647";
 
+const MUSIC_SHELF_SIZE = 12;
+
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 export const revalidate = 300;
@@ -48,19 +50,19 @@ export default async function MusicPage({ searchParams }: Props) {
       .filter((track) => fresh !== "week" || isMusicReleasedThisWeek(track))
     : [];
   const tracks = allMatches.slice(0, hasFilter ? 80 : 24);
-  const recentTracks = selectMusicShelfTracks(index.tracks.filter((track) => track.kind === "track"), 16);
-  const recentVideos = selectMusicShelfTracks(index.tracks.filter((track) => track.kind === "video"), 16);
-  const classics = selectMusicShelfTracks(index.tracks.filter((track) => track.category === "موسیقی قدیمی فارسی"), 16);
-  const foreign = selectMusicShelfTracks(index.tracks.filter((track) => track.category === "موسیقی خارجی"), 16);
-  const remixes = selectMusicShelfTracks(index.tracks.filter((track) => track.category === REMIX_CATEGORY), 16);
+  const recentTracks = selectMusicShelfTracks(index.tracks.filter((track) => track.kind === "track"), MUSIC_SHELF_SIZE);
+  const recentVideos = selectMusicShelfTracks(index.tracks.filter((track) => track.kind === "video"), MUSIC_SHELF_SIZE);
+  const classics = selectMusicShelfTracks(index.tracks.filter((track) => track.category === "موسیقی قدیمی فارسی"), MUSIC_SHELF_SIZE);
+  const foreign = selectMusicShelfTracks(index.tracks.filter((track) => track.category === "موسیقی خارجی"), MUSIC_SHELF_SIZE);
+  const remixes = selectMusicShelfTracks(index.tracks.filter((track) => track.category === REMIX_CATEGORY), MUSIC_SHELF_SIZE);
   const currentYear = new Date().getUTCFullYear();
   const weeklyTracks = selectMusicShelfTracks(
     index.tracks.filter((track) => isMusicReleasedThisWeek(track)),
-    16,
+    MUSIC_SHELF_SIZE,
   );
   const currentYearTracks = selectMusicShelfTracks(
     index.tracks.filter((track) => track.kind === "track" && trackPublishedYear(track) === currentYear),
-    16,
+    MUSIC_SHELF_SIZE,
   );
   const topClassics = classics;
   const compactArchiveStats = "archiveStats" in index && isMusicArchiveStats(index.archiveStats) ? index.archiveStats : null;
@@ -71,9 +73,9 @@ export default async function MusicPage({ searchParams }: Props) {
   };
   const artistOfMoment = index.artists.find((artist) => artistTrackCount(artist) >= 8) ?? index.artists[0];
   const artistTracks = artistOfMoment
-    ? selectMusicShelfTracks(index.tracks.filter((track) => track.artists.some((artist) => artist.slug === artistOfMoment.slug)), 16)
+    ? selectMusicShelfTracks(index.tracks.filter((track) => track.artists.some((artist) => artist.slug === artistOfMoment.slug)), MUSIC_SHELF_SIZE)
     : [];
-  const featuredArtists = pickFeaturedArtists(index.artists, 14);
+  const featuredArtists = pickFeaturedArtists(index.artists, 12);
   // Music-video artwork is generally larger and more reliable than the tiny
   // archive thumbnails, so it leads the visual hero while the shelves keep
   // their chronological catalog order.

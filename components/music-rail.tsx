@@ -6,7 +6,7 @@ import { selectMusicShelfTracks } from "@/lib/music";
 import type { MusicTrack } from "@/lib/music-types";
 
 export function MusicRail({ tracks }: { tracks: MusicTrack[] }) {
-  const visibleTracks = selectMusicShelfTracks(tracks.filter((track) => track.kind === "track"), 15);
+  const visibleTracks = selectMusicShelfTracks(tracks.filter((track) => track.kind === "track"), 12);
   if (!visibleTracks.length) return null;
   return (
     <section className="music-rail-home">

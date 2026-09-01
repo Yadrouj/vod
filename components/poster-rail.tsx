@@ -4,7 +4,7 @@ import type { Locale } from "@/lib/i18n";
 import type { VodCard } from "@/lib/types";
 
 export function PosterRail({ items, locale, href }: { items: VodCard[]; locale: Locale; href: string }) {
-  const visibleItems = items.slice(0, 15);
+  const visibleItems = items.slice(0, 12);
   const railId = `poster-rail-${stableHash(`${href}:${visibleItems[0]?.imdbCode ?? "empty"}`)}`;
 
   return (

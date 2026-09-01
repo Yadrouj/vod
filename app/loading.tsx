@@ -1,26 +1,15 @@
-import { BrandLoader } from "@/components/brand-loader";
-import { PosterRailSkeleton } from "@/components/poster-skeleton";
-
 export default function Loading() {
   return (
-    <main className="shell route-loading">
-      <section className="route-loading-hero">
-        <BrandLoader label="Loading cinema" />
-      </section>
-      <section className="home-stack wrap route-loading-stack">
-        {Array.from({ length: 3 }, (_, index) => (
-          <section className="section rail-section skeleton-section" key={index}>
-            <div className="section-head">
-              <div>
-                <span className="skeleton-line skeleton-heading" />
-                <span className="skeleton-line skeleton-subheading" />
-              </div>
-              <span className="skeleton-pill" />
-            </div>
-            <PosterRailSkeleton count={8} />
-          </section>
-        ))}
-      </section>
+    <main className="route-loading-shell" aria-busy="true" aria-label="Loading page">
+      <div className="route-loading-stage">
+        <span className="route-loading-line route-loading-line-short" />
+        <span className="route-loading-line route-loading-line-title" />
+        <span className="route-loading-line route-loading-line-copy" />
+        <span className="route-loading-button" />
+      </div>
+      <div className="route-loading-row">
+        {Array.from({ length: 7 }, (_, index) => <span key={index} />)}
+      </div>
     </main>
   );
 }

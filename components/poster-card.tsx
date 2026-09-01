@@ -24,7 +24,7 @@ export function PosterCard({ item, locale = DEFAULT_LOCALE, priority = false }: 
   const isFresh = (item.year ?? 0) >= new Date().getUTCFullYear();
 
   return (
-    <Link prefetch={priority ? undefined : false} href={`/${item.imdbCode || item.id}`} className={["poster", item.type === "series" ? "series-poster" : "", hasPoster ? "poster-has-image" : "poster-no-image", isFresh ? "poster-is-fresh" : ""].filter(Boolean).join(" ")}>
+    <Link href={`/${item.imdbCode || item.id}`} className={["poster", item.type === "series" ? "series-poster" : "", hasPoster ? "poster-has-image" : "poster-no-image", isFresh ? "poster-is-fresh" : ""].filter(Boolean).join(" ")}>
       <div className="poster-art">
         {imageUrl && (
           <img

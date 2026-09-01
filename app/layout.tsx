@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { Suspense } from "react";
 import { AppMessageCenter } from "@/components/app-message-center";
+import { NavigationFeedback } from "@/components/navigation-feedback";
 import { StructuredData } from "@/components/structured-data";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import { BRAND_MARK, BRAND_NAME } from "@/lib/brand";
@@ -59,6 +61,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} dir={isRtl(locale) ? "rtl" : "ltr"}>
       <body>
         <StructuredData data={siteJsonLd()} />
+        <Suspense fallback={null}>
+          <NavigationFeedback />
+        </Suspense>
         {children}
         <WatchTogetherLauncher locale={locale} />
         <AppMessageCenter />

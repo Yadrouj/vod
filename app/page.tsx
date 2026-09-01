@@ -31,6 +31,10 @@ type HomeRailSection = VodHomeSection & {
   href?: string;
 };
 
+const HOME_DATA_TTL_MS = 30_000;
+type HomePageData = Awaited<ReturnType<typeof computeHomePageData>>;
+const homePageDataCache = new Map<Locale, { expiresAt: number; promise: Promise<HomePageData> }>();
+
 export const revalidate = 300;
 
 export const metadata: Metadata = titleMetadata({
@@ -107,6 +111,21 @@ export default async function HomePage() {
 }
 
 async function buildHomePageData(locale: Locale) {
+  const now = Date.now();
+  const cached = homePageDataCache.get(locale);
+  if (cached && cached.expiresAt > now) return cached.promise;
+
+  const promise = computeHomePageData(locale);
+  homePageDataCache.set(locale, { expiresAt: now + HOME_DATA_TTL_MS, promise });
+  try {
+    return await promise;
+  } catch (error) {
+    if (homePageDataCache.get(locale)?.promise === promise) homePageDataCache.delete(locale);
+    throw error;
+  }
+}
+
+async function computeHomePageData(locale: Locale) {
   const [index, rawNews, topPeople, rawUpdates, music] = await Promise.all([
     loadVodHomeIndex(),
     loadVodNews(),
