@@ -18,7 +18,7 @@ import { PublicPartyRooms } from "@/components/public-party-rooms";
 import { aiSearch } from "@/lib/ai-search";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import { loadVodNews } from "@/lib/news";
-import { loadReleaseUpdates, type ReleaseUpdate } from "@/lib/release-updates";
+import { loadReleaseUpdates, releaseUpdatesFromCatalog, selectFreshReleaseUpdates, type ReleaseUpdate } from "@/lib/release-updates";
 import { getLocale } from "@/lib/server-locale";
 import { loadTopPeople } from "@/lib/top-people";
 import { loadMusicHomeIndex } from "@/lib/music";
@@ -134,7 +134,11 @@ async function computeHomePageData(locale: Locale) {
     loadMusicHomeIndex(),
   ]);
   const news = { ...rawNews, items: prioritizeNews(rawNews.items) };
-  const updates = { ...rawUpdates, items: prioritizeReleaseUpdates(rawUpdates.items) };
+  const verifiedUpdates = selectFreshReleaseUpdates(rawUpdates.items);
+  const updates = {
+    ...rawUpdates,
+    items: prioritizeReleaseUpdates(verifiedUpdates.length ? verifiedUpdates : releaseUpdatesFromCatalog(index.items)),
+  };
   const t = getDictionary(locale);
   const seen = new Set<string>();
   const toyStoryFive = index.sections

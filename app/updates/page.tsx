@@ -4,9 +4,10 @@ import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ReleaseUpdateCard } from "@/components/release-updates-rail";
 import { getDictionary } from "@/lib/i18n";
-import { loadReleaseUpdates } from "@/lib/release-updates";
+import { loadReleaseUpdates, releaseUpdatesFromCatalog, selectFreshReleaseUpdates } from "@/lib/release-updates";
 import { getLocale } from "@/lib/server-locale";
 import { titleMetadata } from "@/lib/seo";
+import { loadVodHomeIndex } from "@/lib/vod-index";
 
 export const revalidate = 300;
 
@@ -18,7 +19,9 @@ export const metadata: Metadata = titleMetadata({
 });
 
 export default async function UpdatesPage() {
-  const [locale, updates] = await Promise.all([getLocale(), loadReleaseUpdates()]);
+  const [locale, updates, index] = await Promise.all([getLocale(), loadReleaseUpdates(), loadVodHomeIndex()]);
+  const verifiedItems = selectFreshReleaseUpdates(updates.items);
+  const displayItems = verifiedItems.length ? verifiedItems : releaseUpdatesFromCatalog(index.items);
   const t = getDictionary(locale);
   const isFa = locale === "fa";
   return (
@@ -36,22 +39,22 @@ export default async function UpdatesPage() {
             <div className="meta">
               <span>{isFa ? "پایش خودکار منابع" : "AUTOMATED SOURCE RECONCILIATION"}</span>
               <i className="dot" />
-              <span>{updates.summary.available} {isFa ? "آماده" : "available"}</span>
+              <span>{displayItems.length} {isFa ? "عنوان تازه" : "fresh titles"}</span>
               <i className="dot" />
-              <span>{updates.summary.comingSoon} {isFa ? "در صف" : "queued"}</span>
+              <span>{displayItems.filter((item) => item.status === "coming-soon").length} {isFa ? "به‌زودی" : "coming soon"}</span>
             </div>
             <h1>{isFa ? "تازه‌های آرشیو" : "Catalog updates"}</h1>
             <p className="muted updates-intro">
               {isFa
-                ? "IMDb و منبع‌های دانلود هر روز با هم تطبیق داده می‌شوند. نبود فایل به معنی حذف‌شدن نیست؛ عنوان تا رسیدن فایل با برچسب «به‌زودی» باقی می‌ماند."
-                : "IMDb discoveries and download sources are reconciled daily. A title without a file is kept visible as coming soon until a verified source appears."}
+                ? "اینجا فقط انتشارهای واقعاً تازه، قسمت‌های جدید و عنوان‌هایی نمایش داده می‌شوند که اخیراً به آرشیو اضافه شده‌اند."
+                : "This page only shows genuinely new releases, episodes, and titles recently added to the archive."}
             </p>
           </div>
         </div>
       </section>
       <section className="section wrap">
-        {updates.items.length ? <div className="release-updates-grid release-updates-grid-all">
-          {updates.items.map((item) => <ReleaseUpdateCard item={item} locale={locale} key={item.id} />)}
+        {displayItems.length ? <div className="release-updates-grid release-updates-grid-all">
+          {displayItems.map((item) => <ReleaseUpdateCard item={item} locale={locale} key={item.id} />)}
         </div> : <div className="updates-empty">
           <h2>{isFa ? "اولین بررسی روزانه هنوز اجرا نشده" : "The first daily review has not run yet"}</h2>
           <p className="muted">{isFa ? "پس از پایان اولین چرخه، فیلم‌ها، سریال‌ها و اپیزودهای تازه اینجا ظاهر می‌شوند." : "New films, series, and episodes will appear here after the first completed cycle."}</p>

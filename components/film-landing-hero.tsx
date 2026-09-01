@@ -87,10 +87,10 @@ export function FilmLandingHero({ items, locale }: { items: VodCard[]; locale: L
           </div>
 
           <div className="film-landing-info-grid">
-            <span><b>TYPE</b>{typeLabel(activeItem.type, locale)}</span>
-            <span><b>GENRES</b>{activeItem.genres.slice(0, 2).join(" / ") || "—"}</span>
-            <span><b>SOURCES</b>{activeItem.linksCount.toLocaleString(locale)}</span>
-            <span><b>STATUS</b>Ready to watch</span>
+            <span><b>{locale === "fa" ? "نوع" : "TYPE"}</b>{typeLabel(activeItem.type, locale)}</span>
+            <span><b>{locale === "fa" ? "ژانر" : "GENRES"}</b>{activeItem.genres.slice(0, 2).join(" / ") || "—"}</span>
+            <span><b>{locale === "fa" ? "منبع" : "SOURCES"}</b>{activeItem.linksCount.toLocaleString(locale)}</span>
+            <span><b>{locale === "fa" ? "وضعیت" : "STATUS"}</b>{locale === "fa" ? "در آرشیو" : "In archive"}</span>
           </div>
 
           {total > 1 && <div className="film-landing-picker" aria-label="Choose a featured title">

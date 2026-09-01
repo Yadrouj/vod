@@ -14,8 +14,8 @@ export function ReleaseUpdatesRail({ items, locale }: { items: ReleaseUpdate[]; 
           <h2>{isFa ? "تازه‌های سرونما" : "Fresh releases & source status"}</h2>
           <p className="muted">
             {isFa
-              ? "انتشارهای تازه را با منبع‌های دانلود تطبیق می‌دهیم؛ موردهای بدون فایل، در صف آماده‌سازی می‌مانند."
-              : "New IMDb discoveries are reconciled with every configured source; unavailable titles stay queued as coming soon."}
+              ? "فقط فیلم‌ها، سریال‌ها و قسمت‌هایی که واقعاً تازه منتشر یا در روزهای اخیر به آرشیو اضافه شده‌اند."
+              : "Only genuinely new releases, episodes, and titles recently added to the archive."}
           </p>
         </div>
         <Link className="view-all" href="/updates">{isFa ? "مشاهده همه" : "View all"}</Link>
@@ -33,11 +33,11 @@ export function ReleaseUpdateCard({ item, locale }: { item: ReleaseUpdate; local
     <>
       {item.imageUrl && <img src={sizedImageUrl(item.imageUrl, 720) ?? item.imageUrl} alt="" loading="lazy" decoding="async" />}
       <span className={`release-update-status release-update-status-${item.status}`}>
-        {item.status === "available" ? (isFa ? "آمادهٔ تماشا" : "Available now") : (isFa ? "به‌زودی" : "Coming soon")}
+        {item.status === "available" ? (isFa ? "جدید" : "NEW") : (isFa ? "به‌زودی" : "Coming soon")}
       </span>
       <span className="release-update-kind">{kindLabel(item, isFa)}</span>
       <strong>{item.title}</strong>
-      <span className="release-update-copy">{item.reason}</span>
+      <span className="release-update-copy">{reasonLabel(item, isFa)}</span>
       <span className="release-update-foot">
         <span>{formatEventDate(item.eventAt, locale)}</span>
         <span>{item.status === "available" ? qualityLabel(item) : (isFa ? "در حال بررسی منبع" : "Checking sources")}</span>
@@ -62,6 +62,19 @@ function kindLabel(item: ReleaseUpdate, isFa: boolean) {
 function qualityLabel(item: ReleaseUpdate) {
   if (item.qualities.length) return item.qualities.slice(0, 2).join(" / ");
   return item.linksCount ? `${item.linksCount} sources` : "Source ready";
+}
+
+function reasonLabel(item: ReleaseUpdate, isFa: boolean) {
+  if (item.reason === "catalog-fresh") {
+    return isFa ? "تازه به آرشیو سرونما اضافه شده است." : "Recently added to the SarvNema archive.";
+  }
+  if (item.kind === "episode") {
+    return isFa ? "قسمت تازه همراه با لینک‌های منبع اضافه شده است." : "A new episode and its source links were added.";
+  }
+  if (/new files or qualities/i.test(item.reason)) {
+    return isFa ? "لینک یا کیفیت تازه‌ای برای این عنوان پیدا شده است." : "A new source or quality was found for this title.";
+  }
+  return item.reason;
 }
 
 function formatEventDate(value: string, locale: Locale) {
