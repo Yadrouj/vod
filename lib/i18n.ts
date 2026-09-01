@@ -189,6 +189,7 @@ export const dictionaries = {
       castFailed: "Cast could not start.",
       playbackBlocked: "Playback blocked by browser or source.",
       sourceError: "This source may need a compatible browser or direct stream file.",
+      fullSourceUnavailable: "The full release is not available yet. The trailer stays on the details page.",
     },
     people: {
       actor: "Actor",
@@ -407,6 +408,7 @@ export const dictionaries = {
       castFailed: "کست اجرا نشد.",
       playbackBlocked: "مرورگر یا منبع اجازه پخش نداد.",
       sourceError: "این منبع شاید به مرورگر سازگار یا فایل مستقیم نیاز داشته باشد.",
+      fullSourceUnavailable: "نسخه کامل هنوز در دسترس نیست؛ تریلر فقط در صفحه جزئیات نمایش داده می‌شود.",
     },
     people: {
       actor: "بازیگر",

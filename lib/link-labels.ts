@@ -21,17 +21,19 @@ export function episodeLabel(link: VodLink) {
 }
 
 export function playableLinks(links: VodLink[]) {
-  const direct = links.filter((link) => /\.(mp4|m4v|webm|mov)(\?|$)/i.test(link.url));
-  const primary = direct.filter((link) => !isTrailerLink(link));
+  const mediaLinks = links.filter((link) => !isTrailerLink(link) && !isNonPlayableAsset(link));
+  const direct = mediaLinks.filter((link) => /\.(mp4|m4v|webm|mov)(\?|$)/i.test(link.url));
+  const primary = direct;
   const qualityTagged = primary.filter(hasPlaybackQuality);
   // A generic MP4 asset on a source page is commonly its preview/trailer. When the
   // same title exposes versioned files, only present the explicit playback versions.
   if (qualityTagged.length) return qualityTagged;
   if (primary.length) return primary;
-  if (direct.length) return direct;
 
-  const nonTrailer = links.filter((link) => !isTrailerLink(link));
-  return nonTrailer.length ? nonTrailer : links;
+  // Trailer assets belong to the detail-page preview experience. They must
+  // never become the full online-play source just because a title has no
+  // downloadable/streamable release yet.
+  return mediaLinks;
 }
 
 export function playbackSourceLabel(
@@ -61,6 +63,11 @@ function isTrailerLink(link: VodLink) {
   return /(?:^|[._/\s-])(?:trailer|teaser|preview|promo|clip)(?:[._/\s-]|$)/i.test(
     `${link.label} ${link.fileName ?? ""} ${link.url}`,
   );
+}
+
+function isNonPlayableAsset(link: VodLink) {
+  if (link.mediaKind === "subtitle" || link.mediaKind === "archive") return true;
+  return /\.(?:srt|vtt|ass|ssa|sub|zip|rar|7z)(?:$|[?#])/i.test(link.url);
 }
 
 function inferredQuality(value: string) {

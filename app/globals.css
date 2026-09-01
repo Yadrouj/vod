@@ -6195,6 +6195,29 @@ html[dir="rtl"] .mega-menu-shell:focus-within .mega-panel {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Full-player sources never fall back to trailer-only assets. */
+.player-center:disabled {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.player-no-full-source {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  z-index: 8;
+  width: min(520px, calc(100% - 40px));
+  padding: 18px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(8, 9, 10, 0.76);
+  color: #f4f4f4;
+  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.46);
+  backdrop-filter: blur(18px) saturate(125%);
+  text-align: center;
+  line-height: 1.8;
+  transform: translate(-50%, -50%);
+}
 .music-card-copy strong { font-size: 13px; font-weight: 900; }
 .music-card-copy span { margin-top: 3px; color: rgba(255, 255, 255, 0.58); font-size: 11px; }
 .music-card-copy small { margin-top: 3px; color: rgba(255, 255, 255, 0.36); font-size: 9px; }

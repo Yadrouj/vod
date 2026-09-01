@@ -63,6 +63,13 @@ export function VodPlayer({
     let current = true;
     queueMicrotask(() => {
       if (!current) return;
+      if (!playableSources.length) {
+        setSourceReady(false);
+        setSelectionOpen(false);
+        setBuffering(false);
+        setMessage("");
+        return;
+      }
       try {
         const saved = readProgress();
         const match = playableSources.findIndex((link) => Boolean(saved[link.url]));
@@ -329,15 +336,21 @@ export function VodPlayer({
           }}
         />
 
-        {buffering && (
+        {buffering && active?.url && (
           <div className="player-loading">
             <BrandLoader label={t.common.loading} compact />
           </div>
         )}
 
-        <button className="player-center" type="button" onClick={togglePlay} aria-label={paused ? t.common.play : t.player.pause}>
+        <button className="player-center" type="button" onClick={togglePlay} disabled={!active?.url} aria-label={paused ? t.common.play : t.player.pause}>
           <span className={paused ? "player-play-icon" : "player-pause-icon"} />
         </button>
+
+        {!active?.url && (
+          <div className="player-no-full-source" role="status" dir={locale === "fa" ? "rtl" : "ltr"}>
+            <strong>{t.player.fullSourceUnavailable}</strong>
+          </div>
+        )}
 
         <div className="player-top-glass">
           <strong>{title}</strong>
