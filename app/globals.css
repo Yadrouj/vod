@@ -2719,8 +2719,12 @@ html { scroll-behavior: smooth; }
 
 @media (min-width: 981px) {
   .detail-hero {
-    min-height: 100svh;
-    padding-bottom: clamp(48px, 7vh, 86px);
+    /* Keep the first fold compact. Previously the grid itself was almost one
+       viewport tall in addition to the top bar and hero padding, which pushed
+       the title and playback actions below the visible area. */
+    --detail-hero-height: min(880px, 100svh);
+    min-height: var(--detail-hero-height);
+    padding-bottom: clamp(30px, 4vh, 48px);
   }
 
   .detail-hero::after {
@@ -2729,22 +2733,29 @@ html { scroll-behavior: smooth; }
       linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.66) 48%, rgba(0, 0, 0, 0.98) 100%);
   }
 
+  .detail-hero .wrap {
+    min-height: calc(var(--detail-hero-height) - 70px);
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
   .detail-grid {
-    min-height: calc(100svh - 132px);
-    padding-top: 0;
-    align-items: start;
+    min-height: 0;
+    height: 100%;
+    padding-top: clamp(28px, 4vh, 52px);
+    align-items: end;
   }
 
   .detail-copy {
     align-self: end;
     justify-self: start;
     margin-top: 0;
-    padding-bottom: clamp(24px, 5vh, 66px);
+    padding-bottom: 0;
   }
 
   .detail-card {
-    align-self: start;
-    margin-top: clamp(42px, 8vh, 92px);
+    align-self: end;
+    margin-top: 0;
   }
 }
 
