@@ -9567,6 +9567,15 @@ body.party-cinema-lock {
   accent-color: #78edac;
 }
 
+/* Playback timelines are media controls, not reading-direction content.
+   Keep Watch Together and Listen Together seeking consistent in RTL locales. */
+.party-player-stage .party-controls .party-seek-control,
+html[dir="rtl"] .party-player-stage .party-controls .party-seek-control {
+  direction: ltr;
+  writing-mode: horizontal-tb;
+  unicode-bidi: isolate;
+}
+
 .party-player-stage.is-hud-hidden .party-cinema-shade {
   opacity: 0;
 }
