@@ -1,6 +1,12 @@
 import type { VodLink } from "./types";
 
 export function episodeLabel(link: VodLink) {
+  if (link.season != null && link.episode != null) {
+    return `Season ${link.season} / Episode ${link.episode}`;
+  }
+  if (link.season != null) return `Season ${link.season}`;
+  if (link.episode != null) return `Episode ${link.episode}`;
+
   const text = `${link.label} ${link.url}`;
   const seasonEpisode = text.match(/S(\d{1,2})\s?E(\d{1,3})/i);
   if (seasonEpisode) {
@@ -20,11 +26,22 @@ export function episodeLabel(link: VodLink) {
   return null;
 }
 
-export function playableLinks(links: VodLink[]) {
+export function playableLinks(links: VodLink[], options: { isSeries?: boolean } = {}) {
   const mediaLinks = links.filter((link) => !isTrailerLink(link) && !isNonPlayableAsset(link));
   const direct = mediaLinks.filter((link) => /\.(mp4|m4v|webm|mov)(\?|$)/i.test(link.url));
   const primary = direct;
   const qualityTagged = primary.filter(hasPlaybackQuality);
+  const candidates = qualityTagged.length ? qualityTagged : primary.length ? primary : mediaLinks;
+
+  // Some source pages append generic MP4 files before their actual episodic
+  // archive. For a series these files have no season or episode identity, so
+  // showing them as "File 1" makes source selection impossible to understand.
+  // Prefer the structured archive whenever it is available.
+  if (options.isSeries) {
+    const episodic = mediaLinks.filter(hasEpisodeIdentity);
+    if (episodic.length) return episodic;
+  }
+
   // A generic MP4 asset on a source page is commonly its preview/trailer. When the
   // same title exposes versioned files, only present the explicit playback versions.
   if (qualityTagged.length) return qualityTagged;
@@ -45,8 +62,8 @@ export function isBrowserPlayableVodLink(link: VodLink) {
   return /\.(?:mp4|m4v|webm|mov)(?:$|[?#])/i.test(link.url);
 }
 
-export function roomPlayableLinks(links: VodLink[]) {
-  return playableLinks(links).filter(isBrowserPlayableVodLink);
+export function roomPlayableLinks(links: VodLink[], options: { isSeries?: boolean } = {}) {
+  return playableLinks(links, options).filter(isBrowserPlayableVodLink);
 }
 
 export function playbackSourceLabel(
@@ -67,7 +84,8 @@ export function playbackSourceLabel(
   return [
     episodeLabel(link),
     link.quality,
-    link.release ?? link.group,
+    link.release,
+    link.group && !/^(files|unknown)$/i.test(link.group) ? link.group : null,
   ].filter(Boolean).join(" / ") || `${sourceLabel} ${index + 1}`;
 }
 
@@ -94,4 +112,8 @@ function hasPlaybackQuality(link: VodLink) {
     || inferredQuality(`${link.label} ${link.fileName ?? ""} ${link.url}`)
     || /(?:4k|bluray|web[-_. ]?dl|webrip|hdr|hq)/i.test(`${link.release ?? ""} ${link.fileName ?? ""}`),
   );
+}
+
+function hasEpisodeIdentity(link: VodLink) {
+  return link.season != null || link.episode != null || Boolean(episodeLabel(link));
 }

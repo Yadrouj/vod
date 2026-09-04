@@ -10,7 +10,7 @@ export async function GET(_: Request, { params }: Props) {
   const item = await findVodItem(id);
   if (!item) return Response.json({ error: "Title not found" }, { status: 404 });
   const isSeries = normalizeVodType(item.type) === "series";
-  const sources = roomPlayableLinks(item.links).map((link, index) => ({
+  const sources = roomPlayableLinks(item.links, { isSeries }).map((link, index) => ({
     url: link.url,
     label: playbackSourceLabel(link, index, isSeries),
     quality: link.quality,

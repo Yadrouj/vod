@@ -49,3 +49,24 @@ test("movie source labels never expose season or episode text", () => {
 
   assert.equal(playbackSourceLabel(movie, 0, false), "1080p");
 });
+
+test("series playback prioritizes labeled episodes over generic source files", () => {
+  const genericMp4 = link({
+    label: "Source file",
+    fileName: "2645266-0-1080.mp4",
+    url: "https://cdn.example.test/2645266-0-1080.mp4",
+  });
+  const episode = link({
+    label: "S01E01 / 1080p / BluRay / Dubbed",
+    fileName: "Series.S01E01.1080p.BluRay.Dubbed.mkv",
+    url: "https://cdn.example.test/Series.S01E01.1080p.BluRay.Dubbed.mkv",
+    season: 1,
+    episode: 1,
+    quality: "1080p",
+    release: "BluRay",
+    group: "Dubbed",
+  });
+
+  assert.deepEqual(playableLinks([genericMp4, episode], { isSeries: true }), [episode]);
+  assert.equal(playbackSourceLabel(episode, 0, true), "Season 1 / Episode 1 / 1080p / BluRay / Dubbed");
+});

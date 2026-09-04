@@ -54,7 +54,7 @@ export function VodPlayer({
   const [fullscreen, setFullscreen] = useState(false);
   const [muted, setMuted] = useState(false);
   const lastSavedAt = useRef(0);
-  const playableSources = useMemo(() => playableLinks(links), [links]);
+  const playableSources = useMemo(() => playableLinks(links, { isSeries }), [isSeries, links]);
   const active = playableSources[activeIndex] ?? playableSources[0];
   const t = getDictionary(locale);
   const controlsShowing = paused || settingsOpen || subtitlesOpen || selectionOpen || controlsVisible;
@@ -129,6 +129,20 @@ export function VodPlayer({
       })),
     [isSeries, playableSources, t.player.source]
   );
+  const hasStructuredEpisodes = isSeries && sources.some((source) => source.season != null && source.episode != null);
+  const selectedSeason = hasStructuredEpisodes ? sources[activeIndex]?.season ?? sources.find((source) => source.season != null)?.season ?? 0 : 0;
+  const selectedEpisode = hasStructuredEpisodes ? sources[activeIndex]?.episode ?? sources.find((source) => source.season === selectedSeason)?.episode ?? 0 : 0;
+  const seasons = hasStructuredEpisodes
+    ? [...new Set(sources.map((source) => source.season).filter((season): season is number => season != null))].sort((a, b) => a - b)
+    : [];
+  const episodes = hasStructuredEpisodes
+    ? [...new Set(sources.filter((source) => source.season === selectedSeason).map((source) => source.episode).filter((episode): episode is number => episode != null))].sort((a, b) => a - b)
+    : [];
+  const episodeVariants = hasStructuredEpisodes
+    ? sources
+      .map((source, index) => ({ source, index }))
+      .filter(({ source }) => source.season === selectedSeason && source.episode === selectedEpisode)
+    : [];
 
   function togglePlay() {
     const video = videoRef.current;
@@ -263,6 +277,16 @@ export function VodPlayer({
     setMessage("");
     setSourceReady(true);
     setSelectionOpen(false);
+  }
+
+  function chooseSeriesSource(next: { season?: number; episode?: number }) {
+    const season = next.season ?? selectedSeason;
+    const episode = next.episode ?? selectedEpisode;
+    const index = sources.findIndex((source) => (
+      source.season === season
+      && source.episode === episode
+    ));
+    if (index >= 0) setActiveIndex(index);
   }
 
   return (
@@ -463,9 +487,36 @@ export function VodPlayer({
                     ? "کیفیت پخش را انتخاب کن."
                     : "Select a playback quality."}
               </p>
-              <select className="select" value={activeIndex} onChange={(event) => setActiveIndex(Number(event.target.value))}>
-                {sources.map((source, index) => <option key={`${source.url}-${index}`} value={index}>{source.label}</option>)}
-              </select>
+              {hasStructuredEpisodes ? (
+                <div className="player-series-choice-grid">
+                  <label>
+                    <span>{locale === "fa" ? "فصل" : "Season"}</span>
+                    <select className="select" value={selectedSeason} onChange={(event) => {
+                      const season = Number(event.target.value);
+                      const firstEpisode = sources.find((source) => source.season === season)?.episode;
+                      chooseSeriesSource({ season, episode: firstEpisode ?? 0 });
+                    }}>
+                      {seasons.map((season) => <option key={season} value={season}>{locale === "fa" ? `فصل ${season}` : `Season ${season}`}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span>{locale === "fa" ? "قسمت" : "Episode"}</span>
+                    <select className="select" value={selectedEpisode} onChange={(event) => chooseSeriesSource({ episode: Number(event.target.value) })}>
+                      {episodes.map((episode) => <option key={episode} value={episode}>{locale === "fa" ? `قسمت ${episode}` : `Episode ${episode}`}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span>{locale === "fa" ? "کیفیت و نسخه" : "Quality & version"}</span>
+                    <select className="select" value={activeIndex} onChange={(event) => setActiveIndex(Number(event.target.value))}>
+                      {episodeVariants.map(({ source, index }) => <option key={`${source.url}-${index}`} value={index}>{[source.quality ?? "Auto", source.release, source.group].filter(Boolean).join(" / ")}</option>)}
+                    </select>
+                  </label>
+                </div>
+              ) : (
+                <select className="select" value={activeIndex} onChange={(event) => setActiveIndex(Number(event.target.value))}>
+                  {sources.map((source, index) => <option key={`${source.url}-${index}`} value={index}>{source.label}</option>)}
+                </select>
+              )}
               <button type="button" className="play-glow" onClick={confirmSource}>▶ Start playback</button>
             </div>
           </div>

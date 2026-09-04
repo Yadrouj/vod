@@ -1161,3 +1161,170 @@ html[dir="rtl"] .suggest-result-arrow {
   .gradient-menu .language-toggle { display: none !important; }
   .gradient-menu .mega-category-content { grid-template-columns: 102px minmax(0,1fr) !important; }
 }
+
+/* Film landing: keep the three primary actions inside the bottom edge of the
+   hero copy. It stays a single calm row on touch screens and Details becomes
+   an affordance, not a competing fourth text button. */
+.film-landing-actions {
+  width: min(100%, 670px);
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 46px;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 18px !important;
+}
+
+.film-landing-actions .film-landing-primary,
+.film-landing-actions .watch-together-inline,
+.film-landing-actions .film-landing-details-arrow {
+  min-width: 0;
+  min-height: 46px !important;
+  height: 46px;
+  box-sizing: border-box;
+}
+
+.film-landing-actions .film-landing-primary,
+.film-landing-actions .watch-together-inline {
+  width: 100%;
+  padding-inline: 10px;
+  overflow: hidden;
+}
+
+.film-landing-actions .watch-together-launcher-copy,
+.film-landing-actions .watch-together-launcher-copy strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.film-landing-actions .watch-together-launcher-copy strong { font-size: 10px; }
+.film-landing-actions .watch-together-launcher-icon { flex: 0 0 auto; }
+
+.film-landing-details-arrow {
+  width: 46px;
+  padding: 0 !important;
+  border-radius: 50% !important;
+}
+
+.player-series-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.player-series-choice-grid label {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.player-series-choice-grid .select {
+  min-width: 0;
+  width: 100%;
+  min-height: 39px;
+  padding-inline: 8px;
+  border-color: rgba(243, 203, 104, 0.28);
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-size: 11px;
+}
+
+/* Compact swipe rails avoid the old single-card mobile layout while keeping
+   the page itself free of a horizontal scrollbar. */
+@media (max-width: 760px) {
+  .film-landing-copy { width: 100%; }
+  .film-landing-link-row {
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 3px;
+    scrollbar-width: none;
+  }
+  .film-landing-link-row::-webkit-scrollbar { display: none; }
+  .film-landing-link-row a { flex: 0 0 auto; }
+
+  .film-landing-actions { margin-top: 15px !important; }
+  .film-landing-actions .film-landing-primary,
+  .film-landing-actions .watch-together-inline { font-size: 10px; }
+
+  .film-landing-content > .release-updates-section {
+    overflow: hidden;
+    padding: 16px !important;
+  }
+
+  .release-updates-section .section-head {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .release-updates-section .section-head h2 { font-size: 25px !important; }
+  .release-updates-section .section-head .muted {
+    max-width: 100%;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  .release-updates-grid {
+    display: flex !important;
+    grid-template-columns: none !important;
+    gap: 10px !important;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 1px 8px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .release-updates-grid::-webkit-scrollbar { display: none; }
+  .release-update-card {
+    flex: 0 0 min(78vw, 310px);
+    min-height: 208px !important;
+    padding: 14px;
+    scroll-snap-align: start;
+  }
+
+  .release-update-card strong {
+    font-size: 22px !important;
+    line-height: 1.02;
+  }
+
+  .continue-watching-list,
+  .download-history-list {
+    display: flex !important;
+    grid-template-columns: none !important;
+    gap: 10px;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 1px 8px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .continue-watching-list::-webkit-scrollbar,
+  .download-history-list::-webkit-scrollbar { display: none; }
+
+  .continue-watching-item,
+  .download-history-item {
+    flex: 0 0 min(76vw, 284px);
+    min-height: 116px;
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 390px) {
+  .film-landing-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 42px; gap: 6px; }
+  .film-landing-actions .film-landing-primary,
+  .film-landing-actions .watch-together-inline,
+  .film-landing-actions .film-landing-details-arrow { min-height: 43px !important; height: 43px; }
+  .film-landing-details-arrow { width: 42px; }
+  .film-landing-actions .watch-together-launcher-copy strong { font-size: 9px; }
+  .player-series-choice-grid { grid-template-columns: 1fr; }
+}

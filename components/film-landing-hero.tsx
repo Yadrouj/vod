@@ -49,22 +49,24 @@ export function FilmLandingHero({ items, locale }: { items: VodCard[]; locale: L
             <button type="submit">{t.common.search}</button>
           </form>
 
-          <div className="film-landing-actions">
-            <Link href={`/watch/${activeItem.imdbCode}`} className="film-landing-primary"><Play size={17} fill="currentColor" /> {t.common.playOnline}</Link>
-            <Link href={`/${activeItem.imdbCode}`} className="film-landing-secondary">{t.common.details}</Link>
-            <WatchTogetherLauncher
-              locale={locale}
-              placement="inline"
-              preset={{ itemId: activeItem.imdbCode, title: activeItem.title, posterUrl: activeItem.posterUrl ?? activeItem.backdropUrl }}
-            />
-          </div>
-
           <nav className="film-landing-link-row" aria-label="Film discovery">
             <Link href="/browse?section=top-imdb">Top IMDb</Link>
             <Link href="/browse?section=recent-films">New releases</Link>
             <Link href="/browse?type=series">Series</Link>
             <Link href="/browse?section=animation">Animation</Link>
           </nav>
+
+          <div className="film-landing-actions">
+            <Link href={`/watch/${activeItem.imdbCode}`} className="film-landing-primary"><Play size={17} fill="currentColor" /> {t.common.playOnline}</Link>
+            <WatchTogetherLauncher
+              locale={locale}
+              placement="inline"
+              preset={{ itemId: activeItem.imdbCode, title: activeItem.title, posterUrl: activeItem.posterUrl ?? activeItem.backdropUrl }}
+            />
+            <Link href={`/${activeItem.imdbCode}`} className="film-landing-secondary film-landing-details-arrow" aria-label={t.common.details} title={t.common.details}>
+              <ChevronLeft size={20} aria-hidden="true" />
+            </Link>
+          </div>
         </div>
 
         <aside className="film-landing-now-playing" aria-label={`Selected title: ${activeItem.title}`}>

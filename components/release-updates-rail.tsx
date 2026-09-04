@@ -33,7 +33,7 @@ export function ReleaseUpdateCard({ item, locale }: { item: ReleaseUpdate; local
     <>
       {item.imageUrl && <img src={sizedImageUrl(item.imageUrl, 720) ?? item.imageUrl} alt="" loading="lazy" decoding="async" />}
       <span className={`release-update-status release-update-status-${item.status}`}>
-        {item.status === "available" ? (isFa ? "جدید" : "NEW") : (isFa ? "به‌زودی" : "Coming soon")}
+        {item.status === "available" ? (isFa ? "تازه" : "FRESH") : (isFa ? "به‌زودی" : "Coming soon")}
       </span>
       <span className="release-update-kind">{kindLabel(item, isFa)}</span>
       <strong>{item.title}</strong>
@@ -61,7 +61,7 @@ function kindLabel(item: ReleaseUpdate, isFa: boolean) {
 
 function qualityLabel(item: ReleaseUpdate) {
   if (item.qualities.length) return item.qualities.slice(0, 2).join(" / ");
-  return item.linksCount ? `${item.linksCount} sources` : "Source ready";
+  return item.linksCount ? `${item.linksCount} links` : "New source";
 }
 
 function reasonLabel(item: ReleaseUpdate, isFa: boolean) {

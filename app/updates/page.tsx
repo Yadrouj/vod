@@ -4,10 +4,9 @@ import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ReleaseUpdateCard } from "@/components/release-updates-rail";
 import { getDictionary } from "@/lib/i18n";
-import { loadReleaseUpdates, releaseUpdatesFromCatalog, selectFreshReleaseUpdates } from "@/lib/release-updates";
+import { loadReleaseUpdates, selectFreshReleaseUpdates } from "@/lib/release-updates";
 import { getLocale } from "@/lib/server-locale";
 import { titleMetadata } from "@/lib/seo";
-import { loadVodHomeIndex } from "@/lib/vod-index";
 
 export const revalidate = 300;
 
@@ -19,9 +18,9 @@ export const metadata: Metadata = titleMetadata({
 });
 
 export default async function UpdatesPage() {
-  const [locale, updates, index] = await Promise.all([getLocale(), loadReleaseUpdates(), loadVodHomeIndex()]);
+  const [locale, updates] = await Promise.all([getLocale(), loadReleaseUpdates()]);
   const verifiedItems = selectFreshReleaseUpdates(updates.items);
-  const displayItems = verifiedItems.length ? verifiedItems : releaseUpdatesFromCatalog(index.items);
+  const displayItems = verifiedItems;
   const t = getDictionary(locale);
   const isFa = locale === "fa";
   return (
