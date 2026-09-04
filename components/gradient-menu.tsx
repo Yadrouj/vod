@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { sizedImageUrl } from "@/lib/image-url";
@@ -36,6 +36,7 @@ export function GradientMenu({
   featuredItems?: MegaMenuItem[];
 }) {
   const [activeSectionId, setActiveSectionId] = useState(menuSections[0]?.id ?? "");
+  const [menuOpen, setMenuOpen] = useState(false);
   const t = getDictionary(locale);
   const menuItems = [
     { href: "/music", label: locale === "fa" ? "موسیقی" : "Music" },
@@ -45,11 +46,33 @@ export function GradientMenu({
     { href: "/browse?section=best-series", label: t.nav.series },
     { href: "/browse?section=animation", label: t.nav.animation },
   ];
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("mobile-categories-open", menuOpen);
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    if (menuOpen) window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.documentElement.classList.remove("mobile-categories-open");
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [menuOpen]);
+
+  const closeMenu = () => setMenuOpen(false);
+
   return (
     <header className="gradient-menu wrap">
       <BrandLogo className="gradient-brand" locale={locale} />
-      <div className="mega-menu-shell">
-        <button className="mega-button" type="button" aria-haspopup="true">
+      <div className={`mega-menu-shell ${menuOpen ? "is-open" : ""}`}>
+        <button
+          className="mega-button"
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={menuOpen}
+          aria-controls="sarvnema-category-panel"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
           <span className="mega-button-icon" aria-hidden="true">
             <i />
             <i />
@@ -58,7 +81,15 @@ export function GradientMenu({
           {t.common.categories}
         </button>
 
-        <div className="mega-panel">
+        <button className="mega-mobile-backdrop" type="button" aria-label="Close categories" onClick={closeMenu} />
+        <div className="mega-panel" id="sarvnema-category-panel" role="dialog" aria-modal={menuOpen ? "true" : undefined} aria-label={t.common.categories}>
+          <div className="mega-mobile-head">
+            <div>
+              <small>{locale === "fa" ? "مرور آرشیو" : "Browse library"}</small>
+              <strong>{t.common.categories}</strong>
+            </div>
+            <button type="button" onClick={closeMenu} aria-label="Close categories">×</button>
+          </div>
           <aside className="mega-rail" aria-label={t.common.categories}>
             {menuSections.map((section) => (
               <button
@@ -83,13 +114,14 @@ export function GradientMenu({
                   return (
                     <>
                 <div className="mega-group-head">
-                  <Link href={section.href}>{section.title}</Link>
+                  <Link href={section.href} onClick={closeMenu}>{section.title}</Link>
                   <span>{formatNumber(section.total, locale)}</span>
                 </div>
                 <div className="mega-category-content">
                   <Link
                     className="mega-category-art"
                     href={visibleItems[0] ? `/${visibleItems[0].imdbCode}` : section.href}
+                    onClick={closeMenu}
                     style={section.artUrl
                       ? { backgroundImage: `url(${sizedImageUrl(section.artUrl, 960)})` }
                       : undefined}
@@ -98,7 +130,7 @@ export function GradientMenu({
                   </Link>
                   <div className="mega-title-list">
                     {visibleItems.slice(0, 10).map((item) => (
-                      <Link key={`${section.id}-${item.imdbCode}`} href={`/${item.imdbCode}`}>
+                      <Link key={`${section.id}-${item.imdbCode}`} href={`/${item.imdbCode}`} onClick={closeMenu}>
                         <strong>{item.title}</strong>
                         <small>{item.year ?? "-"}</small>
                       </Link>
@@ -116,7 +148,7 @@ export function GradientMenu({
             <p>{t.common.featured}</p>
             <div>
               {featuredItems.map((item) => (
-                <Link key={`badge-${item.imdbCode}`} className="mega-badge" href={`/${item.imdbCode}`}>
+                <Link key={`badge-${item.imdbCode}`} className="mega-badge" href={`/${item.imdbCode}`} onClick={closeMenu}>
                   {item.posterUrl ? (
                     <img src={sizedImageUrl(item.posterUrl, 180) ?? item.posterUrl} alt="" loading="lazy" decoding="async" />
                   ) : <span />}

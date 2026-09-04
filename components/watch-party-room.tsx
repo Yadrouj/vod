@@ -52,6 +52,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const hudTimerRef = useRef<number | null>(null);
   const hudSuppressedUntilRef = useRef(0);
   const stageChatLogRef = useRef<HTMLDivElement>(null);
+  const failedSourceUrlsRef = useRef<Set<string>>(new Set());
   const [profile, setProfile] = useState<PartyProfile | null>(null);
   const [snapshot, setSnapshot] = useState<PartySnapshot | null>(null);
   const [name, setName] = useState(""); const [avatar, setAvatar] = useState("");
@@ -84,6 +85,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const [personalEpisode, setPersonalEpisode] = useState("");
   const [personalMediaBusy, setPersonalMediaBusy] = useState(false);
   const [personalMediaError, setPersonalMediaError] = useState("");
+  const [mediaIssue, setMediaIssue] = useState("");
 
   const me = snapshot?.participants.find((participant) => participant.id === profile?.id);
   const isHost = snapshot?.ownerId === profile?.id;
@@ -243,6 +245,34 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     video.playbackRate = state.playbackRate;
     if (state.paused) video.pause();
     else video.play().catch(() => undefined);
+  }
+  function handleLoadedMetadata(event: React.SyntheticEvent<HTMLMediaElement>) {
+    const player = event.currentTarget;
+    failedSourceUrlsRef.current.delete(player.currentSrc || player.getAttribute("src") || "");
+    setMediaIssue("");
+    setPlayerDuration(player.duration || 0);
+    const state = pendingPlayback.current ?? playback;
+    latestPlayback.current = state;
+    const next = Math.max(0, expectedPosition(state));
+    remoteSeekInFlight.current = Math.abs(player.currentTime - next) > .05;
+    player.currentTime = next;
+    player.playbackRate = state.playbackRate;
+    if (state.paused) player.pause();
+    else player.play().catch(() => undefined);
+  }
+  function handleMediaError(event: React.SyntheticEvent<HTMLMediaElement>) {
+    const media = snapshot?.playback.media;
+    if (!media) return;
+    const failedUrl = event.currentTarget.getAttribute("src") || media.source.url;
+    if (failedSourceUrlsRef.current.has(failedUrl)) return;
+    failedSourceUrlsRef.current.add(failedUrl);
+    const nextSource = media.sources.find((source) => source.url !== failedUrl && !failedSourceUrlsRef.current.has(source.url));
+    if (nextSource && can("changeSource")) {
+      setMediaIssue(`Source unavailable. Switching everyone to ${nextSource.label}…`);
+      command("source", { source: nextSource, time: Math.max(0, event.currentTarget.currentTime || expectedPosition()) });
+      return;
+    }
+    setMediaIssue(nextSource ? "This source is unavailable. The host can switch the room source." : "No browser-playable source is currently available for this title.");
   }
   function finishRemoteSeek(event: React.SyntheticEvent<HTMLMediaElement>) {
     const video = event.currentTarget;
@@ -487,7 +517,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const latestChat = roomChat.at(-1);
   const queueTitle = isListeningRoom ? "Listen queue" : "Watch queue";
   const queueDescription = isListeningRoom ? "Add tracks, personal audio, or a direct media link for everyone." : "Search, add, or switch movies, episodes, and personal media for everyone.";
-  return <div className="party-layout">
+  return <div className={`party-layout ${isListeningRoom ? "party-theme-music" : "party-theme-cinema"}`}>
     <Link className="party-sarvnema-corner" href="/" aria-label="Back to SarvNema" title="SarvNema">
       <img src={BRAND_MARK} alt="" />
     </Link>
@@ -512,12 +542,13 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
       >
         {isListeningRoom ? (
           <>
-            <audio ref={audioRef} key={playback.media.source.url} src={playback.media.source.url} preload="auto" onLoadedMetadata={(event) => { setPlayerDuration(event.currentTarget.duration || 0); const state = pendingPlayback.current ?? playback; latestPlayback.current = state; const next = Math.max(0, expectedPosition(state)); remoteSeekInFlight.current = Math.abs(event.currentTarget.currentTime - next) > .05; event.currentTarget.currentTime = next; event.currentTarget.playbackRate = state.playbackRate; if (state.paused) event.currentTarget.pause(); else event.currentTarget.play().catch(() => undefined); }} onTimeUpdate={(event) => { if (scrubTimeRef.current === null) setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={resumeWhenReady} />
+            <audio ref={audioRef} key={playback.media.source.url} src={playback.media.source.url} preload="auto" onLoadedMetadata={handleLoadedMetadata} onError={handleMediaError} onTimeUpdate={(event) => { if (scrubTimeRef.current === null) setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={resumeWhenReady} />
             <div className="party-listening-art" style={playback.media.posterUrl ? { backgroundImage: `url(${playback.media.posterUrl})` } : undefined} aria-hidden="true"><div>{playback.media.posterUrl ? <img src={playback.media.posterUrl} alt="" /> : <Disc3 size={84} />}</div></div>
             <div className="party-listening-copy" data-player-ui="true"><span>LISTEN TOGETHER · LIVE SYNC</span><h2>{playback.media.title}</h2><p>{playback.media.artistName || playback.media.details?.credits?.map((credit) => credit.name).join(" · ") || "Shared music room"}</p><small>{snapshot.participants.filter((item) => item.connected).length} people in the room · {playback.paused ? "paused" : "playing together"}</small></div>
             <div className="party-listening-wave" aria-hidden="true">{Array.from({ length: 32 }, (_, index) => <i key={index} style={{ "--wave": `${28 + (index * 19) % 72}%`, "--delay": `${index * -0.07}s` } as React.CSSProperties} />)}</div>
           </>
-        ) : <video ref={videoRef} key={playback.media.source.url} src={playback.media.source.url} poster={playback.media.posterUrl ?? undefined} playsInline preload="auto" onLoadedMetadata={(event) => { setPlayerDuration(event.currentTarget.duration || 0); const state = pendingPlayback.current ?? playback; latestPlayback.current = state; const next = Math.max(0, expectedPosition(state)); remoteSeekInFlight.current = Math.abs(event.currentTarget.currentTime - next) > .05; event.currentTarget.currentTime = next; event.currentTarget.playbackRate = state.playbackRate; if (state.paused) event.currentTarget.pause(); else event.currentTarget.play().catch(() => undefined); }} onTimeUpdate={(event) => { if (scrubTimeRef.current === null) setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={resumeWhenReady} />}
+        ) : <video ref={videoRef} key={playback.media.source.url} src={playback.media.source.url} poster={playback.media.posterUrl ?? undefined} playsInline preload="auto" onLoadedMetadata={handleLoadedMetadata} onError={handleMediaError} onTimeUpdate={(event) => { if (scrubTimeRef.current === null) setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={resumeWhenReady} />}
+        {mediaIssue && <div className="party-media-issue" data-player-ui="true"><LoaderCircle size={18} /><span>{mediaIssue}</span></div>}
         <div className="party-cinema-shade" aria-hidden="true" />
         <div className="party-reaction-layer">{reactions.map((reaction, index) => <div className="party-floating-reaction" key={reaction.id} style={{ left: `${12 + (index * 17) % 72}%` }}>{reaction.avatarUrl ? <img src={reaction.avatarUrl} alt="" /> : <span>{reaction.name.slice(0, 1)}</span>}<b>{reaction.emoji}</b><small>{reaction.name}</small></div>)}</div>
         {roomSocket && !isListeningRoom && <WatchPartyAccessibility controlsVisible={hudVisible} socket={roomSocket} roomId={roomId} participants={snapshot.participants} canCaption={can("liveCaptions")} onOpenMovieSubtitles={() => { clearHudTimer(); setHudVisible(true); setStagePanel(null); setSubtitlesOpen(true); setSettingsOpen(false); }} />}

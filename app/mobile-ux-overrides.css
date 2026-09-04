@@ -973,3 +973,191 @@ html[dir="rtl"] .suggest-result-arrow {
 .watch-builder-actions button {
   min-width: 0;
 }
+
+/* Touch-first category sheet. The desktop menu still opens on hover, while
+   mobile uses an explicit button so moving a finger never closes the panel. */
+.mega-mobile-head,
+.mega-mobile-backdrop { display: none; }
+
+@media (max-width: 760px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip !important;
+  }
+
+  html.mobile-categories-open,
+  html.mobile-categories-open body { overflow: hidden !important; overscroll-behavior: none; }
+
+  .gradient-menu.wrap {
+    /* Removing the desktop centering transform also lets the fixed category
+       sheet anchor to the viewport rather than the header's 370px box. */
+    left: 10px !important;
+    right: auto !important;
+    width: calc(100% - 20px) !important;
+    transform: none !important;
+    min-height: 58px;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 7px !important;
+    padding: 8px 0 !important;
+  }
+
+  .gradient-menu .gradient-brand,
+  .gradient-menu .mega-menu-shell { min-width: 0; }
+  .gradient-menu .gradient-nav,
+  .gradient-menu > .hover-button { display: none !important; }
+  /* Reset the legacy <=620px rule that moves Categories on to a full
+     second header row. The trigger belongs beside the brand on touch. */
+  .gradient-menu .mega-menu-shell {
+    position: static !important;
+    grid-column: auto !important;
+    width: auto !important;
+    order: 0 !important;
+  }
+
+  .gradient-menu .mega-button {
+    width: auto !important;
+    justify-content: center !important;
+    min-height: 40px !important;
+    padding: 0 11px !important;
+    border: 1px solid rgba(255,255,255,.09) !important;
+    border-radius: 10px !important;
+    background: rgba(255,255,255,.055) !important;
+    font-size: 11px !important;
+    white-space: nowrap;
+  }
+
+  .gradient-menu .mega-mobile-backdrop {
+    position: fixed;
+    z-index: 2147483200;
+    inset: 0;
+    display: block;
+    border: 0;
+    background: rgba(0,0,0,.72);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+  }
+
+  .gradient-menu .mega-panel,
+  html[dir="rtl"] .gradient-menu .mega-panel {
+    position: fixed !important;
+    z-index: 2147483201 !important;
+    top: 58px !important;
+    /* The header keeps a 10px gutter; compensate for it so this is a true
+       viewport sheet in both RTL and LTR, not a clipped 370px child. */
+    right: -10px !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: 100vw !important;
+    max-width: none !important;
+    height: calc(100dvh - 58px) !important;
+    max-height: calc(100dvh - 58px) !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
+    gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 12px calc(14px + env(safe-area-inset-bottom)) !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(255,255,255,.1) !important;
+    border-bottom: 0 !important;
+    border-radius: 22px 22px 0 0 !important;
+    background: linear-gradient(180deg,#171719,#0c0c0e 72%) !important;
+    box-shadow: 0 -28px 90px rgba(0,0,0,.72) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+    transform: translateY(calc(100dvh + 110%)) !important;
+    transition: transform 220ms cubic-bezier(.2,.8,.2,1) !important;
+  }
+
+  .gradient-menu .mega-menu-shell.is-open .mega-mobile-backdrop { opacity: 1; pointer-events: auto; }
+  .gradient-menu .mega-menu-shell.is-open .mega-panel,
+  html[dir="rtl"] .gradient-menu .mega-menu-shell.is-open .mega-panel { pointer-events: auto !important; transform: translateY(0) !important; }
+  .gradient-menu .mega-menu-shell:not(.is-open):hover .mega-panel,
+  .gradient-menu .mega-menu-shell:not(.is-open):focus-within .mega-panel,
+  html[dir="rtl"] .gradient-menu .mega-menu-shell:not(.is-open):hover .mega-panel,
+  html[dir="rtl"] .gradient-menu .mega-menu-shell:not(.is-open):focus-within .mega-panel {
+    pointer-events: none !important;
+    transform: translateY(calc(100dvh + 110%)) !important;
+  }
+
+  .gradient-menu .mega-mobile-head {
+    min-height: 66px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 2px 9px;
+  }
+  .gradient-menu .mega-mobile-head > div { display: grid; gap: 2px; }
+  .gradient-menu .mega-mobile-head small { color: #f0c84a; font-size: 8px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+  .gradient-menu .mega-mobile-head strong { font-size: 20px; }
+  .gradient-menu .mega-mobile-head button {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 50%;
+    background: rgba(255,255,255,.065);
+    color: #fff;
+    font-size: 25px;
+    line-height: 1;
+  }
+
+  .gradient-menu .mega-rail {
+    width: 100% !important;
+    display: flex !important;
+    gap: 7px !important;
+    padding: 2px 0 11px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    background: transparent !important;
+    scrollbar-width: none;
+  }
+  .gradient-menu .mega-rail::-webkit-scrollbar { display: none; }
+  .gradient-menu .mega-rail button {
+    width: auto !important;
+    min-width: max-content !important;
+    min-height: 39px !important;
+    flex: 0 0 auto;
+    gap: 8px;
+    padding: 0 12px !important;
+    border: 1px solid rgba(255,255,255,.08) !important;
+    border-radius: 999px !important;
+    background: rgba(255,255,255,.045) !important;
+    color: rgba(255,255,255,.72) !important;
+  }
+  .gradient-menu .mega-rail button.active { border-color: rgba(240,200,74,.42) !important; background: #f0c84a !important; color: #171203 !important; }
+
+  .gradient-menu .mega-groups {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    display: block !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 0 0 8px !important;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(240,200,74,.45) transparent;
+  }
+  .gradient-menu .mega-group,
+  .gradient-menu .mega-category-content { min-width: 0 !important; width: 100% !important; }
+  .gradient-menu .mega-group-head { min-height: 44px; }
+  .gradient-menu .mega-category-content { display: grid !important; grid-template-columns: minmax(110px,.72fr) minmax(0,1.28fr) !important; gap: 9px !important; }
+  .gradient-menu .mega-category-art { min-height: 218px !important; height: 100% !important; border-radius: 12px !important; }
+  .gradient-menu .mega-title-list { min-width: 0 !important; display: grid !important; align-content: start; gap: 5px !important; }
+  .gradient-menu .mega-title-list a { min-height: 36px !important; padding: 7px 9px !important; border-radius: 7px !important; }
+  .gradient-menu .mega-title-list a:nth-child(n + 7) { display: none !important; }
+  .gradient-menu .mega-badges { display: none !important; }
+}
+
+@media (max-width: 390px) {
+  .gradient-menu.wrap { grid-template-columns: minmax(0, 1fr) auto; }
+  .gradient-menu .language-toggle { display: none !important; }
+  .gradient-menu .mega-category-content { grid-template-columns: 102px minmax(0,1fr) !important; }
+}

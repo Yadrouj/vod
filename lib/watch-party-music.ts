@@ -9,7 +9,7 @@ function yearFromPublishedAt(value: string | null) {
 function uniqueSources(track: MusicTrack): PartyMediaSource[] {
   const seen = new Set<string>();
   return track.sources
-    .filter((item) => item.url && !seen.has(item.url) && Boolean(seen.add(item.url)))
+    .filter((item) => item.available !== false && isBrowserPlayableMusicSource(item.url) && !seen.has(item.url) && Boolean(seen.add(item.url)))
     .map((item, index) => ({
       url: item.url,
       label: item.label || item.quality || `${item.kind === "stream" ? "Stream" : "Download"} ${index + 1}`,
@@ -18,6 +18,10 @@ function uniqueSources(track: MusicTrack): PartyMediaSource[] {
       episode: null,
       subtitleUrl: null,
     }));
+}
+
+function isBrowserPlayableMusicSource(url: string) {
+  return /\.(?:mp3|m4a|aac|ogg|oga|opus|wav|flac|mp4|m4v|webm|ogv)(?:$|[?#])/i.test(url);
 }
 
 /** Converts our music index entry into the same serializable room media used by Watch Together. */

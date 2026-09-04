@@ -36,6 +36,19 @@ export function playableLinks(links: VodLink[]) {
   return mediaLinks;
 }
 
+/**
+ * Watch Together uses the browser's native media element, so archive/container
+ * formats such as MKV or AVI must never be offered as room sources. The normal
+ * download UI can still expose those files through `playableLinks`.
+ */
+export function isBrowserPlayableVodLink(link: VodLink) {
+  return /\.(?:mp4|m4v|webm|mov)(?:$|[?#])/i.test(link.url);
+}
+
+export function roomPlayableLinks(links: VodLink[]) {
+  return playableLinks(links).filter(isBrowserPlayableVodLink);
+}
+
 export function playbackSourceLabel(
   link: VodLink,
   index: number,

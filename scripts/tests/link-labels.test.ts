@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { playableLinks, playbackSourceLabel } from "../../lib/link-labels";
+import { playableLinks, playbackSourceLabel, roomPlayableLinks } from "../../lib/link-labels";
 import type { VodLink } from "../../lib/types";
 
 function link(overrides: Partial<VodLink>): VodLink {
@@ -35,6 +35,13 @@ test("subtitle and archive files never enter the video player", () => {
   const archive = link({ url: "https://cdn.example.test/title.zip", mediaKind: "archive" });
 
   assert.deepEqual(playableLinks([subtitle, archive]), []);
+});
+
+test("watch rooms only receive containers supported by native browser video", () => {
+  const mkv = link({ url: "https://cdn.example.test/title.1080p.mkv", quality: "1080p", mediaKind: "video" });
+  const mp4 = link({ url: "https://cdn.example.test/title.720p.mp4", quality: "720p", mediaKind: "video" });
+
+  assert.deepEqual(roomPlayableLinks([mkv, mp4]), [mp4]);
 });
 
 test("movie source labels never expose season or episode text", () => {
