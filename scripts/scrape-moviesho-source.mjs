@@ -412,7 +412,7 @@ function mergeItems(rawItems) {
     const links = deduplicateLinks([...previous.links, ...item.links]).sort(sortVodLinks);
     byId.set(item.imdbCode, {
       ...previous,
-      type: /series|tv/i.test(previous.type) || /series|tv/i.test(item.type) ? "tvSeries" : previous.type,
+      type: isSeriesType(previous.type) || isSeriesType(item.type) ? "tvSeries" : previous.type,
       links,
       groups: Array.from(new Set(links.map((link) => link.group).filter(Boolean))).sort(),
       qualities: Array.from(new Set(links.map((link) => link.quality).filter(Boolean))).sort(sortQuality),
@@ -420,6 +420,12 @@ function mergeItems(rawItems) {
     });
   }
   return Array.from(byId.values()).sort((left, right) => left.title.localeCompare(right.title));
+}
+
+function isSeriesType(type) {
+  const value = String(type ?? "").trim().toLowerCase();
+  return !/movie|film|short|documentary|video/i.test(value)
+    && /series|episode|show|tvmini|tvspecial|tvepisode/i.test(value);
 }
 
 function createMatcher(cache) {

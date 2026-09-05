@@ -32,6 +32,12 @@ const FORCE = process.env.CURATED_VOD_FORCE === "1";
 const USER_AGENT = "SarvNemaCatalogBot/1.0 (+https://sarvnema.ir; metadata sync)";
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function isSeriesType(type) {
+  const value = String(type ?? "").trim().toLowerCase();
+  return !/movie|film|short|documentary|video/i.test(value)
+    && /series|episode|show|tvmini|tvspecial|tvepisode/i.test(value);
+}
+
 // These are intentionally the source pages supplied for the catalog review. Categories are
 // read through WordPress REST in batches of 100 so one refresh is fast and deterministic.
 const ALL_SEEDS = [
@@ -428,7 +434,7 @@ function mergeItems(items) {
     const pages = unique([...(previous.curatedSourcePages ?? []), ...(item.curatedSourcePages ?? [])]);
     byKey.set(key, {
       ...previous,
-      type: /series|tv/i.test(`${previous.type} ${item.type}`) ? "tvSeries" : previous.type,
+      type: isSeriesType(previous.type) || isSeriesType(item.type) ? "tvSeries" : previous.type,
       links,
       groups: unique(links.map((link) => link.group)),
       qualities: unique(links.map((link) => link.quality).filter(Boolean)),

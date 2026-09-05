@@ -14,7 +14,13 @@ export function normalizeReleaseTitle(value) {
 
 export function releaseKind(type, episode) {
   if (episode?.season && episode?.episode) return "episode";
-  return /series|tv|show|episode/i.test(String(type ?? "")) ? "series" : "film";
+  return isSeriesType(type) ? "series" : "film";
+}
+
+function isSeriesType(type) {
+  const value = String(type ?? "").trim().toLowerCase();
+  return !/movie|film|short|documentary|video/i.test(value)
+    && /series|episode|tvmini|tvspecial|tvepisode|show/i.test(value);
 }
 
 export function latestEpisode(links = []) {
@@ -61,7 +67,7 @@ export function summarizeCatalogItem(item) {
     imdbCode: String(item?.imdbCode ?? ""),
     title: String(item?.title ?? "Untitled"),
     normalizedTitle: normalizeReleaseTitle(item?.title),
-    type: /series|tv|episode/i.test(String(item?.type ?? "")) ? "series" : "movie",
+    type: isSeriesType(item?.type) ? "series" : "movie",
     year: Number.isFinite(Number(item?.year)) ? Number(item.year) : null,
     releaseDate: item?.releaseDate ?? null,
     posterUrl: item?.posterUrl ?? item?.backdropUrl ?? null,

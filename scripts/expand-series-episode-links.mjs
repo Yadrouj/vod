@@ -44,7 +44,9 @@ function cleanHtml(value) {
 }
 
 function isSeries(item) {
-  return /series|tv|episode/i.test(item.type ?? "");
+  const value = String(item?.type ?? "").trim().toLowerCase();
+  return !/movie|film|short|documentary|video/i.test(value)
+    && /series|episode|show|tvmini|tvspecial|tvepisode/i.test(value);
 }
 
 function ensureSlash(url) {

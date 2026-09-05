@@ -54,7 +54,10 @@ export function VodPlayer({
   const [fullscreen, setFullscreen] = useState(false);
   const [muted, setMuted] = useState(false);
   const lastSavedAt = useRef(0);
-  const playableSources = useMemo(() => playableLinks(links, { isSeries }), [isSeries, links]);
+  const playableSources = useMemo(
+    () => playableLinks(links, { isSeries, title }),
+    [isSeries, links, title],
+  );
   const active = playableSources[activeIndex] ?? playableSources[0];
   const t = getDictionary(locale);
   const controlsShowing = paused || settingsOpen || subtitlesOpen || selectionOpen || controlsVisible;
@@ -378,7 +381,7 @@ export function VodPlayer({
 
         <div className="player-top-glass">
           <strong>{title}</strong>
-          <span>{active?.quality ?? t.player.source} / {active?.release ?? active?.group ?? t.player.stream}</span>
+          <span>{sources[activeIndex]?.label ?? `${active?.quality ?? t.player.source} / ${active?.release ?? active?.group ?? t.player.stream}`}</span>
         </div>
 
         <div className="player-osd">

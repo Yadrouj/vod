@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BRAND_NAME } from "@/lib/brand";
+import { normalizeVodType } from "@/lib/catalog";
 import type { MusicArtist, MusicTrack } from "@/lib/music-types";
 import type { VodItem } from "@/lib/types";
 
@@ -83,7 +84,7 @@ export function titleMetadata({
 export function vodMetadata(item: VodItem): Metadata {
   const persianTitle = item.persianTitle?.trim();
   const displayTitle = persianTitle && persianTitle !== item.title ? `${persianTitle} | ${item.title}` : item.title;
-  const isSeries = /series|tv|episode/i.test(item.type);
+  const isSeries = normalizeVodType(item.type) === "series";
   const typeLabel = isSeries ? P.series : P.movie;
   const hasFiles = item.links.length > 0;
   const action = hasFiles
@@ -145,7 +146,7 @@ export function breadcrumbJsonLd(items: { name: string; pathname: string }[]) {
 }
 
 export function vodJsonLd(item: VodItem) {
-  const isSeries = /series|tv|episode/i.test(item.type);
+  const isSeries = normalizeVodType(item.type) === "series";
   const entity: Record<string, unknown> = {
     "@type": isSeries ? "TVSeries" : "Movie",
     "@id": absoluteUrl(`/${item.imdbCode}#title`),

@@ -32,7 +32,9 @@ export const findVodItem = cache(async (id: string): Promise<VodItem | null> => 
 });
 
 export function normalizeVodType(type: string): "movie" | "series" {
-  return /series|tv|episode/i.test(type) ? "series" : "movie";
+  const value = String(type ?? "").trim().toLowerCase();
+  if (!value || /movie|film|short|documentary|video/i.test(value)) return "movie";
+  return /series|episode|show|tvmini|tvspecial|tvepisode/i.test(value) ? "series" : "movie";
 }
 
 async function loadTitleMap(): Promise<Record<string, string>> {
