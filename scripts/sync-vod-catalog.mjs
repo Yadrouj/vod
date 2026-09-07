@@ -4,6 +4,7 @@ import {
   mkdir,
   open,
   readFile,
+  readdir,
   rename,
   rm,
   stat,
@@ -40,6 +41,7 @@ async function main() {
   const lock = await acquireLock();
   if (!lock) {
     console.log("A catalog sync is already running; this cycle was skipped.");
+    process.exitCode = 75;
     return;
   }
 
@@ -456,41 +458,16 @@ async function run(label, script, args, extraEnv = {}) {
 async function replaceFile(source, target) {
   await mkdir(path.dirname(target), { recursive: true });
   const incoming = `${target}.incoming-${process.pid}`;
-  const backup = `${target}.backup-${process.pid}`;
   await copyFile(source, incoming);
-  let hasBackup = false;
-  try {
-    try {
-      await rename(target, backup);
-      hasBackup = true;
-    } catch (error) {
-      if (error?.code !== "ENOENT") throw error;
-    }
-    await rename(incoming, target);
-    if (hasBackup) await unlink(backup).catch(() => undefined);
-  } catch (error) {
-    await unlink(incoming).catch(() => undefined);
-    if (hasBackup) await rename(backup, target).catch(() => undefined);
-    throw error;
-  }
+  // Rename replaces a regular file atomically: never remove the live version first.
+  await rename(incoming, target);
 }
 
 async function replaceDirectory(source, target) {
-  await mkdir(path.dirname(target), { recursive: true });
-  const backup = `${target}.backup-${process.pid}`;
-  let hasBackup = false;
-  try {
-    try {
-      await rename(target, backup);
-      hasBackup = true;
-    } catch (error) {
-      if (error?.code !== "ENOENT") throw error;
-    }
-    await rename(source, target);
-    if (hasBackup) await rm(backup, { recursive: true, force: true });
-  } catch (error) {
-    if (hasBackup) await rename(backup, target).catch(() => undefined);
-    throw error;
+  await mkdir(target, { recursive: true });
+  // Keep live title pages available even if the maintenance deadline interrupts publication.
+  for (const entry of await readdir(source, { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.endsWith(".json")) await replaceFile(path.join(source, entry.name), path.join(target, entry.name));
   }
 }
 

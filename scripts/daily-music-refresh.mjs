@@ -1,5 +1,5 @@
 import { open, readFile, rename, stat, unlink, writeFile, mkdir } from "node:fs/promises";
-import { spawn } from "node:child_process";
+import { refreshStep } from "./refresh-step.mjs";
 import path from "node:path";
 
 const ROOT = process.cwd();
@@ -19,7 +19,7 @@ const envNumber = (name, fallback, minimum = 0) => {
 const FRONT_PAGES = envNumber("MUSIC_REFRESH_FRONT_PAGES", FULL ? 1777 : RECENT_ONLY ? 1 : 4, 1);
 const VIDEO_PAGES = envNumber("MUSIC_REFRESH_VIDEO_PAGES", FULL ? 60 : RECENT_ONLY ? 1 : 2, 1);
 const MUSICS_FA_PAGES = envNumber("MUSIC_REFRESH_MUSICS_FA_PAGES", FULL ? 1247 : RECENT_ONLY ? 1 : 4, 1);
-const REMIX_PAGES = envNumber("MUSIC_REFRESH_REMIX_PAGES", RECENT_ONLY ? 1 : 35, 1);
+const REMIX_PAGES = envNumber("MUSIC_REFRESH_REMIX_PAGES", FULL ? 35 : RECENT_ONLY ? 1 : 4, 1);
 const WORLDOFMUSIC_ARTISTS = envNumber("MUSIC_REFRESH_WORLDOFMUSIC_ARTISTS", FULL ? 0 : 20, 0);
 const WORLDOFMUSIC_ALBUMS = envNumber("MUSIC_REFRESH_WORLDOFMUSIC_ALBUMS", FULL ? 0 : 50, 0);
 const FOREIGN_PAGES = envNumber("MUSIC_REFRESH_FOREIGN_PAGES", 18, 1);
@@ -29,6 +29,7 @@ async function main() {
   const lock = await acquireLock();
   if (!lock) {
     console.log(JSON.stringify({ skipped: true, reason: "A music refresh is already running." }));
+    process.exitCode = 75;
     return;
   }
 
@@ -100,6 +101,7 @@ async function main() {
     }
     await runStep("Rebuild music landing and artist indexes", "scripts/scrape-rozmusic.mjs", ["--rebuild-only"], steps, startedAt);
     await runStep("Rebuild compact music landing data", "scripts/build-music-landing-index.mjs", [], steps, startedAt);
+    if (steps.some(step => step.state === "failed")) throw new Error("Some music sources failed; successful steps are checkpointed.");
     await writeStatus({
       state: "completed",
       startedAt,
@@ -125,17 +127,13 @@ async function runStep(label, script, scriptArgs, steps, startedAt) {
   const entry = { label, script, state: "running", startedAt: new Date().toISOString(), finishedAt: null };
   steps.push(entry);
   await writeStatus({ state: "running", startedAt, updatedAt: new Date().toISOString(), phase: label, full: FULL, steps, error: null });
-  await new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [script, ...scriptArgs], {
-      cwd: ROOT,
-      env: process.env,
-      stdio: "inherit",
-      windowsHide: true,
-    });
-    child.once("error", reject);
-    child.once("exit", (code, signal) => code === 0 ? resolve() : reject(new Error(`${label} failed (${signal || `exit ${code}`}).`)));
-  });
-  entry.state = "completed";
+  try {
+    entry.state = await refreshStep(label, script, scriptArgs);
+  } catch (error) {
+    entry.state = "failed";
+    entry.error = error instanceof Error ? error.message : String(error);
+    console.error(entry.error);
+  }
   entry.finishedAt = new Date().toISOString();
 }
 

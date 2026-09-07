@@ -34,6 +34,8 @@ services:
   maintenance:
     image: vod-app
     container_name: vod-maintenance
+    mem_limit: 3g
+    cpus: 0.75
     restart: unless-stopped
     depends_on:
       - app
@@ -45,7 +47,7 @@ services:
       VOD_DATA_DIR: /app/public/data
       MAINTENANCE_TIME_ZONE: ${MAINTENANCE_TIME_ZONE:-Asia/Tehran}
       MAINTENANCE_IDLE_START_HOUR: ${MAINTENANCE_IDLE_START_HOUR:-2}
-      MAINTENANCE_IDLE_END_HOUR: ${MAINTENANCE_IDLE_END_HOUR:-6}
+      MAINTENANCE_IDLE_END_HOUR: ${MAINTENANCE_IDLE_END_HOUR:-5}
       MAINTENANCE_POLL_MS: ${MAINTENANCE_POLL_MS:-900000}
       MAINTENANCE_READY_URL: http://app:3000/readyz
       MAINTENANCE_MAX_RECENT_REQUESTS: ${MAINTENANCE_MAX_RECENT_REQUESTS:-12}
@@ -55,8 +57,12 @@ services:
       MOVIESHO_DOWNLOAD_BASE: ${MOVIESHO_DOWNLOAD_BASE:-https://sr1.moviesho.com/}
       MOVIESHO_SITE_BASE: ${MOVIESHO_SITE_BASE:-https://www.moviesho.com/}
       MOVIESHO_MOVIE_YEARS: ${MOVIESHO_MOVIE_YEARS:-2025,2026}
-      MOVIESHO_SITE_REQUEST_INTERVAL_MS: ${MOVIESHO_SITE_REQUEST_INTERVAL_MS:-220}
-      MOVIESHO_SITE_RETRIES: ${MOVIESHO_SITE_RETRIES:-7}
+      MOVIESHO_SITE_REQUEST_INTERVAL_MS: ${MOVIESHO_SITE_REQUEST_INTERVAL_MS:-1000}
+      MOVIESHO_SITE_RETRIES: ${MOVIESHO_SITE_RETRIES:-2}
+      CURATED_VOD_PAGE_LIMIT: ${CURATED_VOD_PAGE_LIMIT:-2}
+      CURATED_VOD_DETAIL_LIMIT: ${CURATED_VOD_DETAIL_LIMIT:-60}
+      CURATED_VOD_RETRIES: ${CURATED_VOD_RETRIES:-2}
+      CURATED_VOD_TIMEOUT_MS: ${CURATED_VOD_TIMEOUT_MS:-15000}
       CURATED_VOD_CONCURRENCY: ${CURATED_VOD_CONCURRENCY:-1}
       CURATED_VOD_REQUEST_GAP_MS: ${CURATED_VOD_REQUEST_GAP_MS:-1000}
       VOD_SERIES_EXPAND_CONCURRENCY: ${VOD_SERIES_EXPAND_CONCURRENCY:-1}
@@ -64,9 +70,14 @@ services:
       # IMDb release/news discovery remains daily; the large title dataset scan is weekly.
       VOD_SYNC_METADATA_INTERVAL_MS: ${VOD_SYNC_METADATA_INTERVAL_MS:-604800000}
       MUSIC_REFRESH_REQUEST_GAP_MS: ${MUSIC_REFRESH_REQUEST_GAP_MS:-1200}
-      MUSIC_PULSE_INTERVAL_MS: ${MUSIC_PULSE_INTERVAL_MS:-14400000}
-      MUSIC_PULSE_ALLOW_OUTSIDE_IDLE: ${MUSIC_PULSE_ALLOW_OUTSIDE_IDLE:-0}
-      NODE_OPTIONS: --max-old-space-size=3072
+      NODE_OPTIONS: --max-old-space-size=2304
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    init: true
+    stop_grace_period: 20s
     command: ["node", "scripts/maintenance-scheduler.mjs", "--daemon"]
     volumes:
       - ./public/data:/app/public/data

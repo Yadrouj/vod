@@ -1,5 +1,5 @@
 import { open, stat, unlink, writeFile, mkdir, rename } from "node:fs/promises";
-import { spawn } from "node:child_process";
+import { refreshStep } from "./refresh-step.mjs";
 import path from "node:path";
 
 const args = new Set(process.argv.slice(2));
@@ -20,7 +20,7 @@ async function main() {
   const steps = [];
   try {
     await writeStatus({ state: "running", startedAt, updatedAt: startedAt, phase: "Preparing daily source review", steps, error: null });
-    await runStep("Refresh cached weekly IMDb popularity charts", "scripts/refresh-imdb-trending.mjs", steps, startedAt);
+    if (process.env.DAILY_RELEASE_SKIP_TRENDING !== "1") await runStep("Refresh cached weekly IMDb popularity charts", "scripts/refresh-imdb-trending.mjs", steps, startedAt);
     if (!MONITOR_ONLY && process.env.DAILY_RELEASE_SKIP_CATALOG_SYNC !== "1") {
       await runStep("Review DonyayeSerial, series feed and Moviesho", "scripts/sync-vod-catalog.mjs", steps, startedAt);
     }
@@ -30,11 +30,12 @@ async function main() {
         "scripts/scrape-f2my-catalog.mjs",
         steps,
         startedAt,
-        [...(FULL ? ["--full"] : []), "--skip-imdb-lookup"],
+        [...(FULL ? ["--full"] : []), "--skip-imdb-lookup", "--concurrency=1", "--archive-concurrency=1", "--limit=80"],
       );
     }
     await runStep("Compare IMDb discoveries with every source", "scripts/release-monitor.mjs", steps, startedAt);
-    await runStep("Publish release-aware news", "scripts/scrape-vod-news.mjs", steps, startedAt);
+    if (process.env.DAILY_RELEASE_SKIP_NEWS !== "1") await runStep("Publish release-aware news", "scripts/scrape-vod-news.mjs", steps, startedAt);
+    if (steps.some(step => step.state === "failed")) throw new Error("Some video sources failed; successful steps are checkpointed.");
     await writeStatus({ state: "completed", startedAt, finishedAt: new Date().toISOString(), updatedAt: new Date().toISOString(), phase: "Daily update section published", steps, error: null });
     console.log(JSON.stringify({ completed: true, monitorOnly: MONITOR_ONLY, full: FULL, steps }, null, 2));
   } catch (error) {
@@ -50,12 +51,13 @@ async function runStep(label, script, steps, startedAt, scriptArgs = []) {
   const entry = { label, script, state: "running", startedAt: new Date().toISOString(), finishedAt: null };
   steps.push(entry);
   await writeStatus({ state: "running", startedAt, updatedAt: new Date().toISOString(), phase: label, steps, error: null });
-  await new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [script, ...scriptArgs], { cwd: ROOT, env: process.env, stdio: "inherit", windowsHide: true });
-    child.once("error", reject);
-    child.once("exit", (code, signal) => code === 0 ? resolve() : reject(new Error(`${label} failed (${signal || `exit ${code}`}).`)));
-  });
-  entry.state = "completed";
+  try {
+    entry.state = await refreshStep(label, script, scriptArgs);
+  } catch (error) {
+    entry.state = "failed";
+    entry.error = error instanceof Error ? error.message : String(error);
+    console.error(entry.error);
+  }
   entry.finishedAt = new Date().toISOString();
 }
 

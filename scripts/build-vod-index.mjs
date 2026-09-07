@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { writeJsonAtomic } from "./atomic-json.mjs";
 import path from "node:path";
 import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 import { buildOldIranianVodIndex } from "./build-vod-old-iranian-index.mjs";
@@ -229,9 +229,9 @@ async function main() {
   const oldIranianIndex = buildOldIranianVodIndex(index);
 
   await Promise.all([
-    writeFile(OUT_FILE, JSON.stringify(index)),
-    writeFile(HOME_OUT_FILE, JSON.stringify(homeIndex)),
-    writeFile(OLD_IRANIAN_OUT_FILE, JSON.stringify(oldIranianIndex)),
+    writeJsonAtomic(OUT_FILE, index),
+    writeJsonAtomic(HOME_OUT_FILE, homeIndex),
+    writeJsonAtomic(OLD_IRANIAN_OUT_FILE, oldIranianIndex),
   ]);
   console.log(
     JSON.stringify(

@@ -307,8 +307,10 @@ function roomForSocket(roomId: string, socketId: string) {
 async function start() {
 await Promise.all([app.prepare(), initializeTempPartyMediaStore()]);
 const httpServer = createServer((request, response) => {
-  recordHttpRequest();
   const pathname = request.url?.split("?", 1)[0];
+  // Health probes are not visitor traffic; otherwise a 20s Docker probe alone
+  // exceeds the nightly idle threshold of 12 requests per five minutes.
+  if (pathname !== "/readyz" && pathname !== "/healthz") recordHttpRequest();
   if (request.method === "POST" && pathname === "/api/watch-party/personal-media/upload") {
     void handleTempMediaUploadRequest(request, response);
     return;
@@ -329,6 +331,7 @@ const httpServer = createServer((request, response) => {
     response.end(JSON.stringify({
       status: status === 200 ? "ready" : "not-ready",
       rooms: rooms.size,
+      activeRooms: [...rooms.values()].filter(room => [...room.participants.values()].some(participant => participant.connected)).length,
       memoryMb: { rss: Math.round(memory.rss / 1024 / 1024), heapUsed: Math.round(memory.heapUsed / 1024 / 1024) },
       recentRequests5m: recentHttpRequests(),
     }));

@@ -10,7 +10,7 @@ const FILE_CHECK_INTERVAL_MS = Math.max(5_000, Number(process.env.VOD_DATA_CHECK
 const archiveCache: FileCache<VodArchive> = {};
 const archiveFallbackCache: FileCache<VodArchive> = {};
 const titleMapCache: FileCache<Record<string, string>> = {};
-const titleFilePromises = new Map<string, Promise<VodItem | null>>();
+const titleFilePromises = new Map<string, FileCache<VodItem>>();
 
 export async function loadVodArchive(): Promise<VodArchive> {
   return loadArchiveFile();
@@ -74,18 +74,17 @@ async function findVodTitleFile(id: string): Promise<VodItem | null> {
   if (!fileId) return null;
 
   const cacheKey = fileId.toLowerCase();
-  let promise = titleFilePromises.get(cacheKey);
-  if (!promise) {
-    promise = readFile(path.join(DATA_DIR, "titles", `${fileId}.json`), "utf8")
-      .then((data) => JSON.parse(data) as VodItem)
-      .catch(() => null);
-    titleFilePromises.set(cacheKey, promise);
+  let entry = titleFilePromises.get(cacheKey);
+  if (!entry) {
+    entry = {};
+    titleFilePromises.set(cacheKey, entry);
     if (titleFilePromises.size > 256) {
       const oldest = titleFilePromises.keys().next().value as string | undefined;
       if (oldest) titleFilePromises.delete(oldest);
     }
   }
-  return promise;
+  // A worker can update an existing title without changing its slug map.
+  return loadFreshJson<VodItem>(path.join(DATA_DIR, "titles", `${fileId}.json`), entry).catch(() => null);
 }
 
 type FileCache<T> = {

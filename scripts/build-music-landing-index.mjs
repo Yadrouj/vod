@@ -1,4 +1,5 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
+import { writeJsonAtomic } from "./atomic-json.mjs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -217,9 +218,9 @@ async function main() {
   const index = JSON.parse(await readFile(INPUT_FILE, "utf8"));
   const { landing, home, artist } = buildMusicLandingIndexes(index);
   await Promise.all([
-    writeFile(LANDING_FILE, JSON.stringify(landing)),
-    writeFile(HOME_FILE, JSON.stringify(home)),
-    writeFile(ARTIST_FILE, JSON.stringify(artist)),
+    writeJsonAtomic(LANDING_FILE, landing),
+    writeJsonAtomic(HOME_FILE, home),
+    writeJsonAtomic(ARTIST_FILE, artist),
   ]);
   console.log(JSON.stringify({
     landing: { tracks: landing.tracks.length, artists: landing.artists.length, bytes: Buffer.byteLength(JSON.stringify(landing)) },

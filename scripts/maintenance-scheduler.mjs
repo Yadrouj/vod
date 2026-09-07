@@ -2,210 +2,165 @@ import os from "node:os";
 import { mkdir, open, readFile, rename, stat, unlink, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { assessCapacity, DAILY_JOBS, localClock, windowDeadline } from "./maintenance-policy.mjs";
 
 const ROOT = process.cwd();
-const DATA_DIR = path.join(ROOT, "data");
-const STATE_FILE = path.join(DATA_DIR, "maintenance-scheduler-state.json");
-const STATUS_FILE = path.join(DATA_DIR, "maintenance-scheduler-status.json");
-const LOCK_FILE = path.join(DATA_DIR, "maintenance-scheduler.lock");
+const DATA = path.join(ROOT, "data");
+const STATE = path.join(DATA, "maintenance-scheduler-state.json");
+const STATUS = path.join(DATA, "maintenance-scheduler-status.json");
+const LOCK = path.join(DATA, "maintenance-scheduler.lock");
 const args = new Set(process.argv.slice(2));
-const DAEMON = args.has("--daemon");
-const FORCE = args.has("--force") || process.env.MAINTENANCE_FORCE === "1";
-const FULL = args.has("--full") || process.env.MAINTENANCE_FULL === "1";
-
-const number = (name, fallback, minimum = 0) => {
-  const value = Number(process.env[name] ?? fallback);
-  return Number.isFinite(value) ? Math.max(minimum, value) : fallback;
-};
-const TIME_ZONE = process.env.MAINTENANCE_TIME_ZONE || "Asia/Tehran";
-const IDLE_START_HOUR = Math.min(23, number("MAINTENANCE_IDLE_START_HOUR", 2));
-const IDLE_END_HOUR = Math.min(23, number("MAINTENANCE_IDLE_END_HOUR", 6));
-const POLL_MS = number("MAINTENANCE_POLL_MS", 15 * 60_000, 60_000);
-const READY_URL = process.env.MAINTENANCE_READY_URL || "http://127.0.0.1:3004/readyz";
-const MAX_RECENT_REQUESTS = number("MAINTENANCE_MAX_RECENT_REQUESTS", 12);
-const MAX_ACTIVE_ROOMS = number("MAINTENANCE_MAX_ACTIVE_ROOMS", 1);
-const MAX_MEMORY_MB = number("MAINTENANCE_MAX_MEMORY_MB", 1_350);
-const MAX_LOAD_AVG = number("MAINTENANCE_MAX_LOAD_AVG", 1.25);
-// A tiny incremental pass keeps the newest music and video listings visible
-// between the heavier once-per-day catalog refreshes.
-const MUSIC_PULSE_INTERVAL_MS = number("MUSIC_PULSE_INTERVAL_MS", 4 * 60 * 60_000, 30 * 60_000);
-const MUSIC_PULSE_ALLOW_OUTSIDE_IDLE = process.env.MUSIC_PULSE_ALLOW_OUTSIDE_IDLE === "1";
+const FORCE = args.has("--force");
+const FULL = args.has("--full");
+const number = (name, fallback) => Number.isFinite(Number(process.env[name])) ? Number(process.env[name]) : fallback;
+const ZONE = process.env.MAINTENANCE_TIME_ZONE || "Asia/Tehran";
+const START = Math.min(23, Math.max(0, number("MAINTENANCE_IDLE_START_HOUR", 2)));
+const END = Math.min(23, Math.max(0, number("MAINTENANCE_IDLE_END_HOUR", 5)));
+const POLL = Math.max(60_000, number("MAINTENANCE_POLL_MS", 900_000));
+let stopping = false;
+let activeStop = null;
+for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => { stopping = true; activeStop?.(); });
 
 async function main() {
-  if (DAEMON) {
-    console.log(`[maintenance] Scheduler polling every ${Math.round(POLL_MS / 60_000)} minutes (${TIME_ZONE}, idle ${IDLE_START_HOUR}:00-${IDLE_END_HOUR}:59, music pulse ${Math.round(MUSIC_PULSE_INTERVAL_MS / 60_000)}m).`);
-    for (;;) {
-      await runCycle().catch((error) => console.error(`[maintenance] ${message(error)}`));
-      await sleep(POLL_MS);
-    }
+  if (args.has("--check")) {
+    const local = localClock(new Date(), ZONE);
+    console.log(JSON.stringify({ timeZone: ZONE, startHour: START, endHourExclusive: END, local, eligibleNow: windowDeadline(new Date(), ZONE, START, END) > Date.now(), capacity: await checkCapacity(), jobs: DAILY_JOBS }, null, 2));
+    return;
   }
-  await runCycle();
+  do {
+    await runCycle().catch(async error => {
+      console.error(error);
+      await atomic(STATUS, { state: "failed", checkedAt: new Date().toISOString(), error: error.message });
+      if (!args.has("--daemon")) process.exitCode = 1;
+    });
+    if (!args.has("--daemon") || stopping) break;
+    // Short, interruptible pauses allow the container to shut down promptly.
+    const until = Date.now() + POLL;
+    while (!stopping && Date.now() < until) await new Promise(resolve => setTimeout(resolve, Math.min(1000, until - Date.now())));
+  } while (!stopping);
 }
 
 async function runCycle() {
+  const local = localClock(new Date(), ZONE);
+  const deadline = FORCE ? Date.now() + 3 * 60 * 60_000 : windowDeadline(new Date(), ZONE, START, END);
+  if (deadline <= Date.now()) {
+    await atomic(STATUS, { state: "waiting", local, reason: "Outside 02:00–05:00 maintenance window", checkedAt: new Date().toISOString() });
+    return;
+  }
   const lock = await acquireLock();
   if (!lock) return;
   try {
-    const local = localClock();
-    const previous = await readJson(STATE_FILE, { version: 1, completedDays: {} });
-    const dailyDue = FORCE || !previous.completedDays?.[local.day];
-    const musicPulseDue = !FULL && pulseDue(previous.lastMusicPulseAt);
-    if (!dailyDue && !musicPulseDue) {
-      await writeStatus({ state: "skipped", checkedAt: new Date().toISOString(), reason: "Today's full refresh and the music pulse are both up to date.", local });
-      return;
-    }
-    if (!FORCE && !inIdleWindow(local.hour) && !(musicPulseDue && MUSIC_PULSE_ALLOW_OUTSIDE_IDLE)) {
-      await writeStatus({ state: "waiting", checkedAt: new Date().toISOString(), reason: "Outside configured idle window.", local });
-      return;
-    }
-    const capacity = await checkCapacity();
-    if (!FORCE && !capacity.idle) {
-      await writeStatus({ state: "waiting", checkedAt: new Date().toISOString(), reason: capacity.reason, local, capacity });
-      return;
-    }
-    const startedAt = new Date().toISOString();
+    const previous = await readJson(STATE, { days: {} });
+    const days = previous.days ?? {};
+    const completed = days[local.day] ?? {};
     const steps = [];
-    const mode = dailyDue ? "Daily source refresh" : "Recent music and video pulse";
-    await writeStatus({ state: "running", startedAt, checkedAt: startedAt, local, capacity, phase: mode, steps, error: null });
-    if (dailyDue) {
-      await runStep(
-        "Refresh video sources, IMDb releases and news",
-        "scripts/daily-release-refresh.mjs",
-        FULL ? ["--full"] : [],
-        steps,
-        startedAt,
-        local,
-        capacity,
-      );
-      await runStep("Refresh music sources and landing indexes", "scripts/daily-music-refresh.mjs", FULL ? ["--full"] : [], steps, startedAt, local, capacity);
-    } else {
-      await runStep("Refresh newest music and music-video listings", "scripts/daily-music-refresh.mjs", ["--recent-only"], steps, startedAt, local, capacity);
+    for (const job of DAILY_JOBS) {
+      if (stopping || Date.now() >= deadline) break;
+      if (!FORCE && completed[job.id]) continue;
+      const capacity = await checkCapacity();
+      if (!FORCE && !capacity.idle) {
+        await atomic(STATUS, { state: "waiting", local, steps, capacity, checkedAt: new Date().toISOString() });
+        return;
+      }
+      if (stopping || Date.now() >= deadline) break;
+      const entry = { id: job.id, script: job.script, state: "running", startedAt: new Date().toISOString() };
+      steps.push(entry);
+      await atomic(STATUS, { state: "running", local, steps, deadline: new Date(deadline).toISOString(), checkedAt: new Date().toISOString() });
+      try {
+        const jobDeadline = Math.min(deadline, Date.now() + job.minutes * 60_000);
+        await runJob(job, jobDeadline, local.day);
+        entry.state = "completed";
+        completed[job.id] = new Date().toISOString();
+        days[local.day] = completed;
+        const recentDays = Object.fromEntries(Object.entries(days).sort(([a], [b]) => b.localeCompare(a)).slice(0, 14));
+        await atomic(STATE, { version: 2, days: recentDays, updatedAt: new Date().toISOString() });
+      } catch (error) {
+        entry.state = "failed";
+        entry.error = error.message;
+        console.error(`[maintenance] ${job.id}: ${error.message}`);
+        // Continue: unavailable IMDb/video sources must not starve music/news.
+      }
+      entry.finishedAt = new Date().toISOString();
     }
-    const completedAt = new Date().toISOString();
-    const completedDays = { ...(previous.completedDays ?? {}) };
-    if (dailyDue) completedDays[local.day] = completedAt;
-    for (const [day] of Object.entries(completedDays)) {
-      if (day < local.dayMinus(14)) delete completedDays[day];
-    }
-    await writeJsonAtomic(STATE_FILE, {
-      version: 1,
-      completedDays,
-      lastCompletedAt: dailyDue ? completedAt : previous.lastCompletedAt ?? null,
-      lastLocalDay: dailyDue ? local.day : previous.lastLocalDay ?? null,
-      lastMusicPulseAt: completedAt,
-      lastCapacity: capacity,
-    });
-    await writeStatus({ state: "completed", startedAt, finishedAt: completedAt, checkedAt: completedAt, local, capacity, full: FULL, mode, phase: "Source updates published", steps, error: null });
-    console.log(JSON.stringify({ completed: true, full: FULL, mode, localDay: local.day, steps }, null, 2));
+    const complete = DAILY_JOBS.every(job => completed[job.id]);
+    await atomic(STATUS, { state: complete ? "completed" : "partial", local, steps, completedJobs: Object.keys(completed), checkedAt: new Date().toISOString() });
+    if (!complete && !args.has("--daemon")) process.exitCode = 1;
   } finally {
-    await lock.close().catch(() => undefined);
-    await unlink(LOCK_FILE).catch(() => undefined);
+    await lock.close();
+    await unlink(LOCK).catch(() => {});
   }
 }
 
-function localClock() {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" })
-    .formatToParts(new Date())
-    .reduce((result, part) => ({ ...result, [part.type]: part.value }), {});
-  const day = `${parts.year}-${parts.month}-${parts.day}`;
-  const dayMinus = (days) => {
-    const date = new Date(`${day}T00:00:00.000Z`);
-    date.setUTCDate(date.getUTCDate() - days);
-    return date.toISOString().slice(0, 10);
-  };
-  return { day, hour: Number(parts.hour), timeZone: TIME_ZONE, dayMinus };
-}
-
-function inIdleWindow(hour) {
-  if (IDLE_START_HOUR === IDLE_END_HOUR) return true;
-  return IDLE_START_HOUR < IDLE_END_HOUR
-    ? hour >= IDLE_START_HOUR && hour <= IDLE_END_HOUR
-    : hour >= IDLE_START_HOUR || hour <= IDLE_END_HOUR;
-}
-
-function pulseDue(lastPulseAt) {
-  const last = Date.parse(lastPulseAt ?? "");
-  return !Number.isFinite(last) || Date.now() - last >= MUSIC_PULSE_INTERVAL_MS;
+export async function runJob(job, deadline, day) {
+  await new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [job.script, ...(job.args || []), ...(FULL && ["f2my", "music"].includes(job.id) ? ["--full"] : [])], {
+      cwd: ROOT, windowsHide: true, detached: process.platform !== "win32", stdio: "inherit",
+      env: { ...process.env, MAINTENANCE_RUN_DAY: FORCE ? "" : day, MAINTENANCE_DEADLINE: String(deadline), DAILY_RELEASE_SKIP_NEWS: "1", DAILY_RELEASE_SKIP_TRENDING: "1" },
+    });
+    let expired = false;
+    let killTimer;
+    const stop = () => {
+      if (expired) return;
+      expired = true;
+      if (!child.pid) return;
+      if (process.platform === "win32") {
+        spawn("taskkill", ["/pid", String(child.pid), "/t", "/f"], { windowsHide: true, stdio: "ignore" });
+      } else {
+        try { process.kill(-child.pid, "SIGTERM"); } catch { /* Already exited. */ }
+        killTimer = setTimeout(() => { try { process.kill(-child.pid, "SIGKILL"); } catch {} }, 5000);
+      }
+    };
+    activeStop = stop;
+    const timer = setTimeout(stop, Math.max(1, deadline - Date.now()));
+    const finish = error => {
+      clearTimeout(timer); clearTimeout(killTimer); activeStop = null;
+      if (error) reject(error); else resolve();
+    };
+    child.once("error", finish);
+    child.once("exit", (code, signal) => {
+      if (expired && process.platform !== "win32") {
+        try { process.kill(-child.pid, "SIGKILL"); } catch { /* No descendants remain. */ }
+      }
+      finish(expired ? new Error("Time budget reached; unfinished steps retry next cycle") : code === 0 ? null : new Error(`exit ${signal || code}`));
+    });
+  });
 }
 
 async function checkCapacity() {
-  const loadAverage = os.loadavg()[0];
-  let ready = null;
   try {
-    const response = await fetch(READY_URL, { signal: AbortSignal.timeout(4_000), headers: { "cache-control": "no-cache" } });
-    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-    ready = await response.json();
-  } catch (error) {
-    return { idle: false, reason: `Application readiness is unavailable: ${message(error)}`, loadAverage, ready: null };
-  }
-  if (ready.status !== "ready") return { idle: false, reason: "Application is not ready.", loadAverage, ready };
-  if (Number(ready.rooms ?? 0) > MAX_ACTIVE_ROOMS) return { idle: false, reason: `Active watch rooms (${ready.rooms}) exceed the idle threshold.`, loadAverage, ready };
-  if (Number(ready.recentRequests5m ?? 0) > MAX_RECENT_REQUESTS) return { idle: false, reason: `Recent requests (${ready.recentRequests5m}) exceed the idle threshold.`, loadAverage, ready };
-  if (Number(ready.memoryMb?.rss ?? 0) > MAX_MEMORY_MB) return { idle: false, reason: `Application memory (${ready.memoryMb.rss}MB) exceeds the idle threshold.`, loadAverage, ready };
-  if (loadAverage > 0 && loadAverage > MAX_LOAD_AVG) return { idle: false, reason: `System load (${loadAverage.toFixed(2)}) exceeds the idle threshold.`, loadAverage, ready };
-  return { idle: true, reason: "Application and host are idle.", loadAverage, ready };
-}
-
-async function runStep(label, script, scriptArgs, steps, startedAt, local, capacity) {
-  const entry = { label, script, state: "running", startedAt: new Date().toISOString(), finishedAt: null };
-  steps.push(entry);
-  await writeStatus({ state: "running", startedAt, checkedAt: new Date().toISOString(), local, capacity, phase: label, steps, error: null });
-  await new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [script, ...scriptArgs], { cwd: ROOT, env: process.env, stdio: "inherit", windowsHide: true });
-    child.once("error", reject);
-    child.once("exit", (code, signal) => code === 0 ? resolve() : reject(new Error(`${label} failed (${signal || `exit ${code}`}).`)));
-  });
-  entry.state = "completed";
-  entry.finishedAt = new Date().toISOString();
+    const response = await fetch(process.env.MAINTENANCE_READY_URL || "http://127.0.0.1:3004/readyz", { signal: AbortSignal.timeout(4000) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const ready = await response.json();
+    return { ...assessCapacity(ready, os.loadavg()[0], {
+      requests: number("MAINTENANCE_MAX_RECENT_REQUESTS", 12), rooms: number("MAINTENANCE_MAX_ACTIVE_ROOMS", 1),
+      memory: number("MAINTENANCE_MAX_MEMORY_MB", 1350), load: number("MAINTENANCE_MAX_LOAD_AVG", 1.25),
+    }), ready };
+  } catch (error) { return { idle: false, reason: error.message }; }
 }
 
 async function acquireLock() {
-  await mkdir(path.dirname(LOCK_FILE), { recursive: true });
+  await mkdir(DATA, { recursive: true });
   try {
-    const handle = await open(LOCK_FILE, "wx");
+    const handle = await open(LOCK, "wx");
     await handle.writeFile(JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }));
     return handle;
   } catch (error) {
-    if (error?.code !== "EEXIST") throw error;
-    const lockStat = await stat(LOCK_FILE).catch(() => null);
-    if (lockStat && Date.now() - lockStat.mtimeMs > 18 * 60 * 60 * 1000) {
-      await unlink(LOCK_FILE).catch(() => undefined);
-      const handle = await open(LOCK_FILE, "wx");
-      await handle.writeFile(JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString(), recovered: true }));
-      return handle;
+    if (error.code !== "EEXIST") throw error;
+    const info = await stat(LOCK).catch(() => null);
+    // Every worker has a three-hour hard limit; never steal an active lock.
+    if (info && Date.now() - info.mtimeMs > 6 * 60 * 60_000) {
+      await unlink(LOCK).catch(() => {});
+      return acquireLock();
     }
     return null;
   }
 }
-
-async function writeStatus(value) {
-  await writeJsonAtomic(STATUS_FILE, value);
-}
-
-async function writeJsonAtomic(file, value) {
+async function atomic(file, value) {
   await mkdir(path.dirname(file), { recursive: true });
-  const temporary = `${file}.${process.pid}.${Date.now()}.tmp`;
-  await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  const temporary = `${file}.${process.pid}.tmp`;
+  await writeFile(temporary, JSON.stringify(value, null, 2));
   await rename(temporary, file);
 }
-
-async function readJson(file, fallback) {
-  try {
-    return JSON.parse(await readFile(file, "utf8"));
-  } catch {
-    return fallback;
-  }
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function message(error) {
-  return error instanceof Error ? error.message : String(error);
-}
-
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+async function readJson(file, fallback) { try { return JSON.parse(await readFile(file, "utf8")); } catch { return fallback; } }
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main().catch(error => { console.error(error); process.exitCode = 1; });

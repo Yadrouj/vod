@@ -33,5 +33,8 @@ data/imdb-trending-status.json.*.tmp
 public/data/imdb-trending.json.*.tmp
 data/daily-music-refresh-status.json
 data/maintenance-scheduler-status.json
+data/maintenance-scheduler-state.json
+data/maintenance-scheduler.lock
+data/refresh-checkpoints/
 .media-cache/
 public/data/vod-sync-status.json

@@ -1,11 +1,17 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 
-const OUT_FILE = process.argv[2] || "public/data/vod-news.json";
+const OUT_FILE = process.argv[2] || path.join(process.env.VOD_DATA_DIR || "public/data", "vod-news.json");
 const LIMIT = Number(process.env.VOD_NEWS_LIMIT || 18);
 const USER_AGENT = "Mozilla/5.0 SarvNema News Browser";
 
 const releaseWindow = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date());
 const WEB_SEARCH_FEEDS = [
+  { category: "release", query: "سینما فیلم جدید when:7d", locale: "fa" },
+  { category: "episodes", query: "سریال قسمت جدید نمایش خانگی when:7d", locale: "fa" },
+  { category: "festival", query: "جشنواره سینمایی when:7d", locale: "fa" },
   { category: "release", query: `latest film releases movie box office streaming ${releaseWindow}` },
   { category: "episodes", query: `latest series episodes release date streaming ${releaseWindow}` },
   { category: "animation", query: `latest animation movie series news ${releaseWindow}` },
@@ -20,9 +26,12 @@ const IMDb_PAGES = [
 async function main() {
   const items = [];
   const sources = [];
+  const failures = [];
+  let previous = { items: [] };
+  try { previous = JSON.parse(await readFile(OUT_FILE, "utf8")); } catch { /* First run. */ }
 
   const monitoredUpdates = await loadReleaseUpdates();
-  if (monitoredUpdates.items.length) {
+  if (process.env.VOD_NEWS_INCLUDE_ARCHIVE_UPDATES === "1" && monitoredUpdates.items.length) {
     sources.push("SarvNema daily source monitor");
     items.push(...monitoredUpdates.items.slice(0, 12).map(toMonitorNews));
   }
@@ -33,43 +42,50 @@ async function main() {
       const html = await fetchText(page.url);
       items.push(...parseIMDbNews(html, page.category, page.url));
     } catch (error) {
+      failures.push({ source: page.url, error: error.message });
       console.warn(`IMDb news skipped: ${page.url} (${error.message})`);
     }
   }
 
   for (const feed of WEB_SEARCH_FEEDS) {
-    const url = googleNewsUrl(feed.query);
+    const url = googleNewsUrl(feed.query, feed.locale);
     sources.push(url);
     try {
       const xml = await fetchText(url);
       items.push(...parseGoogleNews(xml, feed.category));
     } catch (error) {
+      failures.push({ source: url, error: error.message });
       console.warn(`News search skipped: ${feed.query} (${error.message})`);
     }
   }
 
-  const selectedItems = uniqueBy(items, (item) => item.url)
-    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-    .slice(0, LIMIT);
-  const enrichedItems = await Promise.all(selectedItems.map(async (item) => {
-    if (!/^https?:\/\//i.test(item.url)) return item;
-    const url = await resolveFinalUrl(item.url);
-    return { ...item, url, imageUrl: await findOpenGraphImage(url) ?? item.imageUrl };
-  }));
+  const previousItems = (previous.items || []).filter(item => process.env.VOD_NEWS_INCLUDE_ARCHIVE_UPDATES === "1" || item.source !== "SarvNema monitor");
+  const selectedItems = selectNews(items, previousItems, LIMIT);
+  if (!selectNews(items).length) throw new Error("No dated news was retrieved; preserving the previous news file.");
+  const enrichedItems = [];
+  for (const item of selectedItems) {
+    // Feed images are enough; avoid fetching each publisher twice or crawling 18 sites concurrently.
+    const imageUrl = item.imageUrl || (/^https:\/\//i.test(item.url) && !item.url.includes("news.google.com") ? await findOpenGraphImage(item.url) : null);
+    enrichedItems.push({ ...item, imageUrl });
+  }
 
   const payload = {
     generatedAt: new Date().toISOString(),
     sources,
+    failures,
     items: enrichedItems,
   };
 
-  await writeFile(OUT_FILE, JSON.stringify(payload));
+  await mkdir(path.dirname(OUT_FILE), { recursive: true });
+  const temporary = `${OUT_FILE}.${process.pid}.tmp`;
+  await writeFile(temporary, JSON.stringify(payload));
+  await rename(temporary, OUT_FILE);
   console.log(JSON.stringify({ outFile: OUT_FILE, items: payload.items.length, sources: payload.sources.length }, null, 2));
 }
 
 async function loadReleaseUpdates() {
   try {
-    const raw = await readFile("public/data/vod-updates.json", "utf8");
+    const raw = await readFile(path.join(process.env.VOD_DATA_DIR || "public/data", "vod-updates.json"), "utf8");
     const payload = JSON.parse(raw);
     return { items: Array.isArray(payload.items) ? payload.items : [] };
   } catch {
@@ -84,10 +100,10 @@ function toMonitorNews(item) {
     : "";
   return {
     id: `monitor-${item.id}`,
-    title: available ? `${item.baseTitle}${episode} is ready` : `${item.baseTitle} is coming soon`,
+    title: available ? `${item.baseTitle}${episode}؛ به‌روزرسانی آرشیو` : `${item.baseTitle}؛ خبر انتشار`,
     summary: available
-      ? `Verified source files are available${item.qualities?.length ? ` in ${item.qualities.slice(0, 3).join(" / ")}` : ""}.`
-      : "IMDb release found; the source scan is queued and this title will update when verified files arrive.",
+      ? `لینک‌های منبع به آرشیو اضافه شده‌اند${item.qualities?.length ? `؛ کیفیت‌ها: ${item.qualities.slice(0, 3).join(" / ")}` : ""}.`
+      : "خبر انتشار در IMDb ثبت شده است؛ وجود لینک پخش هنوز تأیید نشده است.",
     source: "SarvNema monitor",
     url: available && item.href ? item.href : item.imdbUrl,
     publishedAt: item.eventAt,
@@ -97,19 +113,22 @@ function toMonitorNews(item) {
   };
 }
 
-function googleNewsUrl(query) {
-  return `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
+function googleNewsUrl(query, locale) {
+  return `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&${locale === "fa" ? "hl=fa&gl=IR&ceid=IR:fa" : "hl=en-US&gl=US&ceid=US:en"}`;
 }
 
 async function fetchText(url) {
   const response = await fetch(url, {
+    signal: AbortSignal.timeout(12_000),
     headers: {
       "user-agent": USER_AGENT,
       accept: "text/html,application/rss+xml,application/xml;q=0.9,*/*;q=0.8",
     },
   });
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-  return response.text();
+  const text = await response.text();
+  if (text.length > 4_000_000) throw new Error("News response too large");
+  return text;
 }
 
 async function findOpenGraphImage(url) {
@@ -124,21 +143,14 @@ async function findOpenGraphImage(url) {
   }
 }
 
-async function resolveFinalUrl(url) {
-  try {
-    const response = await fetch(url, { redirect: "follow", headers: { "user-agent": USER_AGENT } });
-    return response.url || url;
-  } catch {
-    return url;
-  }
-}
-
-function parseGoogleNews(xml, category) {
-  return Array.from(xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)).map(([, item], index) => {
+export function parseGoogleNews(xml, category) {
+  return Array.from(xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)).map(([, item]) => {
     const title = cleanXml(tag(item, "title"));
     const source = cleanXml(item.match(/<source\b[^>]*>([\s\S]*?)<\/source>/i)?.[1] ?? "Google News");
     const url = cleanXml(tag(item, "link"));
-    const publishedAt = new Date(cleanXml(tag(item, "pubDate")) || Date.now()).toISOString();
+    const date = Date.parse(cleanXml(tag(item, "pubDate")));
+    if (!Number.isFinite(date) || !/^https:\/\//i.test(url)) return null;
+    const publishedAt = new Date(date).toISOString();
     const rawDescription = cleanXml(tag(item, "description"));
     const description = cleanHtml(rawDescription);
     const imageUrl =
@@ -146,7 +158,7 @@ function parseGoogleNews(xml, category) {
       (cleanXml(item.match(/<(?:media:content|enclosure)\b[^>]+url=["']([^"']+)["']/i)?.[1] ?? "") || null);
 
     return {
-      id: slug(`${category}-${source}-${title}-${index}`),
+      id: `news-${createHash("sha256").update(url).digest("hex").slice(0, 20)}`,
       title: trimSourceSuffix(title),
       summary: description || title,
       source,
@@ -156,7 +168,7 @@ function parseGoogleNews(xml, category) {
       imageUrl,
       tags: tagsFor(category, title),
     };
-  });
+  }).filter(Boolean);
 }
 
 function parseIMDbNews(html, category, sourceUrl) {
@@ -173,7 +185,8 @@ function parseIMDbNews(html, category, sourceUrl) {
         summary: "Latest IMDb entertainment news item.",
         source: "IMDb",
         url,
-        publishedAt: new Date().toISOString(),
+        // Undated headline links must not be promoted as today's news.
+        publishedAt: null,
         category,
         imageUrl: null,
         tags: tagsFor(category, title),
@@ -233,7 +246,15 @@ function uniqueBy(items, key) {
   });
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+export function selectNews(fresh, previous = [], limit = 18, now = Date.now()) {
+  const valid = [...fresh, ...previous].filter(item => {
+      const time = Date.parse(item.publishedAt);
+      return Number.isFinite(time) && time <= now + 300_000 && time >= now - 30 * 86_400_000;
+    });
+  return uniqueBy(valid, item => item.url).sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
+    .slice(0, limit);
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  main().catch((error) => { console.error(error); process.exitCode = 1; });
+}

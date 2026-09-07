@@ -24,7 +24,7 @@ const fallbackNews: VodNewsPayload = {
   sources: [],
   items: [],
 };
-const newsFile = path.join(process.cwd(), "public", "data", "vod-news.json");
+const newsFile = path.join(process.env.VOD_DATA_DIR || path.join(process.cwd(), "public", "data"), "vod-news.json");
 let cachedNews: { modifiedAt: number; value: VodNewsPayload } | null = null;
 
 export async function loadVodNews(): Promise<VodNewsPayload> {
@@ -35,6 +35,6 @@ export async function loadVodNews(): Promise<VodNewsPayload> {
     cachedNews = { modifiedAt: info.mtimeMs, value };
     return value;
   } catch {
-    return fallbackNews;
+    return cachedNews?.value ?? fallbackNews;
   }
 }
