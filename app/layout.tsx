@@ -14,6 +14,7 @@ import "./globals.css";
 import "./watch-together-overrides.css";
 import "./mobile-ux-overrides.css";
 import "./media-theme.css";
+import "./cinema-discovery.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

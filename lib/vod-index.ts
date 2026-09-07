@@ -2,6 +2,7 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { enrichOldIranianCard } from "./old-iranian-media";
 import type { VodCard, VodCatalogIndex } from "./types";
+import { compareImdbRank } from "./vod-search-order";
 
 export const HOME_SECTIONS = [
   "top-imdb",
@@ -44,6 +45,7 @@ const FILE_CHECK_INTERVAL_MS = Math.max(5_000, Number(process.env.VOD_DATA_CHECK
 const indexCache: FileCache<VodCatalogIndex> = {};
 const homeIndexCache: FileCache<VodCatalogIndex> = {};
 const oldIranianIndexCache: FileCache<VodCatalogIndex> = {};
+const enrichedIndexes = new WeakMap<VodCatalogIndex, VodCatalogIndex>();
 
 export async function loadVodIndex(): Promise<VodCatalogIndex> {
   const index = await loadFreshJson(path.join(DATA_DIR, "vod-index.json"), indexCache);
@@ -64,11 +66,15 @@ export async function loadOldIranianVodIndex(): Promise<VodCatalogIndex> {
 }
 
 function enrichLegacyCards(index: VodCatalogIndex): VodCatalogIndex {
-  return {
+  const cached = enrichedIndexes.get(index);
+  if (cached) return cached;
+  const enriched = {
     ...index,
     items: index.items.map(enrichOldIranianCard),
     sections: index.sections.map((section) => ({ ...section, items: section.items.map(enrichOldIranianCard) })),
   };
+  enrichedIndexes.set(index, enriched);
+  return enriched;
 }
 
 export function pickHero(index: VodCatalogIndex): VodCard | null {
@@ -119,6 +125,7 @@ export function browseVodIndex(index: VodCatalogIndex, params: BrowseParams) {
     );
   });
 
+  if (needle) filtered.sort(compareImdbRank);
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const page = Math.min(currentPage, totalPages);
   const start = (page - 1) * pageSize;

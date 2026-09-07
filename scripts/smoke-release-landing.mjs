@@ -17,11 +17,11 @@ try {
     await page.goto(origin, { waitUntil: "domcontentloaded", timeout: 120000 });
     await page.waitForLoadState("load");
     assert.equal(await page.locator("html").getAttribute("lang"), locale);
-    const section = page.locator(".release-updates-refresh:visible");
+    const section = page.locator('[data-section="catalog-updates"]');
     await section.waitFor();
     assert.equal(await section.locator(".release-update-card").count(), 8);
     assert.equal(await section.locator('[data-change-type="links-refreshed"]').count(), 0);
-    const lanterns = section.locator('a[href="/tt26545992"]');
+    const lanterns = page.locator('[data-section="new-episodes"] a[href="/tt26545992"]');
     assert.equal(await lanterns.count(), 1, "Lanterns episode update is visible without duplicate profiles");
     assert.match(await lanterns.innerText(), locale === "fa" ? /قسمت ۴/ : /Episode 4/);
     assert.doesNotMatch(await section.innerText(), /آماده تماشا|Ready to watch/);

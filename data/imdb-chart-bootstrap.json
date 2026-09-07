@@ -1,0 +1,27 @@
+{
+  "note": "Public IMDb chart excerpts reviewed via search cache on 2026-09-07. Not a live fetch or a claimed chart publication date. Direct refresh replaces these snapshots when IMDb is reachable.",
+  "charts": {
+    "movie": {
+      "sourceUrl": "https://www.imdb.com/chart/moviemeter/",
+      "observedAt": "2026-09-07T13:32:54Z",
+      "entries": [
+        { "rank": 1, "title": "The Whisper Man", "year": 2026 },
+        { "rank": 2, "title": "The Odyssey", "year": 2026 },
+        { "rank": 3, "title": "The Dog Stars", "year": 2026 },
+        { "rank": 4, "title": "Spider-Man: Brand New Day", "year": 2026 },
+        { "rank": 5, "title": "Coyote vs. Acme", "year": 2026 }
+      ]
+    },
+    "series": {
+      "sourceUrl": "https://www.imdb.com/chart/tvmeter/?view=grid",
+      "observedAt": "2026-09-07T13:32:54Z",
+      "entries": [
+        { "rank": 1, "title": "Lanterns", "year": 2026 },
+        { "rank": 2, "title": "Bleach: Thousand-Year Blood War", "year": 2022 },
+        { "rank": 3, "title": "Silo", "year": 2023 },
+        { "rank": 4, "title": "Reacher", "year": 2022 },
+        { "rank": 5, "title": "Ted Lasso", "year": 2020 }
+      ]
+    }
+  }
+}

@@ -109,7 +109,7 @@ export function DownloadBrowser({
                 <strong>{file.label}</strong>
                 <small>{[file.group, file.quality, file.release, file.size].filter(Boolean).join(" / ")}</small>
               </span>
-              <DownloadButton href={file.url} title={title} label={file.quality ?? t.common.file} />
+              <DownloadButton href={file.url} title={title} itemId={itemId} posterUrl={fallbackImage} label={file.quality ?? t.common.file} />
             </div>
           ))}
         </div>
@@ -164,6 +164,8 @@ export function DownloadBrowser({
                 <EpisodeRow
                   key={`${episode.season}-${episode.episode ?? "pack"}`}
                   episode={episode}
+                  itemId={itemId}
+                  seriesTitle={title}
                   fallbackImage={fallbackImage}
                   fallbackImages={fallbackImages}
                   locale={locale}
@@ -177,7 +179,7 @@ export function DownloadBrowser({
   );
 }
 
-function EpisodeRow({ episode, fallbackImage, fallbackImages, locale }: { episode: EpisodeDownload; fallbackImage: string | null; fallbackImages: string[]; locale: Locale }) {
+function EpisodeRow({ episode, itemId, seriesTitle, fallbackImage, fallbackImages, locale }: { episode: EpisodeDownload; itemId: string; seriesTitle: string; fallbackImage: string | null; fallbackImages: string[]; locale: Locale }) {
   const qualities = Array.from(new Set(episode.files.map((file) => file.quality).filter(Boolean))).join(" / ");
   const t = getDictionary(locale);
   const title =
@@ -221,7 +223,7 @@ function EpisodeRow({ episode, fallbackImage, fallbackImages, locale }: { episod
         <div className="episode-quality-list">
           {episode.files.map((file, index) => (
             <div key={`${file.url}-${index}`} className="quality-download">
-              <DownloadButton href={file.url} title={`${title} · ${episode.code}`} label={file.quality ?? t.common.file} />
+              <DownloadButton href={file.url} title={`${seriesTitle} · ${episode.code}`} itemId={itemId} posterUrl={episodeImage} label={file.quality ?? t.common.file} />
               <small>{[file.group, file.release, file.size].filter(Boolean).join(" / ") || file.name}</small>
             </div>
           ))}

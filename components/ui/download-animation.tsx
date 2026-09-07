@@ -3,10 +3,9 @@
 import { Download } from "lucide-react";
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { askAppConfirmation, showAppMessage } from "@/lib/app-messages";
+import { readDownloads as readHistory, saveHistoryValue, DOWNLOADS_KEY } from "@/lib/media-history";
 
-type DownloadEntry = { title: string; label: string; href: string; at: number };
-
-export function DownloadButton({ href, label, title = label }: { href: string; label: string; title?: string }) {
+export function DownloadButton({ href, label, title = label, itemId, posterUrl }: { href: string; label: string; title?: string; itemId?: string; posterUrl?: string | null }) {
   const [downloading, setDownloading] = useState(false);
   const subscribe = useCallback((onStoreChange: () => void) => {
     window.addEventListener("sarvnema-download", onStoreChange);
@@ -17,9 +16,8 @@ export function DownloadButton({ href, label, title = label }: { href: string; l
 
   const markDownloaded = () => {
     const history = readHistory();
-    const next = [{ title, label, href, at: Date.now() }, ...history.filter((item) => item.href !== href)].slice(0, 20);
-    document.cookie = `sarvnema_downloads=${encodeURIComponent(JSON.stringify(next))}; path=/; max-age=2592000; SameSite=Lax`;
-    window.dispatchEvent(new CustomEvent("sarvnema-download", { detail: next }));
+    const next = [{ title, label, href, itemId, posterUrl, at: Date.now() }, ...history.filter((item) => item.href !== href)].slice(0, 20);
+    saveHistoryValue(DOWNLOADS_KEY, next, "sarvnema-download");
     setDownloading(true);
     window.setTimeout(() => setDownloading(false), 2_200);
   };
@@ -53,13 +51,4 @@ export function DownloadButton({ href, label, title = label }: { href: string; l
       <span className="animated-download-label">{downloading ? "" : label}</span>
     </a>
   );
-}
-
-function readHistory(): DownloadEntry[] {
-  try {
-    const raw = document.cookie.split("; ").find((cookie) => cookie.startsWith("sarvnema_downloads="))?.split("=")[1];
-    return raw ? JSON.parse(decodeURIComponent(raw)) as DownloadEntry[] : [];
-  } catch {
-    return [];
-  }
 }

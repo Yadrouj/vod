@@ -2,6 +2,7 @@ import { aiSearch } from "./ai-search";
 import { normalizeSearchQuery, TtlLruCache } from "./runtime-cache";
 import type { VodCard } from "./types";
 import { loadVodIndex } from "./vod-index";
+import { selectRankedSuggestions, type SearchKind } from "./vod-search-order";
 
 type Suggestion = {
   title: string;
@@ -32,13 +33,13 @@ const aiResultCache = new TtlLruCache<string, AiSearchPayload[]>(1_000, 30 * 60_
 let documentsPromise: Promise<SearchDocument[]> | null = null;
 let documentsVersion = "";
 
-export async function searchSuggestions(query: string, limit = 8) {
+export async function searchSuggestions(query: string, limit = 8, kind: SearchKind = "all") {
   const normalized = normalizeSearchQuery(query);
-  const cacheKey = `${normalized}:${limit}`;
+  const documents = await loadSearchDocuments();
+  const cacheKey = `${normalized}:${limit}:${kind}`;
   const cached = suggestionCache.get(cacheKey);
   if (cached) return { items: cached, cache: "HIT" as const };
 
-  const documents = await loadSearchDocuments();
   const matches: Array<{ item: VodCard; matchRank: number }> = [];
 
   for (const document of documents) {
@@ -50,19 +51,8 @@ export async function searchSuggestions(query: string, limit = 8) {
   }
 
   const currentYear = new Date().getUTCFullYear();
-  const items = matches
-    // Search is intentionally release-first: a customer looking up a familiar
-    // name sees the newest edition, sequel or fresh release before the archive.
-    // Relevance still breaks ties inside the same release year.
-    .sort((left, right) => (
-      (right.item.year ?? 0) - (left.item.year ?? 0)
-      || left.matchRank - right.matchRank
-      || (right.item.catalogUpdatedAt ?? right.item.sourceUpdatedAt ?? "").localeCompare(left.item.catalogUpdatedAt ?? left.item.sourceUpdatedAt ?? "")
-      || (right.item.imdbRating ?? 0) - (left.item.imdbRating ?? 0)
-      || (right.item.imdbVotes ?? 0) - (left.item.imdbVotes ?? 0)
-    ))
-    .slice(0, limit)
-    .map(({ item }) => ({
+  const items = selectRankedSuggestions(matches.map(({ item }) => item), limit, kind)
+    .map((item) => ({
       title: item.title,
       imdbCode: item.imdbCode,
       year: item.year,

@@ -20,6 +20,7 @@ async function main() {
   const steps = [];
   try {
     await writeStatus({ state: "running", startedAt, updatedAt: startedAt, phase: "Preparing daily source review", steps, error: null });
+    await runStep("Refresh cached weekly IMDb popularity charts", "scripts/refresh-imdb-trending.mjs", steps, startedAt);
     if (!MONITOR_ONLY && process.env.DAILY_RELEASE_SKIP_CATALOG_SYNC !== "1") {
       await runStep("Review DonyayeSerial, series feed and Moviesho", "scripts/sync-vod-catalog.mjs", steps, startedAt);
     }

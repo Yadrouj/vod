@@ -8,8 +8,9 @@ import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import { getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
 import type { VodCard } from "@/lib/types";
+import type { TrendingTitle } from "@/lib/imdb-trending";
 
-export function FilmLandingHero({ items, locale }: { items: VodCard[]; locale: Locale }) {
+export function FilmLandingHero({ items, locale }: { items: (VodCard & { popularity?: TrendingTitle["popularity"] })[]; locale: Locale }) {
   const t = getDictionary(locale);
   const featuredItems = useMemo(() => items.filter((item) => item.imdbCode), [items]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -27,6 +28,11 @@ export function FilmLandingHero({ items, locale }: { items: VodCard[]; locale: L
 
   const artUrl = activeItem.backdropUrl ?? activeItem.posterUrl;
   const posterUrl = activeItem.posterUrl ?? activeItem.backdropUrl;
+  const popularity = activeItem.popularity;
+  const fa = locale === "fa";
+  const displayTitle = fa ? activeItem.persianTitle || activeItem.title : activeItem.title;
+  const chartLabel = popularity?.kind === "series" ? (fa ? "سریال‌ها" : "TV shows") : (fa ? "فیلم‌ها" : "Movies");
+  const observedDate = popularity ? new Intl.DateTimeFormat(fa ? "fa-IR" : "en-US", { month: "short", day: "numeric", timeZone: "Asia/Tehran" }).format(new Date(popularity.observedAt)) : "";
   const heroStyle = artUrl
     ? ({ "--film-hero-art": `url("${sizedImageUrl(artUrl, 1600)?.replaceAll('"', "\\\"") ?? artUrl}")` } as CSSProperties)
     : undefined;
@@ -38,9 +44,10 @@ export function FilmLandingHero({ items, locale }: { items: VodCard[]; locale: L
       <div className="film-landing-hero-glow" aria-hidden="true" />
       <div className="film-landing-hero-grid">
         <div className="film-landing-copy">
-          <span className="film-landing-kicker"><Sparkles size={14} /> SARVNEMA CINEMA</span>
+          <span className="film-landing-kicker"><Sparkles size={14} />{popularity ? (popularity.current ? (fa ? "محبوب‌های هفتهٔ IMDb" : "This week's IMDb favorites") : (fa ? "محبوب‌های IMDb · آخرین فهرست ثبت‌شده" : "IMDb favorites · last saved chart")) : (fa ? "پیشنهادهای سرونما" : "SarvNema picks")}</span>
+          {popularity && <div className="film-trending-context"><a href={popularity.sourceUrl} target="_blank" rel="noreferrer">{fa ? "رتبهٔ محبوبیت" : "Popularity rank"} <b>#{popularity.rank.toLocaleString(fa ? "fa-IR" : "en-US")}</b> · {chartLabel} ↗</a><time dateTime={popularity.observedAt}>{fa ? "ثبت فهرست: " : "Snapshot: "}{observedDate}</time><span>{fa ? "رتبهٔ محبوبیت با امتیاز کاربران متفاوت است." : "Popularity rank is separate from user rating."}</span></div>}
           <p className="film-landing-eyebrow">{meta || "A new title to discover"}</p>
-          <h1>{activeItem.title}</h1>
+          <h1 dir="auto">{displayTitle}</h1>
           <p className="film-landing-description">{activeItem.overview || activeItem.genres.slice(0, 3).join(" / ") || "Discover films and series with direct sources, rich metadata, and a smooth online player."}</p>
 
           <form className="film-landing-search" action="/browse" role="search">
@@ -50,14 +57,14 @@ export function FilmLandingHero({ items, locale }: { items: VodCard[]; locale: L
           </form>
 
           <nav className="film-landing-link-row" aria-label="Film discovery">
-            <Link href="/browse?section=top-imdb">Top IMDb</Link>
-            <Link href="/browse?section=recent-films">New releases</Link>
-            <Link href="/browse?type=series">Series</Link>
-            <Link href="/browse?section=animation">Animation</Link>
+            <Link href="/browse?section=top-imdb">{fa ? "برترین‌های IMDb" : "Top IMDb"}</Link>
+            <Link href="/browse?section=recent-films">{fa ? "فیلم‌های جدید" : "New releases"}</Link>
+            <Link href="/browse?type=series">{fa ? "سریال" : "Series"}</Link>
+            <Link href="/browse?section=animation">{fa ? "انیمیشن" : "Animation"}</Link>
           </nav>
 
           <div className="film-landing-actions">
-            <Link href={`/watch/${activeItem.imdbCode}`} className="film-landing-primary"><Play size={17} fill="currentColor" /> {t.common.playOnline}</Link>
+            <Link href={activeItem.linksCount > 0 ? `/watch/${activeItem.imdbCode}` : `/${activeItem.imdbCode}`} className="film-landing-primary"><Play size={17} fill="currentColor" /> {activeItem.linksCount > 0 ? t.common.playOnline : t.common.details}</Link>
             <WatchTogetherLauncher
               locale={locale}
               placement="inline"
@@ -71,7 +78,7 @@ export function FilmLandingHero({ items, locale }: { items: VodCard[]; locale: L
 
         <aside className="film-landing-now-playing" aria-label={`Selected title: ${activeItem.title}`}>
           <div className="film-landing-now-head">
-            <span><Film size={14} /> NOW SHOWING</span>
+            <span><Film size={14} /> {popularity ? `${chartLabel} · #${popularity.rank.toLocaleString(fa ? "fa-IR" : "en-US")}` : (fa ? "انتخاب امروز" : "FEATURED")}</span>
             <button type="button" className="film-landing-visual-toggle" onClick={() => setIsAutoPlaying((current) => !current)} aria-label={isAutoPlaying ? "Pause title rotation" : "Resume title rotation"}>
               {isAutoPlaying ? "Ⅱ" : "▶"}
             </button>
@@ -84,7 +91,7 @@ export function FilmLandingHero({ items, locale }: { items: VodCard[]; locale: L
           </div>
 
           <div className="film-landing-title-copy" dir="auto">
-            <strong>{activeItem.title}</strong>
+            <strong>{displayTitle}</strong>
             <span>{[activeItem.year, activeItem.imdbRating ? `IMDb ${activeItem.imdbRating.toFixed(1)}` : null].filter(Boolean).join(" • ")}</span>
           </div>
 

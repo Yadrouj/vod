@@ -13,18 +13,20 @@ const labels: Record<ReleaseChangeType, [string, string]> = {
   "coming-soon": ["به‌زودی", "Coming soon"],
 };
 
-export function ReleaseUpdatesRail({ items, locale, generatedAt, asOf }: { items: ReleaseUpdate[]; locale: Locale; generatedAt?: string; asOf: number }) {
+export function ReleaseUpdatesRail({ items, locale, generatedAt, asOf, variant = "updates" }: { items: ReleaseUpdate[]; locale: Locale; generatedAt?: string; asOf: number; variant?: "updates" | "episodes" }) {
   if (!items.length) return null;
   const fa = locale === "fa";
+  const episodes = variant === "episodes";
+  const headingId = `release-${variant}-heading`;
   const weekAgo = asOf - 7 * 86_400_000;
   const thisWeek = items.filter((item) => item.status === "available" && Date.parse(item.eventAt) >= weekAgo);
   return (
-    <section className="section release-updates-section release-updates-refresh" aria-labelledby="release-updates-heading">
+    <section className="section release-updates-section release-updates-refresh" data-section={episodes ? "new-episodes" : "catalog-updates"} aria-labelledby={headingId}>
       <div className="section-head">
         <div>
           <p className="label"><RefreshCw size={13} aria-hidden="true" /> {fa ? "آخرین تغییرات آرشیو" : "LATEST CATALOG CHANGES"}</p>
-          <h2 id="release-updates-heading">{fa ? "تازه‌ها و به‌روزرسانی‌ها" : "New & updated"}</h2>
-          <p className="muted">{fa ? "قسمت‌های تازه، کیفیت‌های جدید و فیلم‌هایی که به آرشیو اضافه شده‌اند." : "New episodes, new qualities, and recent additions to the archive."}</p>
+          <h2 id={headingId}>{episodes ? (fa ? "قسمت‌های جدید" : "New episodes") : (fa ? "تازه‌ها و به‌روزرسانی‌ها" : "New & updated")}</h2>
+          <p className="muted">{episodes ? (fa ? "تازه‌ترین قسمت‌های اضافه‌شده، با شماره فصل و قسمت" : "Recently added episodes, with season and episode numbers") : (fa ? "کیفیت‌های جدید و عنوان‌هایی که به آرشیو اضافه شده‌اند." : "New qualities and recent additions to the archive.")}</p>
         </div>
         <Link className="view-all" href="/updates">{fa ? "همه تغییرات" : "All updates"} <ArrowUpLeft size={16} aria-hidden="true" /></Link>
       </div>

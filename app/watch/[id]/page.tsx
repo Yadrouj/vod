@@ -19,6 +19,7 @@ import { watchPartyDetails } from "@/lib/watch-party-media";
 
 type Props = {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export const revalidate = 300;
@@ -39,10 +40,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function WatchPage({ params }: Props) {
+export default async function WatchPage({ params, searchParams }: Props) {
   const locale = await getLocale();
   const t = getDictionary(locale);
   const { id } = await params;
+  const resume = (await searchParams)?.resume;
   const item = await findVodItem(id);
   if (!item) notFound();
 
@@ -130,6 +132,7 @@ export default async function WatchPage({ params }: Props) {
             ) : (
               <VodPlayer
                 itemId={item.imdbCode}
+                initialSource={typeof resume === "string" ? resume : undefined}
                 title={item.title}
                 posterUrl={heroImage}
                 links={links}

@@ -4,6 +4,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { PosterCard } from "@/components/poster-card";
 import { SearchSuggest } from "@/components/search-suggest";
+import { searchTitleKind } from "@/lib/vod-search-order";
 import { formatNumber, getDictionary, interpolate, type Locale } from "@/lib/i18n";
 import { getLocale } from "@/lib/server-locale";
 import { titleMetadata } from "@/lib/seo";
@@ -146,11 +147,17 @@ export default async function BrowsePage({ searchParams }: Props) {
           </section>
         )}
 
-        <div className="grid browse-grid">
-          {result.items.map((item, index) => (
-            <PosterCard key={item.imdbCode} item={item} locale={locale} priority={index < 6} />
-          ))}
-        </div>
+        {params.q && <div className="browse-search-order"><p>{locale === "fa" ? "نتایج بر اساس امتیاز IMDb، از بیشتر به کمتر" : "Results by IMDb rating, highest first"}</p><nav aria-label={locale === "fa" ? "نوع نتیجه" : "Result type"}>
+          {(["all", "movie", "series"] as const).map((kind) => <Link key={kind} className={`chip ${params.type === kind || kind === "all" && !params.type ? "active" : ""}`} href={`/browse${queryString({ ...params, type: kind, page: 1 })}`}>{kind === "all" ? t.common.all : kind === "movie" ? t.common.movie : t.common.series}</Link>)}
+        </nav></div>}
+        {(params.q ? ["movie", "series"] : ["all"]).map((kind) => {
+          const items = kind === "all" ? result.items : result.items.filter((item) => searchTitleKind(item.type) === kind);
+          if (!items.length) return null;
+          return <div key={kind} className="browse-result-group">
+            {kind !== "all" && <h2>{kind === "movie" ? t.common.movie : t.common.series}</h2>}
+            <div className="grid browse-grid">{items.map((item, index) => <PosterCard key={item.imdbCode} item={item} locale={locale} priority={index < 6} />)}</div>
+          </div>;
+        })}
 
         <nav className="pagination" aria-label="Pagination">
           {result.page > 1 && (

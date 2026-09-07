@@ -27,6 +27,10 @@ data/release-monitor-status.json
 data/release-monitor.lock
 data/daily-release-bot-status.json
 data/daily-release-refresh.lock
+data/imdb-trending.lock
+data/imdb-trending-status.json
+data/imdb-trending-status.json.*.tmp
+public/data/imdb-trending.json.*.tmp
 data/daily-music-refresh-status.json
 data/maintenance-scheduler-status.json
 .media-cache/

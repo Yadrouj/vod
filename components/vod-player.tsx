@@ -7,6 +7,7 @@ import { PlayerSubtitles } from "@/components/player-subtitles";
 import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 import { playableLinks, playbackSourceLabel } from "@/lib/link-labels";
 import type { VodLink } from "@/lib/types";
+import { readProgress, saveHistoryValue, PROGRESS_KEY } from "@/lib/media-history";
 
 type CastableVideo = HTMLVideoElement & {
   webkitShowPlaybackTargetPicker?: () => void;
@@ -22,6 +23,7 @@ export function VodPlayer({
   links,
   isSeries = false,
   locale = DEFAULT_LOCALE,
+  initialSource,
 }: {
   title: string;
   itemId?: string;
@@ -29,6 +31,7 @@ export function VodPlayer({
   links: VodLink[];
   isSeries?: boolean;
   locale?: Locale;
+  initialSource?: string;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerFrameRef = useRef<HTMLDivElement>(null);
@@ -75,7 +78,10 @@ export function VodPlayer({
       }
       try {
         const saved = readProgress();
-        const match = playableSources.findIndex((link) => Boolean(saved[link.url]));
+        const requested = playableSources.findIndex((link) => link.url === initialSource);
+        const latest = Object.entries(saved).sort((a, b) => (typeof b[1] === "number" ? 0 : b[1].at) - (typeof a[1] === "number" ? 0 : a[1].at))
+          .find(([url]) => playableSources.some((link) => link.url === url))?.[0];
+        const match = requested >= 0 ? requested : playableSources.findIndex((link) => link.url === latest);
         if (match >= 0) {
           setActiveIndex(match);
           setSelectionOpen(false);
@@ -93,7 +99,7 @@ export function VodPlayer({
       }
     });
     return () => { current = false; };
-  }, [playableSources]);
+  }, [initialSource, playableSources]);
 
   useEffect(() => {
     const syncFullscreen = () => setFullscreen(Boolean(document.fullscreenElement));
@@ -110,18 +116,13 @@ export function VodPlayer({
     };
   }, [active?.url, paused, selectionOpen, settingsOpen, subtitlesOpen]);
 
-  function readProgress(): Record<string, { title: string; itemId?: string; url: string; time: number; at: number } | number> {
-    try {
-      const raw = document.cookie.split("; ").find((cookie) => cookie.startsWith("sarvnema_progress="))?.split("=")[1];
-      return raw ? JSON.parse(decodeURIComponent(raw)) : {};
-    } catch { return {}; }
-  }
-
   function saveProgress(value: number) {
     if (!active?.url || !Number.isFinite(value) || value < 3) return;
-    const progress = { ...readProgress(), [active.url]: { title, itemId, url: active.url, time: Math.floor(value), at: Date.now() } };
-    document.cookie = `sarvnema_progress=${encodeURIComponent(JSON.stringify(progress))}; path=/; max-age=2592000; SameSite=Lax`;
-    window.dispatchEvent(new CustomEvent("sarvnema-progress"));
+    const entry = { title, itemId, posterUrl, url: active.url, time: Math.floor(value), duration: videoRef.current?.duration || undefined,
+      season: isSeries ? active.season : null, episode: isSeries ? active.episode : null, quality: active.quality, at: Date.now() };
+    const previous = Object.entries(readProgress()).filter(([url]) => url !== active.url)
+      .sort((a, b) => (typeof b[1] === "number" ? 0 : b[1].at) - (typeof a[1] === "number" ? 0 : a[1].at)).slice(0, 49);
+    saveHistoryValue(PROGRESS_KEY, { [active.url]: entry, ...Object.fromEntries(previous) }, "sarvnema-progress");
   }
 
   const sources = useMemo(
@@ -351,7 +352,7 @@ export function VodPlayer({
               }
             }
           }}
-          onEnded={() => { if (active?.url) { const progress = readProgress(); delete progress[active.url]; document.cookie = `sarvnema_progress=${encodeURIComponent(JSON.stringify(progress))}; path=/; max-age=2592000; SameSite=Lax`; } }}
+          onEnded={() => { if (active?.url) { const progress = readProgress(); delete progress[active.url]; saveHistoryValue(PROGRESS_KEY, progress, "sarvnema-progress"); } }}
           onPlaying={() => setBuffering(false)}
           onPlay={() => { setPaused(false); setControlsVisible(true); }}
           onPause={() => { setPaused(true); setControlsVisible(true); }}

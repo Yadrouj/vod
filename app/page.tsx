@@ -25,6 +25,7 @@ import { loadMusicHomeIndex } from "@/lib/music";
 import { FILM_LANDING_SEO, landingJsonLd } from "@/lib/landing-seo";
 import { titleMetadata } from "@/lib/seo";
 import { loadVodHomeIndex } from "@/lib/vod-index";
+import { loadImdbTrending } from "@/lib/imdb-trending";
 import type { VodCard, VodHomeSection } from "@/lib/types";
 
 type HomeRailSection = VodHomeSection & {
@@ -51,6 +52,7 @@ export default async function HomePage() {
     index,
     news,
     updates,
+    newEpisodes,
     topPeople,
     music,
     heroBanners,
@@ -66,11 +68,13 @@ export default async function HomePage() {
   // The first rails are intentional anchors, not part of the daily rotation:
   // a visitor sees releases, their own activity, then the core film and
   // series shelves. Everything after that can keep a fresh daily rhythm.
+  const freshRailIds = ["recent-films", "latest-series"];
+  const freshLandingRails = freshRailIds.map((id) => landingRails.find((section) => section.id === id)).filter((section): section is HomeRailSection => Boolean(section));
   const anchorRailIds = ["films-2026", "best-movies", "best-series", "latest-animation", "recent-trailers"];
   const primaryLandingRails = anchorRailIds
     .map((id) => landingRails.find((section) => section.id === id))
     .filter((section): section is HomeRailSection => Boolean(section));
-  const remainingLandingRails = landingRails.filter((section) => !anchorRailIds.includes(section.id));
+  const remainingLandingRails = landingRails.filter((section) => !anchorRailIds.includes(section.id) && !freshRailIds.includes(section.id));
 
   return (
     <main className="shell film-spotify-page" data-media-theme="cinema">
@@ -88,6 +92,8 @@ export default async function HomePage() {
       </section>
 
       <section className="home-stack wrap film-landing-content">
+        {freshLandingRails.map((section) => <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />)}
+        <ReleaseUpdatesRail items={newEpisodes} variant="episodes" locale={locale} generatedAt={updates.generatedAt} asOf={updates.asOf} />
         <ReleaseUpdatesRail items={updates.items} locale={locale} generatedAt={updates.generatedAt} asOf={updates.asOf} />
         <ContinueWatching />
         <DownloadHistory />
@@ -126,27 +132,27 @@ async function buildHomePageData(locale: Locale) {
 }
 
 async function computeHomePageData(locale: Locale) {
-  const [index, rawNews, topPeople, rawUpdates, music] = await Promise.all([
+  const [index, rawNews, topPeople, rawUpdates, music, trending] = await Promise.all([
     loadVodHomeIndex(),
     loadVodNews(),
     loadTopPeople(),
     loadReleaseUpdates(),
     loadMusicHomeIndex(),
+    loadImdbTrending(),
   ]);
   const news = { ...rawNews, items: prioritizeNews(rawNews.items) };
   const verifiedUpdates = selectFreshReleaseUpdates(rawUpdates.items);
-  const updates = { ...rawUpdates, items: prioritizeReleaseUpdates(verifiedUpdates), asOf: Date.now() };
+  const newEpisodes = prioritizeReleaseUpdates(verifiedUpdates.filter((item) => item.status === "available" && item.kind === "episode" && item.changeType === "new-episode"));
+  const episodeIds = new Set(newEpisodes.map((item) => item.imdbCode));
+  const updates = { ...rawUpdates, items: prioritizeReleaseUpdates(verifiedUpdates.filter((item) => !episodeIds.has(item.imdbCode))), asOf: Date.now() };
   const t = getDictionary(locale);
   const seen = new Set<string>();
-  const toyStoryFive = index.sections
-    .find((section) => section.id === "latest-animation")
-    ?.items.find((item) => item.title.trim().toLowerCase() === "toy story 5");
-  const heroBanners = takeFreshVisual([
-    ...(toyStoryFive ? [toyStoryFive] : []),
+  const heroBanners = trending.length ? trending : takeFreshVisual([
     ...(index.sections.find((section) => section.id === "recent-films")?.items ?? []).slice(0, 5),
     ...(index.sections.find((section) => section.id === "best-movies")?.items ?? []).slice(0, 5),
     ...(index.sections.find((section) => section.id === "top-imdb")?.items ?? []).slice(0, 5),
   ], seen, 10);
+  heroBanners.forEach((item) => seen.add(item.imdbCode));
   const midBanners = takeFreshVisual([
     ...(index.sections.find((section) => section.id === "latest-animation")?.items ?? []).slice(0, 5),
     ...(index.sections.find((section) => section.id === "top-imdb")?.items ?? []).slice(5, 11),
@@ -225,7 +231,7 @@ async function computeHomePageData(locale: Locale) {
     ),
   ];
 
-  const railPriority = ["films-2026", "best-movies", "best-series", "latest-animation", "recent-trailers", "latest-series"];
+  const railPriority = ["recent-films", "latest-series", "films-2026", "best-movies", "best-series", "latest-animation", "recent-trailers"];
   const candidateRails = [...index.sections, ...generatedSections]
     .filter((section) => section.id !== "old-iranian-films");
   const priorityRails = railPriority
@@ -246,6 +252,7 @@ async function computeHomePageData(locale: Locale) {
     index,
     news,
     updates,
+    newEpisodes,
     topPeople,
     music,
     heroBanners,
@@ -448,7 +455,7 @@ function HomeRail({ section, locale }: { section: HomeRailSection; locale: Local
   const t = getDictionary(locale);
 
   return (
-    <section className="section rail-section">
+    <section className="section rail-section" data-section={section.id}>
       <div className="section-head">
         <div>
           <h2>{section.title}</h2>

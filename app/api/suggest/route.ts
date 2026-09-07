@@ -26,7 +26,9 @@ export async function GET(request: Request) {
   const rate = checkRateLimit(`suggest:${clientIp(request)}`, 120, 60_000);
   if (!rate.allowed) return rateLimitedResponse(rate);
 
-  const result = await searchSuggestions(query, limit);
+  const type = searchParams.get("type");
+  const kind = type === "movie" || type === "series" ? type : "all";
+  const result = await searchSuggestions(query, limit, kind);
   return Response.json(
     { items: result.items },
     {

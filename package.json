@@ -46,6 +46,7 @@
     "sync-vod-daemon": "node scripts/catalog-sync-daemon.mjs",
     "release-monitor": "node scripts/release-monitor.mjs",
     "daily-release-refresh": "node scripts/daily-release-refresh.mjs",
+    "refresh-imdb-trending": "node scripts/refresh-imdb-trending.mjs",
     "daily-release-bot": "node scripts/daily-release-bot.mjs",
     "daily-music-refresh": "node scripts/daily-music-refresh.mjs",
     "music-pulse-now": "node scripts/daily-music-refresh.mjs --recent-only",

@@ -4,9 +4,10 @@ import { ArrowUpRight, LoaderCircle, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
-import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { DEFAULT_LOCALE, getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
+import { searchTitleKind, type SearchKind } from "@/lib/vod-search-order";
 
 type Suggestion = {
   title: string;
@@ -46,6 +47,8 @@ export function SearchSuggest({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(defaultValue.trim().length >= 2);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [kind, setKind] = useState<SearchKind>("all");
+  const cinemaSearch = endpoint.split("?")[0] === "/api/suggest";
   const boxRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -61,7 +64,7 @@ export function SearchSuggest({
         close: "بستن جستجو",
         clear: "پاک کردن",
         heading: "نتیجه‌های پیشنهادی",
-        order: "جدیدترین‌ها اول",
+        order: cinemaSearch ? "امتیاز IMDb: بیشتر به کمتر" : "جدیدترین‌ها اول",
         empty: "چیزی پیدا نشد؛ اسم انگلیسی یا کد IMDb را امتحان کن.",
         hint: "نام فیلم، سریال یا کد IMDb را بنویس",
         viewAll: "دیدن همه نتیجه‌ها",
@@ -70,7 +73,7 @@ export function SearchSuggest({
         close: "Close search",
         clear: "Clear",
         heading: "Best matches",
-        order: "Newest first",
+        order: cinemaSearch ? "IMDb rating: highest first" : "Newest first",
         empty: "No match yet. Try the English title or an IMDb ID.",
         hint: "Search by title, series or IMDb ID",
         viewAll: "View all results",
@@ -85,6 +88,7 @@ export function SearchSuggest({
         q: query.trim(),
         limit: String(maxItems),
       });
+      if (cinemaSearch) params.set("type", kind);
       fetch(`${endpoint}${endpoint.includes("?") ? "&" : "?"}${params.toString()}`, { signal: controller.signal })
         .then((res) => {
           if (!res.ok) throw new Error(`Suggest ${res.status}`);
@@ -108,7 +112,11 @@ export function SearchSuggest({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [endpoint, maxItems, query, searchable]);
+  }, [cinemaSearch, endpoint, kind, maxItems, query, searchable]);
+
+  useEffect(() => {
+    if (activeIndex >= 0) document.getElementById(`${listId}-${activeIndex}`)?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex, listId]);
 
   useEffect(() => {
     function onClick(event: MouseEvent) {
@@ -122,30 +130,40 @@ export function SearchSuggest({
   }, []);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen || portal) return;
     document.documentElement.classList.add("mobile-search-open");
     return () => document.documentElement.classList.remove("mobile-search-open");
-  }, [menuOpen]);
+  }, [menuOpen, portal]);
 
   useLayoutEffect(() => {
     if (!menuOpen || !portal) return;
 
     const updatePosition = () => {
-      const anchor = boxRef.current?.getBoundingClientRect();
+      const field = inputRef.current;
+      const anchor = (field?.closest("form.film-landing-search, form.music-landing-search") ?? field?.closest(".suggest-input-shell"))?.getBoundingClientRect();
       if (!anchor) return;
+      const viewport = window.visualViewport;
+      const bottom = (viewport?.height ?? window.innerHeight) + (viewport?.offsetTop ?? 0);
+      const height = Math.max(140, Math.min(600, bottom - anchor.bottom - 16));
       setPortalPosition({
         top: `${Math.round(anchor.bottom + 8)}px`,
-        left: `${Math.round(anchor.left)}px`,
-        width: `${Math.round(anchor.width)}px`,
+        left: `${Math.max(8, Math.round(anchor.left))}px`,
+        width: `${Math.min(Math.round(anchor.width), window.innerWidth - 16)}px`,
+        maxHeight: `${height}px`,
       });
     };
 
     updatePosition();
     window.addEventListener("resize", updatePosition);
     window.addEventListener("scroll", updatePosition, true);
+    window.visualViewport?.addEventListener("resize", updatePosition);
+    const observer = new ResizeObserver(updatePosition);
+    if (inputRef.current) observer.observe(inputRef.current);
     return () => {
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
+      window.visualViewport?.removeEventListener("resize", updatePosition);
+      observer.disconnect();
     };
   }, [menuOpen, portal]);
 
@@ -153,14 +171,15 @@ export function SearchSuggest({
     if (!menuOpen || !portal) return;
 
     const bringSearchIntoView = () => {
-      const anchor = boxRef.current;
+      const field = inputRef.current;
+      const anchor = field?.closest("form.film-landing-search, form.music-landing-search") ?? field?.closest(".suggest-input-shell");
       if (!anchor) return;
 
       const bounds = anchor.getBoundingClientRect();
       // Keep enough vertical room for six useful suggestions. This is only
       // applied when the field is close to either edge of the viewport.
-      if (bounds.top < 16 || window.innerHeight - bounds.bottom < 360) {
-        anchor.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+      if (bounds.top < 16 || window.innerHeight - bounds.bottom < 550) {
+        window.scrollTo({ top: Math.max(0, window.scrollY + bounds.top - 24), behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
       }
     };
 
@@ -212,6 +231,7 @@ export function SearchSuggest({
     <div
       ref={menuRef}
       className={`suggest-menu ${portal ? "suggest-menu-portal" : ""}`}
+      data-search-theme={cinemaSearch ? "cinema" : "music"}
       style={portal ? portalPosition ?? undefined : undefined}
     >
       <div className="suggest-menu-head">
@@ -220,8 +240,18 @@ export function SearchSuggest({
         {!loading && <span className="suggest-menu-count">{visibleItems.length}</span>}
       </div>
 
-      <div id={listId} className="suggest-results" role="listbox">
+      {cinemaSearch && <div className="suggest-type-filters" role="group" aria-label={locale === "fa" ? "نوع نتیجه" : "Result type"}>
+        {(["all", "movie", "series"] as const).map((value) => <button key={value} type="button" aria-pressed={kind === value} onClick={() => {
+          if (value === kind) return;
+          setKind(value); setItems([]); setActiveIndex(-1); setLoading(true); inputRef.current?.focus();
+        }}>{value === "all" ? t.common.all : typeLabel(value, locale)}</button>)}
+      </div>}
+      <div id={listId} className="suggest-results" role="listbox" aria-label={copy.heading} aria-busy={loading}>
         {visibleItems.map((item, index) => (
+          <Fragment key={item.imdbCode}>
+          {cinemaSearch && (index === 0 || searchTitleKind(visibleItems[index - 1].type) !== searchTitleKind(item.type)) && (
+            <div className="suggest-type-heading" role="presentation">{typeLabel(searchTitleKind(item.type), locale)}</div>
+          )}
           <Link
             id={`${listId}-${index}`}
             key={item.imdbCode}
@@ -253,12 +283,13 @@ export function SearchSuggest({
             {item.isFresh && <span className="suggest-fresh">{locale === "fa" ? `تازه ${item.year ?? ""}` : `NEW ${item.year ?? ""}`}</span>}
             <ArrowUpRight className="suggest-result-arrow" size={17} aria-hidden="true" />
           </Link>
+          </Fragment>
         ))}
         {!loading && visibleItems.length === 0 && <p className="suggest-empty">{copy.empty}</p>}
       </div>
 
       {visibleItems.length > 0 && (
-        <Link className="suggest-view-all" href={viewAllHref(query.trim())} onClick={closeSearch}>
+        <Link className="suggest-view-all" href={`${viewAllHref(query.trim())}${cinemaSearch && kind !== "all" ? `&type=${kind}` : ""}`} onClick={closeSearch}>
           <span>{copy.viewAll}</span>
           <ArrowUpRight size={17} aria-hidden="true" />
         </Link>
@@ -267,7 +298,7 @@ export function SearchSuggest({
   ) : null;
 
   return (
-    <div ref={boxRef} className={`suggest-box ${menuOpen ? "is-open" : ""}`}>
+    <div ref={boxRef} className={`suggest-box ${menuOpen ? "is-open" : ""}`} data-search-portal={portal ? "true" : "false"}>
       <div className="suggest-mobile-head">
         <div>
           <span className="label">{t.common.search}</span>

@@ -141,7 +141,7 @@ export default async function DetailPage({ params }: Props) {
                   placement="inline"
                   preset={{ itemId: item.imdbCode, title: displayTitle, posterUrl: item.backdropUrl ?? item.posterUrl }}
                 />
-                {best && <DownloadButton href={best.url} label={t.common.bestFile} />}
+                {best && <DownloadButton href={best.url} title={item.persianTitle || item.title} itemId={item.imdbCode} posterUrl={item.backdropUrl || item.posterUrl} label={best.quality || t.common.bestFile} />}
                 <a
                   className="hover-button"
                   href={subzoneSearchUrl(item.title, item.year)}
