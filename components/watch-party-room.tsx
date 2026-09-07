@@ -15,6 +15,7 @@ import { sizedImageUrl } from "@/lib/image-url";
 import { showAppMessage } from "@/lib/app-messages";
 import type { SubtitleSelection } from "@/lib/subtitle-types";
 import { inferPersonalMediaKind, isSupportedPersonalMediaFile, type PersonalMediaFields, type PersonalMediaKind, type PersonalMediaMode } from "@/lib/watch-party-personal-media";
+import { isDonyayeSerial, regionalPlaybackHint } from "@/lib/playback-help";
 
 type SearchItem = { title: string; imdbCode: string; year: number | null; type: string; posterUrl: string | null; imdbRating: number | null };
 type PlaybackState = PartySnapshot["playback"] & {
@@ -266,6 +267,12 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     const failedUrl = event.currentTarget.getAttribute("src") || media.source.url;
     if (failedSourceUrlsRef.current.has(failedUrl)) return;
     failedSourceUrlsRef.current.add(failedUrl);
+    if (isDonyayeSerial({ url: failedUrl })) {
+      // A single participant's regional/network problem should not switch
+      // the source for every participant who is already watching.
+      setMediaIssue(regionalPlaybackHint(document.documentElement.lang.startsWith("fa")));
+      return;
+    }
     const nextSource = media.sources.find((source) => source.url !== failedUrl && !failedSourceUrlsRef.current.has(source.url));
     if (nextSource && can("changeSource")) {
       setMediaIssue(`Source unavailable. Switching everyone to ${nextSource.label}…`);

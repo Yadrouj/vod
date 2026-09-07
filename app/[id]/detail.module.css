@@ -65,6 +65,12 @@
 .page :global(.title-tab-nav button.active) { background: #ebcf7616; border-color: #ebcf7650; color: var(--gold); }
 .page :global(.title-tab-panel) { padding: 0; border: 0; background: transparent; min-width: 0; }
 .page :global(.download-browser) { background: transparent; border: 0; padding: 0; }
+.page :global(.title-tab-panel > .series-download-browser) { display: block; }
+.page :global(.title-tab-panel .series-download-browser .season-tabs) { display: flex; flex-direction: row; flex-wrap: wrap; grid-column: auto; grid-row: auto; max-height: none; overflow: visible; gap: 8px; padding: 0; margin: 16px 0; }
+.page :global(.title-tab-panel .series-download-browser .season-tab) { flex: 0 0 auto; width: auto; min-height: 46px; }
+.page :global(.title-tab-panel .series-download-browser .series-download-content) { grid-column: auto; width: 100%; min-width: 0; }
+.page :global(.title-tab-panel .series-download-browser .episode-list) { max-height: none; overflow: visible; }
+.page :global(.title-tab-nav) { position: static; }
 .page :global(.download-intro) { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
 .page :global(.download-intro h2) { font-size: 20px; margin: 0 0 4px; }
 .page :global(.download-intro p), .page :global(.download-empty) { font-size: 12px; line-height: 1.8; color: #bcb7a7; margin: 0; }

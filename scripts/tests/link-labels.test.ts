@@ -51,6 +51,19 @@ test("movie source labels never expose season or episode text", () => {
   assert.equal(playbackSourceLabel(movie, 0, false), "1080p");
 });
 
+test("MKV-only releases remain selectable in watch rooms", () => {
+  const mkv = link({ url: "https://example.test/release.mkv", mediaKind: "video" });
+  assert.deepEqual(roomPlayableLinks([mkv]), [mkv]);
+  assert.deepEqual(roomPlayableLinks([{ ...mkv, mediaKind: "trailer" }]), []);
+});
+
+test("online picker keeps alternate MKV releases without replacing preferred MP4 or allowing trailers", () => {
+  const mp4 = link({ url: "https://example.test/release.mp4", quality: "720p" });
+  const mkv = link({ url: "https://example.test/release.mkv", quality: "1080p" });
+  const trailer = link({ url: "https://example.test/trailer.mp4", mediaKind: "trailer" });
+  assert.deepEqual(playableLinks([trailer, mkv, mp4, mkv], { includeAlternateFiles: true }), [mp4, mkv]);
+});
+
 test("series playback keeps browser-playable episode mirrors", () => {
   const genericMp4 = link({
     label: "Source file",

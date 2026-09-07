@@ -4,6 +4,8 @@ export type PlaybackLinkOptions = {
   isSeries?: boolean;
   /** Recover season/episode information from source-specific filenames. */
   title?: string | null;
+  /** Keep alternate Matroska releases available in the online quality picker. */
+  includeAlternateFiles?: boolean;
 };
 
 export function episodeLabel(link: VodLink) {
@@ -19,13 +21,18 @@ export function episodeLabel(link: VodLink) {
 export function playableLinks(
   links: VodLink[] | null | undefined,
   options: PlaybackLinkOptions = {},
-) {
+): VodLink[] {
   const rawMediaLinks = (Array.isArray(links) ? links : [])
     .filter((link) => !isTrailerLink(link) && !isNonPlayableAsset(link))
     .map((link) => options.isSeries ? addParsedEpisodeIdentity(link, options.title) : link);
   const mediaLinks = options.isSeries
     ? mapGenericSeriesFilesToEpisodes(rawMediaLinks)
     : rawMediaLinks;
+  if (options.includeAlternateFiles) {
+    const preferred = playableLinks(links, { ...options, includeAlternateFiles: false });
+    const seen = new Set(preferred.map(link => link.url));
+    return [...preferred, ...mediaLinks.filter(link => /\.mkv(?:$|[?#])/i.test(link.url) && !seen.has(link.url) && Boolean(seen.add(link.url)))];
+  }
   const direct = mediaLinks.filter((link) => /\.(mp4|m4v|webm|mov)(\?|$)/i.test(link.url));
   const primary = direct;
   const qualityTagged = primary.filter(hasPlaybackQuality);
@@ -63,16 +70,20 @@ export function roomPlayableLinks(
 ) {
   const selected = playableLinks(links, options);
   const browserSelected = selected.filter(isBrowserPlayableVodLink);
-  if (browserSelected.length || !options.isSeries) return browserSelected;
+  if (browserSelected.length) return browserSelected;
 
   // A series can have a metadata-rich MKV archive and a separate generic MP4
   // mirror. If the preferred archive is not browser-playable, keep the room
   // usable by falling back to the native MP4 mirror instead of returning an
   // empty source list.
-  return (Array.isArray(links) ? links : [])
+  const mirrors = (Array.isArray(links) ? links : [])
     .filter((link) => !isTrailerLink(link) && !isNonPlayableAsset(link))
     .map((link) => addParsedEpisodeIdentity(link, options.title))
     .filter(isBrowserPlayableVodLink);
+  if (mirrors.length) return mirrors;
+  // Matroska with a compatible codec can play in some browsers. Offer the
+  // release rather than claiming it does not exist; surface decoding errors.
+  return selected.filter((link) => /\.mkv(?:$|[?#])/i.test(link.url));
 }
 
 export function playbackSourceLabel(

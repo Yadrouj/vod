@@ -12,7 +12,7 @@ import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { buildSeasonSummaries, movieDownloadSources } from "@/lib/downloads";
 import { formatNumber, getDictionary, typeLabel } from "@/lib/i18n";
-import { playableLinks, isBrowserPlayableVodLink } from "@/lib/link-labels";
+import { playableLinks } from "@/lib/link-labels";
 import { getOldIranianFilmMedia } from "@/lib/old-iranian-media";
 import { getLocale } from "@/lib/server-locale";
 import { vodJsonLd, vodMetadata } from "@/lib/seo";
@@ -39,8 +39,7 @@ export default async function DetailPage({ params }: Props) {
 
   const isSeries = normalizeVodType(item.type) === "series";
   const downloads = titleDownloadLinks(item.links);
-  const playable = playableLinks(downloads, { isSeries, title: item.title });
-  const roomAvailable = playable.some(isBrowserPlayableVodLink);
+  const playable = playableLinks(downloads, { isSeries, title: item.title, includeAlternateFiles: true });
   const best = isSeries ? null : bestDownloadLink(downloads);
   const seasons = buildSeasonSummaries(downloads);
   const movieFiles = isSeries ? [] : movieDownloadSources(downloads);
@@ -102,7 +101,7 @@ export default async function DetailPage({ params }: Props) {
               </details>}
               <div className={styles.actions}>
                 <Link href="#downloads" className={styles.secondary}><ArrowDown size={18} aria-hidden="true" />{fa ? isSeries ? "فصل‌ها و دانلودها" : "کیفیت‌ها و دانلود" : isSeries ? "Seasons & downloads" : "Quality & downloads"}</Link>
-                {roomAvailable && <WatchTogetherLauncher locale={locale} placement="inline" preset={{ itemId: item.imdbCode, title, posterUrl: posterUrl ?? null }} />}
+                <WatchTogetherLauncher locale={locale} placement="inline" preset={canPlay ? { itemId: item.imdbCode, title, posterUrl: posterUrl ?? null } : undefined} />
                 {best && <DownloadButton href={best.url} title={title} itemId={item.imdbCode} posterUrl={posterUrl} label={fa ? `بهترین فایل · ${best.quality || "دانلود"}` : `Best file · ${best.quality || "Download"}`} />}
               </div>
               {!canPlay && <p className={styles.availability}>{fa ? "نسخه قابل پخش آنلاین هنوز در آرشیو نیست؛ لینک‌های موجود را در بخش دانلود بررسی کنید." : "No browser-playable release is available yet. Check the available download links below."}</p>}

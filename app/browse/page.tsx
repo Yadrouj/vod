@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
-import { PosterCard } from "@/components/poster-card";
+import { ArchiveForm, ArchiveResults } from "@/components/archive-results";
+import { archiveCard, ARCHIVE_PAGE_SIZE, ARCHIVE_BATCH_SIZE } from "@/lib/archive-cards";
+import styles from "./archive.module.css";
 import { SearchSuggest } from "@/components/search-suggest";
-import { searchTitleKind } from "@/lib/vod-search-order";
 import { formatNumber, getDictionary, interpolate, type Locale } from "@/lib/i18n";
 import { getLocale } from "@/lib/server-locale";
 import { titleMetadata } from "@/lib/seo";
@@ -32,12 +33,14 @@ export default async function BrowsePage({ searchParams }: Props) {
   const t = getDictionary(locale);
   const params = normalizeParams(await searchParams);
   const index = params.section === "old-iranian-films" ? await loadOldIranianVodIndex() : await loadVodIndex();
-  const result = browseVodIndex(index, params);
+  const result = browseVodIndex(index, params, ARCHIVE_PAGE_SIZE);
+  const batch = Math.min(5, Math.max(1, Math.floor(Number(params.batch)) || 1));
+  const archiveQuery = new URLSearchParams(Object.entries(params).filter(([key]) => key !== "batch")).toString();
   const sectionTitle = t.home.sections[result.section as keyof typeof t.home.sections]?.title;
-  const title = sectionTitle ?? SECTION_LABELS[result.section] ?? t.browse.titleFallback;
+  const title = locale === "fa" && result.section === "old-iranian-films" ? "فیلم‌های قدیمی ایرانی" : sectionTitle ?? SECTION_LABELS[result.section] ?? t.browse.titleFallback;
 
   return (
-    <main className="shell" data-media-theme="cinema">
+    <main className={`shell ${styles.page}`} data-media-theme="cinema">
       <section className="browse-hero">
         <div className="wrap">
           <header className="topbar">
@@ -59,15 +62,11 @@ export default async function BrowsePage({ searchParams }: Props) {
             <h1>{title}</h1>
           </div>
 
-          <form className="browse-filters" action="/browse">
+          <ArchiveForm key={archiveQuery}>
             <input type="hidden" name="section" value={result.section === "all" ? "" : result.section} />
             <SearchSuggest defaultValue={params.q ?? ""} placeholder={t.browse.searchPlaceholder} locale={locale} />
             <button className="browse-search-submit" type="submit">{t.common.search}</button>
-            <input className="browse-filter-toggle" id="browse-filter-toggle" type="checkbox" />
-            <label className="browse-filter-trigger" htmlFor="browse-filter-toggle">
-              <span>{locale === "fa" ? "فیلترهای دقیق" : "Refine results"}</span>
-              <small>{locale === "fa" ? "نوع، ژانر، کشور، زبان و کیفیت" : "Type, genre, country, language & quality"}</small>
-            </label>
+            <details className={styles.refine}><summary>{locale === "fa" ? "فیلترها و تنظیمات" : "Refine results"}</summary>
             <div className="browse-filter-grid">
               <Select
                 name="type"
@@ -95,12 +94,13 @@ export default async function BrowsePage({ searchParams }: Props) {
                 </Link>
               </div>
             </div>
-          </form>
+            </details>
+          </ArchiveForm>
 
           <div className="quick-tabs">
             <Link href="/browse?section=top-imdb">{t.common.topImdb}</Link>
             <Link href="/browse?section=persian-movies">{t.common.persianMovies}</Link>
-            <Link href="/browse?section=old-iranian-films">Old Iranian Films</Link>
+            <Link href="/browse?section=old-iranian-films">{locale === "fa" ? "فیلم‌های قدیمی ایرانی" : "Old Iranian Films"}</Link>
             <Link href="/browse?section=recent-films">{t.common.recentFilm}</Link>
             <Link href="/browse?section=best-movies">{t.common.bestMovies}</Link>
             <Link href="/browse?section=best-series">{t.common.bestSeries}</Link>
@@ -113,7 +113,8 @@ export default async function BrowsePage({ searchParams }: Props) {
 
       <section className="section wrap">
         {result.section === "old-iranian-films" && (
-          <section className="old-iranian-youtube-collections" dir="rtl" aria-labelledby="old-iranian-youtube-title">
+          <details className="old-iranian-youtube-collections" dir="rtl" aria-labelledby="old-iranian-youtube-title">
+            <summary>{locale === "fa" ? "مجموعه‌های یوتیوب فیلم‌های قدیمی" : "Classic film YouTube collections"}</summary>
             <div className="old-iranian-youtube-collections-head">
               <div>
                 <span className="label">YOUTUBE COLLECTIONS</span>
@@ -144,24 +145,17 @@ export default async function BrowsePage({ searchParams }: Props) {
                 </a>
               ))}
             </div>
-          </section>
+          </details>
         )}
 
         {params.q && <div className="browse-search-order"><p>{locale === "fa" ? "نتایج بر اساس امتیاز IMDb، از بیشتر به کمتر" : "Results by IMDb rating, highest first"}</p><nav aria-label={locale === "fa" ? "نوع نتیجه" : "Result type"}>
           {(["all", "movie", "series"] as const).map((kind) => <Link key={kind} className={`chip ${params.type === kind || kind === "all" && !params.type ? "active" : ""}`} href={`/browse${queryString({ ...params, type: kind, page: 1 })}`}>{kind === "all" ? t.common.all : kind === "movie" ? t.common.movie : t.common.series}</Link>)}
         </nav></div>}
-        {(params.q ? ["movie", "series"] : ["all"]).map((kind) => {
-          const items = kind === "all" ? result.items : result.items.filter((item) => searchTitleKind(item.type) === kind);
-          if (!items.length) return null;
-          return <div key={kind} className="browse-result-group">
-            {kind !== "all" && <h2>{kind === "movie" ? t.common.movie : t.common.series}</h2>}
-            <div className="grid browse-grid">{items.map((item, index) => <PosterCard key={item.imdbCode} item={item} locale={locale} priority={index < 6} />)}</div>
-          </div>;
-        })}
+        <ArchiveResults key={archiveQuery} initial={result.items.slice(0, batch * ARCHIVE_BATCH_SIZE).map(archiveCard)} totalInPage={result.items.length} query={archiveQuery} page={result.page} locale={locale} grouped={Boolean(params.q)} />
 
         <nav className="pagination" aria-label="Pagination">
           {result.page > 1 && (
-            <Link className="chip" href={`/browse${queryString({ ...params, page: result.page - 1 })}`}>
+            <Link className="chip" href={`/browse${queryString({ ...params, batch: undefined, page: result.page - 1 })}`}>
               {t.common.previous}
             </Link>
           )}
@@ -172,7 +166,7 @@ export default async function BrowsePage({ searchParams }: Props) {
             })}
           </span>
           {result.page < result.totalPages && (
-            <Link className="chip active" href={`/browse${queryString({ ...params, page: result.page + 1 })}`}>
+            <Link className="chip active" href={`/browse${queryString({ ...params, batch: undefined, page: result.page + 1 })}`}>
               {t.common.next}
             </Link>
           )}

@@ -86,9 +86,10 @@ export function pickHero(index: VodCatalogIndex): VodCard | null {
   );
 }
 
-export function browseVodIndex(index: VodCatalogIndex, params: BrowseParams) {
-  const pageSize = 30;
-  const currentPage = Math.max(1, Number(params.page ?? "1") || 1);
+export function browseVodIndex(index: VodCatalogIndex, params: BrowseParams, requestedPageSize = 30) {
+  const pageSize = Math.min(200, Math.max(1, Math.floor(requestedPageSize) || 30));
+  const requestedPage = Number(params.page ?? "1");
+  const currentPage = Number.isFinite(requestedPage) ? Math.max(1, Math.floor(requestedPage)) : 1;
   const minScore = Number(params.minScore ?? "0") || 0;
   const needle = (params.q ?? "").trim().toLowerCase();
   const section = params.section || "all";

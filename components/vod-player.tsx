@@ -8,6 +8,8 @@ import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 import { playableLinks, playbackSourceLabel } from "@/lib/link-labels";
 import type { VodLink } from "@/lib/types";
 import { readProgress, saveHistoryValue, PROGRESS_KEY } from "@/lib/media-history";
+import Link from "next/link";
+import { PlaybackHelp } from "@/components/playback-help";
 
 type CastableVideo = HTMLVideoElement & {
   webkitShowPlaybackTargetPicker?: () => void;
@@ -52,13 +54,14 @@ export function VodPlayer({
   const [selectionOpen, setSelectionOpen] = useState(false);
   const [sourceReady, setSourceReady] = useState(false);
   const [message, setMessage] = useState("");
+  const [mediaError, setMediaError] = useState(0);
   const [buffering, setBuffering] = useState(true);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
   const [muted, setMuted] = useState(false);
   const lastSavedAt = useRef(0);
   const playableSources = useMemo(
-    () => playableLinks(links, { isSeries, title }),
+    () => playableLinks(links, { isSeries, title, includeAlternateFiles: true }),
     [isSeries, links, title],
   );
   const active = playableSources[activeIndex] ?? playableSources[0];
@@ -196,6 +199,8 @@ export function VodPlayer({
   }
 
   function changeSource(value: string) {
+    setMediaError(0);
+    setMessage("");
     const wasPlaying = Boolean(videoRef.current && !videoRef.current.paused);
     setActiveIndex(Number(value));
     setPaused(true);
@@ -208,11 +213,12 @@ export function VodPlayer({
   async function toggleFullscreen() {
     const el = playerFrameRef.current;
     if (!el) return;
-    if (document.fullscreenElement) {
+    try { if (document.fullscreenElement) {
       await document.exitFullscreen();
     } else {
       await el.requestFullscreen();
     }
+    } catch { setMessage(locale === "fa" ? "تمام‌صفحه در این مرورگر در دسترس نیست." : "Fullscreen is unavailable in this browser."); }
   }
 
   async function openPictureInPicture() {
@@ -277,6 +283,7 @@ export function VodPlayer({
   }
 
   function confirmSource() {
+    setMediaError(0);
     playAfterSourceReadyRef.current = true;
     setMessage("");
     setSourceReady(true);
@@ -299,6 +306,18 @@ export function VodPlayer({
         ref={playerFrameRef}
         className={`pro-player ${paused ? "is-paused" : "is-playing"} ${controlsShowing ? "is-controls-visible" : "is-controls-hidden"}`}
         dir="ltr"
+        tabIndex={0}
+        aria-label={locale === "fa" ? "پلیر ویدئو؛ فاصله برای پخش، جهت‌ها برای جابه‌جایی" : "Video player: Space to play, arrows to seek"}
+        onKeyDown={(event) => {
+          if ((event.target as HTMLElement).closest("button, input, select, textarea, a") || selectionOpen) return;
+          if ([" ", "k", "ArrowLeft", "ArrowRight", "f", "m"].includes(event.key)) event.preventDefault();
+          if (event.key === " " || event.key === "k") togglePlay();
+          if (event.key === "ArrowLeft") skip(-10);
+          if (event.key === "ArrowRight") skip(10);
+          if (event.key === "f") void toggleFullscreen();
+          if (event.key === "m") toggleMuted();
+          if (event.key === "Escape") { setSettingsOpen(false); setSubtitlesOpen(false); }
+        }}
         onMouseMove={revealControls}
         onMouseLeave={handlePointerLeave}
         onFocusCapture={revealControls}
@@ -314,6 +333,7 @@ export function VodPlayer({
           preload={sourceReady ? "metadata" : "none"}
           onLoadStart={() => setBuffering(true)}
           onLoadedMetadata={(event) => {
+            setMediaError(0);
             event.currentTarget.volume = Number(volume);
             event.currentTarget.playbackRate = Number(speed);
             setDuration(event.currentTarget.duration || 0);
@@ -357,14 +377,16 @@ export function VodPlayer({
           onPlay={() => { setPaused(false); setControlsVisible(true); }}
           onPause={() => { setPaused(true); setControlsVisible(true); }}
           onVolumeChange={(event) => setMuted(event.currentTarget.muted)}
-          onClick={revealControls}
-          onError={() => {
+          onClick={togglePlay}
+          onDoubleClick={() => void toggleFullscreen()}
+          onError={(event) => {
             setBuffering(false);
+            setMediaError(event.currentTarget.error?.code ?? 2);
             setMessage(t.player.sourceError);
           }}
         />
 
-        {buffering && active?.url && (
+        {buffering && sourceReady && active?.url && !selectionOpen && (
           <div className="player-loading">
             <BrandLoader label={t.common.loading} compact />
           </div>
@@ -377,6 +399,7 @@ export function VodPlayer({
         {!active?.url && (
           <div className="player-no-full-source" role="status" dir={locale === "fa" ? "rtl" : "ltr"}>
             <strong>{t.player.fullSourceUnavailable}</strong>
+            {itemId && <Link href={`/${itemId}#downloads`}>{locale === "fa" ? "بررسی همه لینک‌ها و منابع دانلود" : "Check all download links & sources"}</Link>}
           </div>
         )}
 
@@ -480,7 +503,7 @@ export function VodPlayer({
         {selectionOpen && sources.length > 1 && (
           <div className="player-choice-overlay">
             <div className="player-choice-card" dir={locale === "fa" ? "rtl" : "ltr"}>
-              <span className="label">Choose playback</span>
+              <span className="label">{locale === "fa" ? "انتخاب نسخه پخش" : "Choose playback"}</span>
               <h3>{title}</h3>
               <p>
                 {isSeries
@@ -517,15 +540,18 @@ export function VodPlayer({
                   </label>
                 </div>
               ) : (
-                <select className="select" value={activeIndex} onChange={(event) => setActiveIndex(Number(event.target.value))}>
+                <select className="select" aria-label={locale === "fa" ? "کیفیت و منبع پخش" : "Playback quality and source"} value={activeIndex} onChange={(event) => setActiveIndex(Number(event.target.value))}>
                   {sources.map((source, index) => <option key={`${source.url}-${index}`} value={index}>{source.label}</option>)}
                 </select>
               )}
-              <button type="button" className="play-glow" onClick={confirmSource}>▶ Start playback</button>
+              <button type="button" className="play-glow" onClick={confirmSource}><Play size={18} fill="currentColor" />{locale === "fa" ? "شروع پخش" : "Start playback"}</button>
             </div>
           </div>
         )}
       </div>
+      {mediaError > 0 && active && <PlaybackHelp key={active.url} link={active} code={mediaError} fa={locale === "fa"} itemId={itemId}
+        onRetry={() => { setMediaError(0); setMessage(""); playAfterSourceReadyRef.current = true; videoRef.current?.load(); }}
+        onChoose={() => { setSettingsOpen(true); revealControls(); playerFrameRef.current?.scrollIntoView({ block: "center", behavior: "auto" }); }} />}
     </div>
   );
 }
