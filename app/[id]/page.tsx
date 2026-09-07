@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowDown, ArrowUpLeft, Clock3, Film, Play, Star } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { DeferredBackgroundVideo } from "@/components/deferred-background-video";
 import { DownloadButton } from "@/components/ui/download-animation";
@@ -8,262 +9,131 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { StructuredData } from "@/components/structured-data";
 import { TitleTabs, type TitleTabsItem } from "@/components/title-tabs";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
-import { YouTubePlayer } from "@/components/youtube-player";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { buildSeasonSummaries, movieDownloadSources } from "@/lib/downloads";
 import { formatNumber, getDictionary, typeLabel } from "@/lib/i18n";
+import { playableLinks, isBrowserPlayableVodLink } from "@/lib/link-labels";
 import { getOldIranianFilmMedia } from "@/lib/old-iranian-media";
 import { getLocale } from "@/lib/server-locale";
 import { vodJsonLd, vodMetadata } from "@/lib/seo";
 import { subzoneSearchUrl } from "@/lib/subtitles";
 import { sizedImageUrl } from "@/lib/image-url";
+import { bestDownloadLink, detailHeroVideo, titleDownloadLinks } from "@/lib/title-presentation";
 import type { VodItem } from "@/lib/types";
+import styles from "./detail.module.css";
 
-type Props = {
-  params: Promise<{ id: string }>;
-};
-
+type Props = { params: Promise<{ id: string }> };
 export const revalidate = 300;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const item = await findVodItem(id);
-  if (!item) return { title: "Title not found" };
-  return vodMetadata(item);
+  const item = await findVodItem((await params).id);
+  return item ? vodMetadata(item) : { title: "Title not found" };
 }
 
 export default async function DetailPage({ params }: Props) {
   const locale = await getLocale();
+  const fa = locale === "fa";
   const t = getDictionary(locale);
-  const { id } = await params;
-  const item = await findVodItem(id);
+  const item = await findVodItem((await params).id);
   if (!item) notFound();
 
-  const best = item.links[0];
-  const sourceOnly = !best && Boolean(item.sourcePageUrl);
-  const seasons = buildSeasonSummaries(item.links);
-  const isSeries = normalizeVodType(item.type) === "series" && seasons.length > 0;
-  const movieFiles = isSeries ? [] : movieDownloadSources(item.links);
+  const isSeries = normalizeVodType(item.type) === "series";
+  const downloads = titleDownloadLinks(item.links);
+  const playable = playableLinks(downloads, { isSeries, title: item.title });
+  const roomAvailable = playable.some(isBrowserPlayableVodLink);
+  const best = isSeries ? null : bestDownloadLink(downloads);
+  const seasons = buildSeasonSummaries(downloads);
+  const movieFiles = isSeries ? [] : movieDownloadSources(downloads);
   const heroVideo = detailHeroVideo(item);
-  const oldFilmMedia = getOldIranianFilmMedia(item.id) ?? getOldIranianFilmMedia(item.imdbCode);
-  const youtubeSource = !best ? oldFilmMedia?.youtubeVideos[0] ?? item.youtubeVideos?.[0] ?? null : null;
-  const heroBackdrop = item.backdropUrl ?? oldFilmMedia?.backdropUrl ?? null;
-  const posterUrl = item.posterUrl ?? oldFilmMedia?.posterUrl ?? null;
-  const tabsItem = toTitleTabsItem(item);
-  const displayTitle = locale === "fa" ? item.persianTitle || item.title : item.title;
-  const displayOverview = locale === "fa" ? item.persianOverview || item.overview : item.overview;
-  const displayGenres = locale === "fa" && item.persianGenres?.length ? item.persianGenres : item.genres ?? [];
+  const oldMedia = getOldIranianFilmMedia(item.id) ?? getOldIranianFilmMedia(item.imdbCode);
+  const youtube = oldMedia?.youtubeVideos[0] ?? item.youtubeVideos?.[0];
+  const canPlay = playable.length > 0 || Boolean(youtube);
+  const watchHref = `/watch/${item.imdbCode}`;
+  const heroBackdrop = item.backdropUrl ?? oldMedia?.backdropUrl ?? item.posterUrl;
+  const posterUrl = item.posterUrl ?? oldMedia?.posterUrl;
+  const title = fa ? item.persianTitle || item.title : item.title;
+  const overview = fa ? item.persianOverview || item.overview : item.overview;
+  const genres = fa && item.persianGenres?.length ? item.persianGenres : item.genres ?? [];
+  const playHint = fa ? isSeries ? "انتخاب فصل، قسمت و کیفیت" : "انتخاب کیفیت و شروع تماشا" : isSeries ? "Choose season, episode & quality" : "Choose quality & start watching";
 
   return (
-    <div className="shell" data-media-theme="cinema">
+    <div className={`shell ${styles.page}`} data-media-theme="cinema" dir={fa ? "rtl" : "ltr"}>
       <StructuredData data={vodJsonLd(item)} />
-      <section
-        className="detail-hero"
-        style={
-            heroBackdrop
-            ? {
-                backgroundImage: `linear-gradient(90deg, rgba(5,5,5,0.96), rgba(5,5,5,0.56)), url(${sizedImageUrl(heroBackdrop, 1600)})`,
-                backgroundPosition: "center",
-                backgroundSize: "cover",
-              }
-            : undefined
-        }
-      >
-        {heroVideo && (
-          <DeferredBackgroundVideo
-            src={heroVideo}
-            poster={sizedImageUrl(heroBackdrop ?? posterUrl, 1600)}
-          />
-        )}
-        <div className="wrap">
-          <header className="topbar detail-topbar">
+      <section className={styles.hero} aria-labelledby="title-heading">
+        {heroBackdrop && <img className={styles.backdrop} src={sizedImageUrl(heroBackdrop, 1280) ?? undefined} alt="" decoding="async" />}
+        {heroVideo && <DeferredBackgroundVideo key={heroVideo} src={heroVideo} poster={sizedImageUrl(heroBackdrop, 1280)} locale={locale} />}
+        <div className={styles.shade} aria-hidden="true" />
+        <div className={styles.inner}>
+          <header className={styles.topbar}>
             <BrandLogo locale={locale} compact />
-            <nav className="detail-breadcrumb" aria-label="Breadcrumb">
-              <Link href="/">{t.common.home}</Link>
-              <span aria-hidden="true">/</span>
-              <Link href={`/browse?type=${normalizeVodType(item.type)}`}>
-                {normalizeVodType(item.type) === "series" ? t.common.series : t.common.films}
-              </Link>
-              <span aria-hidden="true">/</span>
-              <span className="breadcrumb-current" aria-current="page">{displayTitle}</span>
+            <nav className={styles.breadcrumb} aria-label={fa ? "مسیر صفحه" : "Breadcrumb"}>
+              <Link href="/">{t.common.home}</Link><span aria-hidden="true">/</span>
+              <Link href={`/browse?type=${isSeries ? "series" : "movie"}`}>{isSeries ? t.common.series : t.common.films}</Link>
+              <span aria-hidden="true">/</span><span aria-current="page">{title}</span>
             </nav>
-            <div className="detail-topbar-tools">
-              {item.imdbRating ? (
-                <a
-                  className="pill"
-                  href={item.imdbUrl ?? `https://www.imdb.com/title/${item.imdbCode}/`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  IMDb {item.imdbRating.toFixed(1)}
-                </a>
-              ) : item.sourcePageUrl ? (
-                <a className="pill" href={item.sourcePageUrl} target="_blank" rel="noreferrer">
-                  {t.common.source}
-                </a>
-              ) : null}
-              <LanguageToggle locale={locale} />
-            </div>
+            <LanguageToggle locale={locale} />
           </header>
-
-          <div className="detail-grid">
-            <div className="detail-copy">
-              <div className="meta">
-                <span>{typeLabel(normalizeVodType(item.type), locale)}</span>
-                <i className="dot" />
-                <span>{item.year ?? "-"}</span>
-                <i className="dot" />
-                <span>{item.runtimeMinutes ? `${item.runtimeMinutes}m` : `${item.links.length} ${t.common.files}`}</span>
-                <i className="dot" />
-                <span>{item.source === "old-iranian-archive" ? "Old Iranian Film" : item.source === "mihandownload" ? t.common.persianMovies : item.imdbCode}</span>
+          <div className={styles.heroGrid}>
+            <aside className={styles.posterPanel}>
+              <div className={styles.posterFrame}>
+                {posterUrl ? <img className={styles.poster} src={sizedImageUrl(posterUrl, 500) ?? undefined} alt={title} loading="eager" fetchPriority="high" decoding="async" /> : <Film className={styles.posterFallback} aria-hidden="true" />}
+                {canPlay && <Link href={watchHref} className={styles.posterPlay} aria-label={`${t.common.playOnline} · ${title}`}>
+                  <span className={styles.playOrb}><Play size={28} fill="currentColor" aria-hidden="true" /></span>
+                  <span><strong>{t.common.playOnline}</strong><small>{playHint}</small></span>
+                </Link>}
               </div>
-              <h1>{displayTitle}</h1>
-              {item.originalTitle && item.originalTitle !== displayTitle && (
-                <p className="muted">{t.title.originalTitle}: {item.originalTitle}</p>
-              )}
-              {displayOverview && <p className="detail-overview">{displayOverview}</p>}
-              <div className="chips detail-primary-actions">
-                {best ? (
-                  <Link className="play-glow detail-play-button" href={`/watch/${item.imdbCode}`}>
-                    <span className="play-dot" /> {t.common.playOnline}
-                  </Link>
-                ) : youtubeSource ? (
-                  <Link className="play-glow detail-play-button" href="#youtube-player">
-                    <span className="play-dot" /> تماشای فیلم
-                  </Link>
-                ) : sourceOnly ? (
-                  <a className="hover-button" href={item.sourcePageUrl ?? undefined} target="_blank" rel="noreferrer">
-                    {t.common.source}
-                  </a>
-                ) : null}
-                <WatchTogetherLauncher
-                  locale={locale}
-                  placement="inline"
-                  preset={{ itemId: item.imdbCode, title: displayTitle, posterUrl: item.backdropUrl ?? item.posterUrl }}
-                />
-                {best && <DownloadButton href={best.url} title={item.persianTitle || item.title} itemId={item.imdbCode} posterUrl={item.backdropUrl || item.posterUrl} label={best.quality || t.common.bestFile} />}
-                <a
-                  className="hover-button"
-                  href={subzoneSearchUrl(item.title, item.year)}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {t.title.subzoneSubtitles}
-                </a>
-                {item.imdbUrl ? (
-                  <a className="hover-button" href={item.imdbUrl} target="_blank" rel="noreferrer">
-                    {t.common.viewImdb}
-                  </a>
-                ) : null}
-                {oldFilmMedia?.metadataUrl ? (
-                  <a className="hover-button" href={oldFilmMedia.metadataUrl} target="_blank" rel="noreferrer">
-                    اطلاعات فیلم
-                  </a>
-                ) : null}
+              <span className={styles.posterCaption}>{fa ? isSeries ? "سریال در سرونما" : "سینما در سرونما" : "SARVNEMA CINEMA"}</span>
+            </aside>
+            <div className={styles.copy}>
+              <div className={styles.eyebrow}><Film size={15} aria-hidden="true" /><span>{typeLabel(isSeries ? "series" : "movie", locale)}</span><span>{item.year}</span>{item.certificate && <span>{item.certificate}</span>}</div>
+              <h1 id="title-heading">{title}</h1>
+              {title !== item.title && <p className={styles.original} dir="auto">{item.title}</p>}
+              <div className={styles.facts}>
+                {item.imdbRating != null && <a href={item.imdbUrl ?? `https://www.imdb.com/title/${item.imdbCode}/`} target="_blank" rel="noreferrer" className={styles.rating} aria-label={`IMDb ${item.imdbRating} / 10`}>
+                  <Star size={17} fill="currentColor" aria-hidden="true" /><b dir="ltr">IMDb {item.imdbRating.toFixed(1)}</b>
+                  {!!item.imdbVotes && <small>{formatNumber(item.imdbVotes, locale)} {fa ? "رأی" : "votes"}</small>}
+                </a>}
+                {item.runtimeMinutes ? <span><Clock3 size={16} aria-hidden="true" />{item.runtimeMinutes} {fa ? "دقیقه" : "min"}</span> : null}
+                {isSeries && seasons.length > 0 && <a href="#downloads"><Film size={16} aria-hidden="true" />{seasons.length} {fa ? "فصل در آرشیو" : "seasons in archive"}</a>}
+              </div>
+              <div className={styles.genres}>{genres.slice(0, 5).map(genre => <span key={genre}>{genre}</span>)}</div>
+              {overview && <details className={styles.synopsis}>
+                <summary><span>{overview}</span><b>{fa ? "درباره داستان" : "Read synopsis"} <ArrowDown size={13} aria-hidden="true" /></b></summary>
+              </details>}
+              <div className={styles.actions}>
+                <Link href="#downloads" className={styles.secondary}><ArrowDown size={18} aria-hidden="true" />{fa ? isSeries ? "فصل‌ها و دانلودها" : "کیفیت‌ها و دانلود" : isSeries ? "Seasons & downloads" : "Quality & downloads"}</Link>
+                {roomAvailable && <WatchTogetherLauncher locale={locale} placement="inline" preset={{ itemId: item.imdbCode, title, posterUrl: posterUrl ?? null }} />}
+                {best && <DownloadButton href={best.url} title={title} itemId={item.imdbCode} posterUrl={posterUrl} label={fa ? `بهترین فایل · ${best.quality || "دانلود"}` : `Best file · ${best.quality || "Download"}`} />}
+              </div>
+              {!canPlay && <p className={styles.availability}>{fa ? "نسخه قابل پخش آنلاین هنوز در آرشیو نیست؛ لینک‌های موجود را در بخش دانلود بررسی کنید." : "No browser-playable release is available yet. Check the available download links below."}</p>}
+              <div className={styles.externalLinks}>
+                <a href={subzoneSearchUrl(item.title, item.year)} target="_blank" rel="noreferrer">{t.title.subzoneSubtitles}<ArrowUpLeft size={14} aria-hidden="true" /></a>
+                {item.sourcePageUrl && <a href={item.sourcePageUrl} target="_blank" rel="noreferrer">{fa ? "صفحه منبع" : "Source page"}<ArrowUpLeft size={14} aria-hidden="true" /></a>}
+                {item.imdbUrl && <a href={item.imdbUrl} target="_blank" rel="noreferrer">IMDb<ArrowUpLeft size={14} aria-hidden="true" /></a>}
               </div>
             </div>
-
-            <aside className="detail-card">
-              {posterUrl && (
-                <img
-                  className="detail-poster"
-                  src={sizedImageUrl(posterUrl, 500) ?? posterUrl}
-                  alt={`${displayTitle} poster`}
-                  loading="eager"
-                  decoding="async"
-                />
-              )}
-              <div className="detail-card-data">
-                <p className="label">{t.title.imdbData}</p>
-                <div className="stats">
-                  <Stat label={t.title.rating} value={item.imdbRating ? item.imdbRating.toFixed(1) : "-"} />
-                  <Stat label={t.title.votes} value={formatNumber(item.imdbVotes ?? 0, locale)} />
-                  <Stat label={t.title.runtime} value={item.runtimeMinutes ? `${item.runtimeMinutes}m` : "-"} />
-                  <Stat label={t.title.metascore} value={item.metascore ? String(item.metascore) : "-"} />
-                </div>
-                <div className="chips detail-genres">
-                  {displayGenres.map((genre) => (
-                    <span key={genre} className="chip">{genre}</span>
-                  ))}
-                </div>
-              </div>
-            </aside>
           </div>
         </div>
       </section>
-
-      <main className="wrap">
-        {youtubeSource && oldFilmMedia && (
-          <YouTubePlayer source={youtubeSource} title={displayTitle} />
-        )}
-        <TitleTabs
-          item={tabsItem}
-          isSeries={isSeries}
-          seasons={seasons}
-          movieFiles={movieFiles}
-          locale={locale}
-        />
+      <main className={styles.content}>
+        <TitleTabs key={item.imdbCode} item={toTitleTabsItem(item)} isSeries={isSeries} seasons={seasons} movieFiles={movieFiles} playbackUrls={playable.map(link => link.url)} episodePlayback={Object.fromEntries([...playable].reverse().filter(link => link.season && link.episode).map(link => [`${link.season}:${link.episode}`, link.url]))} locale={locale} />
       </main>
+      <nav className={styles.mobileDock} aria-label={fa ? "دسترسی سریع پخش و دانلود" : "Quick playback and downloads"}>
+        {canPlay && <Link className={styles.dockPlay} href={watchHref}><Play size={19} fill="currentColor" aria-hidden="true" />{t.common.playOnline}</Link>}
+        <Link href="#downloads"><ArrowDown size={18} aria-hidden="true" />{fa ? isSeries ? "فصل و قسمت" : "لینک‌های دانلود" : isSeries ? "Episodes" : "Downloads"}</Link>
+      </nav>
     </div>
   );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="stat">
-      <p className="label">{label}</p>
-      <p className="value">{value}</p>
-    </div>
-  );
-}
-
-function detailHeroVideo(item: VodItem) {
-  const storedUrl = pickHeroVideoUrl(item.imdbVideos ?? []);
-  return storedUrl && !videoUrlExpired(storedUrl) ? storedUrl : null;
 }
 
 function toTitleTabsItem(item: VodItem): TitleTabsItem {
   return {
-    title: item.title,
-    imdbCode: item.imdbCode,
-    type: item.type,
-    year: item.year,
-    endYear: item.endYear,
-    releaseDate: item.releaseDate,
-    certificate: item.certificate,
-    countries: item.countries,
-    languages: item.languages,
-    qualities: item.qualities,
-    keywords: item.keywords?.slice(0, 14),
-    companies: item.companies?.slice(0, 8),
-    credits: item.credits?.slice(0, 30),
-    imdbVideos: item.imdbVideos?.slice(0, 10),
-    imdbImages: item.imdbImages?.slice(0, 20),
-    movieshoImages: item.movieshoImages?.slice(0, 20),
-    backdropUrl: item.backdropUrl,
-    posterUrl: item.posterUrl,
-    source: item.source,
+    title: item.title, imdbCode: item.imdbCode, type: item.type, year: item.year,
+    endYear: item.endYear, releaseDate: item.releaseDate, certificate: item.certificate,
+    countries: item.countries, languages: item.languages, qualities: item.qualities,
+    keywords: item.keywords?.slice(0, 14), companies: item.companies?.slice(0, 8),
+    credits: item.credits?.slice(0, 30), imdbVideos: item.imdbVideos?.slice(0, 10),
+    imdbImages: item.imdbImages?.slice(0, 20), movieshoImages: item.movieshoImages?.slice(0, 20),
+    backdropUrl: item.backdropUrl, posterUrl: item.posterUrl, source: item.source,
   };
-}
-
-function pickHeroVideoUrl(videos: NonNullable<VodItem["imdbVideos"]>) {
-  const preferred =
-    videos.find((video) => /trailer|teaser|preview/i.test(video.name)) ??
-    videos[0];
-  const playbacks = preferred?.playback_urls ?? [];
-
-  return (
-    playbacks.find((playback) => /\.(mp4|m4v)(?:$|[?#])/i.test(playback.url))?.url ??
-    playbacks.find((playback) => playback.mime_type?.toLowerCase() === "video/mp4")?.url ??
-    null
-  );
-}
-
-function videoUrlExpired(url: string) {
-  try {
-    const expires = Number(new URL(url).searchParams.get("Expires"));
-    return Number.isFinite(expires) && expires <= Math.floor(Date.now() / 1000) + 60;
-  } catch {
-    return false;
-  }
 }

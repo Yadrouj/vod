@@ -8,6 +8,7 @@ import { PosterCard, type PosterCardData } from "@/components/poster-card";
 import { DEFAULT_LOCALE, getDictionary, interpolate, type Locale, typeLabel } from "@/lib/i18n";
 import type { DownloadSource, SeasonSummary } from "@/lib/downloads";
 import type { VodItem } from "@/lib/types";
+import { trailerPlayback } from "@/lib/title-presentation";
 
 export type TitleTabsItem = Pick<VodItem,
   | "title"
@@ -36,12 +37,14 @@ type TitleTabsProps = {
   isSeries: boolean;
   seasons: SeasonSummary[];
   movieFiles: DownloadSource[];
+  playbackUrls?: string[];
+  episodePlayback?: Record<string, string>;
   locale?: Locale;
 };
 
 const TABS = [
-  { id: "about", key: "about" },
   { id: "episodes", key: "episodes" },
+  { id: "about", key: "about" },
   { id: "suggestions", key: "suggestions" },
 ] as const;
 
@@ -52,13 +55,31 @@ export function TitleTabs({
   isSeries,
   seasons,
   movieFiles,
+  playbackUrls = [],
+  episodePlayback = {},
   locale = DEFAULT_LOCALE,
 }: TitleTabsProps) {
-  const [active, setActive] = useState<TabId>(isSeries ? "episodes" : "about");
+  const [active, setActive] = useState<TabId>("episodes");
   const [suggestions, setSuggestions] = useState<PosterCardData[]>([]);
   const [suggestionsState, setSuggestionsState] = useState<"idle" | "loading" | "loaded">("idle");
   const suggestionsRequested = useRef(false);
   const t = getDictionary(locale);
+
+  useEffect(() => {
+    const fromHash = () => {
+      const hash = window.location.hash;
+      if (hash === "#downloads") setActive("episodes");
+      else if (hash === "#about") setActive("about");
+    };
+    // A same-hash click must also select downloads after visiting another tab.
+    const fromClick = (event: MouseEvent) => {
+      if ((event.target as Element)?.closest?.('a[href="#downloads"]')) setActive("episodes");
+    };
+    fromHash();
+    window.addEventListener("hashchange", fromHash);
+    document.addEventListener("click", fromClick);
+    return () => { window.removeEventListener("hashchange", fromHash); document.removeEventListener("click", fromClick); };
+  }, []);
 
   useEffect(() => {
     if (active !== "suggestions" || suggestionsRequested.current) return;
@@ -74,20 +95,36 @@ export function TitleTabs({
   }, [active, item.imdbCode]);
 
   return (
-    <section className="title-tabs">
-      <nav className="title-tab-nav" aria-label={`${item.title} sections`}>
+    <section className="title-tabs" id="downloads">
+      <nav className="title-tab-nav" role="tablist" aria-label={locale === "fa" ? "بخش‌های فیلم و سریال" : `${item.title} sections`}>
         {TABS.map((tab) => (
           <button
             key={tab.id}
             className={active === tab.id ? "active" : ""}
             type="button"
+            role="tab"
+            id={`title-tab-${tab.id}`}
+            aria-selected={active === tab.id}
+            aria-controls="title-tab-content"
+            tabIndex={active === tab.id ? 0 : -1}
             onClick={() => setActive(tab.id)}
+            onKeyDown={(event) => {
+              const keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
+              if (!keys.includes(event.key)) return;
+              event.preventDefault();
+              const index = TABS.findIndex((entry) => entry.id === tab.id);
+              const forward = event.key === (locale === "fa" ? "ArrowLeft" : "ArrowRight");
+              const next = event.key === "Home" ? 0 : event.key === "End" ? TABS.length - 1 : (index + (forward ? 1 : -1) + TABS.length) % TABS.length;
+              setActive(TABS[next].id);
+              document.getElementById(`title-tab-${TABS[next].id}`)?.focus();
+            }}
           >
-            {t.title.tabs[tab.key]}
+            {tab.id === "episodes" ? locale === "fa" ? isSeries ? "فصل‌ها و دانلود" : "پخش و دانلود" : isSeries ? "Episodes & downloads" : "Play & download" : t.title.tabs[tab.key]}
           </button>
         ))}
       </nav>
 
+      <div id="title-tab-content" role="tabpanel" aria-labelledby={`title-tab-${active}`} tabIndex={0}>
       {active === "about" && <AboutTab item={item} locale={locale} />}
       {active === "episodes" && (
         <section className="title-tab-panel">
@@ -97,6 +134,8 @@ export function TitleTabs({
             isSeries={isSeries}
             seasons={seasons}
             movieFiles={movieFiles}
+            playbackUrls={playbackUrls}
+            episodePlayback={episodePlayback}
             fallbackImage={item.backdropUrl ?? item.posterUrl ?? null}
             fallbackImages={[...(item.imdbImages ?? []), ...(item.movieshoImages ?? [])].map((image) => image.url)}
             locale={locale}
@@ -113,6 +152,7 @@ export function TitleTabs({
           </div>
         </section>
       )}
+      </div>
     </section>
   );
 }
@@ -188,7 +228,7 @@ function MediaCarousel({ item }: { item: TitleTabsItem; locale: Locale }) {
   const images = item.imdbImages?.slice(0, 20) ?? [];
   const sourceImages = item.movieshoImages?.slice(0, 20) ?? [];
   const media: GalleryMedia[] = [
-    ...videos.flatMap((video, index) => { const source = video.playback_urls?.find((playback) => playback.mime_type === "MP4")?.url ?? video.playback_urls?.[0]?.url; return source ? [{ id: `video-${video.video_id ?? index}`, type: "video" as const, title: video.name, url: source, poster: video.thumbnail_url ?? undefined }] : []; }),
+    ...videos.flatMap((video, index) => { const source = trailerPlayback(video); return source ? [{ id: `video-${video.video_id ?? index}`, type: "video" as const, title: video.name, url: source, poster: video.thumbnail_url ?? undefined }] : []; }),
     ...images.map((image, index) => ({ id: `image-${index}-${image.url}`, type: "image" as const, title: image.caption ?? item.title, url: image.url })),
     ...sourceImages
       .filter((image) => !images.some((existing) => existing.url === image.url))

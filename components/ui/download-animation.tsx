@@ -26,6 +26,7 @@ export function DownloadButton({ href, label, title = label, itemId, posterUrl }
     <a
       className={`animated-download ${visited ? "is-visited" : ""} ${downloading ? "is-downloading" : ""}`}
       href={href}
+      aria-label={`${label} · ${title}`}
       target="_blank"
       rel="noreferrer"
       onClick={async (event) => {
@@ -47,8 +48,8 @@ export function DownloadButton({ href, label, title = label, itemId, posterUrl }
         markDownloaded();
       }}
     >
-      <span className="animated-download-icon"><Download size={20} /></span>
-      <span className="animated-download-label">{downloading ? "" : label}</span>
+      <span className="animated-download-icon" aria-hidden="true"><Download size={20} /></span>
+      <span className="animated-download-label">{label}</span>
     </a>
   );
 }
