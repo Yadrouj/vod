@@ -340,6 +340,7 @@ export function WatchTogetherLauncher({
     <>
       <button
         className={`watch-together-launcher watch-together-${placement} ${effectiveExperience === "listen" ? "watch-together-listen" : ""}`}
+        data-media-theme={effectiveExperience === "listen" ? "music" : "cinema"}
         type="button"
         onClick={openLauncher}
         aria-haspopup="dialog"
@@ -358,6 +359,7 @@ export function WatchTogetherLauncher({
           <section
             ref={builderRef}
             className={`watch-builder watch-builder-step-${builderStep}`}
+            data-media-theme={effectiveExperience === "listen" ? "music" : "cinema"}
             role="dialog"
             aria-modal="true"
             aria-labelledby="watch-builder-title"

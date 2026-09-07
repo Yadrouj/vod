@@ -308,15 +308,13 @@ html.watch-builder-is-open body { overflow: hidden !important; }
 /* Cinema rooms use the film system's gold accent. Music rooms retain green;
    online/network indicators remain green because they communicate status. */
 .party-layout {
-  --party-accent: #f2c84b;
-  --party-accent-rgb: 242, 200, 75;
-  --party-accent-ink: #211904;
+  --party-accent: var(--media-accent);
+  --party-accent-rgb: var(--media-accent-rgb);
+  --party-accent-ink: var(--media-accent-ink);
 }
 
 .party-layout.party-theme-music {
-  --party-accent: #78edac;
-  --party-accent-rgb: 120, 237, 172;
-  --party-accent-ink: #07170e;
+  --party-tool-count: 4;
 }
 
 .party-layout.party-theme-cinema {

@@ -73,7 +73,7 @@ export default async function WatchPage({ params }: Props) {
   const videoData = videoJsonLd(item, links[0]?.url ?? null);
 
   return (
-    <main className="shell watch-page">
+    <main className="shell watch-page" data-media-theme="cinema">
       <StructuredData data={{ "@context": "https://schema.org", "@graph": [videoData, { "@type": "WebPage", url: absoluteUrl(`/watch/${item.imdbCode}`), name: `Watch ${item.title} online` }].filter(Boolean) }} />
       <section className="watch-page-hero">
         {heroImage && <div className="watch-page-hero-art" aria-hidden="true" style={{ backgroundImage: `url(${JSON.stringify(heroImage)})` }} />}

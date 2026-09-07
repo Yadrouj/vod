@@ -448,7 +448,7 @@ export const dictionaries = {
 export type UiDictionary = (typeof dictionaries)[Locale];
 
 export function normalizeLocale(value: string | null | undefined): Locale {
-  return value === "fa" ? "fa" : DEFAULT_LOCALE;
+  return value === "en" || value === "fa" ? value : DEFAULT_LOCALE;
 }
 
 export function getDictionary(locale: Locale): UiDictionary {

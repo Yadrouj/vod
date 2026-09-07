@@ -10,6 +10,10 @@ const EXISTING_FILE = process.argv[2] || path.join("public", "data", "vod-catalo
 const SOURCE_FILE = process.argv[3] || path.join(".media-cache", "vod-sync", "f2my-source.json");
 const OUT_FILE = process.argv[4] || EXISTING_FILE;
 const REPORT_FILE = process.argv[5] || path.join(".media-cache", "vod-sync", "f2my-merge-report.json");
+// Populated in the preflight pass before writing. A newly resolved IMDb ID may
+// already have a Moviesho/Donyaye record; do not give its legacy alias the same
+// file key and overwrite the canonical profile during title-file generation.
+const existingImdbCodes = new Set();
 
 function isF2myLink(link) {
   return link?.sourceProvider === "f2my";
@@ -58,7 +62,9 @@ function mergeItem(existing, incoming) {
   const f2myExtraLinks = incoming.f2myExtraLinks?.length ? incoming.f2myExtraLinks : existing.f2myExtraLinks ?? [];
   return normalizeItem({
     ...existing,
-    imdbCode: /^tt\d+$/i.test(incoming.imdbCode || "") ? incoming.imdbCode : existing.imdbCode,
+    imdbCode: /^tt\d+$/i.test(incoming.imdbCode || "") &&
+      !(!/^tt\d+$/i.test(existing.imdbCode || "") && existingImdbCodes.has(incoming.imdbCode.toLowerCase()))
+      ? incoming.imdbCode : existing.imdbCode,
     imdbUrl: incoming.imdbUrl || existing.imdbUrl || null,
     title: existing.title || incoming.title,
     type: existing.type || incoming.type,
@@ -189,6 +195,7 @@ async function main() {
   let totalLinks = 0;
 
   await streamVodArchiveItems(EXISTING_FILE, async (existingItem) => {
+    if (/^tt\d+$/i.test(existingItem.imdbCode || "")) existingImdbCodes.add(existingItem.imdbCode.toLowerCase());
     totalTitles += 1;
     const incoming = findIncoming(existingItem, incomingByKey);
     const next = incoming ? mergeItem(existingItem, incoming) : existingItem;

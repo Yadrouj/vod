@@ -55,7 +55,7 @@ export default async function DetailPage({ params }: Props) {
   const displayGenres = locale === "fa" && item.persianGenres?.length ? item.persianGenres : item.genres ?? [];
 
   return (
-    <div className="shell">
+    <div className="shell" data-media-theme="cinema">
       <StructuredData data={vodJsonLd(item)} />
       <section
         className="detail-hero"

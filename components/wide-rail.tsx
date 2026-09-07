@@ -8,7 +8,9 @@ import type { VodCard } from "@/lib/types";
 
 export function WideRail({ items, locale }: { items: VodCard[]; locale: Locale }) {
   const t = getDictionary(locale);
-  const [order, setOrder] = useState(() => shuffle(items));
+  // The server and the first client render must use the same order. Randomize
+  // only after hydration, via the existing timer, not during initialization.
+  const [order, setOrder] = useState(items);
   const [seconds, setSeconds] = useState(10);
   useEffect(() => {
     const timer = window.setInterval(() => setSeconds((value) => {

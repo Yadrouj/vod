@@ -21,7 +21,7 @@ export default async function PeoplePage() {
   const topPeople = await loadTopPeople();
 
   return (
-    <main className="shell">
+    <main className="shell" data-media-theme="cinema">
       <section className="browse-hero people-list-hero">
         <div className="wrap">
           <header className="topbar">

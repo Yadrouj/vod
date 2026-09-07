@@ -36,7 +36,7 @@ export default async function BrowsePage({ searchParams }: Props) {
   const title = sectionTitle ?? SECTION_LABELS[result.section] ?? t.browse.titleFallback;
 
   return (
-    <main className="shell">
+    <main className="shell" data-media-theme="cinema">
       <section className="browse-hero">
         <div className="wrap">
           <header className="topbar">

@@ -157,13 +157,13 @@ export function PersonalListenLauncher() {
 
   return (
     <>
-      <button className="watch-together-launcher watch-together-inline watch-together-listen personal-listen-launcher" type="button" onClick={openBuilder} aria-haspopup="dialog">
+      <button className="watch-together-launcher watch-together-inline watch-together-listen personal-listen-launcher" data-media-theme="music" type="button" onClick={openBuilder} aria-haspopup="dialog">
         <span className="watch-together-launcher-icon" aria-hidden="true"><WatchTogetherMark /></span>
         <span className="watch-together-launcher-copy"><strong>Upload &amp; listen together</strong><small>Your file or link · one room</small></span>
       </button>
       {open && typeof document !== "undefined" && createPortal(
         <div className="watch-builder-backdrop" onClick={closeBuilder}>
-          <section className="watch-builder personal-listen-builder" role="dialog" aria-modal="true" aria-labelledby="personal-listen-title" onClick={(event) => event.stopPropagation()}>
+          <section className="watch-builder personal-listen-builder" data-media-theme="music" role="dialog" aria-modal="true" aria-labelledby="personal-listen-title" onClick={(event) => event.stopPropagation()}>
             <header className="watch-builder-header">
               <div className="watch-builder-mark"><WatchTogetherMark /></div>
               <div><span className="label">LISTEN TOGETHER</span><h2 id="personal-listen-title">Start with your own music</h2></div>

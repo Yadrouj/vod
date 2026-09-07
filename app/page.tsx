@@ -73,7 +73,7 @@ export default async function HomePage() {
   const remainingLandingRails = landingRails.filter((section) => !anchorRailIds.includes(section.id));
 
   return (
-    <main className="shell film-spotify-page">
+    <main className="shell film-spotify-page" data-media-theme="cinema">
       <StructuredData data={landingJsonLd(FILM_LANDING_SEO, "/")} />
       <section className="film-landing-shell">
         <GradientMenu
@@ -88,7 +88,7 @@ export default async function HomePage() {
       </section>
 
       <section className="home-stack wrap film-landing-content">
-        <ReleaseUpdatesRail items={updates.items} locale={locale} />
+        <ReleaseUpdatesRail items={updates.items} locale={locale} generatedAt={updates.generatedAt} asOf={updates.asOf} />
         <ContinueWatching />
         <DownloadHistory />
         {primaryLandingRails.map((section) => (
@@ -135,7 +135,7 @@ async function computeHomePageData(locale: Locale) {
   ]);
   const news = { ...rawNews, items: prioritizeNews(rawNews.items) };
   const verifiedUpdates = selectFreshReleaseUpdates(rawUpdates.items);
-  const updates = { ...rawUpdates, items: prioritizeReleaseUpdates(verifiedUpdates) };
+  const updates = { ...rawUpdates, items: prioritizeReleaseUpdates(verifiedUpdates), asOf: Date.now() };
   const t = getDictionary(locale);
   const seen = new Set<string>();
   const toyStoryFive = index.sections
@@ -307,11 +307,18 @@ function prioritizeNews<T extends { id: string; url: string; title: string; cate
 }
 
 function prioritizeReleaseUpdates(items: ReleaseUpdate[]) {
+  const seenTitles = new Set<string>();
   return [...items]
     .sort((a, b) => {
-      const statusRank = (status: ReleaseUpdate["status"]) => status === "coming-soon" ? 0 : 1;
+      const statusRank = (status: ReleaseUpdate["status"]) => status === "available" ? 0 : 1;
       const kindRank = (kind: ReleaseUpdate["kind"]) => kind === "episode" ? 0 : kind === "series" ? 1 : 2;
       return statusRank(a.status) - statusRank(b.status) || Date.parse(b.eventAt) - Date.parse(a.eventAt) || kindRank(a.kind) - kindRank(b.kind);
+    })
+    .filter((item) => {
+      const key = `${item.baseTitle.toLocaleLowerCase().trim()}:${item.year ?? ""}`;
+      if (seenTitles.has(key)) return false;
+      seenTitles.add(key);
+      return true;
     })
     .slice(0, 16);
 }
@@ -378,7 +385,7 @@ function buildGenreMenu(items: VodCard[], oldIranianSection: VodHomeSection | un
       });
       const selected = rotated.filter((item) => item.imdbCode !== artItem?.imdbCode);
       return {
-        id: `genre-${genre.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+        id: `genre-${encodeURIComponent(genre.toLowerCase())}`,
         title: genre,
         href: `/browse?genre=${encodeURIComponent(genre)}`,
         items: (selected.length ? selected : candidates).slice(0, 10).map(toMegaMenuItem),

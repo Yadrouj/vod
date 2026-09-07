@@ -24,7 +24,7 @@ export default async function UpdatesPage() {
   const t = getDictionary(locale);
   const isFa = locale === "fa";
   return (
-    <main className="shell">
+    <main className="shell" data-media-theme="cinema">
       <section className="browse-hero updates-hero">
         <div className="wrap">
           <header className="topbar">
@@ -38,15 +38,15 @@ export default async function UpdatesPage() {
             <div className="meta">
               <span>{isFa ? "پایش خودکار منابع" : "AUTOMATED SOURCE RECONCILIATION"}</span>
               <i className="dot" />
-              <span>{displayItems.length} {isFa ? "عنوان تازه" : "fresh titles"}</span>
+              <span>{displayItems.length.toLocaleString(isFa ? "fa-IR" : "en-US")} {isFa ? "تغییر اخیر" : "recent changes"}</span>
               <i className="dot" />
               <span>{displayItems.filter((item) => item.status === "coming-soon").length} {isFa ? "به‌زودی" : "coming soon"}</span>
             </div>
-            <h1>{isFa ? "تازه‌های آرشیو" : "Catalog updates"}</h1>
+            <h1>{isFa ? "تازه‌ها و به‌روزرسانی‌ها" : "New & updated"}</h1>
             <p className="muted updates-intro">
               {isFa
-                ? "اینجا فقط انتشارهای واقعاً تازه، قسمت‌های جدید و عنوان‌هایی نمایش داده می‌شوند که اخیراً به آرشیو اضافه شده‌اند."
-                : "This page only shows genuinely new releases, episodes, and titles recently added to the archive."}
+                ? "قسمت جدید، کیفیت تازه یا اضافه‌شدن یک عنوان به آرشیو؛ روی هر کارت مشخص است چه چیزی تغییر کرده. بررسی مجدد یک لینک، انتشار جدید نیست."
+                : "New episodes, qualities and additions to the archive. Each card explains what changed; rechecking a link is not a new release."}
             </p>
           </div>
         </div>
@@ -55,8 +55,8 @@ export default async function UpdatesPage() {
         {displayItems.length ? <div className="release-updates-grid release-updates-grid-all">
           {displayItems.map((item) => <ReleaseUpdateCard item={item} locale={locale} key={item.id} />)}
         </div> : <div className="updates-empty">
-          <h2>{isFa ? "اولین بررسی روزانه هنوز اجرا نشده" : "The first daily review has not run yet"}</h2>
-          <p className="muted">{isFa ? "پس از پایان اولین چرخه، فیلم‌ها، سریال‌ها و اپیزودهای تازه اینجا ظاهر می‌شوند." : "New films, series, and episodes will appear here after the first completed cycle."}</p>
+          <h2>{isFa ? "فعلاً تغییر تازه‌ای ثبت نشده" : "No recent changes recorded"}</h2>
+          <p className="muted">{isFa ? "وقتی قسمت، کیفیت یا عنوان تازه‌ای پیدا شود، اینجا نمایش داده می‌شود." : "New episodes, qualities and titles will appear here when found."}</p>
         </div>}
       </section>
     </main>

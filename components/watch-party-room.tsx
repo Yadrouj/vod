@@ -517,7 +517,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const latestChat = roomChat.at(-1);
   const queueTitle = isListeningRoom ? "Listen queue" : "Watch queue";
   const queueDescription = isListeningRoom ? "Add tracks, personal audio, or a direct media link for everyone." : "Search, add, or switch movies, episodes, and personal media for everyone.";
-  return <div className={`party-layout ${isListeningRoom ? "party-theme-music" : "party-theme-cinema"}`}>
+  return <div className={`party-layout ${isListeningRoom ? "party-theme-music" : "party-theme-cinema"}`} data-media-theme={isListeningRoom ? "music" : "cinema"}>
     <Link className="party-sarvnema-corner" href="/" aria-label="Back to SarvNema" title="SarvNema">
       <img src={BRAND_MARK} alt="" />
     </Link>
@@ -587,7 +587,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
           </div>
         )}
 
-        <div className="party-controls" data-player-ui="true">
+        <div className="party-controls" dir="ltr" data-player-ui="true">
           <button type="button" disabled={!can("playback")} onClick={() => command(playback.paused ? "play" : "pause", { time: (isListeningRoom ? audioRef.current : videoRef.current)?.currentTime })} aria-label={playback.paused ? "Play" : "Pause"}>{playback.paused ? <Play /> : <Pause />}</button>
           <input className="party-seek-control" dir="ltr" type="range" min="0" max={playerDuration || 0} value={Math.min(scrubTime ?? playerTime, playerDuration || 0)} disabled={!can("seek")} aria-label="Playback position" onChange={(event) => previewSeek(Number(event.target.value))} onPointerUp={commitSeek} onPointerCancel={() => { scrubTimeRef.current = null; setScrubTime(null); }} onKeyUp={commitSeek} onBlur={commitSeek} />
           {!isListeningRoom && <button className={subtitlesOpen ? "is-active" : ""} type="button" onClick={() => { clearHudTimer(); setHudVisible(true); setStagePanel(null); setSubtitlesOpen((value) => !value); setSettingsOpen(false); }} aria-label="Subtitles" title="Subtitles"><Captions /></button>}

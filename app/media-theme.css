@@ -1,0 +1,301 @@
+/* One accent system for film surfaces and shared media components.
+   Explicit theme roots also travel with portals and change with room media.
+   Keep error, recording and network-status colors semantic, not decorative. */
+:root {
+  --cinema-accent: #f3cb68;
+  --cinema-accent-rgb: 243, 203, 104;
+  --cinema-accent-ink: #211904;
+  --music-accent: #78edac;
+  --music-accent-rgb: 120, 237, 172;
+  --music-accent-ink: #07170e;
+}
+
+[data-media-theme="cinema"] {
+  --media-accent: var(--cinema-accent);
+  --media-accent-rgb: var(--cinema-accent-rgb);
+  --media-accent-ink: var(--cinema-accent-ink);
+}
+
+[data-media-theme="music"] {
+  --media-accent: var(--music-accent);
+  --media-accent-rgb: var(--music-accent-rgb);
+  --media-accent-ink: var(--music-accent-ink);
+}
+
+/* Shared actions use the nearest theme, including music rails on the film home. */
+[data-media-theme] :is(.play-glow, .browse-search-submit, .chip.active) {
+  border-color: var(--media-accent);
+  background: var(--media-accent);
+  color: var(--media-accent-ink);
+  box-shadow: 0 6px 24px rgba(var(--media-accent-rgb), .12);
+}
+
+[data-media-theme] :is(.view-all, .music-view-all, .watch-back) {
+  color: var(--media-accent);
+}
+
+[data-media-theme] :is(button, a, input, select, summary):focus-visible {
+  outline: 2px solid var(--media-accent);
+  outline-offset: 3px;
+}
+
+[data-media-theme] :is(.chip, .hover-button, .view-all, .browse-filter-trigger):hover {
+  border-color: rgba(var(--media-accent-rgb), .55);
+}
+
+[data-media-theme] :is(.quick-tabs a.active, .season-tab.active) {
+  border-color: var(--media-accent);
+  background: rgba(var(--media-accent-rgb), .12);
+  color: var(--media-accent);
+}
+
+[data-media-theme="cinema"] .player-shell input[type="range"] {
+  accent-color: var(--cinema-accent);
+}
+
+[data-media-theme="cinema"] .player-btn-primary {
+  background: var(--cinema-accent);
+  color: var(--cinema-accent-ink);
+}
+
+/* Updates describe a verified change, not merely the existence of a file. */
+.film-landing-content { grid-template-columns: minmax(0, 1fr); }
+.film-landing-content > * { min-width: 0; }
+[data-media-theme="cinema"] .release-updates-refresh .label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--cinema-accent);
+}
+.release-updates-refresh .section-head { gap: 16px; align-items: start; }
+.release-updates-refresh .section-head > div { min-width: 0; }
+.release-updates-refresh .section-head .muted { max-width: 65ch; white-space: normal; line-height: 1.8; }
+.release-updates-refresh .view-all { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
+.release-update-summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin: 0 0 16px; color: #bcb7a9; font-size: 12px; }
+.release-update-summary > span { color: var(--cinema-accent); }
+[data-media-theme="cinema"] .release-update-card {
+  min-width: 0;
+  min-height: 270px;
+  padding: 16px;
+  border-color: rgba(var(--cinema-accent-rgb), .18);
+  border-radius: 16px !important;
+  gap: 7px;
+}
+[data-media-theme="cinema"] .release-update-card::before { background: linear-gradient(0deg, #10100f 2%, rgba(12, 12, 10, .86) 43%, rgba(12, 12, 10, .14)); }
+[data-media-theme="cinema"] .release-update-status {
+  position: static;
+  align-self: flex-start;
+  margin-bottom: auto;
+  max-width: 100%;
+  border-color: rgba(var(--cinema-accent-rgb), .45);
+  border-radius: 6px !important;
+  color: var(--cinema-accent);
+  background: rgba(34, 27, 10, .9);
+  font-size: 11px;
+  letter-spacing: 0;
+}
+[data-media-theme="cinema"] .release-update-kind { position: static; max-width: 100%; margin-top: 16px; text-align: start; letter-spacing: 0; }
+[data-media-theme="cinema"] .release-update-card strong { margin: 0; font-size: clamp(18px, 1.5vw, 23px); line-height: 1.45; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+[data-media-theme="cinema"] .release-update-copy { margin: 0; color: #e1ddcf; font-weight: 500; }
+.release-update-qualities { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+.release-update-qualities > span { padding: 3px 6px; border-radius: 4px !important; background: rgba(255, 255, 255, .09); font-size: 10px; }
+[data-media-theme="cinema"] .release-update-foot { margin-top: 4px; font-weight: 400; }
+.release-update-foot > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.release-update-foot > time { flex-shrink: 0; }
+.release-update-art-fallback { position: absolute; inset: 20px; width: 80px; height: 80px; opacity: .12; z-index: -3; color: var(--cinema-accent); }
+
+@media (max-width: 1000px) {
+  [data-media-theme="cinema"] .release-updates-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .release-updates-refresh .section-head { display: flex; flex-wrap: wrap; gap: 10px; }
+  .release-updates-refresh .section-head h2 { font-size: 23px; }
+  .release-updates-refresh .section-head .muted { font-size: 12px; }
+  .release-updates-refresh .view-all { padding: 8px 12px; }
+  [data-media-theme="cinema"] .release-updates-grid { gap: 10px; }
+  [data-media-theme="cinema"] .release-update-card { min-height: 246px; padding: 10px; }
+  [data-media-theme="cinema"] .release-update-card strong { font-size: 16px; }
+  [data-media-theme="cinema"] .release-update-foot { flex-direction: column; gap: 3px; }
+}
+
+/* Watch / Listen Together launchers and their portaled room builder. */
+.watch-together-launcher[data-media-theme] {
+  border-color: rgba(var(--media-accent-rgb), .34);
+  background: linear-gradient(135deg, rgba(var(--media-accent-rgb), .16), rgba(17, 18, 20, .92));
+  color: #fff;
+}
+
+.watch-together-launcher[data-media-theme]:hover {
+  border-color: rgba(var(--media-accent-rgb), .7);
+  background: linear-gradient(135deg, rgba(var(--media-accent-rgb), .25), rgba(17, 18, 20, .95));
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .3), 0 0 24px rgba(var(--media-accent-rgb), .1);
+}
+
+.watch-together-launcher[data-media-theme]::before {
+  background: linear-gradient(90deg, transparent, rgba(var(--media-accent-rgb), .23), transparent);
+}
+
+.watch-together-launcher[data-media-theme]::after,
+.watch-builder[data-media-theme]::before {
+  background: radial-gradient(circle, rgba(var(--media-accent-rgb), .13), transparent 68%);
+}
+
+[data-media-theme] :is(.watch-together-launcher-icon, .watch-builder-mark, .watch-builder-success-icon, .party-header-mark) {
+  color: var(--media-accent);
+  background: rgba(var(--media-accent-rgb), .12);
+  box-shadow: 0 0 18px rgba(var(--media-accent-rgb), .08);
+}
+
+[data-media-theme] .watch-together-mark-front { fill: rgba(var(--media-accent-rgb), .12); }
+[data-media-theme] .watch-together-mark-live {
+  color: var(--media-accent);
+  filter: drop-shadow(0 0 5px rgba(var(--media-accent-rgb), .65));
+}
+
+[data-media-theme] .watch-together-launcher-icon i {
+  background: var(--media-accent);
+  animation: media-accent-pulse 1.8s ease-out infinite;
+}
+
+.watch-builder[data-media-theme] {
+  border-color: rgba(var(--media-accent-rgb), .24);
+  background: linear-gradient(145deg, rgba(var(--media-accent-rgb), .07), transparent 45%), #121315;
+}
+
+.watch-builder[data-media-theme] :is(.watch-builder-section-title button, .watch-builder-selected > svg, .watch-builder-profile > svg, .watch-builder-progress .is-active, .watch-builder-link, .watch-share-button) {
+  color: var(--media-accent);
+}
+
+.watch-builder[data-media-theme] :is(.watch-builder-progress .is-active i, .watch-builder-access-options button.is-active, .watch-builder-link, .watch-share-button) {
+  border-color: rgba(var(--media-accent-rgb), .4);
+  background: rgba(var(--media-accent-rgb), .1);
+  box-shadow: none;
+}
+
+.watch-builder[data-media-theme] .watch-builder-access-options button.is-active { color: var(--media-accent); }
+.watch-builder[data-media-theme] .watch-builder-feature-list i {
+  background: var(--media-accent);
+  box-shadow: 0 0 10px rgba(var(--media-accent-rgb), .25);
+}
+.watch-builder[data-media-theme] .watch-builder-searching { border-top-color: var(--media-accent); }
+
+/* Public watch rooms must keep their identity outside the landing page too. */
+.public-party-rooms[data-media-theme] {
+  border-color: rgba(var(--media-accent-rgb), .2);
+  background: linear-gradient(135deg, rgba(var(--media-accent-rgb), .09), #0b0d11 58%);
+}
+.public-party-rooms[data-media-theme]::after { background: rgba(var(--media-accent-rgb), .09); }
+.public-party-rooms[data-media-theme] :is(.public-party-rooms-head p, .public-party-room-join, .public-party-room-art) { color: var(--media-accent); }
+.public-party-rooms[data-media-theme] .public-party-room-card:hover {
+  border-color: rgba(var(--media-accent-rgb), .48);
+  background: rgba(var(--media-accent-rgb), .1);
+}
+
+/* Media transport is physical LTR in both locales. Only this toolbar changes
+   reading direction; chat, source names and room content keep their locale. */
+.party-layout { --party-tool-count: 5; }
+.party-layout.party-theme-music { --party-tool-count: 4; }
+.party-layout .party-player-stage .party-controls[dir="ltr"] {
+  direction: ltr;
+  unicode-bidi: isolate;
+  grid-template-columns: 40px minmax(0, 1fr) repeat(var(--party-tool-count), 36px);
+  border-color: rgba(var(--media-accent-rgb), .22);
+  border-radius: 14px !important;
+}
+.party-layout .party-player-stage .party-controls > button:first-child {
+  background: var(--media-accent);
+  color: var(--media-accent-ink);
+  border-radius: 50% !important;
+  justify-self: start;
+}
+.party-layout .party-player-stage .party-controls > button:disabled { opacity: .45; cursor: not-allowed; }
+.party-layout .party-player-stage .party-controls > button:not(:first-child):hover {
+  background: rgba(var(--media-accent-rgb), .13);
+  color: var(--media-accent);
+}
+.party-layout .party-controls button > small {
+  color: var(--media-accent-ink);
+  background: var(--media-accent);
+}
+
+/* Room details, queue and personal uploads: no hard-coded music accent. */
+.party-layout .party-title-details {
+  border-color: rgba(var(--media-accent-rgb), .16);
+  background: radial-gradient(circle at 75% 0, rgba(var(--media-accent-rgb), .075), transparent 40%), #101112;
+}
+.party-layout :is(.party-title-stats svg, .party-title-copy blockquote, .party-cast-card > span, .party-personal-media > header span, .party-personal-media > header span svg) {
+  color: var(--media-accent);
+}
+.party-layout .party-title-actions a:first-child,
+.party-layout .party-personal-media-toggle {
+  border-color: rgba(var(--media-accent-rgb), .32);
+  color: var(--media-accent);
+  background: rgba(var(--media-accent-rgb), .09);
+}
+.party-layout .party-personal-media {
+  border-color: rgba(var(--media-accent-rgb), .2);
+  background: linear-gradient(135deg, rgba(var(--media-accent-rgb), .07), rgba(255, 255, 255, .025) 48%, rgba(4, 5, 6, .5));
+}
+.party-layout :is(.party-personal-media-tabs button.is-active, .party-personal-dropzone) {
+  border-color: rgba(var(--media-accent-rgb), .4);
+  background: rgba(var(--media-accent-rgb), .08);
+  color: var(--media-accent);
+}
+.party-layout .party-personal-dropzone { text-align: start; }
+.party-layout .party-personal-play {
+  border-color: var(--media-accent) !important;
+  background: var(--media-accent);
+  color: var(--media-accent-ink);
+}
+.party-layout :is(.party-personal-media-toggle, .party-title-actions a, .party-queue-list button, .party-search-results button):hover {
+  border-color: var(--media-accent);
+  background: rgba(var(--media-accent-rgb), .16);
+  color: var(--media-accent);
+}
+.party-layout :is(.party-personal-field input, .party-personal-field select, .party-player-settings select, .party-media-search input):focus {
+  border-color: var(--media-accent);
+}
+.party-layout :is(.party-people input, .party-player-settings input) { accent-color: var(--media-accent); }
+
+/* Chat, captions and lounge actions inherit the same accent in fullscreen. */
+.party-layout :is(.party-chat-peek strong, .party-stage-chat-panel header svg, .party-stage-chat-log strong, .party-live-caption strong, .party-caption-transcript strong, .party-voice-copy > svg) { color: var(--media-accent); }
+.party-layout :is(.party-chat-peek > span:first-child, .party-chat form button, .party-stage-chat-panel form button, .party-live-caption-avatar, .party-voice-join) {
+  background: var(--media-accent);
+  color: var(--media-accent-ink);
+}
+.party-layout .party-stage-chat-log .is-me {
+  border-color: rgba(var(--media-accent-rgb), .22);
+  background: rgba(var(--media-accent-rgb), .08);
+}
+.party-layout :is(.party-voice-toggle > svg, .subtitle-now, .party-accessibility-live > button:not(.is-live)) {
+  border-color: rgba(var(--media-accent-rgb), .24);
+  background: rgba(var(--media-accent-rgb), .1);
+  color: var(--media-accent);
+}
+.party-layout .party-voice-panel .party-voice-ptt {
+  border-color: rgba(var(--media-accent-rgb), .32);
+  background: radial-gradient(circle, rgba(var(--media-accent-rgb), .18), rgba(255, 255, 255, .04));
+  color: var(--media-accent);
+}
+.party-layout .party-voice.is-talking .party-voice-ptt {
+  border-color: var(--media-accent);
+  background: rgba(var(--media-accent-rgb), .23);
+  box-shadow: 0 0 18px rgba(var(--media-accent-rgb), .12);
+}
+
+@keyframes media-accent-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(var(--media-accent-rgb), .38); }
+  70%, 100% { box-shadow: 0 0 0 8px rgba(var(--media-accent-rgb), 0); }
+}
+
+@media (max-width: 700px) {
+  .party-layout .party-player-stage .party-controls[dir="ltr"] {
+    grid-template-columns: minmax(36px, 1fr) repeat(var(--party-tool-count), 36px);
+    grid-template-rows: 24px 36px;
+  }
+  .party-layout .party-player-stage .party-controls > button { width: 36px; height: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-media-theme] .watch-together-launcher-icon i { animation: none; }
+}

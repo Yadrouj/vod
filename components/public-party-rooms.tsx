@@ -40,7 +40,7 @@ export function PublicPartyRooms({ mode, locale, limit = 6 }: { mode: Mode; loca
     };
   }, [limit, mode]);
 
-  return <section className={`public-party-rooms public-party-rooms-${mode}`} dir={fa ? "rtl" : "ltr"} aria-labelledby={`public-${mode}-rooms-heading`}>
+  return <section className={`public-party-rooms public-party-rooms-${mode}`} data-media-theme={listening ? "music" : "cinema"} dir={fa ? "rtl" : "ltr"} aria-labelledby={`public-${mode}-rooms-heading`}>
     <header className="public-party-rooms-head">
       <div><p><Radio size={14} /> {listening ? "LISTEN TOGETHER" : "WATCH TOGETHER"}</p><h2 id={`public-${mode}-rooms-heading`}>{title}</h2><span>{subtitle}</span></div>
       <WatchTogetherLauncher locale={locale} placement="inline" experience={listening ? "listen" : "watch"} label={listening ? (fa ? "ساخت اتاق شنیدن" : "Start listening room") : (fa ? "ساخت اتاق تماشا" : "Start watch room")} />

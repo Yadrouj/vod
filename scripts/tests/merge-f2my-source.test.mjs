@@ -46,6 +46,33 @@ test("merges F2MY links without removing links from other providers", async () =
     assert.ok(catalog.items[0].links.some((link) => link.url === "https://new.test/Film/Example.1080p.mkv"));
     assert.equal(report.newLinks, 1);
   } finally {
+    assert.ok(path.resolve(directory).startsWith(path.join(path.resolve(os.tmpdir()), "sarvnema-f2my-")));
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("resolving a legacy F2MY profile cannot overwrite an existing canonical IMDb title", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "sarvnema-f2my-"));
+  try {
+    const existingPath = path.join(directory, "catalog.json");
+    const sourcePath = path.join(directory, "source.json");
+    const reportPath = path.join(directory, "report.json");
+    const page = "https://www.f2my.top/series/lanterns/";
+    const link = { url: "https://files.test/Lanterns.S01E04.720p.mkv", sourceProvider: "f2my", quality: "720p", season: 1, episode: 4 };
+    const canonical = { id: "tt26545992", imdbCode: "tt26545992", title: "Lanterns", links: [{ url: "https://movies.test/S01E01.mkv" }] };
+    const alias = { id: "f2my-lanterns", imdbCode: "f2my-lanterns", title: "Lanterns", source: "f2my", f2myPageUrl: page, links: [] };
+    await writeFile(sourcePath, JSON.stringify({ items: [{ ...canonical, f2myPageUrl: page, links: [link] }] }));
+    // Both catalog orders must behave identically.
+    for (const items of [[alias, canonical], [canonical, alias]]) {
+      await writeFile(existingPath, JSON.stringify({ items }));
+      await execFileAsync(process.execPath, ["scripts/merge-f2my-source.mjs", existingPath, sourcePath, existingPath, reportPath]);
+      const merged = JSON.parse(await readFile(existingPath, "utf8")).items;
+      assert.equal(new Set(merged.map((item) => item.imdbCode)).size, 2);
+      assert.equal(merged.find((item) => item.imdbCode === canonical.imdbCode).links.length, 2);
+      assert.ok(merged.every((item) => item.links.some((entry) => entry.episode === 4)));
+    }
+  } finally {
+    assert.ok(path.resolve(directory).startsWith(path.join(path.resolve(os.tmpdir()), "sarvnema-f2my-")));
     await rm(directory, { recursive: true, force: true });
   }
 });

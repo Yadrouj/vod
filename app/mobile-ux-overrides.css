@@ -1067,8 +1067,8 @@ html[dir="rtl"] .suggest-result-arrow {
     border-radius: 22px 22px 0 0 !important;
     background: linear-gradient(180deg,#171719,#0c0c0e 72%) !important;
     box-shadow: 0 -28px 90px rgba(0,0,0,.72) !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
     pointer-events: none !important;
     transform: translateY(calc(100dvh + 110%)) !important;
     transition: transform 220ms cubic-bezier(.2,.8,.2,1) !important;
@@ -1076,7 +1076,7 @@ html[dir="rtl"] .suggest-result-arrow {
 
   .gradient-menu .mega-menu-shell.is-open .mega-mobile-backdrop { opacity: 1; pointer-events: auto; }
   .gradient-menu .mega-menu-shell.is-open .mega-panel,
-  html[dir="rtl"] .gradient-menu .mega-menu-shell.is-open .mega-panel { pointer-events: auto !important; transform: translateY(0) !important; }
+  html[dir="rtl"] .gradient-menu .mega-menu-shell.is-open .mega-panel { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; transform: translateY(0) !important; }
   .gradient-menu .mega-menu-shell:not(.is-open):hover .mega-panel,
   .gradient-menu .mega-menu-shell:not(.is-open):focus-within .mega-panel,
   html[dir="rtl"] .gradient-menu .mega-menu-shell:not(.is-open):hover .mega-panel,
@@ -1269,28 +1269,22 @@ html[dir="rtl"] .suggest-result-arrow {
   }
 
   .release-updates-grid {
-    display: flex !important;
-    grid-template-columns: none !important;
-    gap: 10px !important;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
     width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 2px 1px 8px;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
+    min-width: 0;
+    padding: 0;
   }
 
-  .release-updates-grid::-webkit-scrollbar { display: none; }
   .release-update-card {
-    flex: 0 0 min(78vw, 310px);
-    min-height: 208px !important;
+    min-width: 0;
+    min-height: 208px;
     padding: 14px;
-    scroll-snap-align: start;
   }
 
   .release-update-card strong {
-    font-size: 22px !important;
+    font-size: 18px;
     line-height: 1.02;
   }
 

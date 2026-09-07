@@ -43,6 +43,12 @@ const archiveConcurrency = Math.min(6, Math.max(1, Number(valueArg("--archive-co
 const staleHours = Math.max(1, Number(valueArg("--stale-hours", process.env.F2MY_STALE_HOURS || "168")) || 168);
 const freshPages = Math.max(1, Number(valueArg("--fresh-pages", process.env.F2MY_FRESH_PAGES || "3")) || 3);
 const archivePageLimit = Math.max(0, Number(valueArg("--archive-page-limit", "0")) || 0);
+// A targeted refresh must not wait behind the movie archive (e.g. a new episode).
+const pageUrls = process.argv.slice(2).filter((arg) => arg.startsWith("--page-url=")).map((arg) => {
+  const url = new URL(arg.slice("--page-url=".length));
+  if (url.protocol !== "https:" || !["f2my.top", "www.f2my.top"].includes(url.hostname)) throw new Error("--page-url must be an HTTPS F2MY page");
+  return url.href;
+});
 const timeoutMs = Math.max(5_000, Number(process.env.F2MY_FETCH_TIMEOUT_MS || 30_000));
 const staleMs = staleHours * 60 * 60 * 1_000;
 
@@ -334,11 +340,14 @@ function imdbSuggestionScore(item, candidate) {
 }
 
 async function resolveMissingImdb(item, cache) {
-  if (skipImdbLookup || /^tt\d+$/i.test(item.imdbCode || "")) return item;
+  if (/^tt\d+$/i.test(item.imdbCode || "")) return item;
   cache.imdbSuggestions ??= {};
   const key = `${item.type}:${normalizeTitle(item.title)}:${item.year || ""}`;
   let candidate = cache.imdbSuggestions[key];
   if (!candidate) {
+    // Daily runs skip network lookup, not a previously verified identity.
+    // Forgetting cached matches recreated synthetic duplicate profiles.
+    if (skipImdbLookup) return item;
     try {
       const payload = await fetchJson(`https://v3.sg.media-imdb.com/suggestion/x/${encodeURIComponent(normalizeTitle(item.title).replace(/\s+/g, "_"))}.json`);
       candidate = (payload?.d || [])
@@ -428,8 +437,11 @@ async function main() {
   log(`Starting ${full ? "full" : "incremental"} F2MY movie + series crawl`);
   const cache = await readJson(CACHE_FILE, { version: 1, updatedAt: null, entries: {} });
   cache.entries ??= {};
-  const [movies, series] = await Promise.all([discoverArchive("movie"), discoverArchive("series")]);
-  const entries = [...movies, ...series];
+  const [movies, series] = pageUrls.length ? [[], []] : await Promise.all([discoverArchive("movie"), discoverArchive("series")]);
+  // Interleave the catalogues so a bounded daily run cannot starve series.
+  const entries = pageUrls.length
+    ? pageUrls.map((link) => ({ link, slug: new URL(link).pathname.split("/").filter(Boolean).at(-1), type: link.includes("/series/") ? "series" : "movie", archiveIndex: 1 }))
+    : Array.from({ length: Math.max(movies.length, series.length) }, (_, index) => [movies[index], series[index]].filter(Boolean)).flat();
   status.totals.discovered = entries.length;
   const targets = entries.filter((entry) => needsFetch(entry, cache.entries[entry.link]));
   const selected = limit ? targets.slice(0, limit) : targets;

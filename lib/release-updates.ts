@@ -4,6 +4,7 @@ import type { VodCard } from "./types";
 
 export type ReleaseAvailability = "available" | "coming-soon";
 export type ReleaseKind = "film" | "series" | "episode";
+export type ReleaseChangeType = "new-title" | "new-episode" | "quality-added" | "source-added" | "links-refreshed" | "coming-soon";
 
 export type ReleaseUpdate = {
   id: string;
@@ -24,6 +25,8 @@ export type ReleaseUpdate = {
   qualities: string[];
   linksCount: number;
   reason: string;
+  changeType?: ReleaseChangeType;
+  addedQualities?: string[];
 };
 
 export type ReleaseUpdatesPayload = {
@@ -69,13 +72,18 @@ export function selectFreshReleaseUpdates(items: ReleaseUpdate[], limit = 80, no
   const seen = new Set<string>();
 
   return [...items]
+    .sort((left, right) => Number(right.status === "available") - Number(left.status === "available") || Date.parse(right.eventAt) - Date.parse(left.eventAt))
     .filter((item) => {
       const eventTime = Date.parse(item.eventAt);
-      if (!Number.isFinite(eventTime) || eventTime < recentEventCutoff) return false;
+      if (!Number.isFinite(eventTime) || eventTime < recentEventCutoff || eventTime > now.getTime()) return false;
+      if (item.status === "available" && !item.linksCount) return false;
+      // A URL/token refresh is maintenance, not new content. Untyped legacy
+      // events still need release-date evidence to avoid resurfacing old seeds.
+      if (releaseChangeType(item) === "links-refreshed") return false;
       const releaseTime = Date.parse(item.releaseDate ?? "");
       const isCurrentRelease = (item.year ?? 0) >= currentYear
         || (Number.isFinite(releaseTime) && releaseTime >= recentReleaseCutoff);
-      if (item.kind !== "episode" && !isCurrentRelease) return false;
+      if (!item.changeType && item.kind !== "episode" && !isCurrentRelease) return false;
       const key = `${item.imdbCode ?? item.baseTitle}:${item.season ?? 0}:${item.episode ?? 0}`;
       if (seen.has(key)) return false;
       seen.add(key);
@@ -83,6 +91,15 @@ export function selectFreshReleaseUpdates(items: ReleaseUpdate[], limit = 80, no
     })
     .sort((left, right) => Date.parse(right.eventAt) - Date.parse(left.eventAt))
     .slice(0, limit);
+}
+
+export function releaseChangeType(item: ReleaseUpdate): ReleaseChangeType {
+  if (item.status === "coming-soon") return "coming-soon";
+  if (item.changeType) return item.changeType;
+  if (item.kind === "episode") return "new-episode";
+  if (item.reason === "catalog-fresh" || /new title found|IMDb discovery is already available/i.test(item.reason)) return "new-title";
+  // Old events did not distinguish a new quality from a changed URL.
+  return "links-refreshed";
 }
 
 export function releaseUpdatesFromCatalog(items: VodCard[], limit = 80, now = new Date()): ReleaseUpdate[] {

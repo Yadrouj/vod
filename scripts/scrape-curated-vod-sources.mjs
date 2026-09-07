@@ -178,6 +178,9 @@ async function fetchCollection({ seed, apiRoot, collection, taxonomy, sourceId }
   const endpoint = new URL(`wp/v2/${collection === "post" ? "posts" : collection}`, root);
   endpoint.searchParams.set("per_page", "100");
   endpoint.searchParams.set("_embed", "1");
+  // Episode additions update existing posts; creation-date order misses them.
+  endpoint.searchParams.set("orderby", "modified");
+  endpoint.searchParams.set("order", "desc");
   if (taxonomy && sourceId) endpoint.searchParams.set(taxonomy, sourceId);
   const first = await fetchJsonWithHeaders(endpoint.toString());
   if (!first || !Array.isArray(first.value)) return [];
@@ -196,11 +199,13 @@ async function fetchCollection({ seed, apiRoot, collection, taxonomy, sourceId }
   stats.collections += 1;
   stats.restPages += pageCount;
   stats.postsReceived += posts.length;
+  const previous = stats.sourceBreakdown[seed.id];
   stats.sourceBreakdown[seed.id] = {
     provider: seed.provider,
-    collection,
-    totalPosts: Number(first.headers.get("x-wp-total") ?? posts.length),
-    pagesRead: pageCount,
+    collections: [...(previous?.collections ?? []), collection],
+    totalPosts: (previous?.totalPosts ?? 0) + Number(first.headers.get("x-wp-total") ?? posts.length),
+    postsRead: (previous?.postsRead ?? 0) + posts.length,
+    pagesRead: (previous?.pagesRead ?? 0) + pageCount,
   };
   console.log(`[curated-vod] ${seed.id}: ${posts.length}/${Number(first.headers.get("x-wp-total") ?? posts.length)} ${collection} posts`);
   return posts;

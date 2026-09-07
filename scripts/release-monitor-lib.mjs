@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 const YEAR = /^\d{4}$/;
 
 export function normalizeReleaseTitle(value) {
@@ -73,11 +74,36 @@ export function summarizeCatalogItem(item) {
     posterUrl: item?.posterUrl ?? item?.backdropUrl ?? null,
     backdropUrl: item?.backdropUrl ?? item?.posterUrl ?? null,
     linksCount,
+    linkKeys: (item?.links ?? []).map((link) => createHash("sha256").update(String(link.sourceOriginalUrl || link.url || "")).digest("hex").slice(0, 32)),
     qualities,
     sources: Array.from(sources),
     latestEpisode: episode,
     fingerprint: makeSourceFingerprint(item),
   };
+}
+
+// Historical imports can contain more than one record for the same title ID.
+// Comparing each row to the last row's state creates fake updates every run.
+// Union their links and metadata before comparing; never sum duplicate URLs.
+export function combineCatalogSummaries(items) {
+  const combined = new Map();
+  for (const item of items) {
+    const previous = combined.get(item.id);
+    if (!previous) { combined.set(item.id, item); continue; }
+    const linkKeys = [...new Set([...(previous.linkKeys ?? []), ...(item.linkKeys ?? [])])].sort();
+    const episode = latestEpisode([previous.latestEpisode, item.latestEpisode]);
+    combined.set(item.id, {
+      ...previous,
+      linksCount: linkKeys.length || Math.max(previous.linksCount, item.linksCount),
+      linkKeys,
+      fingerprint: `combined:${hash(linkKeys.join("|"))}`,
+      qualities: [...new Set([...previous.qualities, ...item.qualities])].sort(),
+      sources: [...new Set([...previous.sources, ...item.sources])].sort(),
+      latestEpisode: episode,
+      combinedSources: true,
+    });
+  }
+  return [...combined.values()];
 }
 
 export function normalizeImdbCandidate(value, source = "IMDb") {
@@ -122,8 +148,7 @@ export function findCatalogMatch(candidate, catalogItems) {
 }
 
 function availableEvent(item, eventAt, reason, previous, discoveryReleaseDate = null) {
-  const episodeChanged = item.latestEpisode && (
-    !previous?.latestEpisode ||
+  const episodeChanged = previous?.latestEpisode && item.latestEpisode && (
     item.latestEpisode.season > previous.latestEpisode.season ||
     (item.latestEpisode.season === previous.latestEpisode.season && item.latestEpisode.episode > previous.latestEpisode.episode)
   );
@@ -131,6 +156,11 @@ function availableEvent(item, eventAt, reason, previous, discoveryReleaseDate = 
   const episodeLabel = episodeChanged
     ? ` · S${String(item.latestEpisode.season).padStart(2, "0")}E${String(item.latestEpisode.episode).padStart(2, "0")}`
     : "";
+  const addedQualities = previous?.qualities ? item.qualities.filter((quality) => !previous.qualities.includes(quality)) : [];
+  const changeType = episodeChanged ? "new-episode"
+    : !previous || !previous.linksCount ? "new-title"
+      : addedQualities.length ? "quality-added"
+        : item.linksCount > previous.linksCount ? "source-added" : "links-refreshed";
   return {
     id: `available-${item.imdbCode || item.id}-${item.fingerprint}`,
     eventAt,
@@ -150,6 +180,8 @@ function availableEvent(item, eventAt, reason, previous, discoveryReleaseDate = 
     qualities: item.qualities,
     linksCount: item.linksCount,
     reason,
+    changeType,
+    addedQualities,
   };
 }
 
@@ -173,6 +205,7 @@ function comingSoonEvent(candidate, eventAt, existing) {
     qualities: [],
     linksCount: 0,
     reason: "IMDb release found — source scan is queued.",
+    changeType: "coming-soon",
   };
 }
 
@@ -182,6 +215,7 @@ function isWithinRetention(event, now, retentionDays) {
 }
 
 export function buildReleaseMonitorResult({ catalogItems, previousState, imdbCandidates, now = new Date(), retentionDays = 14 }) {
+  catalogItems = combineCatalogSummaries(catalogItems);
   const previousItems = new Map(Object.entries(previousState?.items ?? {}));
   const previousUpdates = new Map((previousState?.updates ?? []).map((item) => [item.id, item]));
   const previouslyTrackedImdb = new Set(previousState?.trackedImdbCodes ?? []);
@@ -193,23 +227,32 @@ export function buildReleaseMonitorResult({ catalogItems, previousState, imdbCan
 
   if (!bootstrap) {
     for (const item of catalogItems) {
+      if (!item.linksCount) continue;
       const previous = previousItems.get(item.id);
+      // Seed the unified state on the first run after this migration rather
+      // than announcing legacy duplicates as newly discovered source files.
+      if (item.combinedSources && previous && !previous.combinedSources) continue;
       if (!previous) {
         fresh.push(availableEvent(item, eventAt, "New title found in a configured source.", null));
         continue;
       }
-      if (previous.fingerprint !== item.fingerprint) {
-        const episodeChanged = item.latestEpisode && (
-          !previous.latestEpisode ||
+      const qualityAdded = previous.qualities && item.qualities.some((quality) => !previous.qualities.includes(quality));
+      if (qualityAdded || previous.fingerprint !== item.fingerprint || previous.latestEpisode?.episode !== item.latestEpisode?.episode || previous.latestEpisode?.season !== item.latestEpisode?.season || previous.linksCount !== item.linksCount) {
+        const episodeChanged = previous.latestEpisode && item.latestEpisode && (
           item.latestEpisode.season > previous.latestEpisode.season ||
           (item.latestEpisode.season === previous.latestEpisode.season && item.latestEpisode.episode > previous.latestEpisode.episode)
         );
-        fresh.push(availableEvent(
+        // Removing dead links is maintenance, not a newly available release.
+        if (item.linksCount < previous.linksCount && !episodeChanged && !qualityAdded) continue;
+        const event = availableEvent(
           item,
           eventAt,
           episodeChanged ? "A new episode and its available qualities were found." : "New files or qualities were found in a configured source.",
           previous,
-        ));
+        );
+        // Keep maintenance in the state only. Otherwise 80 URL rotations can
+        // evict every real episode update from the bounded public feed.
+        if (event.changeType !== "links-refreshed") fresh.push(event);
       }
     }
   }
@@ -239,11 +282,19 @@ export function buildReleaseMonitorResult({ catalogItems, previousState, imdbCan
     // During bootstrap, do not resurrect any prior generated list.
     if (bootstrap) return false;
     const key = `${event.status}-${event.imdbCode || event.baseTitle}-${event.season ?? ""}-${event.episode ?? ""}`;
-    return !currentEvents.has(key) && isWithinRetention(event, now.getTime(), retentionDays) && Date.parse(event.eventAt) >= cutoff;
+    const nowAvailable = event.status === "coming-soon" && catalogItems.some((item) => item.imdbCode === event.imdbCode && item.linksCount > 0);
+    return !nowAvailable && event.changeType !== "links-refreshed" && !currentEvents.has(key) && isWithinRetention(event, now.getTime(), retentionDays) && Date.parse(event.eventAt) >= cutoff;
   });
   const allUpdates = [...currentEvents.values(), ...retained]
-    .sort((left, right) => Date.parse(right.eventAt) - Date.parse(left.eventAt))
-    .slice(0, 80);
+    .sort((left, right) => {
+      const rank = { "new-episode": 0, "new-title": 1, "quality-added": 2, "source-added": 3, "coming-soon": 4 };
+      return Date.parse(right.eventAt) - Date.parse(left.eventAt)
+        || (rank[left.changeType] ?? 5) - (rank[right.changeType] ?? 5)
+        || (right.year ?? 0) - (left.year ?? 0)
+        || Number(/^tt\d+$/.test(right.imdbCode ?? "")) - Number(/^tt\d+$/.test(left.imdbCode ?? ""))
+        || String(left.baseTitle).localeCompare(String(right.baseTitle));
+    })
+    .slice(0, 200);
   const updates = bootstrap
     ? allUpdates.filter((event) => event.status !== "available" || Boolean(event.releaseDate))
     : allUpdates;
@@ -253,6 +304,8 @@ export function buildReleaseMonitorResult({ catalogItems, previousState, imdbCan
     fingerprint: item.fingerprint,
     latestEpisode: item.latestEpisode,
     linksCount: item.linksCount,
+    qualities: item.qualities,
+    combinedSources: item.combinedSources ?? false,
   }]));
   return {
     bootstrap,

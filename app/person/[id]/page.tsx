@@ -23,7 +23,7 @@ export default async function PersonPage({ params }: Props) {
   );
 
   return (
-    <main className="shell">
+    <main className="shell" data-media-theme="cinema">
       <section className="person-hero person-page-hero">
         <div className="wrap">
           <header className="topbar person-topbar">

@@ -13,6 +13,7 @@ import { SITE_URL } from "@/lib/seo";
 import "./globals.css";
 import "./watch-together-overrides.css";
 import "./mobile-ux-overrides.css";
+import "./media-theme.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
