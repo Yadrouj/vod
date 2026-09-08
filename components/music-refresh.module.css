@@ -30,11 +30,16 @@
 .startPlayer button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 20px; border: 0; border-radius: 24px !important; background: #a5edc2; color: #102117; cursor: pointer; }
 .dock { position: fixed; z-index: 500; left: 16px; bottom: max(16px, env(safe-area-inset-bottom)); width: min(660px, calc(100vw - 32px)); max-height: 80svh; overflow: auto; color: #f0fff5; background: #101b15f5; border: 1px solid #a5edc260; border-radius: 22px !important; box-shadow: 0 12px 48px #0009; padding: 10px; scrollbar-width: thin; scrollbar-color: #759f83 #142019; }
 .dock > header { display: flex; align-items: center; gap: 5px; padding: 0 5px 6px; font-size: 12px; }
+.dock { margin: 0; top: auto; right: auto; max-width: none; }
 .dock > header span { flex: 1; }
 .dock > header a { color: #a5edc2; }
 .dock > header button { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50% !important; background: #243a2c; color: #d4ffe3; cursor: pointer; }
 .dock :global(.music-player) { margin: 0; padding: 12px; background: transparent; border: 0; }
 .dock :global(.music-player-controls), .dock :global(.music-player-transport), .dock :global(.music-progress-wrap) { direction: ltr; }
+.dock :global(.music-progress-wrap)::after { background: #a5edc2; pointer-events: none; }
+.dock :global(.music-progress-buffer) { background: #a5edc255; pointer-events: none; }
+.dock :global(.music-volume input) { accent-color: #a5edc2; }
+.dock :global(.music-player-now > span), .dock :global(.music-download) { color: #a5edc2; border-color: #a5edc240; }
 .compact { width: min(350px, calc(100vw - 32px)); padding: 8px; }
 .compact :global(.music-player) { display: grid; grid-template-columns: minmax(0, 1fr) 48px; gap: 6px; padding: 0; }
 .compact :global(.music-player-shell) { display: flex; gap: 8px; padding: 0; min-width: 0; }
@@ -72,3 +77,47 @@
  .dock :global(.music-player-controls) { flex-wrap: wrap; }
 }
 @media(prefers-reduced-motion: reduce) { .page *, .dock * { animation: none !important; transition: none !important; } }
+.dock :global(.music-lyrics-tools) { display: flex; gap: 12px; flex-wrap: wrap; padding: 12px; }
+.dock :global(.music-lyrics-tools label), .dock :global(.music-lyrics-tools a) { display: flex; align-items: center; gap: 6px; color: #b7f1cd; min-height: 40px; font-size: 12px; cursor: pointer; }
+.dock :global(.music-lyrics-tools input) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.dock :global(.music-lyrics-tools label:focus-within) { outline: 2px solid #a5edc2; }
+.dock :global(.music-lyrics-note) { font-size: 11px; line-height: 1.8; color: #a9bdae; padding: 0 12px; }
+.dock :global(.music-lyrics-lines) { position: relative; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; max-height: 38svh; }
+.dock :global(.music-lyrics-lines button) { width: 100%; text-align: inherit; font: inherit; color: inherit; border: 0; background: transparent; padding: 10px 0; cursor: pointer; }
+.immersive { inset: 0; width: 100%; height: 100dvh; max-height: none; padding: max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)); border-radius: 0 !important; background: radial-gradient(ellipse at 90% 0, #284835, transparent 65%), #0b1410; overflow-x: hidden; }
+.immersive::backdrop { background: #080d0b; }
+.immersive > header { height: 48px; max-width: 1500px; margin: 0 auto 20px; }
+.immersive > header button { width: 44px; height: 44px; }
+.immersive :global(.music-player) { display: grid; grid-template-columns: minmax(220px, .85fr) minmax(260px, 1.4fr) minmax(220px, .85fr); grid-template-areas: "now lyrics queue" "transport lyrics queue" "controls controls controls"; align-content: center; gap: 24px; max-width: 1500px; margin: auto; min-height: calc(100dvh - 130px); }
+.immersive :global(.music-player-shell) { grid-area: now; display: flex; flex-wrap: wrap; justify-content: center; text-align: center; gap: 16px; }
+.immersive :global(.music-player-art) { width: min(100%, 320px); height: auto; aspect-ratio: 1; border-radius: 24px !important; animation: none; background-size: cover; background-position: center; box-shadow: 0 20px 60px #0008; }
+.immersive :global(.music-player-now) { width: 100%; }
+.immersive :global(.music-player-now strong) { font-size: clamp(20px, 2.3vw, 34px); line-height: 1.5; }
+.immersive :global(.music-lyrics-toggle) { display: none; }
+.immersive :global(.music-player-transport) { grid-area: transport; align-self: start; }
+.immersive :global(.music-player-controls) { grid-area: controls; position: sticky; bottom: 0; background: #0e1913; padding: 18px; border-radius: 18px !important; }
+.immersive :global(.music-lyrics-panel) { grid-area: lyrics; margin: 0; min-width: 0; max-height: none; align-self: start; display: flex; flex-direction: column; background: #0b140d66; border: 1px solid #a5edc220; border-radius: 22px !important; }
+.immersive :global(.music-lyrics-lines) { display: block; min-height: 240px; max-height: 52svh; padding: 12px 24px; flex: 0 1 auto; }
+.immersive :global(.music-lyrics-lines li) { font-size: clamp(20px, 2.3vw, 32px); line-height: 1.8; opacity: .55; transition: opacity .2s, color .2s; }
+.immersive :global(.music-lyrics-lines li.is-active) { opacity: 1; color: #bafbd2; }
+.immersive :global(.music-player-queue) { grid-area: queue; min-width: 0; align-self: stretch; margin: 0; border: 1px solid #a5edc21c; border-radius: 20px !important; overflow: hidden; }
+.immersive :global(.music-player-queue ol) { max-height: 60svh; overflow: auto; scrollbar-width: thin; }
+.immersive :global(.music-player-queue li button) { min-width: 0; }
+.immersive :global(.music-player-queue li strong) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.immersive :global(.music-player-source-issue) { grid-column: 1/-1; }
+.immersive :global(.music-player-video-stage) { grid-column: 1/-1; max-height: 40svh; }
+@media(max-width: 1000px) {
+ .immersive :global(.music-player) { grid-template-columns: minmax(0,1fr) minmax(0,1.4fr); grid-template-areas: "now lyrics" "transport lyrics" "controls controls" "queue queue"; }
+ .immersive :global(.music-player-queue ol) { max-height: 280px; }
+}
+@media(max-width: 600px) {
+ .immersive { left: 0; bottom: 0; width: 100%; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
+ .immersive :global(.music-player) { grid-template-columns: minmax(0,1fr); grid-template-areas: "now" "transport" "controls" "lyrics" "queue"; gap: 16px; padding: 0; }
+ .immersive :global(.music-player-art) { width: 100px; flex: 0 0 100px; }
+ .immersive :global(.music-player-shell) { text-align: right; justify-content: start; }
+ .immersive :global(.music-player-now) { flex: 1; width: auto; min-width: 120px; }
+ .immersive :global(.music-player-now strong) { font-size: 19px; }
+ .immersive :global(.music-player-controls) { position: relative; padding: 12px; }
+ .immersive :global(.music-lyrics-lines) { max-height: 45svh; padding: 10px 18px; }
+ .immersive :global(.music-player-shell > button), .immersive :global(.music-download) { display: none; }
+}

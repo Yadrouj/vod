@@ -36,9 +36,10 @@ export function assessCapacity(ready, loadAverage, limits = {}) {
 export const DAILY_JOBS = [
   { id: "news", script: "scripts/scrape-vod-news.mjs", minutes: 5 },
   { id: "imdb-trending", script: "scripts/refresh-imdb-trending.mjs", minutes: 8 },
-  { id: "video", script: "scripts/sync-vod-catalog.mjs", minutes: 45 },
+  { id: "video", script: "scripts/sync-vod-catalog.mjs", minutes: 40 },
   { id: "f2my", script: "scripts/scrape-f2my-catalog.mjs", minutes: 25, args: ["--skip-imdb-lookup", "--concurrency=1", "--archive-concurrency=1", "--limit=80"] },
   { id: "curated-video", script: "scripts/refresh-curated-vod.mjs", minutes: 15 },
+  { id: "public-archives", script: "scripts/refresh-public-archives.mjs", minutes: 8 },
   { id: "releases", script: "scripts/release-monitor.mjs", minutes: 5 },
-  { id: "music", script: "scripts/daily-music-refresh.mjs", minutes: 75 },
+  { id: "music", script: "scripts/daily-music-refresh.mjs", minutes: 70 },
 ];

@@ -22,6 +22,7 @@ import { sizedImageUrl } from "@/lib/image-url";
 import { bestDownloadLink, detailHeroVideo, titleDownloadLinks } from "@/lib/title-presentation";
 import type { VodItem } from "@/lib/types";
 import styles from "./detail.module.css";
+import { validPublisherPlayer } from "@/lib/publisher-player";
 
 type Props = { params: Promise<{ id: string }> };
 export const revalidate = 300;
@@ -47,14 +48,15 @@ export default async function DetailPage({ params }: Props) {
   const heroVideo = detailHeroVideo(item);
   const oldMedia = getOldIranianFilmMedia(item.id) ?? getOldIranianFilmMedia(item.imdbCode);
   const youtube = oldMedia?.youtubeVideos[0] ?? item.youtubeVideos?.[0];
-  const canPlay = playable.length > 0 || Boolean(youtube);
+  const publisher = validPublisherPlayer(item.publisherPlayer);
+  const canPlay = playable.length > 0 || Boolean(youtube) || Boolean(publisher);
   const watchHref = `/watch/${item.imdbCode}`;
   const heroBackdrop = item.backdropUrl ?? oldMedia?.backdropUrl ?? item.posterUrl;
   const posterUrl = item.posterUrl ?? oldMedia?.posterUrl;
   const title = fa ? item.persianTitle || item.title : item.title;
   const overview = fa ? item.persianOverview || item.overview : item.overview;
   const genres = fa && item.persianGenres?.length ? item.persianGenres : item.genres ?? [];
-  const playHint = fa ? isSeries ? "انتخاب فصل، قسمت و کیفیت" : "انتخاب کیفیت و شروع تماشا" : isSeries ? "Choose season, episode & quality" : "Choose quality & start watching";
+  const playHint = publisher ? (fa ? "پخش در پلیر رسمی ناشر" : "Official publisher player") : fa ? isSeries ? "انتخاب فصل، قسمت و کیفیت" : "انتخاب کیفیت و شروع تماشا" : isSeries ? "Choose season, episode & quality" : "Choose quality & start watching";
 
   return (
     <div className={`shell ${styles.page}`} data-media-theme="cinema" data-mobile-title="true" dir={fa ? "rtl" : "ltr"}>

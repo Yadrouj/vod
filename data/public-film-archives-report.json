@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-09-08T11:02:28.215Z",
+  "reviewed": 7,
+  "matched": 7,
+  "failures": [],
+  "items": [
+    {
+      "id": "nfb-hypersensitive",
+      "title": "Hypersensitive",
+      "sourceUrl": "https://www.nfb.ca/film/hypersensitive/"
+    },
+    {
+      "id": "nfb-my-knitting-circle",
+      "title": "My Knitting Circle",
+      "sourceUrl": "https://www.nfb.ca/film/my-knitting-circle/"
+    },
+    {
+      "id": "tt36956820",
+      "title": "The Girl Who Cried Pearls",
+      "sourceUrl": "https://www.nfb.ca/film/the-girl-who-cried-pearls/"
+    },
+    {
+      "id": "nfb-what-is-democracy-2018",
+      "title": "What is Democracy?",
+      "sourceUrl": "https://www.nfb.ca/film/what-is-democracy-2018/"
+    },
+    {
+      "id": "nfb-this-is-not-a-movie",
+      "title": "This is Not a Movie",
+      "sourceUrl": "https://www.nfb.ca/film/this-is-not-a-movie/"
+    },
+    {
+      "id": "kofa-the-coachman-1961",
+      "title": "The Coachman",
+      "sourceUrl": "https://www.koreafilm.or.kr/kofa/news/news/BC_0000059393"
+    },
+    {
+      "id": "kofa-uijeok-iljimae-1961",
+      "title": "Uijeok Iljimae",
+      "sourceUrl": "https://www.koreafilm.or.kr/kofa/news/news/BC_0000059393"
+    }
+  ]
+}

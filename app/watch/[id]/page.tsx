@@ -18,6 +18,8 @@ import { absoluteUrl, titleMetadata, videoJsonLd } from "@/lib/seo";
 import { watchPartyDetails } from "@/lib/watch-party-media";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import styles from "./watch.module.css";
+import { validPublisherPlayer } from "@/lib/publisher-player";
+import { PublisherFilmPlayer } from "@/components/publisher-film-player";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -54,6 +56,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
   const links = playableLinks(item.links, { isSeries, title: item.title, includeAlternateFiles: true });
   const oldFilmMedia = getOldIranianFilmMedia(item.id) ?? getOldIranianFilmMedia(item.imdbCode);
   const youtubeSource = !links.length ? oldFilmMedia?.youtubeVideos[0] ?? item.youtubeVideos?.[0] ?? null : null;
+  const publisher = !links.length && !youtubeSource ? validPublisherPlayer(item.publisherPlayer) : null;
   const partySources = links.map((link, index) => ({
     url: link.url,
     label: playbackSourceLabel(link, index, isSeries),
@@ -85,7 +88,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
       </header>
       <div className={styles.layout}>
         <section className={styles.main}>
-          {youtubeSource ? <YouTubePlayer source={youtubeSource} title={displayTitle} /> : <VodPlayer itemId={item.imdbCode} initialSource={typeof resume === "string" ? resume : undefined} title={item.title} posterUrl={heroImage} links={links} isSeries={isSeries} locale={locale} />}
+          {publisher ? <PublisherFilmPlayer source={publisher} title={displayTitle} poster={heroImage} /> : youtubeSource ? <YouTubePlayer source={youtubeSource} title={displayTitle} /> : <VodPlayer itemId={item.imdbCode} initialSource={typeof resume === "string" ? resume : undefined} title={item.title} posterUrl={heroImage} links={links} isSeries={isSeries} locale={locale} />}
           <div className={styles.titleRow}>
             <div><h1>{displayTitle}</h1><p>{item.year} · {isSeries ? t.common.series : t.common.films}{item.imdbRating ? ` · IMDb ${item.imdbRating.toFixed(1)}` : ""}</p></div>
             {partyMedia ? <WatchTogetherInvite locale={locale} placement="player" label={locale === "fa" ? "تماشای همزمان" : "Watch together"} media={partyMedia} /> : <WatchTogetherLauncher placement="inline" locale={locale} />}

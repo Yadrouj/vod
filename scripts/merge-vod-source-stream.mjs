@@ -1,5 +1,5 @@
 import { createWriteStream } from "node:fs";
-import { mkdir, readFile, rename, rm } from "node:fs/promises";
+import { mkdir, readFile, rename } from "node:fs/promises";
 import { once } from "node:events";
 import { createHash } from "node:crypto";
 import path from "node:path";
@@ -91,7 +91,6 @@ async function main() {
     output.once("error", reject);
     output.end(resolve);
   });
-  await rm(OUT_FILE, { force: true });
   await rename(temporary, OUT_FILE);
 
   const report = {

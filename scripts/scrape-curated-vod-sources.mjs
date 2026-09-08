@@ -27,6 +27,7 @@ const REQUEST_GAP_MS = numberEnv("CURATED_VOD_REQUEST_GAP_MS", 350, 0, 3_000);
 const RETRIES = numberEnv("CURATED_VOD_RETRIES", 4, 1, 8);
 const TIMEOUT_MS = numberEnv("CURATED_VOD_TIMEOUT_MS", 60_000, 5_000, 120_000);
 const PAGE_LIMIT = numberEnv("CURATED_VOD_PAGE_LIMIT", 0, 0, 10_000);
+const PAGE_SIZE = numberEnv("CURATED_VOD_PAGE_SIZE", 25, 1, 100);
 const DETAIL_LIMIT = numberEnv("CURATED_VOD_DETAIL_LIMIT", 0, 0, 100_000);
 const FORCE = process.env.CURATED_VOD_FORCE === "1";
 const USER_AGENT = "SarvNemaCatalogBot/1.0 (+https://sarvnema.ir; metadata sync)";
@@ -48,6 +49,8 @@ const ALL_SEEDS = [
   { id: "moviesho-series", url: "https://www.moviesho.com/series/", provider: "moviesho", type: "series", restCollection: "series", label: "Moviesho / Series" },
   { id: "moviesho-movies", url: "https://www.moviesho.com/category/movies/", restPath: "wp/v2/categories/1", provider: "moviesho", type: "movie", label: "Moviesho / Movies" },
   { id: "moviesho-korean", url: "https://www.moviesho.com/category/korean/", restPath: "wp/v2/categories/1306", provider: "moviesho", label: "Moviesho / Korean" },
+  { id: "moviesho-iranian", url: "https://www.moviesho.com/category/iranian/", restPath: "wp/v2/categories/937", provider: "moviesho", label: "Moviesho / Iranian" },
+  { id: "moviesho-documentary", url: "https://www.moviesho.com/genre-movies/documentary/", restPath: "wp/v2/genre-movies/2164", type: "movie", provider: "moviesho", label: "Moviesho / Documentary" },
   { id: "moviesho-war", url: "https://www.moviesho.com/genre-movies/war/", restPath: "wp/v2/genre-movies/1392", provider: "moviesho", type: "movie", label: "Moviesho / War" },
   { id: "zardfilm-animation", url: "https://zardfilm.in/animation/", restPath: "wp/v2/categories/48", restCollections: ["post"], provider: "zardfilm", label: "ZardFilm / Animation" },
   { id: "zardfilm-toy-story-5", url: "https://zardfilm.in/news/toy-story-5-2026/", restPath: "wp/v2/posts/76240", provider: "zardfilm", type: "movie", label: "ZardFilm / Toy Story 5" },
@@ -176,7 +179,7 @@ function isTaxonomy(restBase) {
 async function fetchCollection({ seed, apiRoot, collection, taxonomy, sourceId }) {
   const root = new URL(apiRoot);
   const endpoint = new URL(`wp/v2/${collection === "post" ? "posts" : collection}`, root);
-  endpoint.searchParams.set("per_page", "100");
+  endpoint.searchParams.set("per_page", String(PAGE_SIZE));
   endpoint.searchParams.set("_embed", "1");
   // Episode additions update existing posts; creation-date order misses them.
   endpoint.searchParams.set("orderby", "modified");
@@ -345,6 +348,7 @@ function isVideoMediaUrl(value) {
   try {
     const url = new URL(value);
     const pathname = url.pathname;
+    if (/(?:^|[\/_. -])(?:trailer|teaser|promo|preview)(?:[\/_. -]|$)/i.test(decodeURIComponent(pathname))) return false;
     return isVideoFile(pathname)
       || /\.m3u8$/i.test(pathname)
       || (/\/download\//i.test(pathname) && /^(?:mp4|mkv|webm|m3u8)$/i.test(url.searchParams.get("format") ?? ""));

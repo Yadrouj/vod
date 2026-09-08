@@ -17,6 +17,8 @@ import { titleMetadata } from "@/lib/seo";
 import { LandingPulse } from "@/components/landing-pulse";
 import { matchingMusicArtists } from "@/lib/music-search-ranking";
 import styles from "@/components/music-refresh.module.css";
+import { MoodCollections } from "@/components/mood-collections";
+import { loadMoodPlaylists } from "@/lib/mood-playlists";
 
 const REMIX_CATEGORY = "\u0631\u06cc\u0645\u06cc\u06a9\u0633";
 const REMIX_DESCRIPTION = "\u0631\u06cc\u0645\u06cc\u06a9\u0633\u200c\u0647\u0627\u06cc \u0634\u0627\u062f\u060c \u067e\u0627\u062f\u06a9\u0633\u062a \u0648 \u0627\u0646\u062a\u062e\u0627\u0628\u200c\u0647\u0627\u06cc \u062a\u0627\u0632\u0647";
@@ -43,9 +45,10 @@ export default async function MusicPage({ searchParams }: Props) {
   const year = Number(asText(params.year)) || null;
   const filterLabel = q || category || (fresh === "week" ? "تازه‌های این هفته" : "") || (year ? String(year) : "") || kind;
   const hasFilter = Boolean(q || category || kind !== "all" || year || fresh);
-  const [locale, index] = await Promise.all([
+  const [locale, index, moodIndex] = await Promise.all([
     getLocale(),
     hasFilter ? loadMusicIndex() : loadMusicLandingIndex(),
+    hasFilter ? Promise.resolve(null) : loadMoodPlaylists(),
   ]);
   const allMatches = hasFilter
     ? searchMusic(index, q, kind, category)
@@ -96,7 +99,7 @@ export default async function MusicPage({ searchParams }: Props) {
     }));
   const discovery = [
     { href: `/music?category=${encodeURIComponent(REMIX_CATEGORY)}`, label: REMIX_CATEGORY, description: REMIX_DESCRIPTION, coverUrl: remixes[0]?.coverUrl ?? null },
-    { href: "/music/playlists", label: "پلی‌لیست خودت", description: "صف شخصی، پخش پشت‌سرهم و Shuffle", coverUrl: heroTracks[0]?.coverUrl ?? null },
+    { href: "/music/collections", label: "پلی‌لیست‌های حال‌وهوا", description: "سفر، تمرکز، ورزش و خاطره‌ها", coverUrl: heroTracks[0]?.coverUrl ?? null },
     { href: "/music?kind=video", label: "موزیک‌ویدیو", description: "تصویر، صدا و اجرای زنده", coverUrl: recentVideos[0]?.coverUrl ?? null },
     { href: "/music?category=%D9%85%D9%88%D8%B3%DB%8C%D9%82%DB%8C%20%D9%82%D8%AF%DB%8C%D9%85%DB%8C%20%D9%81%D8%A7%D8%B1%D8%B3%DB%8C", label: "خاطره‌ها", description: "گلچین موسیقی قدیمی فارسی", coverUrl: classics[0]?.coverUrl ?? null },
     { href: "/music?q=موسیقی%20خارجی", label: "Foreign picks", description: "چند انتخاب تازه از آرشیو خارجی", coverUrl: foreign[0]?.coverUrl ?? null },
@@ -121,6 +124,7 @@ export default async function MusicPage({ searchParams }: Props) {
       </section>
 
       <section className="wrap music-content music-landing-content">
+        {moodIndex && moodIndex.playlists.length > 0 && <MoodCollections playlists={moodIndex.playlists} preview />}
         {hasFilter ? (
           <>
             {q && matchingMusicArtists(index.artists, q).length > 0 && <section><h2>خواننده‌ها</h2><MusicHorizontalRail label="خواننده‌های مرتبط">{matchingMusicArtists(index.artists, q).slice(0, 12).map(artist => <MusicArtistCard key={artist.slug} artist={artist} />)}</MusicHorizontalRail></section>}

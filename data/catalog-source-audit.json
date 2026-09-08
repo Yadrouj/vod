@@ -1,0 +1,139 @@
+{
+  "checkedAt": "2026-09-08T11:09:42.597Z",
+  "scope": "Catalog metadata and source-page reachability; no media files downloaded; not an exhaustive playback check",
+  "catalog": {
+    "films": 18065,
+    "series": 3941,
+    "korean": 1008,
+    "turkish": 303,
+    "iranian": 938,
+    "documentary": 390,
+    "short": 39,
+    "oldIranian": 901,
+    "oldIranianWithFiles": 0,
+    "oldIranianSuspiciousYear": 0,
+    "music": 27205,
+    "musicVideos": 175,
+    "artists": 5699,
+    "foreignCategory": 180,
+    "musicUpdatedAt": "2026-09-08T10:56:18.823Z"
+  },
+  "sources": [
+    {
+      "id": "donyaye-serial",
+      "kind": "film",
+      "url": "https://dls2.aparatchi-dlcenter.top/DonyayeSerial/donyaye_serial_all_archive.html",
+      "status": 200,
+      "state": "reachable",
+      "sampledBytes": 262144,
+      "elapsedMs": 263
+    },
+    {
+      "id": "f2my",
+      "kind": "film",
+      "url": "https://www.f2my.top/",
+      "status": 200,
+      "state": "reachable",
+      "sampledBytes": 262144,
+      "elapsedMs": 1011
+    },
+    {
+      "id": "moviesho-korean",
+      "kind": "film",
+      "url": "https://www.moviesho.com/wp-json/wp/v2/posts?categories=1306&per_page=1",
+      "status": 200,
+      "state": "reachable",
+      "sampledBytes": 24618,
+      "elapsedMs": 309
+    },
+    {
+      "id": "moviesho-turkish",
+      "kind": "film",
+      "url": "https://www.moviesho.com/wp-json/wp/v2/posts?categories=9627&per_page=1",
+      "status": 200,
+      "state": "reachable",
+      "sampledBytes": 21899,
+      "elapsedMs": 211
+    },
+    {
+      "id": "zardfilm",
+      "kind": "film",
+      "url": "https://zardfilm.in/animation/",
+      "status": 200,
+      "state": "reachable",
+      "sampledBytes": 223327,
+      "elapsedMs": 79
+    },
+    {
+      "id": "uptvs",
+      "kind": "film",
+      "url": "https://www.uptvs.com/category/irani",
+      "status": 200,
+      "state": "reachable",
+      "sampledBytes": 146469,
+      "elapsedMs": 30
+    },
+    {
+      "id": "oldfarsi",
+      "kind": "film",
+      "url": "https://oldfarsi.blogspot.com/",
+      "state": "unreachable",
+      "message": "fetch failed",
+      "elapsedMs": 259
+    },
+    {
+      "id": "rozmusic",
+      "kind": "music",
+      "url": "https://rozmusic.com/",
+      "status": 200,
+      "state": "reachable",
+      "sampledBytes": 111665,
+      "elapsedMs": 288
+    },
+    {
+      "id": "musics-fa",
+      "kind": "music",
+      "url": "https://musics-fa.com/",
+      "status": 200,
+      "state": "reachable",
+      "sampledBytes": 142959,
+      "elapsedMs": 68
+    },
+    {
+      "id": "sevilmusics",
+      "kind": "music",
+      "url": "https://sevilmusics.com/singer/habibmusic/",
+      "status": 200,
+      "state": "reachable",
+      "sampledBytes": 134866,
+      "elapsedMs": 87
+    },
+    {
+      "id": "remiixbaz",
+      "kind": "music",
+      "url": "https://remiixbaz.com/playlist/old-music/",
+      "status": 200,
+      "state": "reachable",
+      "sampledBytes": 180411,
+      "elapsedMs": 34
+    },
+    {
+      "id": "worldofmusic",
+      "kind": "music",
+      "url": "https://worldofmusic.ir/artists/",
+      "status": 200,
+      "state": "reachable",
+      "sampledBytes": 114420,
+      "elapsedMs": 1969
+    },
+    {
+      "id": "aftabmusic",
+      "kind": "music",
+      "url": "https://aftabmusic.com/foreign/",
+      "status": 200,
+      "state": "reachable",
+      "sampledBytes": 114062,
+      "elapsedMs": 157
+    }
+  ]
+}

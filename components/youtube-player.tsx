@@ -12,7 +12,7 @@ export function YouTubePlayer({ source, title }: { source: YouTubeSource; title:
     <section id="youtube-player" className="youtube-player-card" aria-label={`${title} YouTube player`}>
       <div className="youtube-player-heading">
         <div>
-          <span className="youtube-player-kicker"><Radio size={15} /> Public video source</span>
+          <span className="youtube-player-kicker"><Radio size={15} /> منبع ویدیوی عمومی</span>
           <h2>تماشای آنلاین {title}</h2>
           <p>این نسخه از یک ویدیوی عمومی YouTube پخش می‌شود؛ بدون دانلود واسطه‌ای و با کنترل‌های کامل خود YouTube.</p>
         </div>
@@ -45,7 +45,7 @@ export function YouTubePlayer({ source, title }: { source: YouTubeSource; title:
 
       <footer className="youtube-player-footer">
         <span><Radio size={14} /> {source.channel}</span>
-        <small>اگر پخش داخل صفحه محدود شد، از دکمهٔ YouTube استفاده کنید.</small>
+        <small>اگر پخش داخل صفحه محدود شد، از دکمهٔ YouTube استفاده کنید. دسترسی به ویدیو به کشور و تنظیمات ناشر وابسته است.{source.evidenceUrl && <> · <a href={source.evidenceUrl} target="_blank" rel="noopener noreferrer">منبع شناسایی فیلم</a></>}</small>
       </footer>
     </section>
   );

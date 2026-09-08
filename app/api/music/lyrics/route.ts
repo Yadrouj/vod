@@ -1,39 +1,27 @@
-import { findMusicTrack, loadMusicIndex } from "@/lib/music";
-import { scrapeMusicLyrics } from "@/lib/music-lyrics";
-import { checkRateLimit, clientIp, publicCacheHeaders, rateLimitedResponse, rateLimitHeaders } from "@/lib/runtime-cache";
+import { readFile, stat } from "node:fs/promises";
+import path from "node:path";
+import { MAX_LYRICS_BYTES, parseLrc } from "@/lib/lyrics-timing";
+import { checkRateLimit, clientIp, rateLimitedResponse } from "@/lib/runtime-cache";
 
 export const dynamic = "force-dynamic";
 
-const TRUSTED_HOSTS = new Set([
-  "musics-fa.com", "www.musics-fa.com", "rozmusic.com", "www.rozmusic.com",
-  "remiixbaz.com", "www.remiixbaz.com", "aftabmusic.com", "www.aftabmusic.com",
-  "sevilmusics.com", "www.sevilmusics.com", "musics-mehr.com", "www.musics-mehr.com",
-  "worldofmusic.ir", "www.worldofmusic.ir",
-]);
-
+/** Operator-supplied licensed/original/public-domain lyrics only. No third-party
+ * lyric scraping, no full music-index read, and no untrusted remote fetch. */
 export async function GET(request: Request) {
-  const id = new URL(request.url).searchParams.get("id")?.trim() ?? "";
-  if (!id || id.length > 180) return Response.json({ found: false, lines: [], message: "Invalid track." }, { status: 400 });
-
-  const rate = checkRateLimit(`music-lyrics:${clientIp(request)}`, 30, 60_000);
+  const id = new URL(request.url).searchParams.get("id") ?? "";
+  if (!/^[\p{L}\p{N}_-]{1,180}$/u.test(id)) return Response.json({ found: false, lines: [] }, { status: 400 });
+  const rate = checkRateLimit(`music-lyrics:${clientIp(request)}`, 60, 60_000);
   if (!rate.allowed) return rateLimitedResponse(rate);
-
-  const track = findMusicTrack(await loadMusicIndex(), id);
-  if (!track || !isTrustedSource(track.sourceUrl)) return Response.json({ found: false, lines: [], message: "Lyrics are not available for this source." }, { status: 404 });
-
+  const file = path.join(process.env.LICENSED_LYRICS_DIR || path.join(process.cwd(), "data", "licensed-lyrics"), `${id}.json`);
   try {
-    const result = await scrapeMusicLyrics(track.sourceUrl);
-    return Response.json(result, { headers: { ...publicCacheHeaders({ browserSeconds: 300, edgeSeconds: 21_600 }), ...rateLimitHeaders(rate) } });
+    if ((await stat(file)).size > MAX_LYRICS_BYTES * 2) throw new Error("oversized lyric record");
+    const record = JSON.parse(await readFile(file, "utf8"));
+    if (!["licensed", "original", "public-domain"].includes(record.rights) || !record.attribution || typeof record.lrc !== "string") throw new Error("rights metadata missing");
+    const lines = parseLrc(record.lrc);
+    const sourceUrl = typeof record.sourceUrl === "string" && /^https:\/\//.test(record.sourceUrl) ? record.sourceUrl : undefined;
+    return Response.json({ found: lines.length > 0, lines, sourceUrl, attribution: String(record.attribution).slice(0, 300), timing: lines.some(line => line.start !== undefined) ? "timed" : "plain" }, { headers: { "Cache-Control": "private, max-age=60" } });
   } catch (error) {
-    return Response.json({ found: false, lines: [], sourceUrl: track.sourceUrl, message: error instanceof Error ? error.message : "Lyrics could not be loaded." }, { status: 502, headers: rateLimitHeaders(rate) });
-  }
-}
-
-function isTrustedSource(value: string) {
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" && TRUSTED_HOSTS.has(url.hostname.toLocaleLowerCase());
-  } catch {
-    return false;
+    const missing = (error as NodeJS.ErrnoException).code === "ENOENT";
+    return Response.json({ found: false, lines: [], message: missing ? "متن مجاز این آهنگ هنوز موجود نیست؛ فایل LRC یا متن خودتان را اضافه کنید." : "فایل متن نیاز به بررسی دارد." }, { status: missing ? 200 : 503, headers: { "Cache-Control": "no-store" } });
   }
 }

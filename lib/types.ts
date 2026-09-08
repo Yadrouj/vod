@@ -79,12 +79,18 @@ export type VodItem = {
     playback_urls?: { url: string; quality?: string | null; mime_type?: string | null }[];
   }[];
   /** A public YouTube reference verified for legacy source-only titles. */
+  publisherPlayer?: { provider: "nfb"; embedUrl: string; sourceUrl: string; checkedAt: string; playbackStatus: "not-tested" };
+  /** A public YouTube reference; playback availability can vary by territory. */
   youtubeVideos?: {
     videoId: string;
     title: string;
     channel: string;
     sourceUrl: string;
     thumbnailUrl: string;
+    evidenceUrl?: string;
+    checkedAt?: string;
+    durationSeconds?: number;
+    playbackStatus?: "not-tested" | "available" | "unavailable";
   }[];
   credits?: {
     category: string;

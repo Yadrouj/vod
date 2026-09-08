@@ -3,6 +3,7 @@ import { once } from "node:events";
 import { mkdir, readFile, rename, unlink } from "node:fs/promises";
 import path from "node:path";
 import { streamVodArchiveItems } from "./vod-json-stream.mjs";
+import { legacyMismatch } from "./catalog-evidence.mjs";
 
 const IN_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
 const ENRICHMENT_FILE = process.argv[3] || path.join(".media-cache", "vod-sync", "old-iranian-wikidata.json");
@@ -11,7 +12,7 @@ const MIN_MATCH_SCORE = 100;
 
 async function main() {
   const enrichment = JSON.parse(await readFile(ENRICHMENT_FILE, "utf8"));
-  const accepted = (enrichment.items ?? []).filter((item) => item.status === "matched" && item.matchScore >= MIN_MATCH_SCORE);
+  const accepted = (enrichment.items ?? []).filter((item) => item.status === "matched" && item.matchScore >= MIN_MATCH_SCORE && !legacyMismatch(item));
   const byId = new Map(accepted.map((item) => [item.id, item]));
   const output = `${OUT_FILE}.tmp-${process.pid}`;
   await mkdir(path.dirname(OUT_FILE), { recursive: true });

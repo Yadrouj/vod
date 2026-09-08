@@ -16,6 +16,7 @@ export function MusicPlayerEngine({
   onTrackPlay,
   playRequest = 0,
   lyricsAutoOpen = false,
+  immersive = false,
 }: {
   track: MusicTrack;
   queue?: MusicTrack[];
@@ -23,6 +24,7 @@ export function MusicPlayerEngine({
   /** Increment this from a parent click to begin playback without a DOM ref. */
   playRequest?: number;
   lyricsAutoOpen?: boolean;
+  immersive?: boolean;
 }) {
   const media = useRef<HTMLAudioElement | HTMLVideoElement>(null);
   const autoplayTrackId = useRef<string | null>(null);
@@ -283,14 +285,14 @@ export function MusicPlayerEngine({
 
       <div className="music-player-shell">
         <div className={`music-player-art ${playing ? "is-spinning" : ""}`} style={activeTrack.coverUrl ? { backgroundImage: `url(${activeTrack.coverUrl})` } : undefined} />
-        <div className="music-player-now" dir="auto"><span>{activeTrack.kind === "video" ? "Music video" : "Now playing"}</span><strong>{activeTrack.persianTitle || activeTrack.title}</strong><small>{activeTrack.artists.map((artist) => artist.name).join(" · ")}</small><button className={`music-lyrics-toggle ${lyricsOpen ? "is-active" : ""}`} type="button" onClick={() => setLyricsOpen((value) => !value)}><Captions size={14} /> متن آهنگ</button></div>
+        <div className="music-player-now" dir="auto"><span>{activeTrack.kind === "video" ? "موزیک‌ویدیو" : "در حال پخش"}</span><strong>{activeTrack.persianTitle || activeTrack.title}</strong><small>{activeTrack.artists.map((artist) => artist.name).join(" · ")}</small><button className={`music-lyrics-toggle ${lyricsOpen ? "is-active" : ""}`} type="button" onClick={() => setLyricsOpen((value) => !value)}><Captions size={14} /> متن آهنگ</button></div>
         <button className={`music-icon-button ${liked ? "is-active" : ""}`} type="button" onClick={toggleLiked} aria-label={liked ? "Remove from liked songs" : "Add to liked songs"}><Heart size={18} fill={liked ? "currentColor" : "none"} /></button>
-        <a className="music-download" href={activeTrack.sources.find((item) => item.kind === "download")?.url ?? source.url} target="_blank" rel="noreferrer"><Download size={16} /> Download</a>
+        <a className="music-download" href={activeTrack.sources.find((item) => item.kind === "download")?.url ?? source.url} target="_blank" rel="noreferrer"><Download size={16} /> دانلود</a>
       </div>
 
       {sourceIssue && <p className="music-player-source-issue" role="status">{sourceIssue}</p>}
 
-      <MusicLyrics key={activeTrack.id} trackId={activeTrack.id} title={activeTrack.persianTitle || activeTrack.title} artist={activeTrack.artists.map((item) => item.name).join(" · ")} currentTime={currentTime} duration={duration} open={lyricsOpen} onClose={() => setLyricsOpen(false)} />
+      <MusicLyrics key={activeTrack.id} trackId={activeTrack.id} title={activeTrack.persianTitle || activeTrack.title} artist={activeTrack.artists.map((item) => item.name).join(" · ")} currentTime={currentTime} duration={duration} open={lyricsOpen || immersive} immersive={immersive} onSeek={seek} onClose={() => setLyricsOpen(false)} />
 
       <div className="music-player-transport">
         <button className={`music-icon-button ${shuffle ? "is-active" : ""}`} type="button" onClick={() => setShuffle((value) => !value)} aria-label="Shuffle"><Shuffle size={17} /></button>
@@ -310,7 +312,7 @@ export function MusicPlayerEngine({
         <button className={`music-icon-button ${queueOpen ? "is-active" : ""}`} type="button" onClick={() => setQueueOpen((value) => !value)} aria-label="Listening queue"><ListMusic size={18} /></button>
       </div>
 
-      {queueOpen && <aside className="music-player-queue" aria-label="Listening queue"><header><span><ListMusic size={16} /><strong>Queue</strong><small>{library.length} tracks</small></span><button className="music-icon-button" type="button" onClick={() => setQueueOpen(false)} aria-label="Close queue"><X size={16} /></button></header><ol>{library.map((item, index) => <li className={index === activeIndex ? "is-active" : ""} key={item.id}><button type="button" onClick={() => chooseTrack(index, true)}>{item.coverUrl ? <img src={item.coverUrl} alt="" /> : <span />}{index === activeIndex && playing ? <i className="music-equalizer"><b /><b /><b /></i> : <em>{String(index + 1).padStart(2, "0")}</em>}<span><strong>{item.persianTitle || item.title}</strong><small>{item.artists.map((artist) => artist.name).join(" · ")}</small></span></button></li>)}</ol></aside>}
+      {(queueOpen || immersive) && <aside className="music-player-queue" aria-label="Listening queue"><header><span><ListMusic size={16} /><strong>صف پخش</strong><small>{library.length.toLocaleString("fa-IR")} آهنگ</small></span>{!immersive && <button className="music-icon-button" type="button" onClick={() => setQueueOpen(false)} aria-label="Close queue"><X size={16} /></button>}</header><ol>{library.map((item, index) => <li className={index === activeIndex ? "is-active" : ""} key={item.id}><button type="button" onClick={() => chooseTrack(index, true)}>{item.coverUrl ? <img src={item.coverUrl} alt="" loading="lazy" /> : <span />}{index === activeIndex && playing ? <i className="music-equalizer"><b /><b /><b /></i> : <em>{String(index + 1).padStart(2, "0")}</em>}<span><strong>{item.persianTitle || item.title}</strong><small>{item.artists.map((artist) => artist.name).join(" · ")}</small></span></button></li>)}</ol></aside>}
     </section>
   );
 }
