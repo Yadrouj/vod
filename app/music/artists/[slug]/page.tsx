@@ -9,6 +9,7 @@ import { artistTrackCount, findMusicArtist, loadMusicArtistIndex, musicForArtist
 import { artistJsonLd, artistMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import styles from "@/components/music-refresh.module.css";
+import artistStyles from "@/components/artist-design.module.css";
 
 export const revalidate = 300;
 
@@ -32,7 +33,7 @@ export default async function MusicArtistPage({ params, searchParams }: { params
   const artwork = artist.profileImageUrl || artist.coverUrl;
 
   return (
-    <main className={`shell music-artist-page music-artist-page-spotify ${styles.page}`} dir="rtl">
+    <main className={`shell music-artist-page music-artist-page-spotify ${styles.page} ${artistStyles.profile}`} dir="rtl">
       <StructuredData data={artistJsonLd(artist, tracks.length)} />
       <section className="wrap">
         <Link href="/music" className="music-back"><ArrowLeft size={16} /> بازگشت به موسیقی</Link>
@@ -41,10 +42,10 @@ export default async function MusicArtistPage({ params, searchParams }: { params
             {!artwork && artist.name.slice(0, 1)}
           </div>
           <div className="music-artist-hero-copy">
-            <p>ARTIST · آرشیو سرونما</p>
+            <p>هنرمند · آرشیو موسیقی سرونما</p>
             <h1>{artist.name}</h1>
             <span>{tracks.length.toLocaleString("fa-IR")} اثر · {artist.categories.slice(0, 4).join("، ") || "موسیقی"}</span>
-            <div className="music-artist-hero-meta"><b>پخش فوری</b><b>صف پخش خودکار</b><a href={artist.profileSourceUrl || artist.sourceUrl} target="_blank" rel="noreferrer">آرشیو منبع ↗</a></div>
+            <div className="music-artist-hero-meta"><a href="#artist-tracks">شنیدن آهنگ‌ها ↓</a><Link href="/music/artists">همهٔ هنرمندان</Link><a href={artist.profileSourceUrl || artist.sourceUrl} target="_blank" rel="noreferrer">آرشیو منبع ↗</a></div>
           </div>
         </header>
         <MusicArtistPlaylist key={page} artistName={artist.name} tracks={tracks.slice((page - 1) * 50, page * 50)} />

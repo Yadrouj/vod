@@ -27,10 +27,11 @@ export function MusicArtistPlaylist({ artistName, tracks }: { artistName: string
         <div className="artist-playlist-caption"><span>پخش آهنگ</span><ListMusic size={16} /><b>{tracks.length.toLocaleString("fa-IR")} ترک در این صفحه</b></div>
         <MusicPlayer track={selected} queue={queue} playRequest={playRequest} />
       </aside>
-      <section className="artist-playlist-library">
-        <header><div><p>DISCOGRAPHY</p><h2>آهنگ‌های {artistName}</h2></div><span>{tracks.length.toLocaleString("fa-IR")} اثر</span></header>
+      <section className="artist-playlist-library" id="artist-tracks">
+        <header><div><p>یک صدا، چندین خاطره</p><h2>آهنگ‌های {artistName}</h2></div><span>{tracks.length.toLocaleString("fa-IR")} اثر</span></header>
         <div className={styles.tools}><input aria-label="جستجو در آهنگ‌های این صفحه" placeholder="جستجو در این صفحه…" value={query} onChange={event => setQuery(event.target.value)} /><button type="button" onClick={() => selectTrack(tracks[0])}>پخش همه</button></div>
         <ol className="artist-track-list">
+          {!tracks.some(track => `${track.title} ${track.persianTitle} ${track.album?.title ?? ""}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())) && <li role="status">آهنگی در این صفحه پیدا نشد؛ عبارت دیگری را امتحان کنید.</li>}
           {tracks.filter(track => `${track.title} ${track.persianTitle} ${track.album?.title ?? ""}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map((track, index) => {
             const active = track.id === selected.id;
             return <li className={active ? "is-active" : ""} key={track.id}>
