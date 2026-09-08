@@ -1,4 +1,5 @@
 import { loadMusicIndex } from "@/lib/music";
+import { fetchStreamHeaders } from "@/lib/upstream-stream";
 
 const MAX_ID_LENGTH = 180;
 const MAX_URL_LENGTH = 4096;
@@ -36,29 +37,21 @@ export async function GET(request: Request) {
   let upstream: Response;
   let resolvedSourceUrl = source.url;
   try {
-    upstream = await fetch(source.url, {
-      cache: "no-store",
-      headers: upstreamHeaders,
-      redirect: "follow",
-      signal: AbortSignal.timeout(30_000),
-    });
+    upstream = await fetchStreamHeaders(source.url, upstreamHeaders, request.signal);
   } catch {
+    if (request.signal.aborted) return new Response(null, { status: 499 });
     const fallbackUrl = worldOfMusicHttpFallback(source.url, source.provider);
     if (!fallbackUrl) return Response.json({ error: "The music source could not be reached." }, { status: 502 });
     try {
       resolvedSourceUrl = fallbackUrl;
-      upstream = await fetch(fallbackUrl, {
-        cache: "no-store",
-        headers: upstreamHeaders,
-        redirect: "follow",
-        signal: AbortSignal.timeout(30_000),
-      });
+      upstream = await fetchStreamHeaders(fallbackUrl, upstreamHeaders, request.signal);
     } catch {
       return Response.json({ error: "The music source could not be reached." }, { status: 502 });
     }
   }
 
   if (!upstream.ok && upstream.status !== 206) {
+    await upstream.body?.cancel();
     return Response.json({ error: "The music source rejected playback." }, { status: upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502 });
   }
 

@@ -1,4 +1,4 @@
-import { readFile, stat } from "node:fs/promises";
+import { readFileSnapshot, type FileSnapshot } from "./file-snapshot";
 import path from "node:path";
 import { enrichOldIranianCard } from "./old-iranian-media";
 import type { VodCard, VodCatalogIndex } from "./types";
@@ -209,23 +209,8 @@ function hasGenre(item: VodCard, names: string[]) {
   return names.some((name) => haystack.includes(name));
 }
 
-type FileCache<T> = {
-  checkedAt?: number;
-  mtimeMs?: number;
-  promise?: Promise<T>;
-};
+type FileCache<T> = FileSnapshot<T>;
 
 async function loadFreshJson<T>(file: string, cache: FileCache<T>): Promise<T> {
-  const now = Date.now();
-  if (cache.promise && cache.checkedAt && now - cache.checkedAt < FILE_CHECK_INTERVAL_MS) {
-    return cache.promise;
-  }
-
-  cache.checkedAt = now;
-  const fileStat = await stat(file);
-  if (!cache.promise || cache.mtimeMs !== fileStat.mtimeMs) {
-    cache.mtimeMs = fileStat.mtimeMs;
-    cache.promise = readFile(file, "utf8").then((data) => JSON.parse(data) as T);
-  }
-  return cache.promise;
+  return readFileSnapshot(file, cache, FILE_CHECK_INTERVAL_MS);
 }

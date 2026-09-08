@@ -112,7 +112,7 @@ export function rateLimitHeaders(result: RateLimitResult) {
 
 export function rateLimitedResponse(result: RateLimitResult) {
   return Response.json(
-    { error: "Too many requests. Please try again shortly." },
+    { error: "تعداد درخواست‌ها زیاد است؛ چند لحظه دیگر دوباره تلاش کنید.", code: "RATE_LIMITED", retryAfter: result.retryAfterSeconds },
     {
       status: 429,
       headers: {

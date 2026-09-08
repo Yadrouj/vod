@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { randomBytes, randomUUID } from "node:crypto";
+import { createRequestAdmission, RequestBudget, verifiedClientIp } from "./lib/request-admission";
 import next from "next";
 import { Server } from "socket.io";
 import { loadVodHomeIndex, loadVodIndex } from "./lib/vod-index";
@@ -33,6 +34,9 @@ const port = Number(process.env.PORT || 3004);
 const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
 const processStartedAt = Date.now();
+const admission = createRequestAdmission();
+const handshakeBudget = new RequestBudget(160, 4);
+const MAX_SOCKET_CONNECTIONS = positiveInteger(process.env.WATCH_PARTY_MAX_CONNECTIONS, 512);
 const MAX_ACTIVE_ROOMS = positiveInteger(process.env.WATCH_PARTY_MAX_ROOMS, 500);
 const MAX_ROOM_PARTICIPANTS = positiveInteger(process.env.WATCH_PARTY_MAX_PARTICIPANTS, 50);
 const MAX_QUEUE_ITEMS = positiveInteger(process.env.WATCH_PARTY_MAX_QUEUE, 100);
@@ -306,7 +310,7 @@ function roomForSocket(roomId: string, socketId: string) {
 
 async function start() {
 await Promise.all([app.prepare(), initializeTempPartyMediaStore()]);
-const httpServer = createServer((request, response) => {
+const httpServer = createServer((request, response) => admission.run(request, response, () => {
   const pathname = request.url?.split("?", 1)[0];
   // Health probes are not visitor traffic; otherwise a 20s Docker probe alone
   // exceeds the nightly idle threshold of 12 requests per five minutes.
@@ -319,12 +323,12 @@ const httpServer = createServer((request, response) => {
     void handleTempMediaStreamRequest(request, response, pathname);
     return;
   }
-  if (request.method === "GET" && pathname === "/healthz") {
+  if ((request.method === "GET" || request.method === "HEAD") && pathname === "/healthz") {
     response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
     response.end(JSON.stringify({ status: "ok", uptimeSeconds: Math.floor((Date.now() - processStartedAt) / 1000) }));
     return;
   }
-  if (request.method === "GET" && pathname === "/readyz") {
+  if ((request.method === "GET" || request.method === "HEAD") && pathname === "/readyz") {
     const status = ready && !shuttingDown ? 200 : 503;
     const memory = process.memoryUsage();
     response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
@@ -334,6 +338,7 @@ const httpServer = createServer((request, response) => {
       activeRooms: [...rooms.values()].filter(room => [...room.participants.values()].some(participant => participant.connected)).length,
       memoryMb: { rss: Math.round(memory.rss / 1024 / 1024), heapUsed: Math.round(memory.heapUsed / 1024 / 1024) },
       recentRequests5m: recentHttpRequests(),
+      requests: admission.snapshot(),
     }));
     return;
   }
@@ -357,13 +362,23 @@ const httpServer = createServer((request, response) => {
     response.end("Not found");
     return;
   }
-  void handler(request, response);
-});
-httpServer.keepAliveTimeout = 65_000;
-httpServer.headersTimeout = 66_000;
+  void handler(request, response).catch(() => {
+    if (!response.headersSent) response.writeHead(500, { "Cache-Control": "no-store" });
+    response.end();
+  });
+}));
+httpServer.keepAliveTimeout = 10_000;
+httpServer.headersTimeout = 15_000;
 httpServer.requestTimeout = TEMP_MEDIA_UPLOAD_TIMEOUT_MS;
+httpServer.maxHeadersCount = 80;
+httpServer.maxRequestsPerSocket = 1000;
 
 const io = new Server(httpServer, {
+  allowRequest: (request, callback) => {
+    const allowed = io.engine.clientsCount < MAX_SOCKET_CONNECTIONS
+      && handshakeBudget.allow(verifiedClientIp(request, admission.trustedPeers, admission.isolatedProxy));
+    callback(allowed ? null : "Server busy. Please retry in a few seconds.", allowed);
+  },
   cors: { origin: allowedSocketOrigin, credentials: true },
   transports: ["websocket", "polling"],
   maxHttpBufferSize: 512 * 1024,
@@ -415,6 +430,12 @@ io.use((socket, nextMiddleware) => {
 });
 
 io.on("connection", (socket) => {
+  // Also cover otherwise unthrottled event types / unknown-event floods.
+  const eventBudget = new RequestBudget(80, 30, 1);
+  socket.use((_packet, nextEvent) => {
+    if (eventBudget.allow("socket")) nextEvent();
+    else { socket.emit("server:busy", { retryAfter: 5 }); socket.disconnect(true); }
+  });
   socket.on("room:create", (payload: { profile: PartyProfile; media: PartyMedia; visibility?: PartyRoomVisibility }, ack) => {
     if (!allowSocketEvent(socket, "room:create", 3, 60_000)) return ack?.({ ok: false, error: "Too many room requests." });
     if (rooms.size >= MAX_ACTIVE_ROOMS) return ack?.({ ok: false, error: "Room capacity is temporarily full." });
@@ -789,7 +810,7 @@ setInterval(() => {
 await Promise.all([loadVodHomeIndex(), loadVodIndex()]);
 ready = true;
 
-httpServer.listen(port, hostname, () => {
+httpServer.listen({ port, host: hostname, backlog: 2048 }, () => {
   console.log(`SarvNema with Watch Together ready on http://${hostname}:${port}`);
 });
 

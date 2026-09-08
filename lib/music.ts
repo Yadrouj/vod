@@ -120,22 +120,33 @@ export function musicForArtistIndex(index: MusicArtistIndex, slug: string) {
   return diversifyMusicTracks(tracks);
 }
 
+type MusicSearchDocument = { track: MusicTrack; text: string; title: string; artists: string };
+const musicDocuments = new WeakMap<MusicIndex, MusicSearchDocument[]>();
+/** Immutable catalog identity invalidates this index on a daily catalog refresh.
+ * Normalize and sort once, not 27k tracks on every keystroke. Four relevance
+ * buckets preserve the existing relevance > popularity > year ordering. */
 export function searchMusic(index: MusicIndex, query: string, kind = "all", category = "all") {
-  const needle = normalizeSearchValue(query);
-  return index.tracks
-    .map(normalizeMusicTrack)
-    .filter((track) => {
-      const matchesKind = kind === "all" || track.kind === kind;
-      const matchesCategory = category === "all" || !category || track.category === category;
-      const matchesQuery = !needle || musicSearchText(track).includes(needle);
-      return matchesKind && matchesCategory && matchesQuery;
-    })
-    .sort((left, right) => (
-      (needle ? musicSearchRank(left, needle) - musicSearchRank(right, needle) : 0)
-      || compareMusicPopularityYear(left, right)
-      || Number(Boolean(right.coverUrl)) - Number(Boolean(left.coverUrl))
-      || left.title.localeCompare(right.title)
-    ));
+  let documents = musicDocuments.get(index);
+  if (!documents) {
+    documents = index.tracks.map(normalizeMusicTrack)
+      .sort((a, b) => compareMusicPopularityYear(a, b)
+        || Number(Boolean(b.coverUrl)) - Number(Boolean(a.coverUrl)) || a.title.localeCompare(b.title))
+      .map(track => ({ track, text: musicSearchText(track),
+        title: normalizeSearchValue([track.title, track.persianTitle].join(" ")),
+        artists: normalizeSearchValue(track.artists.flatMap(artist => [artist.name, ...(artist.aliases ?? [])]).join(" ")) }));
+    musicDocuments.set(index, documents);
+  }
+  const needle = normalizeSearchValue(query).slice(0, 160);
+  const buckets: MusicTrack[][] = [[], [], [], []];
+  for (const document of documents) {
+    const { track } = document;
+    if (kind !== "all" && track.kind !== kind) continue;
+    if (category && category !== "all" && track.category !== category) continue;
+    if (needle && !document.text.includes(needle)) continue;
+    const rank = !needle || document.title === needle ? 0 : document.title.startsWith(needle) ? 1 : document.artists.startsWith(needle) ? 2 : 3;
+    buckets[rank].push(track);
+  }
+  return buckets.flat();
 }
 
 export function selectMusicShelfTracks(tracks: MusicTrack[], limit = 15) {
@@ -307,19 +318,6 @@ function musicSearchText(track: MusicTrack) {
     ...track.artists.map((artist) => artist.name),
     ...track.artists.flatMap((artist) => artist.aliases ?? []),
   ].join(" "));
-}
-
-function musicSearchRank(track: MusicTrack, needle: string) {
-  if (!needle) return 0;
-  const title = normalizeSearchValue([track.title, track.persianTitle].join(" "));
-  const artists = normalizeSearchValue([
-    ...track.artists.map((artist) => artist.name),
-    ...track.artists.flatMap((artist) => artist.aliases ?? []),
-  ].join(" "));
-  if (title === needle) return 0;
-  if (title.startsWith(needle)) return 1;
-  if (artists.startsWith(needle)) return 2;
-  return 3;
 }
 
 function artKey(track: MusicTrack) {

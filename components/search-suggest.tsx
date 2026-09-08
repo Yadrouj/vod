@@ -48,6 +48,7 @@ export function SearchSuggest({
   const [items, setItems] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(defaultValue.trim().length >= 2);
+  const [failure, setFailure] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
   const [kind, setKind] = useState<SearchKind>("all");
   const cinemaSearch = endpoint.split("?")[0] === "/api/suggest";
@@ -92,19 +93,23 @@ export function SearchSuggest({
       });
       if (cinemaSearch) params.set("type", kind);
       if (endpoint.split("?")[0] === "/api/music/search") params.set("includeArtists", "1");
-      fetch(`${endpoint}${endpoint.includes("?") ? "&" : "?"}${params.toString()}`, { signal: controller.signal })
+      fetch(`${endpoint}${endpoint.includes("?") ? "&" : "?"}${params.toString()}`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(12_000)]) })
         .then((res) => {
           if (!res.ok) throw new Error(`Suggest ${res.status}`);
           return res.json() as Promise<{ items?: Suggestion[]; artists?: Suggestion[] }>;
         })
         .then((data) => {
+          setFailure("");
           setItems([...(data.artists ?? []), ...(data.items ?? [])]);
           setActiveIndex(-1);
           setLoading(false);
           setOpen(true);
         })
         .catch((error: unknown) => {
-          if (error instanceof DOMException && error.name === "AbortError") return;
+          if (controller.signal.aborted) return;
+          setFailure(error instanceof Error && /429|503/.test(error.message)
+            ? (locale === "fa" ? "درخواست‌ها زیاد است؛ چند لحظه دیگر جستجو کنید." : "Search is busy. Please try again shortly.")
+            : (locale === "fa" ? "جستجو دریافت نشد؛ اتصال را بررسی و دوباره تلاش کنید." : "Search unavailable. Check your connection and try again."));
           setItems([]);
           setLoading(false);
           setOpen(true);
@@ -115,7 +120,7 @@ export function SearchSuggest({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [cinemaSearch, endpoint, kind, maxItems, query, searchable]);
+  }, [cinemaSearch, endpoint, kind, locale, maxItems, query, searchable]);
 
   useEffect(() => {
     if (activeIndex >= 0) document.getElementById(`${listId}-${activeIndex}`)?.scrollIntoView({ block: "nearest" });
@@ -293,7 +298,7 @@ export function SearchSuggest({
           </Link>
           </Fragment>
         ))}
-        {!loading && visibleItems.length === 0 && <p className="suggest-empty">{copy.empty}</p>}
+        {!loading && visibleItems.length === 0 && <p className="suggest-empty" role="status">{failure || copy.empty}</p>}
       </div>
 
       {visibleItems.length > 0 && (

@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <main className="route-loading-shell" aria-busy="true" aria-label="Loading page">
+    <main className="route-loading-shell" aria-busy="true" aria-label="در حال بارگذاری صفحه">
       <div className="route-loading-stage">
         <span className="route-loading-line route-loading-line-short" />
         <span className="route-loading-line route-loading-line-title" />

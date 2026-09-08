@@ -8,6 +8,12 @@ services:
       NODE_ENV: production
       PORT: 3004
       HOSTNAME: 0.0.0.0
+      # App has no published port; nginx overwrites X-Real-IP on every route.
+      TRUST_ISOLATED_PROXY: "1"
+      HTTP_PAGE_CONCURRENCY: ${HTTP_PAGE_CONCURRENCY:-16}
+      HTTP_MEDIA_CONCURRENCY: ${HTTP_MEDIA_CONCURRENCY:-128}
+      HTTP_QUEUE_LIMIT: ${HTTP_QUEUE_LIMIT:-128}
+      WATCH_PARTY_MAX_CONNECTIONS: ${WATCH_PARTY_MAX_CONNECTIONS:-512}
       NODE_OPTIONS: --max-old-space-size=1536
       VOD_DATA_DIR: /app/public/data
       PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://sarvnema.ir}

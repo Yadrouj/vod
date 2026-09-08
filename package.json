@@ -8,6 +8,8 @@
     "build": "next build --webpack",
     "start": "tsx watch-party-server.ts",
     "load-smoke": "node scripts/smoke-load.mjs",
+    "capacity-smoke": "node scripts/smoke-capacity.mjs",
+    "test:performance": "node --import tsx --test scripts/tests/performance.test.ts",
     "watch-party-smoke": "node scripts/smoke-watch-party.mjs",
     "lint": "eslint",
     "harvest-vod": "node scripts/harvest-vod.mjs",

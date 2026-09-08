@@ -1357,6 +1357,25 @@ html.is-route-pending .route-progress {
   opacity: 1;
 }
 
+.route-status {
+  position: fixed;
+  inset: 18px auto auto 50%;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 32px);
+  width: max-content;
+  padding: 10px 18px;
+  border-radius: 14px;
+  border: 1px solid #e8ca7070;
+  background: #15140ff5;
+  color: #f5e4a6;
+  box-shadow: 0 6px 28px #0008;
+  font-size: 13px;
+  z-index: 2147483646;
+  pointer-events: none;
+}
+.route-status:empty { display: none; }
+a[data-route-pending="true"] { outline: 2px solid var(--accent, #e8ca70); outline-offset: 3px; opacity: .7; cursor: progress; }
+
 html.is-route-pending .route-progress span {
   animation: route-progress-slide 1.05s cubic-bezier(0.42, 0, 0.3, 1) infinite;
 }

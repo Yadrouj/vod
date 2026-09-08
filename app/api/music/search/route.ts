@@ -1,13 +1,15 @@
-import { loadMusicIndex, searchMusic } from "@/lib/music";
-import { publicCacheHeaders } from "@/lib/runtime-cache";
+import { loadMusicArtistIndex, searchMusic } from "@/lib/music";
+import { checkRateLimit, clientIp, publicCacheHeaders, rateLimitedResponse } from "@/lib/runtime-cache";
 import { matchingMusicArtists } from "@/lib/music-search-ranking";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q") ?? "";
+  const query = (searchParams.get("q") ?? "").slice(0, 160);
+  const rate = checkRateLimit(`music-search:${clientIp(request)}`, 120, 60_000);
+  if (!rate.allowed) return rateLimitedResponse(rate);
   const requestedLimit = Number(searchParams.get("limit") ?? 12);
   const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(Math.floor(requestedLimit), 6), 20) : 12;
-  const index = await loadMusicIndex();
+  const index = await loadMusicArtistIndex();
   const tracks = searchMusic(index, query).slice(0, limit);
   return Response.json({
     artists: searchParams.get("includeArtists") === "1" ? matchingMusicArtists(index.artists, query).slice(0, 4).map(artist => ({
