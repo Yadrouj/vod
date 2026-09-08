@@ -10,6 +10,8 @@ import { sizedImageUrl } from "@/lib/image-url";
 import { searchTitleKind, type SearchKind } from "@/lib/vod-search-order";
 
 type Suggestion = {
+  href?: string;
+  trackCount?: number;
   title: string;
   imdbCode: string;
   year: number | null;
@@ -64,7 +66,7 @@ export function SearchSuggest({
         close: "بستن جستجو",
         clear: "پاک کردن",
         heading: "نتیجه‌های پیشنهادی",
-        order: cinemaSearch ? "امتیاز IMDb: بیشتر به کمتر" : "جدیدترین‌ها اول",
+        order: cinemaSearch ? "امتیاز IMDb: بیشتر به کمتر" : "خواننده‌ها و آثار · مرتبط‌ترین‌ها",
         empty: "چیزی پیدا نشد؛ اسم انگلیسی یا کد IMDb را امتحان کن.",
         hint: "نام فیلم، سریال یا کد IMDb را بنویس",
         viewAll: "دیدن همه نتیجه‌ها",
@@ -89,13 +91,14 @@ export function SearchSuggest({
         limit: String(maxItems),
       });
       if (cinemaSearch) params.set("type", kind);
+      if (endpoint.split("?")[0] === "/api/music/search") params.set("includeArtists", "1");
       fetch(`${endpoint}${endpoint.includes("?") ? "&" : "?"}${params.toString()}`, { signal: controller.signal })
         .then((res) => {
           if (!res.ok) throw new Error(`Suggest ${res.status}`);
-          return res.json() as Promise<{ items?: Suggestion[] }>;
+          return res.json() as Promise<{ items?: Suggestion[]; artists?: Suggestion[] }>;
         })
         .then((data) => {
-          setItems(data.items ?? []);
+          setItems([...(data.artists ?? []), ...(data.items ?? [])]);
           setActiveIndex(-1);
           setLoading(false);
           setOpen(true);
@@ -222,9 +225,13 @@ export function SearchSuggest({
       setActiveIndex((current) => (current <= 0 ? visibleItems.length - 1 : current - 1));
     } else if (event.key === "Enter" && activeIndex >= 0) {
       event.preventDefault();
-      router.push(hrefForItem(visibleItems[activeIndex]));
+      router.push(suggestionHref(visibleItems[activeIndex]));
       closeSearch();
     }
+  }
+
+  function suggestionHref(item: Suggestion) {
+    return item.type === "artist" && item.href?.startsWith("/music/artists/") ? item.href : hrefForItem(item);
   }
 
   const menu = menuOpen ? (
@@ -249,6 +256,7 @@ export function SearchSuggest({
       <div id={listId} className="suggest-results" role="listbox" aria-label={copy.heading} aria-busy={loading}>
         {visibleItems.map((item, index) => (
           <Fragment key={item.imdbCode}>
+          {!cinemaSearch && (index === 0 || (visibleItems[index - 1].type === "artist") !== (item.type === "artist")) && <div className="suggest-type-heading" role="presentation">{item.type === "artist" ? (locale === "fa" ? "خواننده‌ها" : "Artists") : (locale === "fa" ? "آثار" : "Tracks")}</div>}
           {cinemaSearch && (index === 0 || searchTitleKind(visibleItems[index - 1].type) !== searchTitleKind(item.type)) && (
             <div className="suggest-type-heading" role="presentation">{typeLabel(searchTitleKind(item.type), locale)}</div>
           )}
@@ -256,7 +264,7 @@ export function SearchSuggest({
             id={`${listId}-${index}`}
             key={item.imdbCode}
             className={`suggest-item ${activeIndex === index ? "is-active" : ""}`}
-            href={hrefForItem(item)}
+            href={suggestionHref(item)}
             role="option"
             aria-selected={activeIndex === index}
             onMouseEnter={() => setActiveIndex(index)}
@@ -275,7 +283,7 @@ export function SearchSuggest({
             <span className="suggest-result-copy">
               <strong>{item.title}</strong>
               <small>
-                {[item.year ?? "-", item.artists?.[0], typeLabel(item.type, locale), item.imdbRating ? `${t.common.imdb} ${item.imdbRating.toFixed(1)}` : null]
+                {[item.trackCount != null ? `${item.trackCount.toLocaleString(locale)} ${locale === "fa" ? "اثر" : "tracks"}` : item.year ?? "-", item.artists?.[0], item.type === "artist" ? null : typeLabel(item.type, locale), item.imdbRating ? `${t.common.imdb} ${item.imdbRating.toFixed(1)}` : null]
                   .filter(Boolean)
                   .join(" / ")}
               </small>

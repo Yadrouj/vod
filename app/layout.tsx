@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Suspense } from "react";
 import { AppMessageCenter } from "@/components/app-message-center";
+import { MusicPlaybackProvider } from "@/components/music-playback-provider";
 import { NavigationFeedback } from "@/components/navigation-feedback";
 import { StructuredData } from "@/components/structured-data";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
@@ -66,7 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Suspense fallback={null}>
           <NavigationFeedback />
         </Suspense>
-        {children}
+        <MusicPlaybackProvider>{children}</MusicPlaybackProvider>
         <WatchTogetherLauncher locale={locale} />
         <AppMessageCenter />
         {hasGoogleAnalytics && googleAnalyticsId ? <GoogleAnalytics measurementId={googleAnalyticsId} /> : null}

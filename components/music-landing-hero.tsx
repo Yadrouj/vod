@@ -48,7 +48,7 @@ export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", init
 
   useEffect(() => {
     if (!isVisualPlaying || total < 2) return;
-    const timer = window.setInterval(() => setActiveIndex((current) => (current + 1) % total), 7200);
+    const timer = window.setInterval(() => { if (!document.hidden && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) setActiveIndex((current) => (current + 1) % total); }, 7200);
     return () => window.clearInterval(timer);
   }, [isVisualPlaying, total]);
 
@@ -67,9 +67,9 @@ export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", init
       <div className="music-landing-hero-grid">
         <div className="music-landing-copy">
           <span className="music-landing-kicker"><Sparkles size={14} /> سرو‌نما موزیک</span>
-          <p className="music-landing-eyebrow">{initialQuery ? `نتیجه‌های جست‌وجوی «${initialQuery}»` : "هر لحظه، یک حال تازه"}</p>
-          <h1>{initialQuery ? "همان قطعه‌ای که دنبالش بودی." : "صدای امروزت را پیدا کن."}</h1>
-          <p className="music-landing-description">آهنگ، موزیک‌ویدیو، پلی‌لیست و شنیدن هم‌زمان؛ سریع، مرتب و بدون گم شدن بین صدها لینک.</p>
+          <p className="music-landing-eyebrow">{initialQuery ? `نتیجه‌های جست‌وجوی «${initialQuery}»` : "از آهنگ‌های تازه تا خاطره‌های قدیمی"}</p>
+          <h1>{initialQuery ? "دنبال چی می‌گردی؟" : "یه آهنگ بذار."}</h1>
+          <p className="music-landing-description">برای خودت پلی کن، یا با دوست‌هات توی یک اتاق گوش بده.</p>
 
           {archiveStats && <div className="music-landing-stats" aria-label="آمار آرشیو موسیقی">
             <span><strong>{archiveStats.tracks.toLocaleString("fa-IR")}</strong><small>آهنگ</small></span>
@@ -111,7 +111,7 @@ export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", init
 
         <aside className="music-landing-now-playing" aria-label="قطعهٔ منتخب">
           <div className="music-landing-now-head">
-            <span><Radio size={14} /> اکنون در حال پخش</span>
+            <span><Radio size={14} /> انتخاب برای شنیدن</span>
             <button type="button" className="music-landing-visual-toggle" onClick={() => setIsVisualPlaying((current) => !current)} aria-label={isVisualPlaying ? "توقف نمایش متحرک" : "شروع نمایش متحرک"}>
               {isVisualPlaying ? <Pause size={15} fill="currentColor" /> : <Play size={15} fill="currentColor" />}
             </button>

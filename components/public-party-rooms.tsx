@@ -20,14 +20,19 @@ export function PublicPartyRooms({ mode, locale, limit = 6 }: { mode: Mode; loca
   useEffect(() => {
     let alive = true;
     const controller = new AbortController();
+    let pending = false;
     const load = async () => {
+      if (pending || document.hidden) return;
+      pending = true;
       try {
         const response = await fetch(`/api/watch-party/public-rooms?mode=${mode}&limit=${Math.max(1, Math.min(limit, 12))}`, { signal: controller.signal, cache: "no-store" });
+        if (!response.ok) throw new Error("Rooms unavailable");
         const data = await response.json() as { rooms?: PartyPublicRoom[] };
-        if (alive) setRooms(data.rooms ?? []);
+        if (alive) setRooms((data.rooms ?? []).filter(room => room.participantCount > 0).sort((a, b) => Number(a.paused) - Number(b.paused) || b.participantCount - a.participantCount));
       } catch (error) {
         if ((error as { name?: string })?.name !== "AbortError" && alive) setRooms([]);
       } finally {
+        pending = false;
         if (alive) setLoading(false);
       }
     };

@@ -19,6 +19,8 @@ export type MusicArtistRef = {
 };
 
 export type MusicTrack = {
+  /** Only populated from measured plays; missing is not an estimated count. */
+  playCount?: number;
   id: string;
   kind: MusicKind;
   title: string;
@@ -52,6 +54,7 @@ export type MusicTrack = {
 };
 
 export type MusicArtist = MusicArtistRef & {
+  playCount?: number;
   coverUrl: string | null;
   profileImageUrl?: string | null;
   bio?: string | null;

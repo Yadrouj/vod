@@ -100,6 +100,7 @@ async function main() {
       }
     }
     await runStep("Rebuild music landing and artist indexes", "scripts/scrape-rozmusic.mjs", ["--rebuild-only"], steps, startedAt);
+    await runStep("Match track artwork against original source pages", "scripts/enrich-music-artwork.mjs", ["--limit=40"], steps, startedAt);
     await runStep("Rebuild compact music landing data", "scripts/build-music-landing-index.mjs", [], steps, startedAt);
     if (steps.some(step => step.state === "failed")) throw new Error("Some music sources failed; successful steps are checkpointed.");
     await writeStatus({

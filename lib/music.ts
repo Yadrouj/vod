@@ -1,5 +1,6 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { compareMusicPopularityYear } from "./music-search-ranking";
 import type { MusicArtist, MusicArtistIndex, MusicIndex, MusicLandingIndex, MusicTrack } from "@/lib/music-types";
 
 const DATA_FILE = path.join(process.cwd(), "public", "data", "music-index.json");
@@ -130,8 +131,8 @@ export function searchMusic(index: MusicIndex, query: string, kind = "all", cate
       return matchesKind && matchesCategory && matchesQuery;
     })
     .sort((left, right) => (
-      (right.publishedAt ?? "").localeCompare(left.publishedAt ?? "")
-      || musicSearchRank(left, needle) - musicSearchRank(right, needle)
+      (needle ? musicSearchRank(left, needle) - musicSearchRank(right, needle) : 0)
+      || compareMusicPopularityYear(left, right)
       || Number(Boolean(right.coverUrl)) - Number(Boolean(left.coverUrl))
       || left.title.localeCompare(right.title)
     ));

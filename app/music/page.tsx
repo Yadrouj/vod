@@ -14,6 +14,9 @@ import { MUSIC_LANDING_SEO, landingJsonLd } from "@/lib/landing-seo";
 import { artistTrackCount, loadMusicIndex, loadMusicLandingIndex, normalizeMusicTrack, searchMusic, selectMusicShelfTracks } from "@/lib/music";
 import { getLocale } from "@/lib/server-locale";
 import { titleMetadata } from "@/lib/seo";
+import { LandingPulse } from "@/components/landing-pulse";
+import { matchingMusicArtists } from "@/lib/music-search-ranking";
+import styles from "@/components/music-refresh.module.css";
 
 const REMIX_CATEGORY = "\u0631\u06cc\u0645\u06cc\u06a9\u0633";
 const REMIX_DESCRIPTION = "\u0631\u06cc\u0645\u06cc\u06a9\u0633\u200c\u0647\u0627\u06cc \u0634\u0627\u062f\u060c \u067e\u0627\u062f\u06a9\u0633\u062a \u0648 \u0627\u0646\u062a\u062e\u0627\u0628\u200c\u0647\u0627\u06cc \u062a\u0627\u0632\u0647";
@@ -100,7 +103,7 @@ export default async function MusicPage({ searchParams }: Props) {
   ];
 
   return (
-    <main className="shell music-page music-spotify-page" dir="rtl">
+    <main className={`shell music-page music-spotify-page ${styles.page}`} dir="rtl">
       <StructuredData data={landingJsonLd(MUSIC_LANDING_SEO, "/music")} />
       <section className="music-landing-shell">
         <div className="wrap">
@@ -113,12 +116,14 @@ export default async function MusicPage({ searchParams }: Props) {
             </div>
           </header>
           <MusicLandingHero tracks={heroTracks} archiveStats={archiveStats} initialQuery={q} initialKind={kind} />
+          <LandingPulse initial={{ version: index.updatedAt, updatedAt: Date.parse(index.updatedAt) > 0 ? index.updatedAt : null, recentCount: 0 }} locale={locale} endpoint="/api/music/pulse" updatesHref="/music?fresh=week" />
         </div>
       </section>
 
       <section className="wrap music-content music-landing-content">
         {hasFilter ? (
           <>
+            {q && matchingMusicArtists(index.artists, q).length > 0 && <section><h2>خواننده‌ها</h2><MusicHorizontalRail label="خواننده‌های مرتبط">{matchingMusicArtists(index.artists, q).slice(0, 12).map(artist => <MusicArtistCard key={artist.slug} artist={artist} />)}</MusicHorizontalRail></section>}
             <div className="music-section-head music-search-results-head">
               <div><p>نتایج جست‌وجو</p><h2>{allMatches.length.toLocaleString("fa-IR")} نتیجه برای «{filterLabel}»</h2></div>
               <span>{index.tracks.length.toLocaleString("fa-IR")} عنوان در آرشیو</span>
@@ -128,6 +133,7 @@ export default async function MusicPage({ searchParams }: Props) {
           </>
         ) : (
           <>
+            <PublicPartyRooms mode="listen" locale={locale} />
             <nav className="music-discovery-grid" aria-label="میان‌برهای موسیقی">
               {discovery.map((item, itemIndex) => (
                 <Link href={item.href} className={`music-discovery-card music-discovery-card-${itemIndex + 1}`} key={item.href}>
@@ -139,7 +145,6 @@ export default async function MusicPage({ searchParams }: Props) {
                 </Link>
               ))}
             </nav>
-            <PublicPartyRooms mode="listen" locale={locale} />
             <MusicPlaylistLeaderboard />
             {topClassics.length > 0 && <MusicShelf eyebrow={"\u0622\u0631\u0634\u06cc\u0648 \u062e\u0627\u0637\u0631\u0647\u200c\u0647\u0627"} title={"\u0645\u0648\u0633\u06cc\u0642\u06cc \u0642\u062f\u06cc\u0645\u06cc \u0641\u0627\u0631\u0633\u06cc"} tracks={topClassics} viewAll="/music?category=%D9%85%D9%88%D8%B3%DB%8C%D9%82%DB%8C%20%D9%82%D8%AF%DB%8C%D9%85%DB%8C%20%D9%81%D8%A7%D8%B1%D8%B3%DB%8C" preload />}
             {weeklyTracks.length > 0 && <MusicShelf eyebrow="همین هفته" title="تازه‌های این هفته" tracks={weeklyTracks} viewAll="/music?fresh=week" preload />}
