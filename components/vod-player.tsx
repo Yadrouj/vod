@@ -10,6 +10,7 @@ import type { VodLink } from "@/lib/types";
 import { readProgress, saveHistoryValue, PROGRESS_KEY } from "@/lib/media-history";
 import Link from "next/link";
 import { PlaybackHelp } from "@/components/playback-help";
+import { isDonyayeSerial, regionalPlaybackHint } from "@/lib/playback-help";
 
 type CastableVideo = HTMLVideoElement & {
   webkitShowPlaybackTargetPicker?: () => void;
@@ -302,6 +303,7 @@ export function VodPlayer({
 
   return (
     <div className="player-shell">
+      {isDonyayeSerial(active) && <details className="source-region-notice" dir={locale === "fa" ? "rtl" : "ltr"}><summary>{locale === "fa" ? "این منبع ممکن است به IP ایران نیاز داشته باشد · راهنمای VPN" : "This source may require an Iranian IP · VPN help"}</summary><p>{regionalPlaybackHint(locale === "fa")}</p></details>}
       <div
         ref={playerFrameRef}
         className={`pro-player ${paused ? "is-paused" : "is-playing"} ${controlsShowing ? "is-controls-visible" : "is-controls-hidden"}`}

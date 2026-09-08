@@ -24,15 +24,16 @@ try {
     await page.setViewportSize({ width, height: 850 });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `overflow at ${width}`);
     if (width <= 760) {
-      assert.ok(await nav.getByRole("link", { name: "فیلم", exact: true }).isVisible());
-      const box = await nav.boundingBox();
+      const appNav = page.getByRole("navigation", { name: "منوی اصلی موبایل" });
+      assert.ok(await appNav.getByRole("link", { name: "فیلم و سریال", exact: true }).isVisible());
+      const box = await appNav.boundingBox();
       assert.ok(box.y > 700 && box.y + box.height <= 850, "Bottom nav inside viewport");
     }
   }
   await page.evaluate(() => {
     localStorage.setItem("sarvnema_downloads", JSON.stringify([{ title: "Test movie", href: "https://example.com/movie.mp4", label: "1080p", at: Date.now() }]));
   });
-  await nav.getByRole("button", { name: "دانلودها" }).click();
+  await page.locator(".app-mobile-nav").getByRole("button", { name: "دانلودها" }).click();
   await page.getByRole("dialog", { name: "دانلودها", exact: true }).getByText("Test movie", { exact: true }).waitFor();
   await page.keyboard.press("Escape");
   await page.screenshot({ path: ".media-cache/landing-mobile.png" });

@@ -51,6 +51,7 @@
 .page :global(.trailer-controls button) { display: flex; align-items: center; justify-content: center; gap: 7px; background: #171810d9; border: 1px solid var(--edge); min-width: 40px; min-height: 40px; border-radius: 20px !important; padding: 8px 12px; color: var(--gold); cursor: pointer; }
 .content { padding-top: 22px; padding-bottom: 60px; }
 .mobileDock { display: none; }
+.primaryPlay { display: inline-flex; justify-content: center; align-items: center; gap: 10px; min-height: 50px; padding: 12px 24px; border-radius: 14px !important; background: var(--gold); color: #231b07; font-size: 14px; font-weight: 800; }
 :global(body):has(.page) :global(.watch-together-floating) { display: none; }
 
 /* Scope the shared controls to cinema detail pages; music retains its theme. */
@@ -179,4 +180,22 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .page *, .page *::before { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* One shared app nav, with title-specific actions directly above it. */
+@media (max-width: 760px) {
+  .page { padding-bottom: calc(154px + env(safe-area-inset-bottom)); }
+  .mobileDock { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.08fr) 44px; position: fixed; inset: auto 10px; bottom: calc(82px + env(safe-area-inset-bottom)); z-index: 310; padding: 8px; gap: 6px; border: 1px solid var(--edge); border-radius: 18px !important; background: #171610f5; box-shadow: 0 -8px 28px #0005; }
+  .mobileDock a, .mobileDock :global(.watch-together-inline) { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 46px; height: auto; padding: 6px !important; gap: 5px; font-size: 11px !important; border: 1px solid var(--edge); border-radius: 12px !important; white-space: normal; }
+  .mobileDock .dockPlay { color: #231b07; background: var(--gold); font-weight: 800; }
+  .mobileDock :global(.watch-together-inline) { color: var(--gold); background: #ebcf7614; }
+  .mobileDock :global(.watch-together-mark) { width: 22px; height: 22px; min-width: 22px; }
+  .mobileDock .dockDownload { width: 44px; }
+  .primaryPlay { grid-column: 1/-1; font-size: 14px; }
+  .page :global(.source-region-notice) { grid-column: 1/-1; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .primaryPlay, .mobileDock .dockPlay { animation: actionGlow 3.6s ease-in-out 4; }
+  .mobileDock :global(.watch-together-inline svg) { animation: actionGlow 3.6s 1.8s ease-in-out 4; }
+  @keyframes actionGlow { 50% { box-shadow: 0 0 0 4px #ebcf7622,0 0 24px #ebcf7630; } }
 }

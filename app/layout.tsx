@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { AppMessageCenter } from "@/components/app-message-center";
 import { MusicPlaybackProvider } from "@/components/music-playback-provider";
 import { NavigationFeedback } from "@/components/navigation-feedback";
+import { MobileAppShell } from "@/components/mobile-app-shell";
 import { StructuredData } from "@/components/structured-data";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import { BRAND_MARK, BRAND_NAME } from "@/lib/brand";
@@ -16,6 +17,7 @@ import "./watch-together-overrides.css";
 import "./mobile-ux-overrides.css";
 import "./media-theme.css";
 import "./cinema-discovery.css";
+import "./mobile-app.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -28,6 +30,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
   keywords: ["دانلود فیلم", "دانلود سریال", "دانلود آهنگ", "فیلم جدید", "سریال جدید", "قسمت جدید سریال", "موزیک جدید", "پخش آنلاین فیلم", "پخش آنلاین موسیقی", "تماشای هم‌زمان", "شنیدن هم‌زمان موسیقی"],
   applicationName: BRAND_NAME,
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: BRAND_NAME },
   authors: [{ name: "سرونما" }],
   creator: "سرونما",
   publisher: "سرونما",
@@ -35,7 +38,7 @@ export const metadata: Metadata = {
   verification: process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : undefined,
   icons: {
     icon: BRAND_MARK,
-    apple: BRAND_MARK,
+    apple: "/app-icon/192",
   },
   openGraph: {
     title: "سرونما | فیلم، سریال و موسیقی",
@@ -52,6 +55,8 @@ export const viewport: Viewport = {
   themeColor: "#050505",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 const googleAnalyticsId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
@@ -68,6 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <NavigationFeedback />
         </Suspense>
         <MusicPlaybackProvider>{children}</MusicPlaybackProvider>
+        <MobileAppShell locale={locale} />
         <WatchTogetherLauncher locale={locale} />
         <AppMessageCenter />
         {hasGoogleAnalytics && googleAnalyticsId ? <GoogleAnalytics measurementId={googleAnalyticsId} /> : null}

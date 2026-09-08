@@ -607,6 +607,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
         {!isListeningRoom && <PlayerSubtitles videoRef={videoRef} itemId={playback.media.itemId} title={playback.media.title} sourceKey={playback.media.source.url} sourceLabel={playback.media.source.label} sourceSubtitleUrl={playback.media.source.subtitleUrl ?? null} open={subtitlesOpen} onClose={() => setSubtitlesOpen(false)} selection={snapshot.subtitle} onSelectionChange={changeSubtitle} canChange={can("subtitles")} shared />}
       </div>
       <section className="party-queue">
+        {isDonyayeSerial({ url: playback.media.source.url }) && <details className="source-region-notice"><summary>راهنمای VPN · VPN help</summary><p>{regionalPlaybackHint(document.documentElement.lang.startsWith("fa"))}</p></details>}
         <div className="section-head"><div><h2>{queueTitle}</h2><p className="muted">{queueDescription}</p></div></div>
         <section className={`party-personal-media ${personalMediaOpen ? "is-open" : ""}`} aria-label="Personal room media">
           <header>

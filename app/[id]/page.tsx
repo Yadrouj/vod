@@ -9,6 +9,7 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { StructuredData } from "@/components/structured-data";
 import { TitleTabs, type TitleTabsItem } from "@/components/title-tabs";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
+import { isDonyayeSerial, regionalPlaybackHint } from "@/lib/playback-help";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { buildSeasonSummaries, movieDownloadSources } from "@/lib/downloads";
 import { formatNumber, getDictionary, typeLabel } from "@/lib/i18n";
@@ -56,7 +57,7 @@ export default async function DetailPage({ params }: Props) {
   const playHint = fa ? isSeries ? "انتخاب فصل، قسمت و کیفیت" : "انتخاب کیفیت و شروع تماشا" : isSeries ? "Choose season, episode & quality" : "Choose quality & start watching";
 
   return (
-    <div className={`shell ${styles.page}`} data-media-theme="cinema" dir={fa ? "rtl" : "ltr"}>
+    <div className={`shell ${styles.page}`} data-media-theme="cinema" data-mobile-title="true" dir={fa ? "rtl" : "ltr"}>
       <StructuredData data={vodJsonLd(item)} />
       <section className={styles.hero} aria-labelledby="title-heading">
         {heroBackdrop && <img className={styles.backdrop} src={sizedImageUrl(heroBackdrop, 1280) ?? undefined} alt="" decoding="async" />}
@@ -100,11 +101,13 @@ export default async function DetailPage({ params }: Props) {
                 <summary><span>{overview}</span><b>{fa ? "درباره داستان" : "Read synopsis"} <ArrowDown size={13} aria-hidden="true" /></b></summary>
               </details>}
               <div className={styles.actions}>
+                {canPlay && <Link href={watchHref} className={styles.primaryPlay}><Play size={21} fill="currentColor" />{t.common.playOnline}</Link>}
                 <Link href="#downloads" className={styles.secondary}><ArrowDown size={18} aria-hidden="true" />{fa ? isSeries ? "فصل‌ها و دانلودها" : "کیفیت‌ها و دانلود" : isSeries ? "Seasons & downloads" : "Quality & downloads"}</Link>
                 <WatchTogetherLauncher locale={locale} placement="inline" preset={canPlay ? { itemId: item.imdbCode, title, posterUrl: posterUrl ?? null } : undefined} />
                 {best && <DownloadButton href={best.url} title={title} itemId={item.imdbCode} posterUrl={posterUrl} label={fa ? `بهترین فایل · ${best.quality || "دانلود"}` : `Best file · ${best.quality || "Download"}`} />}
               </div>
               {!canPlay && <p className={styles.availability}>{fa ? "نسخه قابل پخش آنلاین هنوز در آرشیو نیست؛ لینک‌های موجود را در بخش دانلود بررسی کنید." : "No browser-playable release is available yet. Check the available download links below."}</p>}
+              {downloads.some(isDonyayeSerial) && <details className="source-region-notice"><summary>{fa ? "راهنمای VPN و محدودیت منبع" : "VPN & source availability"}</summary><p>{regionalPlaybackHint(fa)}</p></details>}
               <div className={styles.externalLinks}>
                 <a href={subzoneSearchUrl(item.title, item.year)} target="_blank" rel="noreferrer">{t.title.subzoneSubtitles}<ArrowUpLeft size={14} aria-hidden="true" /></a>
                 {item.sourcePageUrl && <a href={item.sourcePageUrl} target="_blank" rel="noreferrer">{fa ? "صفحه منبع" : "Source page"}<ArrowUpLeft size={14} aria-hidden="true" /></a>}
@@ -119,7 +122,8 @@ export default async function DetailPage({ params }: Props) {
       </main>
       <nav className={styles.mobileDock} aria-label={fa ? "دسترسی سریع پخش و دانلود" : "Quick playback and downloads"}>
         {canPlay && <Link className={styles.dockPlay} href={watchHref}><Play size={19} fill="currentColor" aria-hidden="true" />{t.common.playOnline}</Link>}
-        <Link href="#downloads"><ArrowDown size={18} aria-hidden="true" />{fa ? isSeries ? "فصل و قسمت" : "لینک‌های دانلود" : isSeries ? "Episodes" : "Downloads"}</Link>
+        <WatchTogetherLauncher locale={locale} placement="inline" preset={canPlay ? { itemId: item.imdbCode, title, posterUrl: posterUrl ?? null } : undefined} label={fa ? "تماشای همزمان" : "Watch together"} />
+        <Link className={styles.dockDownload} href="#downloads" aria-label={fa ? "فصل‌ها و دانلودها" : "Episodes & downloads"}><ArrowDown size={19} aria-hidden="true" /></Link>
       </nav>
     </div>
   );

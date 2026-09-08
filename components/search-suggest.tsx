@@ -8,6 +8,7 @@ import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type CSS
 import { DEFAULT_LOCALE, getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
 import { searchTitleKind, type SearchKind } from "@/lib/vod-search-order";
+import { VoiceSearch } from "./voice-search";
 
 type Suggestion = {
   href?: string;
@@ -214,6 +215,12 @@ export function SearchSuggest({
     inputRef.current?.focus();
   }
 
+  function updateQuery(value: string) {
+    const canSearch = value.trim().length >= 2;
+    setQuery(value); setLoading(canSearch); setOpen(canSearch); setActiveIndex(-1); setFailure("");
+    if (!canSearch) setItems([]);
+  }
+
   function handleKeyboard(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Escape") {
       event.preventDefault();
@@ -322,7 +329,7 @@ export function SearchSuggest({
         </button>
       </div>
 
-      <div className="suggest-input-shell">
+      <div className="suggest-input-shell has-voice">
         <Search className="suggest-input-icon" size={19} aria-hidden="true" />
         <input
           ref={inputRef}
@@ -330,13 +337,7 @@ export function SearchSuggest({
           name={name}
           value={query}
           onChange={(event) => {
-            const value = event.target.value;
-            const canSearch = value.trim().length >= 2;
-            setQuery(value);
-            setLoading(canSearch);
-            setOpen(canSearch);
-            setActiveIndex(-1);
-            if (!canSearch) setItems([]);
+            updateQuery(event.target.value);
           }}
           onFocus={() => {
             if (searchable) setOpen(true);
@@ -357,6 +358,7 @@ export function SearchSuggest({
             <X size={17} />
           </button>
         ) : null}
+        <VoiceSearch locale={locale} onAccept={value => { updateQuery(value); inputRef.current?.focus(); }} />
       </div>
 
       {!portal && menu}

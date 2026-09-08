@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AiSearchPanel } from "@/components/ai-search-panel";
+import { CountryDiscovery } from "@/components/country-discovery";
 import { FilmLandingHero } from "@/components/film-landing-hero";
 import { FocusRail } from "@/components/focus-rail";
 import { GradientMenu, type MegaMenuItem } from "@/components/gradient-menu";
@@ -96,6 +97,7 @@ export default async function HomePage() {
       </section>
 
       <section className="home-stack wrap film-landing-content">
+        <CountryDiscovery locale={locale} />
         {freshLandingRails.map((section) => <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />)}
         <ReleaseUpdatesRail items={newEpisodes} variant="episodes" locale={locale} generatedAt={updates.generatedAt} asOf={updates.asOf} />
         <ReleaseUpdatesRail items={updates.items} locale={locale} generatedAt={updates.generatedAt} asOf={updates.asOf} />
