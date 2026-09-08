@@ -73,7 +73,7 @@
  .page :global(.artist-track-list li button > i), .page :global(.artist-track-list li button > em) { display: none; }
  .page :global(.artist-track-list img), .page :global(.artist-track-art) { width: 42px; height: 42px; }
  .page :global(.artist-playlist-library) { padding: 14px; }
- .dock { bottom: calc(82px + env(safe-area-inset-bottom)); left: 10px; width: calc(100vw - 20px); }
+ .dock { bottom: var(--app-nav-space, calc(100px + env(safe-area-inset-bottom))); left: 10px; width: calc(100vw - 20px); }
  .dock :global(.music-player-controls) { flex-wrap: wrap; }
 }
 @media(prefers-reduced-motion: reduce) { .page *, .dock * { animation: none !important; transition: none !important; } }

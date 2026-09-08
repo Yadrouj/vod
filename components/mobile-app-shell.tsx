@@ -2,22 +2,45 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowRight, Download, Film, History, Home, Music2, Search, Users, WifiOff, X } from "lucide-react";
+import { ArrowRight, Download, Film, History, Library, ListMusic, Music2, Search, Users, WifiOff, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ActivityDialog, openActivity } from "./landing-activity";
 import { SearchSuggest } from "./search-suggest";
+import { WatchTogetherLauncher } from "./watch-together-launcher";
 import type { Locale } from "@/lib/i18n";
 
 export function MobileAppShell({ locale }: { locale: Locale }) {
   const pathname = usePathname();
-  const music = pathname.startsWith("/music");
   const watching = pathname.startsWith("/watch/");
   const room = pathname.startsWith("/watch-together/");
+  const [roomMusic, setRoomMusic] = useState(false);
+  const music = pathname.startsWith("/music") || (room && roomMusic);
   const fa = locale === "fa";
   const [offline, setOffline] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const searchDialog = useRef<HTMLDialogElement>(null);
+  const libraryDialog = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (!room) return;
+    // A room can switch between video and audio without changing its URL.
+    let themeObserver: MutationObserver | undefined;
+    const discovery = new MutationObserver(attach);
+    function attach() {
+      const stage = document.querySelector(".party-layout[data-media-theme]");
+      if (!stage) return;
+      discovery.disconnect();
+      const read = () => setRoomMusic(stage.getAttribute("data-media-theme") === "music");
+      read();
+      themeObserver = new MutationObserver(read);
+      themeObserver.observe(stage, { attributes: true, attributeFilter: ["data-media-theme"] });
+    }
+    discovery.observe(document.body, { childList: true, subtree: true });
+    attach();
+    return () => { discovery.disconnect(); themeObserver?.disconnect(); };
+  }, [room, pathname]);
 
   useEffect(() => {
     const updateConnection = () => setOffline(!navigator.onLine);
@@ -60,24 +83,33 @@ export function MobileAppShell({ locale }: { locale: Locale }) {
 
   useEffect(() => {
     searchDialog.current?.close();
+    libraryDialog.current?.close();
   }, [pathname]);
 
   const openSearch = () => { setSearchOpen(true); searchDialog.current?.showModal(); };
   return <>
     {offline && <div className="app-offline" role="status"><WifiOff size={16} />{fa ? "اتصال اینترنت قطع است؛ برای پخش و جستجو دوباره متصل شوید." : "You’re offline. Reconnect to search and play."}</div>}
-    <nav className="app-mobile-nav" data-theme={music ? "music" : "cinema"} data-hidden={hidden} aria-label={fa ? "منوی اصلی موبایل" : "Mobile navigation"}>
-      <Link href={watching ? pathname.replace("/watch/", "/") : "/"} prefetch={false} aria-current={pathname === "/" ? "page" : undefined}>
-        {watching ? <ArrowRight /> : <Home />}<span>{watching ? (fa ? "جزئیات" : "Details") : (fa ? "خانه" : "Home")}</span>
+    <nav className="app-mobile-nav" dir={fa ? "rtl" : "ltr"} data-theme={music ? "music" : "cinema"} data-hidden={hidden} aria-label={fa ? "منوی اصلی موبایل" : "Mobile navigation"}>
+      <Link href={watching ? pathname.replace("/watch/", "/") : music ? "/music" : "/"} prefetch={false} aria-current={pathname === (music ? "/music" : "/") ? "page" : undefined}>
+        <span className="app-nav-icon">{watching ? <ArrowRight /> : music ? <Music2 /> : <Film />}</span><span>{watching ? (fa ? "جزئیات" : "Details") : music ? (fa ? "موسیقی" : "Music") : (fa ? "فیلم‌ها" : "Cinema")}</span>
       </Link>
-      <Link href={music ? "/music/artists" : "/browse"} prefetch={false} aria-current={pathname.startsWith(music ? "/music/artists" : "/browse") ? "page" : undefined}>
-        {music ? <Users /> : <Film />}<span>{music ? (fa ? "خواننده‌ها" : "Artists") : (fa ? "فیلم و سریال" : "Explore")}</span>
-      </Link>
-      <button className="app-nav-search" type="button" aria-haspopup="dialog" onClick={openSearch}><Search /><span>{fa ? "جستجو" : "Search"}</span></button>
-      <Link href={music ? "/" : "/music"} prefetch={false}>{music ? <Film /> : <Music2 />}<span>{music ? (fa ? "سینما" : "Cinema") : (fa ? "موسیقی" : "Music")}</span></Link>
-      <button type="button" aria-haspopup="dialog" onClick={() => openActivity(watching || room || music ? "watch" : "download")}>
-        {watching || room || music ? <History /> : <Download />}<span>{watching || room || music ? (fa ? "ادامه تماشا" : "History") : (fa ? "دانلودها" : "Downloads")}</span>
+      <button className="app-nav-search" type="button" aria-haspopup="dialog" aria-expanded={searchOpen} onClick={openSearch}><span className="app-nav-icon"><Search /></span><span>{fa ? "جستجو" : "Search"}</span></button>
+      <WatchTogetherLauncher key={music ? "listen" : "watch"} locale={locale} placement="dock" experience={music ? "listen" : "watch"} />
+      <Link className="app-nav-switch" href={music ? "/" : "/music"} prefetch={false} aria-label={music ? (fa ? "رفتن به سینما" : "Switch to cinema") : (fa ? "رفتن به موسیقی" : "Switch to music")}><span className="app-nav-icon">{music ? <Film /> : <Music2 />}<i aria-hidden="true" /></span><span>{music ? (fa ? "سینما" : "Cinema") : (fa ? "موسیقی" : "Music")}</span></Link>
+      <button type="button" className="app-nav-library" aria-haspopup="dialog" aria-expanded={libraryOpen} onClick={() => { setLibraryOpen(true); libraryDialog.current?.showModal(); }}>
+        <span className="app-nav-icon"><Library /></span><span>{fa ? "کتابخانه" : "Library"}</span>
       </button>
     </nav>
+    <dialog ref={libraryDialog} className="app-search-dialog app-library-dialog" data-theme={music ? "music" : "cinema"} dir={fa ? "rtl" : "ltr"} aria-labelledby="app-library-title" onClose={() => setLibraryOpen(false)} onClick={e => { if (e.target === e.currentTarget || (e.target as Element).closest("a[href]")) libraryDialog.current?.close(); }}>
+      <header><div><small>{music ? (fa ? "دنیای موسیقی تو" : "Your music space") : (fa ? "دنیای سینمای تو" : "Your cinema space")}</small><h2 id="app-library-title">{fa ? "کتابخانه و دسترسی سریع" : "Library & shortcuts"}</h2></div><button autoFocus type="button" aria-label={fa ? "بستن" : "Close"} onClick={() => libraryDialog.current?.close()}><X /></button></header>
+      <div className="app-library-grid">
+        <Link href={music ? "/music/artists" : "/browse"} prefetch={false}>{music ? <Users /> : <Film />}<strong>{music ? (fa ? "خواننده‌ها" : "Artists") : (fa ? "فیلم و سریال" : "Movies & series")}</strong><small>{fa ? "کشف و مرور آرشیو" : "Explore the archive"}</small></Link>
+        <Link href={music ? "/music/playlists" : "/browse?section=recent-films"} prefetch={false}>{music ? <ListMusic /> : <Library />}<strong>{music ? (fa ? "پلی‌لیست‌ها" : "Playlists") : (fa ? "تازه‌ها" : "New releases")}</strong><small>{music ? (fa ? "برای هر حال و هوا" : "For every mood") : (fa ? "فیلم‌های جدید" : "New movies")}</small></Link>
+        <button type="button" onClick={() => { libraryDialog.current?.close(); openActivity("download"); }}><Download /><strong>{fa ? "دانلودها" : "Downloads"}</strong><small>{fa ? "لینک‌های اخیر این مرورگر" : "Recent links in this browser"}</small></button>
+        <button type="button" onClick={() => { libraryDialog.current?.close(); openActivity("watch"); }}><History /><strong>{fa ? "آخرین نمایش‌ها" : "Recently watched"}</strong><small>{fa ? "از همان‌جا ادامه بده" : "Pick up where you left off"}</small></button>
+      </div>
+      <p className="app-search-tip">{fa ? "با دکمهٔ وسط منو اتاق بساز و لینک دعوت را برای دوستانت بفرست." : "Use the center button to create a room and invite your friends."}</p>
+    </dialog>
     <ActivityDialog locale={locale} />
     <dialog ref={searchDialog} className="app-search-dialog" data-theme={music ? "music" : "cinema"} dir={fa ? "rtl" : "ltr"} aria-labelledby="app-search-title" onClose={() => setSearchOpen(false)} onClick={e => { if (e.target === e.currentTarget || (e.target as Element).closest("a[href]")) searchDialog.current?.close(); }}>
       <header><div><small>{fa ? "کشف در سرونما" : "Discover SarvNema"}</small><h2 id="app-search-title">{fa ? "چی دوست داری ببینی یا بشنوی؟" : "What would you like to discover?"}</h2></div><button autoFocus type="button" aria-label={fa ? "بستن" : "Close"} onClick={() => searchDialog.current?.close()}><X /></button></header>

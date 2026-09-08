@@ -50,7 +50,7 @@ try {
   await page.reload(); await country.waitFor(); await page.waitForFunction(() => document.querySelector(".country-discovery select")?.value === "off");
 
   await nav.locator(".app-nav-search").click();
-  const search = page.locator(".app-search-dialog"); await search.waitFor();
+  const search = page.locator(".app-search-dialog:not(.app-library-dialog)"); await search.waitFor();
   await search.getByRole("button", { name: "جستجوی صوتی", exact: true }).click();
   const voice = page.locator(".voice-dialog"); await voice.waitFor();
   assert.equal(await page.evaluate(() => window.voiceStarts), 0, "Never record on opening");
@@ -78,7 +78,8 @@ try {
   await page.keyboard.press("Escape");
   await page.screenshot({ path: ".media-cache/mobile-search-app.png" });
   await page.keyboard.press("Escape");
-  await nav.getByRole("button", { name: "دانلودها", exact: true }).click();
+  await nav.locator(".app-nav-library").click();
+  await page.locator(".app-library-dialog").getByRole("button", { name: /دانلودها/ }).click();
   await page.getByRole("dialog", { name: "دانلودها", exact: true }).getByRole("button", { name: "آخرین نمایش‌ها", exact: true }).click();
   await page.getByRole("dialog", { name: "آخرین نمایش‌ها", exact: true }).waitFor(); await page.keyboard.press("Escape");
 
@@ -103,7 +104,9 @@ try {
   assert.equal(await page.locator(".pro-player").getAttribute("dir"), "ltr");
   assert.equal(await page.locator(".player-timeline").evaluate(el => getComputedStyle(el).direction), "ltr");
   await page.goto(origin + "/music");
-  await nav.getByRole("link", { name: "خواننده‌ها", exact: true }).waitFor();
+  await nav.locator(".app-nav-library").click();
+  await page.locator(".app-library-dialog").getByRole("link", { name: /خواننده‌ها/ }).waitFor();
+  await page.keyboard.press("Escape");
   assert.equal(await nav.getAttribute("data-theme"), "music");
   await nav.locator(".app-nav-search").click();
   assert.equal(await search.getAttribute("data-theme"), "music");

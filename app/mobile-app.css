@@ -1,5 +1,5 @@
 /* App chrome is mounted once, outside transformed / filtered page ancestors. */
-:root { --app-accent: #ebcf76; --app-nav-space: calc(82px + env(safe-area-inset-bottom)); }
+:root { --app-accent: #ebcf76; --app-nav-space: calc(100px + env(safe-area-inset-bottom)); }
 .app-mobile-nav { display: none; }
 .app-offline { position: fixed; inset: env(safe-area-inset-top) 12px auto; z-index: 1000; display: flex; justify-content: center; align-items: center; gap: 8px; margin: 8px auto; padding: 10px 14px; max-width: 550px; font-size: 12px; line-height: 1.8; background: #302717; color: #f4da91; border: 1px solid #ebcf7655; border-radius: 14px !important; }
 .app-search-dialog, .voice-dialog { --app-accent: #ebcf76; position: fixed; inset: 0; margin: auto; box-sizing: border-box; width: min(620px, calc(100% - 24px)); max-height: calc(100dvh - 32px); border: 1px solid #ebcf7645; border-radius: 28px !important; padding: 24px; background: #121310; color: #f7f5ed; overflow: auto; scrollbar-width: thin; scrollbar-color: #847444 transparent; }
@@ -18,6 +18,12 @@
 .app-search-dialog .suggest-input-shell .search { min-height: 52px; border: 1px solid #ffffff22; border-radius: 14px !important; }
 .app-search-submit { align-self: start; min-height: 44px; padding: 8px 18px; border: 0; border-radius: 12px !important; background: var(--app-accent); color: #16170e; font-size: 12px; }
 .app-search-tip { color: #aaa89c; font-size: 12px; line-height: 1.9; }
+.app-library-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin-block: 22px 14px; }
+.app-library-grid > :is(a,button) { display: flex; flex-direction: column; align-items: start; gap: 9px; min-width: 0; padding: 18px 14px; border: 1px solid #ffffff13; border-radius: 20px !important; background: linear-gradient(145deg,#ffffff09,#ffffff02); color: #f7f5ed; text-align: start; text-decoration: none; cursor: pointer; }
+.app-library-grid svg { color: var(--app-accent); width: 24px; height: 24px; }
+.app-library-grid strong { font-size: 13px; }
+.app-library-grid small { font-size: 10px; line-height: 1.8; color: #a8aaa1; }
+.app-library-grid > :is(a,button):hover { border-color: var(--app-accent); }
 .app-search-dialog :focus-visible, .voice-dialog :focus-visible, .app-mobile-nav :focus-visible { outline: 2px solid var(--app-accent); outline-offset: 3px; }
 /* Reserve distinct hit targets for clear and voice; neither leaves the field. */
 .suggest-input-shell.has-voice { min-height: 48px; }
@@ -64,18 +70,33 @@ html .has-voice .suggest-loading { margin-top: -9px; transform: none; }
 @keyframes app-skeleton { to { opacity: .4; } }
 @media (max-width: 760px) {
   body { padding-bottom: var(--app-nav-space); }
-  .app-mobile-nav { --app-accent: #ebcf76; position: fixed; inset: auto 10px; bottom: max(8px, env(safe-area-inset-bottom)); z-index: 300; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 3px; padding: 7px 5px; border: 1px solid #ebcf7635; border-radius: 24px !important; background: #151611f7; box-shadow: 0 -10px 34px #0006; contain: layout; }
-  .app-mobile-nav[data-theme=music] { --app-accent: #a5edc2; border-color: #a5edc235; background: #111b15f7; }
-  .app-mobile-nav > a, .app-mobile-nav > button { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-width: 0; min-height: 52px; padding: 4px 0; font-size: 9px; text-decoration: none; border: 0; border-radius: 16px !important; background: transparent; color: #b7b8ac; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-  .app-mobile-nav svg { width: 21px; height: 21px; stroke-width: 1.7; }
-  .app-mobile-nav [aria-current=page] { background: color-mix(in srgb,var(--app-accent) 12%,transparent); color: var(--app-accent); }
-  .app-mobile-nav .app-nav-search { color: #201d12; background: var(--app-accent); }
+  .app-mobile-nav { --app-accent: #ebcf76; --app-ink: #30260d; --app-switch: #a5edc2; position: fixed; inset: auto 12px; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 300; width: calc(100% - 24px); max-width: 520px; margin-inline: auto; display: grid; grid-template-columns: 1fr 1fr 1.35fr 1fr 1fr; gap: 2px; padding: 8px 6px; box-sizing: border-box; border: 1px solid #ebcf7633; border-radius: 30px !important; background: linear-gradient(155deg,#2a281ff7,#161712fa 60%); box-shadow: 0 12px 36px #0009, inset 0 1px 0 #ffffff15; isolation: isolate; }
+  .app-mobile-nav[data-theme=music] { --app-accent: #a5edc2; --app-ink: #102e20; --app-switch: #ebcf76; border-color: #a5edc23d; background: linear-gradient(155deg,#22342af7,#101b16fa 60%); }
+  .app-mobile-nav > a, .app-mobile-nav > button { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0; min-height: 62px; margin: 0; padding: 3px 0; font-size: 10px; line-height: 1.7; font-weight: 600; text-decoration: none; border: 0; border-radius: 22px !important; background: transparent; color: #c2c5b9; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  .app-mobile-nav svg { width: 22px; height: 22px; stroke-width: 1.7; }
+  .app-nav-icon { position: relative; display: grid; place-items: center; width: 38px; height: 34px; border-radius: 15px !important; }
+  .app-mobile-nav [aria-current=page], .app-mobile-nav [aria-expanded=true] { color: var(--app-accent); }
+  .app-mobile-nav [aria-current=page] .app-nav-icon, .app-mobile-nav [aria-expanded=true] .app-nav-icon { background: color-mix(in srgb,var(--app-accent) 14%,transparent); box-shadow: inset 0 1px 0 #ffffff13; }
+  .app-mobile-nav [aria-current=page]::after { content: ""; width: 12px; height: 2px; position: absolute; bottom: -4px; background: var(--app-accent); border-radius: 8px !important; }
+  .app-nav-switch .app-nav-icon { color: var(--app-switch); }
+  .app-nav-switch i { position: absolute; width: 5px; height: 5px; top: 3px; inset-inline-end: 3px; background: var(--app-switch); border-radius: 50% !important; }
+  .app-mobile-nav .watch-together-dock { color: var(--app-accent); box-shadow: none; overflow: visible; }
+  .app-mobile-nav .watch-together-dock::before, .app-mobile-nav .watch-together-dock::after { content: none; }
+  .app-mobile-nav .watch-together-dock .watch-together-launcher-icon { position: relative; display: grid; place-items: center; flex: none; width: 48px; height: 44px; margin-top: -15px; border: 1px solid #ffffff30; border-radius: 18px !important; background: linear-gradient(135deg,color-mix(in srgb,var(--app-accent) 72%,white),var(--app-accent)); color: var(--app-ink); box-shadow: 0 5px 16px color-mix(in srgb,var(--app-accent) 18%,transparent),0 0 0 5px #171913; transform: rotate(-5deg); }
+  .app-mobile-nav .watch-together-dock .watch-together-launcher-icon > svg { width: 27px; height: 27px; }
+  .app-mobile-nav .watch-together-dock .watch-together-launcher-icon::before, .app-mobile-nav .watch-together-dock .watch-together-launcher-icon::after { content: none; }
+  .app-mobile-nav .app-room-plus { position: absolute; inset-inline-end: -4px; bottom: -3px; width: 17px; height: 17px; display: grid; place-items: center; border: 2px solid #171913; border-radius: 50% !important; color: var(--app-accent); background: #263027; }
+  .app-mobile-nav .app-room-plus svg { width: 11px; height: 11px; stroke-width: 2.5; }
+  .app-mobile-nav .watch-together-launcher-copy { display: block; min-width: 0; margin-top: 3px; }
+  .app-mobile-nav .watch-together-launcher-copy strong { font-size: 9px; line-height: 1.7; white-space: nowrap; font-weight: 750; }
   .app-mobile-nav > :active { transform: scale(.94); }
   .app-mobile-nav[data-hidden=true], body:has(:fullscreen) .app-mobile-nav, body:has(.party-player-stage.is-pseudo-fullscreen) .app-mobile-nav { display: none; }
   .watch-together-floating { display: none !important; }
-  body:has([data-mobile-title]) [data-music-dock] { bottom: calc(154px + env(safe-area-inset-bottom)); }
+  body:has([data-mobile-title]) [data-music-dock] { bottom: calc(var(--app-nav-space) + 72px); }
   html[data-app-keyboard=true] [data-mobile-title] nav[aria-label="دسترسی سریع پخش و دانلود"], html[data-app-keyboard=true] [data-music-dock] { visibility: hidden; }
   .app-search-dialog { margin: max(12px, env(safe-area-inset-top)) auto auto; padding: 18px; border-radius: 22px !important; }
+  .app-library-dialog { margin: auto auto calc(12px + env(safe-area-inset-bottom)); border-radius: 28px !important; padding: 20px; }
+  .app-library-dialog::before { content: ""; display: block; width: 34px; height: 4px; border-radius: 8px !important; background: #ffffff32; margin: -8px auto 18px; }
   .app-search-dialog h2 { font-size: 18px; }
   .app-search-dialog .suggest-results { max-height: 48dvh; }
   .voice-dialog { padding: 18px; }
@@ -97,10 +118,15 @@ html .has-voice .suggest-loading { margin-top: -9px; transform: none; }
   .route-status { top: calc(12px + env(safe-area-inset-top)); }
 }
 @media (prefers-reduced-motion: no-preference) {
+  .app-mobile-nav { transition: background .3s, border-color .3s; animation: app-dialog-in .35s ease-out both; }
+  .app-nav-icon { transition: background .2s, color .2s, transform .2s; }
+  .app-mobile-nav > :hover .app-nav-icon { transform: translateY(-2px); }
+  .app-mobile-nav .watch-together-dock .watch-together-launcher-icon { animation: app-room-welcome 2.4s ease-in-out 2; }
+  @keyframes app-room-welcome { 0%,100% { transform: rotate(-5deg); } 45% { transform: translateY(-3px) rotate(4deg); } }
   .app-mobile-nav > * { transition: background .18s, color .18s, transform .18s; }
   .voice-dialog[open], .app-search-dialog[open] { animation: app-dialog-in .18s ease-out; }
   @keyframes app-dialog-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 }
 @media (prefers-reduced-motion: reduce) {
-  .voice-dialog *, .app-search-dialog *, .app-mobile-nav *, .country-discovery * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .voice-dialog *, .app-search-dialog *, .app-mobile-nav, .app-mobile-nav *, .country-discovery * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Globe2, Link2, LockKeyhole, Radio, Search, Share2, UsersRound, X } from "lucide-react";
+import { Check, Copy, Globe2, Headphones, Link2, LockKeyhole, Plus, Radio, Search, Share2, UsersRound, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -33,7 +33,7 @@ type CreateRoomResult = {
   error?: string;
 };
 
-type Placement = "floating" | "inline" | "player";
+type Placement = "floating" | "inline" | "player" | "dock";
 type Experience = "watch" | "listen";
 
 const copyByLocale = {
@@ -129,6 +129,7 @@ export function WatchTogetherLauncher({
     ? "listen"
     : "watch";
   const socketRef = useRef<Socket | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const builderRef = useRef<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -165,6 +166,27 @@ export function WatchTogetherLauncher({
       chooseError: "Choose a track first.",
       mediaError: "This track does not have a playable source right now.",
       titleStep: "Track",
+      searchPlaceholder: "Search for a track or artist…",
+      ...(locale === "fa" ? {
+        button: "شنیدن همزمان",
+        buttonHint: "ساخت اتاق موسیقی",
+        eyebrow: "شنیدن همزمان",
+        title: "یک اتاق شنیدن همزمان بساز",
+        description: "آهنگ را انتخاب کن، اتاق بساز و لینک دعوت را بفرست؛ با دوستانت همزمان گوش بده و گپ بزن.",
+        searchLabel: "انتخاب آهنگ",
+        searchPlaceholder: "نام آهنگ یا خواننده…",
+        selected: "آهنگ انتخاب‌شده برای اتاق",
+        change: "تغییر آهنگ",
+        sync: "همگام با ضرب آهنگ",
+        host: "کنترل موسیقی با میزبان",
+        social: "صدا، چت و ری‌اکشن",
+        create: "ساخت اتاق موسیقی و دعوت",
+        creating: "در حال ساخت اتاق موسیقی…",
+        readyText: "لینک را برای دوستانت بفرست؛ وارد اتاق شوید و از همان لحظه باهم گوش بدهید.",
+        chooseError: "اول یک آهنگ انتخاب کن.",
+        mediaError: "در حال حاضر لینک قابل پخشی برای این آهنگ پیدا نشد.",
+        titleStep: "انتخاب آهنگ",
+      } : {}),
     }
     : baseText;
 
@@ -175,8 +197,17 @@ export function WatchTogetherLauncher({
   useEffect(() => {
     if (!open) return;
     const previousOverflow = document.body.style.overflow;
+    const trigger = triggerRef.current;
+    const focusTimer = window.setTimeout(() => builderRef.current?.querySelector<HTMLButtonElement>(".watch-builder-close")?.focus(), 0);
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") closeLauncher();
+      if (event.key === "Tab") {
+        const controls = Array.from(builderRef.current?.querySelectorAll<HTMLElement>('a[href],button:not(:disabled),input:not(:disabled),select,textarea,[tabindex="0"]') ?? []).filter(el => el.getClientRects().length);
+        const first = controls[0], last = controls.at(-1);
+        if (first && (event.shiftKey ? document.activeElement === first : document.activeElement === last)) {
+          event.preventDefault(); (event.shiftKey ? last : first)?.focus();
+        }
+      }
     };
     document.body.style.overflow = "hidden";
     document.documentElement.classList.add("watch-builder-is-open");
@@ -185,6 +216,8 @@ export function WatchTogetherLauncher({
       document.body.style.overflow = previousOverflow;
       document.documentElement.classList.remove("watch-builder-is-open");
       window.removeEventListener("keydown", closeOnEscape);
+      window.clearTimeout(focusTimer);
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     };
   }, [open]);
 
@@ -339,14 +372,19 @@ export function WatchTogetherLauncher({
   return (
     <>
       <button
+        ref={triggerRef}
         className={`watch-together-launcher watch-together-${placement} ${effectiveExperience === "listen" ? "watch-together-listen" : ""}`}
         data-media-theme={effectiveExperience === "listen" ? "music" : "cinema"}
         type="button"
         onClick={openLauncher}
         aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={placement === "dock" ? `${text.buttonHint} · ${text.button}` : undefined}
+        title={placement === "dock" ? text.buttonHint : undefined}
       >
         <span className="watch-together-launcher-icon" aria-hidden="true">
-          <WatchTogetherMark />
+          {placement === "dock" && effectiveExperience === "listen" ? <Headphones /> : <WatchTogetherMark />}
+          {placement === "dock" && <span className="app-room-plus"><Plus /></span>}
         </span>
         <span className="watch-together-launcher-copy">
           <strong>{buttonText}</strong>

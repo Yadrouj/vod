@@ -49,6 +49,9 @@ try {
   await page.keyboard.press("Escape");
   await page.waitForFunction(()=>!document.querySelector("[data-music-dock]")?.matches(":modal"));
   assert.equal(await audio.evaluate(el=>el.paused),false);
+  const mini = await page.locator("[data-music-dock]").boundingBox();
+  const nav = await page.locator(".app-mobile-nav").boundingBox();
+  assert.ok(mini.y + mini.height <= nav.y - 5, "Mini player must clear the floating navigation and raised room action");
   await page.locator('a[href="/music/collections"]').first().click();
   await page.waitForURL("**/music/collections");
   assert.equal(await audio.getAttribute("data-instance"),"persistent");
