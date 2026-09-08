@@ -14,6 +14,7 @@ import { titleSynopsis } from "@/lib/title-synopsis";
 
 export type TitleTabsItem = Pick<VodItem,
   | "title"
+  | "youtubeVideos"
   | "overview"
   | "persianOverview"
   | "persianTitle"
@@ -136,6 +137,14 @@ export function TitleTabs({
       {active === "about" && <AboutTab item={item} locale={locale} isSeries={isSeries} />}
       {active === "episodes" && (
         <section className="title-tab-panel">
+          {!!item.youtubeVideos?.length && <section className={styles.watchSources} aria-label={locale === "fa" ? "منابع تماشای فیلم" : "Film watch sources"}>
+            <h2>{locale === "fa" ? "تماشای فیلم در یوتیوب" : "Watch on YouTube"}</h2>
+            <p>{locale === "fa" ? "این لینک‌ها برای تماشا در منبع هستند، نه دانلود مستقیم. دسترسی و امکان پخش ممکن است با کشور یا وضعیت ویدئو تغییر کند." : "These are source watch pages, not direct downloads. Availability can vary by region and video status."}</p>
+            {item.youtubeVideos.filter(video => /^[\w-]{11}$/.test(video.videoId)).map(video => <div key={video.videoId}>
+              <span><strong>{video.title || item.title}</strong><small>{video.channel || "YouTube"} · {locale === "fa" ? video.playbackStatus === "available" ? "پخش بررسی شده" : video.playbackStatus === "unavailable" ? "پخش در دسترس نیست" : "پخش بررسی نشده" : video.playbackStatus || "not-tested"}</small></span>
+              <a href={`https://www.youtube.com/watch?v=${video.videoId}`} target="_blank" rel="noopener noreferrer">{locale === "fa" ? "باز کردن در یوتیوب ↗" : "Open YouTube ↗"}</a>
+            </div>)}
+          </section>}
           <DownloadBrowser
             itemId={item.imdbCode}
             title={item.title}

@@ -8,7 +8,12 @@ import { readLegacyList } from "./scrape-oitn-films.mjs";
 const catalog = "public/data/vod-catalog.json", output = `${catalog}.tmp-${process.pid}`;
 const names = new Map(readLegacyList(await readFile("scripts/data/old-iranian-film-list.txt", "utf8")).map(e => [e.id, e.title]));
 const references = JSON.parse(await readFile("public/data/old-iranian-video-references.json", "utf8"));
-const grouped = Map.groupBy(references.items, item => item.id);
+const reviewed = JSON.parse(await readFile("scripts/data/old-iranian-video-reviewed.json", "utf8"));
+const allReferences = [...references.items, ...reviewed.items];
+for (const ref of allReferences) {
+  if (!names.has(ref.id) || !/^[\w-]{11}$/.test(ref.videoId) || ref.durationSeconds < 2400) throw new Error(`Invalid full-film reference: ${ref.id}`);
+}
+const grouped = Map.groupBy(allReferences, item => item.id);
 const backup = [], stats = { metadataQuarantined: 0, linkedTitles: 0, youtubeReferences: 0 };
 await mkdir(".media-cache/research", { recursive: true });
 const stream = createWriteStream(output, { encoding: "utf8" });

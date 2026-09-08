@@ -135,6 +135,7 @@ function toTitleTabsItem(item: VodItem): TitleTabsItem {
   return {
     title: item.title, imdbCode: item.imdbCode, type: item.type, year: item.year,
     overview: item.overview, persianOverview: item.persianOverview, persianTitle: item.persianTitle,
+    youtubeVideos: item.youtubeVideos ?? getOldIranianFilmMedia(item.id)?.youtubeVideos,
     endYear: item.endYear, releaseDate: item.releaseDate, certificate: item.certificate,
     countries: item.countries, languages: item.languages, qualities: item.qualities,
     keywords: item.keywords?.slice(0, 14), companies: item.companies?.slice(0, 8),
