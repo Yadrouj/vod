@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { CategoryExplorer } from "./category-explorer";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { LandingActivity } from "@/components/landing-activity";
-import { sizedImageUrl } from "@/lib/image-url";
 import { formatNumber, getDictionary, type Locale } from "@/lib/i18n";
 
 export type MegaMenuItem = {
@@ -29,7 +28,6 @@ export function GradientMenu({
   totalTitles,
   locale,
   menuSections = [],
-  featuredItems = [],
   activity = false,
 }: {
   totalTitles?: number;
@@ -38,8 +36,6 @@ export function GradientMenu({
   featuredItems?: MegaMenuItem[];
   activity?: boolean;
 }) {
-  const [activeSectionId, setActiveSectionId] = useState(menuSections[0]?.id ?? "");
-  const [menuOpen, setMenuOpen] = useState(false);
   const t = getDictionary(locale);
   const menuItems = [
     { href: "/music", label: locale === "fa" ? "موسیقی" : "Music" },
@@ -50,118 +46,11 @@ export function GradientMenu({
     { href: "/browse?section=animation", label: t.nav.animation },
   ];
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("mobile-categories-open", menuOpen);
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
-    };
-    if (menuOpen) window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.documentElement.classList.remove("mobile-categories-open");
-      window.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [menuOpen]);
-
-  const closeMenu = () => setMenuOpen(false);
 
   return (
     <header className="gradient-menu wrap">
       <BrandLogo className="gradient-brand" locale={locale} />
-      <div className={`mega-menu-shell ${menuOpen ? "is-open" : ""}`}>
-        <button
-          className="mega-button"
-          type="button"
-          aria-haspopup="dialog"
-          aria-expanded={menuOpen}
-          aria-controls="sarvnema-category-panel"
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          <span className="mega-button-icon" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </span>
-          {t.common.categories}
-        </button>
-
-        <button className="mega-mobile-backdrop" type="button" aria-label="Close categories" onClick={closeMenu} />
-        <div className="mega-panel" id="sarvnema-category-panel" role="dialog" aria-modal={menuOpen ? "true" : undefined} aria-label={t.common.categories}>
-          <div className="mega-mobile-head">
-            <div>
-              <small>{locale === "fa" ? "مرور آرشیو" : "Browse library"}</small>
-              <strong>{t.common.categories}</strong>
-            </div>
-            <button type="button" onClick={closeMenu} aria-label="Close categories">×</button>
-          </div>
-          <aside className="mega-rail" aria-label={t.common.categories}>
-            {menuSections.map((section) => (
-              <button
-                key={`rail-${section.id}`}
-                type="button"
-                className={activeSectionId === section.id ? "active" : ""}
-                onMouseEnter={() => setActiveSectionId(section.id)}
-                onFocus={() => setActiveSectionId(section.id)}
-                onClick={() => setActiveSectionId(section.id)}
-              >
-                {section.title}
-                <span>{formatNumber(section.total, locale)}</span>
-              </button>
-            ))}
-          </aside>
-
-          <div className="mega-groups">
-            {menuSections.filter((section) => section.id === activeSectionId).map((section) => (
-              <section key={section.id} id={`mega-${section.id}`} className="mega-group">
-                {(() => {
-                  const visibleItems = section.items;
-                  return (
-                    <>
-                <div className="mega-group-head">
-                  <Link href={section.href} onClick={closeMenu}>{section.title}</Link>
-                  <span>{formatNumber(section.total, locale)}</span>
-                </div>
-                <div className="mega-category-content">
-                  <Link
-                    className="mega-category-art"
-                    href={visibleItems[0] ? `/${visibleItems[0].imdbCode}` : section.href}
-                    onClick={closeMenu}
-                    style={section.artUrl
-                      ? { backgroundImage: `url(${sizedImageUrl(section.artUrl, 960)})` }
-                      : undefined}
-                  >
-                    <span>{visibleItems[0]?.title ?? section.title}</span>
-                  </Link>
-                  <div className="mega-title-list">
-                    {visibleItems.slice(0, 10).map((item) => (
-                      <Link key={`${section.id}-${item.imdbCode}`} href={`/${item.imdbCode}`} onClick={closeMenu}>
-                        <strong>{item.title}</strong>
-                        <small>{item.year ?? "-"}</small>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-                    </>
-                  );
-                })()}
-              </section>
-            ))}
-          </div>
-
-          <aside className="mega-badges">
-            <p>{t.common.featured}</p>
-            <div>
-              {featuredItems.map((item) => (
-                <Link key={`badge-${item.imdbCode}`} className="mega-badge" href={`/${item.imdbCode}`} onClick={closeMenu}>
-                  {item.posterUrl ? (
-                    <img src={sizedImageUrl(item.posterUrl, 180) ?? item.posterUrl} alt="" loading="lazy" decoding="async" />
-                  ) : <span />}
-                  <small>{item.title}</small>
-                </Link>
-              ))}
-            </div>
-          </aside>
-        </div>
-      </div>
+      <CategoryExplorer sections={menuSections} locale={locale} />
       <nav className="gradient-nav" aria-label="Primary">
         {menuItems.map((item) => (
           <Link key={item.href} className="gradient-nav-item" href={item.href}>

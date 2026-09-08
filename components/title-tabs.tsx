@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { DownloadBrowser } from "@/components/download-browser";
 import { InteractiveMediaGallery, type GalleryMedia } from "@/components/ui/interactive-media-gallery";
 import { PosterCard, type PosterCardData } from "@/components/poster-card";
@@ -9,9 +9,14 @@ import { DEFAULT_LOCALE, getDictionary, interpolate, type Locale, typeLabel } fr
 import type { DownloadSource, SeasonSummary } from "@/lib/downloads";
 import type { VodItem } from "@/lib/types";
 import { trailerPlayback } from "@/lib/title-presentation";
+import styles from "./title-about.module.css";
+import { titleSynopsis } from "@/lib/title-synopsis";
 
 export type TitleTabsItem = Pick<VodItem,
   | "title"
+  | "overview"
+  | "persianOverview"
+  | "persianTitle"
   | "imdbCode"
   | "type"
   | "year"
@@ -49,6 +54,7 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
+const subscribeReady = () => () => {};
 
 export function TitleTabs({
   item,
@@ -60,6 +66,7 @@ export function TitleTabs({
   locale = DEFAULT_LOCALE,
 }: TitleTabsProps) {
   const [active, setActive] = useState<TabId>("episodes");
+  const ready = useSyncExternalStore(subscribeReady, () => true, () => false);
   const [suggestions, setSuggestions] = useState<PosterCardData[]>([]);
   const [suggestionsState, setSuggestionsState] = useState<"idle" | "loading" | "loaded">("idle");
   const suggestionsRequested = useRef(false);
@@ -103,6 +110,7 @@ export function TitleTabs({
             className={active === tab.id ? "active" : ""}
             type="button"
             role="tab"
+            disabled={!ready}
             id={`title-tab-${tab.id}`}
             aria-selected={active === tab.id}
             aria-controls="title-tab-content"
@@ -125,7 +133,7 @@ export function TitleTabs({
       </nav>
 
       <div id="title-tab-content" role="tabpanel" aria-labelledby={`title-tab-${active}`} tabIndex={0}>
-      {active === "about" && <AboutTab item={item} locale={locale} />}
+      {active === "about" && <AboutTab item={item} locale={locale} isSeries={isSeries} />}
       {active === "episodes" && (
         <section className="title-tab-panel">
           <DownloadBrowser
@@ -157,18 +165,24 @@ export function TitleTabs({
   );
 }
 
-function AboutTab({ item, locale }: { item: TitleTabsItem; locale: Locale }) {
+function AboutTab({ item, locale, isSeries }: { item: TitleTabsItem; locale: Locale; isSeries: boolean }) {
   const t = getDictionary(locale);
 
   return (
-    <section className="title-tab-panel about-tab">
-      <div className="about-main">
+    <section className={styles.about} data-title-about dir={locale === "fa" ? "rtl" : "ltr"}>
+      <div className={styles.main}>
+        <section className={styles.story}>
+          <span className={styles.eyebrow}>{locale === "fa" ? "داستان و دنیای اثر" : "The story"}</span>
+          <h2>{locale === "fa" ? `دربارهٔ ${item.persianTitle || item.title}` : `About ${item.title}`}</h2>
+          <p dir="auto">{titleSynopsis(item, locale) || (locale === "fa" ? "خلاصهٔ داستان هنوز در آرشیو ثبت نشده است." : "A synopsis has not been added yet.")}</p>
+        </section>
         {(item.credits?.length ?? 0) > 0 && (
-          <>
+          <section className={styles.panel}>
             <PanelHead title={t.title.castCrew} note={`${item.credits?.length} ${t.title.people}`} />
             <CastRail item={item} />
-          </>
+          </section>
         )}
+        <section className={styles.panel}>
         <PanelHead
           title={t.title.trailersPictures}
           note={interpolate(t.title.trailersPicturesNote, {
@@ -177,12 +191,13 @@ function AboutTab({ item, locale }: { item: TitleTabsItem; locale: Locale }) {
           })}
         />
         <MediaCarousel item={item} locale={locale} />
+        </section>
       </div>
 
-      <aside className="about-data">
+      <aside className={styles.facts}>
         <PanelHead title={t.title.data} note={item.source === "mihandownload" ? "MihanDownload" : item.imdbCode} />
         <div className="compact-facts">
-          <Info label={t.title.type} value={typeLabel(item.type, locale)} />
+          <Info label={t.title.type} value={typeLabel(isSeries ? "series" : "movie", locale)} />
           <Info label={t.title.year} value={String(item.year ?? "-")} />
           {item.endYear && <Info label={t.title.end} value={String(item.endYear)} />}
           {item.releaseDate && <Info label={t.title.release} value={item.releaseDate} />}
@@ -202,6 +217,7 @@ function AboutTab({ item, locale }: { item: TitleTabsItem; locale: Locale }) {
 
         {(item.companies?.length ?? 0) > 0 && (
           <div className="company-list">
+            <h3>{locale === "fa" ? "شرکت‌های سازنده" : "Production companies"}</h3>
             {item.companies?.slice(0, 8).map((company, index) => (
               <span key={`${company.company_id ?? company.company_name}-${index}`}>
                 {company.company_name}
@@ -223,7 +239,7 @@ function PanelHead({ title, note }: { title: string; note: string }) {
   );
 }
 
-function MediaCarousel({ item }: { item: TitleTabsItem; locale: Locale }) {
+function MediaCarousel({ item, locale }: { item: TitleTabsItem; locale: Locale }) {
   const videos = item.imdbVideos?.slice(0, 10) ?? [];
   const images = item.imdbImages?.slice(0, 20) ?? [];
   const sourceImages = item.movieshoImages?.slice(0, 20) ?? [];
@@ -235,7 +251,7 @@ function MediaCarousel({ item }: { item: TitleTabsItem; locale: Locale }) {
       .map((image, index) => ({ id: `moviesho-image-${index}-${image.url}`, type: "image" as const, title: image.caption ?? item.title, url: image.url })),
   ];
   if (!media.length && (item.backdropUrl ?? item.posterUrl)) media.push({ id: "fallback", type: "image", title: item.title, url: item.backdropUrl ?? item.posterUrl! });
-  return <InteractiveMediaGallery items={media} />;
+  return <InteractiveMediaGallery items={media} locale={locale} />;
 }
 
 function CastRail({ item }: { item: TitleTabsItem }) {
