@@ -157,7 +157,7 @@ export function PersonalListenLauncher() {
 
   return (
     <>
-      <button className="watch-together-launcher watch-together-inline watch-together-listen personal-listen-launcher" data-media-theme="music" type="button" onClick={openBuilder} aria-haspopup="dialog">
+      <button className="watch-together-launcher watch-together-inline watch-together-listen personal-listen-launcher" data-media-theme="music" type="button" onClick={openBuilder} aria-haspopup="dialog" aria-label="ساخت اتاق با فایل یا لینک موسیقی شخصی">
         <span className="watch-together-launcher-icon" aria-hidden="true"><WatchTogetherMark /></span>
         <span className="watch-together-launcher-copy"><strong>Upload &amp; listen together</strong><small>Your file or link · one room</small></span>
       </button>

@@ -1,0 +1,38 @@
+.mobile { display: none; }
+@media (max-width: 760px) {
+  .mobile { --feature-accent: #ebcf76; display: block; min-width: 0; }
+  .mobile[data-mobile-feature=music] { --feature-accent: #a5edc2; }
+  .card { position: relative; isolation: isolate; height: clamp(300px,calc(100svh - 218px - env(safe-area-inset-bottom) - env(safe-area-inset-top)),580px); overflow: hidden; border-radius: 26px !important; background: #161819; border: 1px solid var(--surface-edge); box-shadow: var(--surface-shadow); touch-action: pan-y; }
+  .art { position: absolute; inset: 0; display: grid; place-items: center; background: linear-gradient(135deg,#2b2d30,#101113); z-index: -3; }
+  .art img { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
+  .art > svg { width: 70px; height: 70px; color: #85888b; }
+  .shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg,#0b0c0dfc 0%,#0b0c0deb 12%,#0b0c0d80 35%,transparent 66%),linear-gradient(180deg,#0005,transparent 25%); }
+  .topline { position: absolute; inset: 14px 14px auto; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .topline > span { display: inline-flex; align-items: center; gap: 6px; max-width: calc(100% - 52px); padding: 8px 10px; color: #f4f4f2; background: #151617b8; border: 1px solid #ffffff0f; border-radius: 12px !important; font-size: 10px; line-height: 1.6; }
+  .topline > span svg { flex-shrink: 0; }
+  .topline button { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; padding: 0; border: 1px solid #ffffff0f; border-radius: 50% !important; background: #151617b8; color: #fff; cursor: pointer; }
+  .copy { position: absolute; inset: auto 14px 16px; }
+  .copy h2 { margin: 8px 0 18px; font-size: clamp(25px,6.8vw,38px); font-weight: 850; line-height: 1.35; letter-spacing: -.035em; color: #fff; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; text-wrap: balance; text-align: start; }
+  .copy .meta { margin: 0; font-size: 11px; line-height: 1.8; color: #dedee0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .mobile .actions { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) 44px; gap: 6px; align-items: stretch; }
+  .mobile .actions > :is(a,button) { position: relative; display: flex; align-items: center; justify-content: center; gap: 5px; min-width: 0; min-height: 48px; margin: 0; padding: 7px 5px; border: 1px solid #ffffff17; border-radius: 15px !important; background: #ffffff0d; color: #f3f3f3; font-size: 11px; font-weight: 700; text-decoration: none; box-shadow: inset 0 1px 0 #ffffff04; }
+  .mobile .actions .play { color: #181a12; background: var(--feature-accent); border-color: transparent; }
+  .actions > a > svg { flex-shrink: 0; }
+  .mobile .actions :global(.watch-together-launcher-icon) { width: 22px; height: 22px; flex: 0 0 22px; background: transparent; color: var(--feature-accent); box-shadow: none; }
+  .mobile .actions :global(.watch-together-mark) { width: 22px; height: 22px; }
+  .mobile .actions :global(.watch-together-launcher-copy strong) { font-size: 10px; line-height: 1.4; white-space: normal; }
+  .mobile .actions :global(.watch-together-launcher)::before, .mobile .actions :global(.watch-together-launcher)::after { content: none; }
+  .pager { display: flex; align-items: center; justify-content: center; gap: 18px; padding-top: 4px; height: 48px; }
+  .pager button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; background: none; border: 0; color: #b8babe; cursor: pointer; border-radius: 50% !important; }
+  .pager > span { display: flex; gap: 10px; align-items: center; color: #84888f; font-size: 11px; }
+  .pager b { color: #eee; font-weight: 700; }
+  .pager i { width: 22px; height: 2px; border-radius: 4px !important; background: #ffffff24; }
+  .mobile :is(a,button):focus-visible { outline: 2px solid var(--feature-accent); outline-offset: 3px; }
+  .mobile button, .mobile a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  .mobile :is(button,a):active { transform: scale(.97); }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
+  .mobile :is(button,a) { transition: transform .16s, background .16s; }
+  .card { animation: card-enter .3s ease-out both; }
+  @keyframes card-enter { from { opacity: .4; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+}

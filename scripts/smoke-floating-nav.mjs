@@ -32,7 +32,7 @@ try {
   await page.goto(origin, { waitUntil: "domcontentloaded", timeout: 90000 });
   for (const music of [false, true]) {
     await nav.waitFor();
-    await page.locator(music ? ".music-spotify-page h1" : ".film-spotify-page h1").first().waitFor();
+    await page.locator(`[data-mobile-feature="${music ? "music" : "cinema"}"] h2`).waitFor();
     assert.equal(await nav.getAttribute("data-theme"), music ? "music" : "cinema");
     assert.match(await roomButton.innerText(), music ? /شنیدن همزمان/ : /تماشای همزمان/);
     assert.equal(await nav.evaluate(el => getComputedStyle(el).getPropertyValue("--app-accent").trim()), music ? "#a5edc2" : "#ebcf76");

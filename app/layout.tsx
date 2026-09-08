@@ -18,6 +18,7 @@ import "./mobile-ux-overrides.css";
 import "./media-theme.css";
 import "./cinema-discovery.css";
 import "./mobile-app.css";
+import "./soft-surfaces.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

@@ -1,0 +1,85 @@
+/* Shared surface treatment: accents belong to actions, not every container.
+   Explicit surfaces only: focus rings and semantic warning/error states remain. */
+:root {
+  --surface-edge: rgba(255, 255, 255, .075);
+  --surface-edge-strong: rgba(255, 255, 255, .14);
+  --surface-shadow: 0 8px 28px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .025);
+}
+
+html :is(.film-landing-hero, .film-landing-now-playing, .music-landing-hero, .music-landing-now-playing,
+  .film-landing-content > .section, .country-discovery, .public-party-rooms,
+  .music-artist-hero, .artist-playlist-library, .artist-playlist-now-playing,
+  .music-discovery-card, .music-card, .release-update-card, .personal-history-card,
+  .app-mobile-nav, .app-search-dialog, .voice-dialog, .watch-builder, .personal-media-card,
+  .party-header, .party-chat, .party-title-details, .party-personal-media, .party-queue-panel, .public-party-room-card,
+  .browse-hero, .browse-form, .mega-panel, .suggest-menu, .suggest-menu-portal,
+  .youtube-player-card, .music-player-pro, .player-shell, .pro-player, [data-music-dock], [data-landing-pulse]) {
+  border-color: var(--surface-edge) !important;
+  box-shadow: var(--surface-shadow) !important;
+}
+
+html :is(.film-landing-search, .music-landing-search, .film-landing-info-grid > span,
+  .music-landing-stats > span, .music-landing-track-picker button > span,
+  .film-landing-picker button > span, .film-landing-kicker, .music-landing-kicker,
+  .mega-button, .watch-builder-section, .watch-builder-access-options > button,
+  .party-title-stats > *, .party-controls, .party-player-settings, .app-library-grid > *,
+  .player-series-choice-grid .select, .watch-builder-link, .watch-share-button, .film-landing-visual-toggle,
+  .party-personal-media-toggle, .party-title-actions a, .party-personal-dropzone, .party-personal-media-tabs button,
+  .country-discovery select, .voice-language select, .activity-mode-tabs button,
+  .film-landing-secondary, .music-landing-secondary, .watch-together-launcher) {
+  border-color: var(--surface-edge) !important;
+}
+
+html :is(.watch-together-launcher, .mega-button, .film-landing-secondary, .music-landing-secondary):hover {
+  border-color: var(--surface-edge-strong) !important;
+  box-shadow: 0 4px 16px #0002;
+}
+html :is(.app-search-dialog, .voice-dialog, .suggest-menu, .suggest-menu-portal, .mega-panel) {
+  scrollbar-color: #ffffff30 transparent;
+}
+html .app-mobile-nav {
+  background: linear-gradient(155deg,#252628f7,#121314fa 65%);
+  box-shadow: 0 8px 26px #0005, inset 0 1px 0 #ffffff05 !important;
+}
+html .app-mobile-nav[data-theme=music] { background: linear-gradient(155deg,#202825f7,#111615fa 65%); }
+html .app-mobile-nav [aria-current=page]::after { content: none; }
+html .app-mobile-nav .watch-together-dock .watch-together-launcher-icon { box-shadow: 0 3px 12px #0003, 0 0 0 5px #17191a; }
+.mobile-music-statline { display: none; }
+
+@media (max-width: 760px) {
+  /* A purpose-built portrait feature replaces the two-column desktop hero. */
+  html :is(.film-landing-hero-grid, .music-landing-hero-grid, .film-landing-dots,
+    .film-landing-hero-glow, .music-landing-hero-glow) { display: none !important; }
+  html :is(.film-landing-hero, .music-landing-hero)::before,
+  html :is(.film-landing-hero, .music-landing-hero)::after { display: none !important; }
+  html :is(.film-spotify-page .film-landing-hero, .music-spotify-page .music-landing-hero) {
+    min-height: 0 !important; padding: 0 !important; margin: 0 !important;
+    border: 0 !important; background: none !important; box-shadow: none !important;
+    overflow: visible; border-radius: 0 !important;
+  }
+  html .film-spotify-page .film-landing-shell { padding-top: env(safe-area-inset-top); }
+  html .music-spotify-page .music-landing-shell { padding-top: env(safe-area-inset-top); }
+  html .music-spotify-page .music-landing-topbar { flex-direction: row; align-items: center; min-height: 60px; margin-bottom: 6px; padding: 8px 0; }
+  html .music-landing-topbar .topbar-actions { width: auto; flex-wrap: nowrap; }
+  html .music-landing-topbar .topbar-actions > .pill { display: none; }
+  html .music-landing-topbar .personal-listen-launcher { width: 44px; min-height: 44px; border-radius: 14px !important; background: #ffffff06; }
+  html :is(.film-spotify-page, .music-spotify-page) > .wrap,
+  html .film-spotify-page .film-landing-shell > .wrap { width: calc(100% - 24px); padding-inline: 0; }
+  html .film-spotify-page .gradient-menu { min-height: 60px; padding-block: 8px; margin-bottom: 6px; background: transparent; }
+  html .film-spotify-page .gradient-menu::before, html .film-spotify-page .gradient-menu::after { display: none; }
+  html .mega-button { min-height: 42px; padding: 8px 12px; background: #ffffff06; }
+  html :is(.film-landing-search, .music-landing-search) { display: none !important; }
+  html .mobile-music-statline { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 9px; margin: 8px 0 18px; color: #a6aaa8; font-size: 10px; line-height: 1.8; }
+  .mobile-music-statline span { color: #555b58; }
+  html [data-landing-pulse] { margin: 10px 0 8px; padding: 12px 14px; gap: 8px; background: #ffffff03; font-size: 10px; }
+  html [data-landing-pulse] > div { gap: 6px; }
+  html [data-landing-pulse] time { font-size: 9px; color: #85898e; }
+  html .film-spotify-page .film-landing-content { gap: 26px; margin-top: 18px; padding-top: 0; }
+  html .film-spotify-page .film-landing-content > .section { padding: 0; background: none !important; border: 0 !important; box-shadow: none !important; }
+  html .film-landing-content .section-head { align-items: center; margin-bottom: 12px; gap: 10px; }
+  html .film-landing-content .section-head h2 { font-size: 20px; line-height: 1.5; letter-spacing: -.02em; }
+  html .film-landing-content .section-head .muted { font-size: 11px; line-height: 1.8; }
+  html .film-landing-content .view-all { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 6px 10px; font-size: 10px; border: 0; background: #ffffff06; border-radius: 12px !important; }
+  html .country-discovery { padding: 16px; background: #ffffff03; }
+  html .country-discovery h2 { font-size: 18px; }
+}

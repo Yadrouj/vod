@@ -38,6 +38,7 @@ try {
   }
   await page.setViewportSize({ width: 390, height: 844 });
   const country = page.locator(".country-discovery select");
+  await country.scrollIntoViewIfNeeded();
   await country.selectOption("IR");
   await page.locator("#country-film-rail a").first().waitFor({ timeout: 20000 });
   assert.ok(await page.locator("#country-film-rail a").count() <= 12);

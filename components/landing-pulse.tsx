@@ -36,7 +36,7 @@ export function LandingPulse({ initial, locale, endpoint = "/api/landing-pulse",
   }, [endpoint]);
   const changed = Date.parse(latest.version) > Date.parse(initial.version);
   const date = initial.updatedAt ? new Intl.DateTimeFormat(fa ? "fa-IR" : "en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tehran" }).format(new Date(initial.updatedAt)) : null;
-  return <div className={styles.pulse}>
+  return <div className={styles.pulse} data-landing-pulse>
     <div><RefreshCw size={16} aria-hidden="true" /><strong>{fa ? "تازه‌های آرشیو" : "Archive updates"}</strong>{date && <time dateTime={initial.updatedAt!}>{fa ? "آخرین بررسی: " : "Last checked: "}{date}</time>}</div>
     {changed ? <button type="button" disabled={pending} onClick={() => startTransition(() => router.refresh())} aria-live="polite">{pending ? (fa ? "در حال بارگذاری…" : "Loading…") : (fa ? "به‌روزرسانی جدید · نمایش" : "New update · Show")}</button> : <Link href={updatesHref}>{initial.recentCount ? (fa ? `${initial.recentCount.toLocaleString("fa")} فیلم و قسمت جدید در هفتهٔ اخیر` : `${initial.recentCount} new titles and episodes this week`) : (fa ? "مشاهدهٔ تغییرات آرشیو" : "View archive changes")}<ArrowUpLeft size={16} /></Link>}
   </div>;

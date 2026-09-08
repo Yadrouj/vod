@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Film, Play, Search, Sparkles } from "lucide-
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { SearchSuggest } from "@/components/search-suggest";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
+import { MobileFeatureCard } from "./mobile-feature-card";
 import { getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
 import type { VodCard } from "@/lib/types";
@@ -39,11 +40,15 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
   const heroStyle = artUrl
     ? ({ "--film-hero-art": `url("${sizedImageUrl(artUrl, 1600)?.replaceAll('"', "\\\"") ?? artUrl}")` } as CSSProperties)
     : undefined;
-  const selectItem = (direction: -1 | 1) => setActiveIndex((current) => (current + direction + total) % total);
+  const selectItem = (direction: -1 | 1) => { setIsAutoPlaying(false); setActiveIndex((current) => (current + direction + total) % total); };
   const meta = [activeItem.year, activeItem.imdbRating ? `IMDb ${activeItem.imdbRating.toFixed(1)}` : null, typeLabel(activeItem.type, locale)].filter(Boolean).join(" • ");
 
   return (
     <section className="film-landing-hero" style={heroStyle} data-playing={isAutoPlaying ? "true" : "false"}>
+      <MobileFeatureCard title={displayTitle} image={posterUrl ? sizedImageUrl(posterUrl, 760) ?? posterUrl : null} meta={meta}
+        eyebrow={popularity ? (popularity.current ? (fa ? "محبوب‌های هفتهٔ IMDb" : "This week on IMDb") : (fa ? "از فهرست محبوب‌های IMDb" : "From the IMDb chart")) : (fa ? "پیشنهاد سرونما" : "Featured on SarvNema")}
+        item={{ itemId: activeItem.imdbCode, title: activeItem.title, posterUrl }} locale={locale} playable={activeItem.linksCount > 0}
+        index={activeIndex % total} total={total} rotating={isAutoPlaying} onRotate={setIsAutoPlaying} onSelect={selectItem} />
       <div className="film-landing-hero-glow" aria-hidden="true" />
       <div className="film-landing-hero-grid">
         <div className="film-landing-copy">

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { SearchSuggest } from "@/components/search-suggest";
+import { MobileFeatureCard } from "./mobile-feature-card";
 
 export type MusicHeroTrack = {
   id: string;
@@ -59,10 +60,14 @@ export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", init
   const heroStyle = activeTrack.coverUrl
     ? ({ "--music-hero-art": `url("${activeTrack.coverUrl.replaceAll('"', "\\\"")}")` } as CSSProperties)
     : undefined;
-  const selectTrack = (direction: -1 | 1) => setActiveIndex((current) => (current + direction + total) % total);
+  const selectTrack = (direction: -1 | 1) => { setIsVisualPlaying(false); setActiveIndex((current) => (current + direction + total) % total); };
 
   return (
     <section className="music-landing-hero" style={heroStyle} data-playing={isVisualPlaying ? "true" : "false"}>
+      <MobileFeatureCard music title={trackTitle} image={activeTrack.coverUrl} meta={artistLabel} eyebrow="انتخاب برای شنیدن"
+        item={{ itemId: activeTrack.id, title: trackTitle, posterUrl: activeTrack.coverUrl }} locale="fa"
+        index={activeIndex % total} total={total} rotating={isVisualPlaying} onRotate={setIsVisualPlaying} onSelect={selectTrack} />
+      {archiveStats && <p className="mobile-music-statline">{archiveStats.tracks.toLocaleString("fa-IR")} آهنگ <span>·</span> {archiveStats.artists.toLocaleString("fa-IR")} هنرمند <span>·</span> {archiveStats.videos.toLocaleString("fa-IR")} موزیک‌ویدیو</p>}
       <div className="music-landing-hero-glow" aria-hidden="true" />
       <div className="music-landing-hero-grid">
         <div className="music-landing-copy">

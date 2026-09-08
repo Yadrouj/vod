@@ -91,16 +91,16 @@ export default async function HomePage() {
           featuredItems={megaFeaturedItems}
         />
         <div className="wrap">
-          <LandingPulse initial={pulse} locale={locale} />
           <FilmLandingHero items={heroBanners} locale={locale} />
+          <LandingPulse initial={pulse} locale={locale} />
         </div>
       </section>
 
       <section className="home-stack wrap film-landing-content">
-        <CountryDiscovery locale={locale} />
         {freshLandingRails.map((section) => <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />)}
         <ReleaseUpdatesRail items={newEpisodes} variant="episodes" locale={locale} generatedAt={updates.generatedAt} asOf={updates.asOf} />
         <ReleaseUpdatesRail items={updates.items} locale={locale} generatedAt={updates.generatedAt} asOf={updates.asOf} />
+        <CountryDiscovery locale={locale} />
         {primaryLandingRails.map((section) => (
           <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />
         ))}
