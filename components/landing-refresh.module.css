@@ -1,0 +1,56 @@
+.landing { --landing-gold: #ebce72; background: #090909; }
+.landing :global(.gradient-menu) { position: relative; padding-bottom: 58px; }
+.activity { position: absolute; left: 0; bottom: 8px; display: flex; gap: 8px; align-items: center; }
+.activity button, .activity a { display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: #d6d1c2; background: #191813; border: 1px solid #ebce722b; border-radius: 12px !important; min-height: 40px; padding: 8px 12px; font-size: 12px; cursor: pointer; text-decoration: none; }
+.activity button:hover { color: #ebce72; border-color: #ebce72; }
+.activity .mobileOnly { display: none; }
+.pulse { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 8px 0 18px; padding: 12px 18px; border: 1px solid #ebce7230; border-radius: 16px !important; background: linear-gradient(110deg, #18160f, #101010); font-size: 12px; }
+.pulse > div, .pulse a { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.pulse svg, .pulse a { color: #ebce72; }
+.pulse time { color: #aaa596; }
+.pulse button { border: 0; border-radius: 10px !important; background: #ebce72; color: #17130a; padding: 10px 16px; cursor: pointer; }
+.historyDialog { position: fixed; inset: 0; margin: auto; width: min(850px, calc(100% - 32px)); max-height: min(80svh, 700px); padding: 24px; background: #11110f; color: #eee; border: 1px solid #ebce7255; border-radius: 24px !important; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #8a783c #171714; }
+.historyDialog::backdrop { background: #000b; backdrop-filter: blur(5px); }
+.historyDialog > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.historyDialog h2 { font-size: 22px; margin: 0; }
+.historyDialog header button { display: grid; place-items: center; width: 44px; height: 44px; background: #24231d; border: 1px solid #ebce7240; border-radius: 50% !important; color: #ebce72; cursor: pointer; }
+.historyDialog :global(.section-head) { display: none; }
+.historyDialog :global(.personal-history) { margin: 16px 0; padding: 0; border: 0; background: none; }
+.empty { padding: 40px 0; color: #c1baa5; text-align: center; }
+.privacy { font-size: 12px; color: #928e81; margin-top: 20px; }
+.landing :global(.film-landing-hero) { border-radius: 28px !important; border: 1px solid #ebce7233; box-shadow: 0 20px 60px #0004; }
+.landing :global(.film-landing-hero-grid) { min-height: 0; padding-block: 28px; }
+.landing :global(.film-landing-copy h1) { font-size: clamp(30px, 4.3vw, 64px); line-height: 1.2; }
+.landing :global(.film-landing-description) { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 14px; line-height: 1.9; }
+.landing :global(.film-landing-info-grid) { gap: 6px; font-size: 11px; }
+.landing :global(.film-landing-content) { gap: 32px; }
+.landing :global(.film-landing-content > .section) { border-radius: 22px !important; border-color: #ebce7226; background: linear-gradient(140deg, #15140f, #0c0c0b); }
+.landing :global(.film-landing-content > .section:nth-child(n+5)) { content-visibility: auto; contain-intrinsic-size: auto 440px; }
+.activity :focus-visible, .historyDialog :focus-visible, .pulse :focus-visible { outline: 2px solid #ebce72; outline-offset: 3px; }
+@media(min-width: 1000px) {
+  .landing :global(.film-landing-artwork) { max-height: 270px; }
+  .landing :global(.film-landing-now-playing) { padding: 16px; }
+  .landing :global(.film-landing-info-grid > div) { padding: 8px; }
+}
+@media(max-width: 760px) {
+  .landing { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+  .landing :global(.gradient-menu) { padding-bottom: 8px; backdrop-filter: none; }
+  .activity { position: fixed; inset: auto 10px 8px; bottom: max(8px, env(safe-area-inset-bottom)); z-index: 300; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 6px; border: 1px solid #ebce7240; border-radius: 20px !important; background: #14140ff5; box-shadow: 0 -8px 30px #0005; }
+  .activity button, .activity a, .activity .mobileOnly { display: flex; flex-direction: column; gap: 5px; padding: 6px 2px; border: none; background: transparent; min-height: 52px; font-size: 10px; color: #e3d9b7; }
+  .pulse { padding: 12px; font-size: 11px; gap: 10px; }
+  .pulse time { flex-basis: 100%; }
+  .historyDialog { padding: 18px; max-height: 78svh; }
+  .landing :global(.film-landing-hero) { border-radius: 20px !important; }
+  .landing :global(.film-landing-content) { gap: 22px; }
+  .landing :global(.film-landing-eyebrow) { margin: 10px 0 7px; }
+  .landing :global(.film-trending-context) { margin: 8px 0; }
+  .landing :global(.film-landing-description) { -webkit-line-clamp: 2; margin-top: 12px; }
+  .landing :global(.film-landing-search) { grid-template-columns: auto minmax(0, 1fr) auto; margin-top: 18px; gap: 5px; }
+  .landing :global(.film-landing-search > button) { grid-column: auto; width: auto; min-height: 40px; padding: 8px 10px; }
+  .landing :global(.film-landing-search .search-suggest) { min-width: 0; }
+}
+@media(prefers-reduced-motion: no-preference) {
+  .historyDialog[open] { animation: reveal .18s ease-out; }
+  .pulse button { animation: reveal .3s ease-out; }
+  @keyframes reveal { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+}

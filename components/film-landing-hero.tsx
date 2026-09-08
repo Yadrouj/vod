@@ -20,7 +20,10 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
 
   useEffect(() => {
     if (!isAutoPlaying || total < 2) return;
-    const timer = window.setInterval(() => setActiveIndex((current) => (current + 1) % total), 7200);
+    const timer = window.setInterval(() => {
+      if (document.hidden || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      setActiveIndex((current) => (current + 1) % total);
+    }, 7200);
     return () => window.clearInterval(timer);
   }, [isAutoPlaying, total]);
 

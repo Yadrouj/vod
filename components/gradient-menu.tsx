@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
+import { LandingActivity } from "@/components/landing-activity";
 import { sizedImageUrl } from "@/lib/image-url";
 import { formatNumber, getDictionary, type Locale } from "@/lib/i18n";
 
@@ -29,11 +30,13 @@ export function GradientMenu({
   locale,
   menuSections = [],
   featuredItems = [],
+  activity = false,
 }: {
   totalTitles?: number;
   locale: Locale;
   menuSections?: MegaMenuSection[];
   featuredItems?: MegaMenuItem[];
+  activity?: boolean;
 }) {
   const [activeSectionId, setActiveSectionId] = useState(menuSections[0]?.id ?? "");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -170,6 +173,7 @@ export function GradientMenu({
       <Link className="hover-button" href="/browse">
         {t.nav.browse} {totalTitles ? formatNumber(totalTitles, locale) : ""}
       </Link>
+      {activity && <LandingActivity locale={locale} />}
     </header>
   );
 }

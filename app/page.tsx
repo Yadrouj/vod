@@ -7,8 +7,9 @@ import { GradientMenu, type MegaMenuItem } from "@/components/gradient-menu";
 import { LandingSeoContent } from "@/components/landing-seo-content";
 import { NewsRail } from "@/components/news-rail";
 import { MusicRail } from "@/components/music-rail";
-import { DownloadHistory } from "@/components/download-history";
-import { ContinueWatching } from "@/components/continue-watching";
+import { LandingPulse } from "@/components/landing-pulse";
+import { landingPulse } from "@/lib/landing-pulse";
+import landingStyles from "@/components/landing-refresh.module.css";
 import { PeopleRail } from "@/components/people-rail";
 import { PosterRail } from "@/components/poster-rail";
 import { ReleaseUpdatesRail } from "@/components/release-updates-rail";
@@ -52,6 +53,7 @@ export default async function HomePage() {
     index,
     news,
     updates,
+    pulse,
     newEpisodes,
     topPeople,
     music,
@@ -77,16 +79,18 @@ export default async function HomePage() {
   const remainingLandingRails = landingRails.filter((section) => !anchorRailIds.includes(section.id) && !freshRailIds.includes(section.id));
 
   return (
-    <main className="shell film-spotify-page" data-media-theme="cinema">
+    <main className={`shell film-spotify-page ${landingStyles.landing}`} data-media-theme="cinema">
       <StructuredData data={landingJsonLd(FILM_LANDING_SEO, "/")} />
       <section className="film-landing-shell">
         <GradientMenu
+          activity
           totalTitles={index.totalTitles}
           locale={locale}
           menuSections={megaSections}
           featuredItems={megaFeaturedItems}
         />
         <div className="wrap">
+          <LandingPulse initial={pulse} locale={locale} />
           <FilmLandingHero items={heroBanners} locale={locale} />
         </div>
       </section>
@@ -95,8 +99,6 @@ export default async function HomePage() {
         {freshLandingRails.map((section) => <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />)}
         <ReleaseUpdatesRail items={newEpisodes} variant="episodes" locale={locale} generatedAt={updates.generatedAt} asOf={updates.asOf} />
         <ReleaseUpdatesRail items={updates.items} locale={locale} generatedAt={updates.generatedAt} asOf={updates.asOf} />
-        <ContinueWatching />
-        <DownloadHistory />
         {primaryLandingRails.map((section) => (
           <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />
         ))}
@@ -250,6 +252,7 @@ async function computeHomePageData(locale: Locale) {
 
   return {
     index,
+    pulse: landingPulse(rawUpdates),
     news,
     updates,
     newEpisodes,
