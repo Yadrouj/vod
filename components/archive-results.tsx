@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { type ArchiveCard, ARCHIVE_BATCH_SIZE } from "@/lib/archive-cards";
@@ -26,12 +26,11 @@ export function ArchiveResults({ initial, totalInPage, query, page, locale, grou
   const [items, setItems] = useState(initial);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [opening, setOpening] = useState<string | null>(null);
   const sentinel = useRef<HTMLDivElement>(null);
   const active = useRef<AbortController | null>(null);
   const fa = locale === "fa";
   const more = items.length < totalInPage;
-  useEffect(() => () => active.current?.abort(), []);
+  useEffect(() => () => { active.current?.abort(); active.current = null; }, []);
   const load = useCallback(async () => {
     if (active.current || !more) return;
     const controller = new AbortController(); active.current = controller;
@@ -45,7 +44,7 @@ export function ArchiveResults({ initial, totalInPage, query, page, locale, grou
       if (data.page !== page || !data.items.length) throw new Error("Archive changed; reload");
       setItems((previous) => [...previous, ...data.items].slice(0, totalInPage));
     } catch { if (active.current === controller) setError(true); }
-    finally { clearTimeout(timeout); active.current = null; setLoading(false); }
+    finally { clearTimeout(timeout); if (active.current === controller) { active.current = null; setLoading(false); } }
   }, [items.length, more, page, query, totalInPage]);
   useEffect(() => {
     if (!more || error || loading || !sentinel.current || !("IntersectionObserver" in window)) return;
@@ -59,10 +58,10 @@ export function ArchiveResults({ initial, totalInPage, query, page, locale, grou
       const group = kind === "all" ? items : items.filter((item) => searchTitleKind(item.type) === kind);
       if (!group.length) return null;
       return <section key={kind}>{kind !== "all" && <h2>{typeLabel(kind, locale)}</h2>}
-        <div className={styles.grid}>{group.map((item, index) => <Link data-archive-card prefetch={false} className={styles.card} key={item.id} href={`/${item.id}`} aria-busy={opening === item.id} onClick={(event) => { if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) setOpening(item.id); }}>
+        <div className={styles.grid}>{group.map((item, index) => <Link data-archive-card prefetch={false} className={styles.card} key={item.id} href={`/${item.id}`}>
           <div className={styles.art}><span className={styles.placeholder} aria-hidden="true">▶</span>{item.image && <img src={sizedImageUrl(item.image, 400) || item.image} alt="" width={400} height={600} loading={index < 6 ? "eager" : "lazy"} decoding="async" onError={(event) => { event.currentTarget.style.visibility = "hidden"; }} />}
             {item.rating != null && <span className={styles.rating} dir="ltr">★ {item.rating.toFixed(1)}</span>}
-            <span className={styles.open} aria-hidden="true">{opening === item.id ? "…" : "↗"}</span>
+            <CardNavigation locale={locale} />
           </div><strong>{fa ? item.persianTitle || item.title : item.title}</strong><small>{typeLabel(item.type, locale)} · {item.year ? new Intl.NumberFormat(locale, { useGrouping: false }).format(item.year) : "—"}</small>
         </Link>)}</div>
       </section>;
@@ -75,4 +74,9 @@ export function ArchiveResults({ initial, totalInPage, query, page, locale, grou
       <noscript>{more && <a href={`/browse?${query}&batch=${Math.ceil(initial.length / ARCHIVE_BATCH_SIZE) + 1}`}>{fa ? "نمایش عناوین بیشتر" : "More titles"}</a>}</noscript>
     </div>
   </div>;
+}
+
+function CardNavigation({ locale }: { locale: Locale }) {
+  const { pending } = useLinkStatus();
+  return <span className={styles.open} data-pending={pending} role={pending ? "status" : undefined} aria-label={pending ? (locale === "fa" ? "در حال باز کردن" : "Opening title") : undefined}><span aria-hidden="true">{pending ? "…" : "↗"}</span></span>;
 }

@@ -19,6 +19,12 @@ try {
   await page.locator('summary').first().click();
   assert.ok(await page.locator('select[name="genre"]').isVisible());
   await page.locator('summary').first().click();
+  const categories = page.locator('details').filter({ has: page.locator('nav.quick-tabs') });
+  assert.equal(await categories.getAttribute('open'), null);
+  await categories.locator('summary').click();
+  assert.ok(await categories.locator('[aria-current="page"]').isVisible());
+  await categories.locator('summary').click();
+  assert.ok((await cards.first().boundingBox()).y < 900, 'Cards visible in the first mobile viewport');
   for (let count = 40; count < 200; count += 40) {
     await cards.last().scrollIntoViewIfNeeded();
     await page.waitForFunction(expected => document.querySelectorAll('a[data-archive-card]').length >= expected, count + 40, { timeout: 45000 });
@@ -39,6 +45,9 @@ try {
   await page.goto(`${origin}/browse?q=breaking`, { waitUntil: 'domcontentloaded' });
   await cards.first().waitFor();
   assert.ok(await page.locator('h2').count());
+  const removeQuery = page.getByRole('link', { name: 'حذف فیلتر breaking', exact: true });
+  assert.ok(await removeQuery.isVisible());
+  assert.ok(!(await removeQuery.getAttribute('href')).includes('q=breaking'));
   assert.deepEqual(errors, []);
   console.log('PASS archive: mobile, filters, 200-card cap, pagination, API and search groups');
 } finally { await browser.close(); }

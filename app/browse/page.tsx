@@ -59,7 +59,8 @@ export default async function BrowsePage({ searchParams }: Props) {
               <i className="dot" />
               <span>{interpolate(t.browse.pageOf, { page: result.page, total: result.totalPages })}</span>
             </div>
-            <h1>{title}</h1>
+            <h1>{title}<span className={styles.headingMark} aria-hidden="true">◧</span></h1>
+            <p className={styles.intro}>{locale === "fa" ? "فیلم بعدی‌تان را پیدا کنید؛ با فیلتر سال، ژانر و امتیاز." : "Find your next watch by year, genre and rating."}</p>
           </div>
 
           <ArchiveForm key={archiveQuery}>
@@ -97,16 +98,19 @@ export default async function BrowsePage({ searchParams }: Props) {
             </details>
           </ArchiveForm>
 
-          <div className="quick-tabs">
-            <Link href="/browse?section=top-imdb">{t.common.topImdb}</Link>
-            <Link href="/browse?section=persian-movies">{t.common.persianMovies}</Link>
-            <Link href="/browse?section=old-iranian-films">{locale === "fa" ? "فیلم‌های قدیمی ایرانی" : "Old Iranian Films"}</Link>
-            <Link href="/browse?section=recent-films">{t.common.recentFilm}</Link>
-            <Link href="/browse?section=best-movies">{t.common.bestMovies}</Link>
-            <Link href="/browse?section=best-series">{t.common.bestSeries}</Link>
-            <Link href="/browse?section=kids">{t.common.kids}</Link>
-            <Link href="/browse?section=animation">{t.common.animation}</Link>
-            <Link href="/browse?section=latest-animation">{locale === "fa" ? "انیمیشن‌های جدید" : "New Animation"}</Link>
+          <details className={styles.categories}><summary>{locale === "fa" ? "دسته‌بندی‌ها" : "Categories"} <span>{title}</span></summary><nav className="quick-tabs" aria-label={locale === "fa" ? "دسته‌بندی آرشیو" : "Archive categories"}>
+            <Link aria-current={result.section === "top-imdb" ? "page" : undefined} href="/browse?section=top-imdb">{t.common.topImdb}</Link>
+            <Link aria-current={result.section === "persian-movies" ? "page" : undefined} href="/browse?section=persian-movies">{t.common.persianMovies}</Link>
+            <Link aria-current={result.section === "old-iranian-films" ? "page" : undefined} href="/browse?section=old-iranian-films">{locale === "fa" ? "فیلم‌های قدیمی ایرانی" : "Old Iranian Films"}</Link>
+            <Link aria-current={result.section === "recent-films" ? "page" : undefined} href="/browse?section=recent-films">{t.common.recentFilm}</Link>
+            <Link aria-current={result.section === "best-movies" ? "page" : undefined} href="/browse?section=best-movies">{t.common.bestMovies}</Link>
+            <Link aria-current={result.section === "best-series" ? "page" : undefined} href="/browse?section=best-series">{t.common.bestSeries}</Link>
+            <Link aria-current={result.section === "kids" ? "page" : undefined} href="/browse?section=kids">{t.common.kids}</Link>
+            <Link aria-current={result.section === "animation" ? "page" : undefined} href="/browse?section=animation">{t.common.animation}</Link>
+            <Link aria-current={result.section === "latest-animation" ? "page" : undefined} href="/browse?section=latest-animation">{locale === "fa" ? "انیمیشن‌های جدید" : "New Animation"}</Link>
+          </nav></details>
+          <div className={styles.activeFilters} aria-label={locale === "fa" ? "فیلترهای فعال" : "Active filters"}>
+            {Object.entries(params).filter(([key, value]) => ["q", "type", "genre", "country", "language", "year", "quality", "minScore"].includes(key) && value && !["all", "All", "0"].includes(value)).map(([key, value]) => <Link key={key} href={`/browse${queryString({ ...params, [key]: undefined, page: 1, batch: undefined })}`} aria-label={`${locale === "fa" ? "حذف فیلتر" : "Remove filter"} ${value}`}><span>{value}</span><span aria-hidden="true">×</span></Link>)}
           </div>
         </div>
       </section>
@@ -153,17 +157,14 @@ export default async function BrowsePage({ searchParams }: Props) {
         </nav></div>}
         <ArchiveResults key={archiveQuery} initial={result.items.slice(0, batch * ARCHIVE_BATCH_SIZE).map(archiveCard)} totalInPage={result.items.length} query={archiveQuery} page={result.page} locale={locale} grouped={Boolean(params.q)} />
 
-        <nav className="pagination" aria-label="Pagination">
+        <nav className="pagination" aria-label={locale === "fa" ? "صفحه‌بندی آرشیو" : "Archive pagination"}>
           {result.page > 1 && (
             <Link className="chip" href={`/browse${queryString({ ...params, batch: undefined, page: result.page - 1 })}`}>
               {t.common.previous}
             </Link>
           )}
           <span className="muted">
-            {interpolate(t.browse.showing, {
-              count: formatNumber(result.items.length, locale),
-              total: formatNumber(result.total, locale),
-            })}
+            {interpolate(t.browse.pageOf, { page: formatNumber(result.page, locale), total: formatNumber(result.totalPages, locale) })}
           </span>
           {result.page < result.totalPages && (
             <Link className="chip active" href={`/browse${queryString({ ...params, batch: undefined, page: result.page + 1 })}`}>

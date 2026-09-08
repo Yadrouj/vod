@@ -1,4 +1,24 @@
 .page { --archive-gold: #ebce72; background: #090909; color: #eee; min-height: 100svh; }
+.intro { color: #b7b1a0; font-size: 14px; margin: 8px 0 20px; line-height: 1.8; }
+.headingMark { display: inline-grid; place-items: center; margin-inline-start: 16px; color: var(--archive-gold); font-size: .65em; vertical-align: middle; }
+.categories { margin-top: 16px; border-bottom: 1px solid #ebce7226; padding-bottom: 16px; }
+.categories > summary { color: var(--archive-gold); cursor: pointer; min-height: 44px; padding: 10px 0; }
+.categories > summary span { color: #aaa497; font-size: 12px; margin-inline-start: 12px; }
+.page .categories :global(.quick-tabs) { margin-top: 8px; }
+.page :global(.quick-tabs a[aria-current="page"]) { background: var(--archive-gold); color: #191609; border-color: var(--archive-gold); }
+.activeFilters { display: flex; flex-wrap: wrap; gap: 8px; }
+.activeFilters:not(:empty) { margin-top: 14px; }
+.activeFilters a { display: inline-flex; align-items: center; gap: 16px; min-height: 44px; padding: 8px 14px; border: 1px solid #ebce7240; border-radius: 12px !important; color: var(--archive-gold); max-width: 100%; }
+.activeFilters a span:first-child { overflow-wrap: anywhere; }
+.page .card { background: linear-gradient(145deg, #1b1a16, #111); border: 1px solid #ffffff12; border-radius: 18px !important; padding: 7px 7px 13px; transition: border-color .2s, box-shadow .2s; }
+.page .card:hover, .page .card:focus-visible { border-color: #ebce7280; box-shadow: 0 8px 24px #0006; }
+.page .card strong, .page .card small { padding-inline: 6px; }
+.page .card small { font-size: 12px; margin-top: auto; }
+.art::after { content: ""; position: absolute; inset: 50% 0 0; background: linear-gradient(transparent, #0008); pointer-events: none; }
+.page .open { z-index: 1; background: var(--archive-gold); color: #17130a; width: 38px; height: 38px; }
+.open[data-pending="true"] { animation: shimmer 1s infinite; background: linear-gradient(90deg, #ebce72, #fff2bd, #ebce72); background-size: 200% 100%; }
+.page .rating { z-index: 1; backdrop-filter: blur(6px); }
+@media(prefers-reduced-motion: reduce) { .page .card { transition: none; } .open[data-pending="true"] { animation: none; } }
 .page :global(.browse-hero) { background: radial-gradient(ellipse at top right, #292311, transparent 70%); padding-bottom: 24px; border-bottom: 1px solid #ebce7226; }
 .page :global(.browse-title) { margin: 24px 0; padding: 0; }
 .page :global(.browse-title h1) { font-size: clamp(26px, 4vw, 44px); margin: 8px 0; }
