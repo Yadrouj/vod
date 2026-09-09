@@ -13,7 +13,8 @@ const allReferences = [...references.items, ...reviewed.items];
 for (const ref of allReferences) {
   if (!names.has(ref.id) || !/^[\w-]{11}$/.test(ref.videoId) || ref.durationSeconds < 2400) throw new Error(`Invalid full-film reference: ${ref.id}`);
 }
-const grouped = Map.groupBy(allReferences, item => item.id);
+const rejectedVideoIds = new Set(allReferences.filter(item => item.playbackStatus === "unavailable").map(item => item.videoId));
+const grouped = Map.groupBy(allReferences.filter(item => !rejectedVideoIds.has(item.videoId)), item => item.id);
 const backup = [], stats = { metadataQuarantined: 0, linkedTitles: 0, youtubeReferences: 0 };
 await mkdir(".media-cache/research", { recursive: true });
 const stream = createWriteStream(output, { encoding: "utf8" });
@@ -22,6 +23,7 @@ const write = async value => { if (!stream.write(value)) await once(stream, "dra
 try {
   await streamVodArchiveItems(catalog, async item => {
     if (legacyMismatch(item)) { backup.push(item); stats.metadataQuarantined++; item = quarantineLegacyMetadata(item, names.get(item.id)); }
+    if (item.youtubeVideos) item.youtubeVideos = item.youtubeVideos.filter(video => !rejectedVideoIds.has(video.videoId));
     const videos = grouped.get(item.id);
     if (videos?.length) {
       const existing = new Map((item.youtubeVideos || []).map(v => [v.videoId, v]));

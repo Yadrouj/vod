@@ -1,16 +1,13 @@
 {
-  "checkedAt": "2026-09-08T10:58:38.011Z",
+  "checkedAt": "2026-09-09T02:47:09.586Z",
   "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
   "discovered": 29,
-  "matched": 24,
-  "uniqueTitles": 24,
+  "matched": 27,
+  "uniqueTitles": 26,
   "retained": 0,
   "unmatched": [
     "فیلم ایرانی - مراد برقی",
-    "👍 فیلم قدیمی - Mehman مهمان ۱۳۵۵ 👍",
-    "فیلم کامل سالار مردان",
-    "فیلم قدیمی؛ مهمان | ۱۳۵۵ | رنگی اچ دی",
-    "فیلم قدیمی؛ صلات ظهر | ۱۳۵۳ | رنگی اچ دی"
+    "فیلم کامل سالار مردان"
   ],
   "items": [
     {
@@ -22,7 +19,7 @@
       "persianYear": 1355,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -35,7 +32,20 @@
       "persianYear": 1349,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
+      "evidence": "publisher-VideoObject",
+      "playbackStatus": "not-tested"
+    },
+    {
+      "videoId": "Cwh_9tx6IA0",
+      "title": "👍 فیلم قدیمی - Mehman مهمان ۱۳۵۵ 👍",
+      "durationSeconds": 6026,
+      "id": "old-iranian-1355051",
+      "filmTitle": "میهمان",
+      "persianYear": 1355,
+      "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
+      "publisher": "OITN / تلویزیون امید ایران",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -48,7 +58,7 @@
       "persianYear": 1352,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -61,7 +71,7 @@
       "persianYear": 1352,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -74,7 +84,7 @@
       "persianYear": 1351,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -87,7 +97,7 @@
       "persianYear": 1355,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -100,7 +110,7 @@
       "persianYear": 1350,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -113,7 +123,7 @@
       "persianYear": 1350,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -126,7 +136,7 @@
       "persianYear": 1349,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -139,7 +149,20 @@
       "persianYear": 1348,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
+      "evidence": "publisher-VideoObject",
+      "playbackStatus": "not-tested"
+    },
+    {
+      "videoId": "3o0JENft3tM",
+      "title": "فیلم قدیمی؛ مهمان | ۱۳۵۵ | رنگی اچ دی",
+      "durationSeconds": 5992,
+      "id": "old-iranian-1355051",
+      "filmTitle": "میهمان",
+      "persianYear": 1355,
+      "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
+      "publisher": "OITN / تلویزیون امید ایران",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -152,7 +175,7 @@
       "persianYear": 1351,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -165,7 +188,7 @@
       "persianYear": 1352,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -178,7 +201,7 @@
       "persianYear": 1352,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -191,7 +214,7 @@
       "persianYear": 1352,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -204,7 +227,7 @@
       "persianYear": 1345,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -217,7 +240,7 @@
       "persianYear": 1354,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -230,7 +253,7 @@
       "persianYear": 1353,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -243,7 +266,7 @@
       "persianYear": 1353,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -256,7 +279,7 @@
       "persianYear": 1353,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -269,7 +292,7 @@
       "persianYear": 1352,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -282,7 +305,7 @@
       "persianYear": 1353,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -295,7 +318,7 @@
       "persianYear": 1353,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -308,7 +331,7 @@
       "persianYear": 1351,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     },
@@ -321,7 +344,20 @@
       "persianYear": 1356,
       "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
       "publisher": "OITN / تلویزیون امید ایران",
-      "checkedAt": "2026-09-08T10:58:38.011Z",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
+      "evidence": "publisher-VideoObject",
+      "playbackStatus": "not-tested"
+    },
+    {
+      "videoId": "tBLkdKZdR00",
+      "title": "فیلم قدیمی؛ صلات ظهر | ۱۳۵۳ | رنگی اچ دی",
+      "durationSeconds": 5628,
+      "id": "old-iranian-1353027",
+      "filmTitle": "صلوه ظهر",
+      "persianYear": 1353,
+      "sourceUrl": "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7",
+      "publisher": "OITN / تلویزیون امید ایران",
+      "checkedAt": "2026-09-09T02:47:09.586Z",
       "evidence": "publisher-VideoObject",
       "playbackStatus": "not-tested"
     }

@@ -38,17 +38,29 @@ export function matchLegacyVideo(video, entries) {
   const year = Number(name.match(/\b(13\d{2})\b/)?.[1]) || null;
   const head = name.split(/[|｜]/)[0].split(/با بازی/)[0];
   const key = normalizePersian(head.replace(/فیلم(?:\s+(?:ایرانی|قدیمی|کامل|سینمایی))*/g, ""));
+  const reviewedAliases = { "1355:مهمان": "old-iranian-1355051", "1353:صلاتظهر": "old-iranian-1353027" };
+  const aliasId = reviewedAliases[`${year}:${key}`];
+  if (aliasId) return entries.find(entry => entry.id === aliasId && entry.year === year) ?? null;
   // Exact title + source year when supplied. Never fuzzy-match a short ambiguous name.
   const matches = entries.filter(entry => normalizePersian(entry.title) === key && (!year || entry.year === year));
   return matches.length === 1 ? matches[0] : null;
 }
 
 async function main() {
+  const htmlArg = process.argv.indexOf("--html");
+  let html;
+  if (htmlArg >= 0) {
+    if (!process.argv[htmlArg + 1]) throw new Error("--html requires a saved publisher page");
+    html = await readFile(process.argv[htmlArg + 1], "utf8");
+    if (Buffer.byteLength(html) > 2_000_000) throw new Error("Archive page exceeded metadata limit");
+  } else {
   const response = await fetch(SOURCE_URL, { signal: AbortSignal.timeout(25000), headers: { "User-Agent": "SarvnemaCatalog/1.0 (metadata and public embed references)" } });
   if (!response.ok) throw new Error(`OITN returned ${response.status}; last good references retained`);
   const reader = response.body.getReader(); let bytes = 0; const chunks = [];
   try { while (true) { const { value, done } = await reader.read(); if (done) break; bytes += value.length; if (bytes > 2_000_000) throw new Error("Archive page exceeded metadata limit"); chunks.push(value); } } finally { await reader.cancel().catch(() => {}); }
-  const videos = parseArchiveVideos(Buffer.concat(chunks).toString("utf8"));
+  html = Buffer.concat(chunks).toString("utf8");
+  }
+  const videos = parseArchiveVideos(html);
   if (!videos.length) throw new Error("No full-length video metadata; last good references retained");
   const entries = readLegacyList(await readFile("scripts/data/old-iranian-film-list.txt", "utf8"));
   const checkedAt = new Date().toISOString();
