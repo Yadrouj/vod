@@ -1,18 +1,1605 @@
 {
-  "generatedAt": "2026-09-07T11:57:03.105Z",
+  "generatedAt": "2026-09-09T13:48:26.157Z",
   "sources": [
-    "https://www.imdb.com/search/title/?title_type=feature&release_date=2026-08-31,2026-09-07&sort=release_date,desc",
-    "https://www.imdb.com/search/title/?title_type=tv_series%2Ctv_miniseries&release_date=2026-08-31,2026-09-07&sort=release_date,desc"
+    "https://www.imdb.com/search/title/?title_type=feature&release_date=2026-09-02,2026-09-09&sort=release_date,desc",
+    "https://www.imdb.com/search/title/?title_type=tv_series%2Ctv_miniseries&release_date=2026-09-02,2026-09-09&sort=release_date,desc"
   ],
   "bootstrap": false,
   "summary": {
-    "catalogTitles": 21890,
-    "available": 192,
-    "comingSoon": 8,
-    "newEvents": 181,
-    "imdbCandidates": 33
+    "catalogTitles": 21914,
+    "available": 196,
+    "comingSoon": 4,
+    "newEvents": 57,
+    "imdbCandidates": 29
   },
   "items": [
+    {
+      "id": "available-tt43583640-a16498637c6f64a6d7ba99fdb16367a3f5f885e25966b7fe67750fc5133364a7",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "Alti Ustu Istanbul · S01E13",
+      "baseTitle": "Alti Ustu Istanbul",
+      "imdbCode": "tt43583640",
+      "year": 2026,
+      "releaseDate": "2026-06-15",
+      "season": 1,
+      "episode": 13,
+      "href": "/tt43583640",
+      "imdbUrl": "https://www.imdb.com/title/tt43583640/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNjg5N2IzMTYtYTZmZC00OThjLTgzY2MtZThkMzY0Mjg3MWI1XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 39,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt39229633-aef9e3a34bf132e9ba4cf6cb623f17037849f1ae4a8575144b98675a0414eb53",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "Liar Game · S01E23",
+      "baseTitle": "Liar Game",
+      "imdbCode": "tt39229633",
+      "year": 2026,
+      "releaseDate": "2026-04-06",
+      "season": 1,
+      "episode": 23,
+      "href": "/tt39229633",
+      "imdbUrl": "https://www.imdb.com/title/tt39229633/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BYWFmZDgxYmMtZmNjZS00YzAyLTliODAtZDM3YzMxMTEwMjhiXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p"
+      ],
+      "linksCount": 69,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt39304754-19a64830b63606222c02c479b6490376189f1f5b77ef6289a2e5ee6ff3fce6e9",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "Love Unseen Beneath the Clear Night Sky · S01E10",
+      "baseTitle": "Love Unseen Beneath the Clear Night Sky",
+      "imdbCode": "tt39304754",
+      "year": 2026,
+      "releaseDate": "2026-07-06",
+      "season": 1,
+      "episode": 10,
+      "href": "/tt39304754",
+      "imdbUrl": "https://www.imdb.com/title/tt39304754/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNzIwNmYxMmUtMzA0Zi00NmE4LTk4NDEtMWFkOGM0MzJiYjczXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p"
+      ],
+      "linksCount": 30,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt43648966-2a538bcc53307803b1a10dc94fb0d6d5fca89845d11e2ea8d3d868259ab25525",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "My Bias, My Boss · S01E12",
+      "baseTitle": "My Bias, My Boss",
+      "imdbCode": "tt43648966",
+      "year": 2026,
+      "releaseDate": "2026-08-03",
+      "season": 1,
+      "episode": 12,
+      "href": "/tt43648966",
+      "imdbUrl": "https://www.imdb.com/title/tt43648966/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMGE5ZTdhMGQtNmVkYi00MjhmLThkMjgtYTc0NDZkMjM0Nzg3XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "moviesho"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 94,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt36517689-c86ec536420a84f1cc3d46e46d08b45e847e9cfbc07ba2467921006500ef92c8",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "The Ghost in the Shell · S01E10",
+      "baseTitle": "The Ghost in the Shell",
+      "imdbCode": "tt36517689",
+      "year": 2026,
+      "releaseDate": "2026-07-07",
+      "season": 1,
+      "episode": 10,
+      "href": "/tt36517689",
+      "imdbUrl": "https://www.imdb.com/title/tt36517689/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BODVlMDUwMmUtNTg4Ny00NWI1LWI5YTQtOGNmZWQ3NzViNzg4XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "zardfilm"
+      ],
+      "qualities": [
+        "1080p",
+        "720p"
+      ],
+      "linksCount": 31,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt32862795-79916ed7bdd6a188a44b7739013acf9abfffbe181adc6750151f21237ae591b2",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "The Insipid Prince's Furtive Grab for the Throne · S01E10",
+      "baseTitle": "The Insipid Prince's Furtive Grab for the Throne",
+      "imdbCode": "tt32862795",
+      "year": 2026,
+      "releaseDate": "2026-07-06",
+      "season": 1,
+      "episode": 10,
+      "href": "/tt32862795",
+      "imdbUrl": "https://www.imdb.com/title/tt32862795/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZDg5OGMwMTctNDY5Zi00MWMxLTk5N2MtZjExZTdlYzdmNjBmXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p"
+      ],
+      "linksCount": 30,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt41278636-aa68c09106cd25fbd6be01228c4fd6e5256f9bb6a66699ebf592c8a5d882f1a5",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "The Oblivious Saint Can't Contain Her Power · S01E11",
+      "baseTitle": "The Oblivious Saint Can't Contain Her Power",
+      "imdbCode": "tt41278636",
+      "year": 2026,
+      "releaseDate": "2026-06-30",
+      "season": 1,
+      "episode": 11,
+      "href": "/tt41278636",
+      "imdbUrl": "https://www.imdb.com/title/tt41278636/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTFkZWY4NzgtNjEzNS00YzRhLWE3MmUtZjMzYWFhMTlmODhkXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p"
+      ],
+      "linksCount": 33,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt31449991-f985ff05709ed9d106acc97caff7d5bb6ce766d330bccca4352688361b35e991",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "Chad Powers · S02E03",
+      "baseTitle": "Chad Powers",
+      "imdbCode": "tt31449991",
+      "year": 2025,
+      "releaseDate": "2025-09-30",
+      "season": 2,
+      "episode": 3,
+      "href": "/tt31449991",
+      "imdbUrl": "https://www.imdb.com/title/tt31449991/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNTQxOWI1NzUtNWFiMy00MDI5LWEwYTItMTY2NjUyOGYxNjJhXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "moviesho"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 77,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt33298903-efea06b3134d0cd068857a7f0255cb8b9632761a9f3b011f50f8754d289b823c",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "Made in Korea · S02E02",
+      "baseTitle": "Made in Korea",
+      "imdbCode": "tt33298903",
+      "year": 2025,
+      "releaseDate": "2025-12-24",
+      "season": 2,
+      "episode": 2,
+      "href": "/tt33298903",
+      "imdbUrl": "https://www.imdb.com/title/tt33298903/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMDZlYzUwYWYtYzg0YS00MDA0LWJkM2ItZWUxNDhkMDU1OTdhXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 54,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt14986406-688711ad80f00571a19607e5c01bdaf23b477175772ddfabc1a121cc43b8f8f4",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "Bleach: Thousand-Year Blood War · S04E07",
+      "baseTitle": "Bleach: Thousand-Year Blood War",
+      "imdbCode": "tt14986406",
+      "year": 2022,
+      "releaseDate": "2022-10-10",
+      "season": 4,
+      "episode": 7,
+      "href": "/tt14986406",
+      "imdbUrl": "https://www.imdb.com/title/tt14986406/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNDBmNmMwZTItMTZlMi00MTZlLTkxOWItZGZiNDQ2MjBhZTMwXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 436,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt9288030-3afbeee41a5ec221e46f507265d562aaaee471b77f29cec3ae7f0bf03caca869",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "Reacher · S04E07",
+      "baseTitle": "Reacher",
+      "imdbCode": "tt9288030",
+      "year": 2022,
+      "releaseDate": "2022-02-04",
+      "season": 4,
+      "episode": 7,
+      "href": "/tt9288030",
+      "imdbUrl": "https://www.imdb.com/title/tt9288030/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNDNhNzhhOGMtYTI1Zi00ZjRjLThmM2ItN2ZkZmE0ZWNjNjA4XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "moviesho"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 555,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt14476236-494d5a0932be25b86513a1a20e95e9e97baedf3a3cef5560129ad661cad49809",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "Skeleton Knight in Another World · S02E10",
+      "baseTitle": "Skeleton Knight in Another World",
+      "imdbCode": "tt14476236",
+      "year": 2022,
+      "releaseDate": "2022-04-07",
+      "season": 2,
+      "episode": 10,
+      "href": "/tt14476236",
+      "imdbUrl": "https://www.imdb.com/title/tt14476236/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNzRiMmI4MDYtNDEyMC00N2IxLTg0NmItZWMzNDM0Mjg0ZGFlXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p"
+      ],
+      "linksCount": 54,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt10986410-da8dbb05e0f1d2ba0bed5930cf1d295ca7b3c182c9967ce2cfcd834d918baca8",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "Ted Lasso · S04E06",
+      "baseTitle": "Ted Lasso",
+      "imdbCode": "tt10986410",
+      "year": 2020,
+      "releaseDate": "2020-08-14",
+      "season": 4,
+      "episode": 6,
+      "href": "/tt10986410",
+      "imdbUrl": "https://www.imdb.com/title/tt10986410/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTBiNGYwYmUtMmExYy00MzBiLWE0MDAtMzVhMGUzMzQwNGVkXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "moviesho"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 595,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt5712554-2a50ca4dc95bd4b8fc4fa9c78eae0db4315c9a98fe795463f15e46866822474d",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "The Grand Tour · S07E06",
+      "baseTitle": "The Grand Tour",
+      "imdbCode": "tt5712554",
+      "year": 2016,
+      "releaseDate": "2016-11-18",
+      "season": 7,
+      "episode": 6,
+      "href": "/tt5712554",
+      "imdbUrl": "https://www.imdb.com/title/tt5712554/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMmUxYWUyMmEtMzVjNy00ZWNlLTg3NjgtYjg1YzBmNTIxMzUzXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "moviesho"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 613,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-fightland-99385b911eef9581262ba93bcec1696331582978972add8eed5ce9c2036dcb83",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "Fightland · S01E06",
+      "baseTitle": "Fightland",
+      "imdbCode": "f2my-fightland",
+      "year": 0,
+      "releaseDate": null,
+      "season": 1,
+      "episode": 6,
+      "href": "/f2my-fightland",
+      "imdbUrl": "https://www.imdb.com/title/f2my-fightland/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/08/qRlOEIiwkfLy6ERRMbyQNGQQ6Lc-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 24,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-its-always-sunny-in-philadelphia-5debff9387a15085630eb8efd413bc20e89599dacf3fa0a62a4a8da323aa4a59",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "It’s Always Sunny in Philadelphia · S18E05",
+      "baseTitle": "It’s Always Sunny in Philadelphia",
+      "imdbCode": "f2my-its-always-sunny-in-philadelphia",
+      "year": 0,
+      "releaseDate": null,
+      "season": 18,
+      "episode": 5,
+      "href": "/f2my-its-always-sunny-in-philadelphia",
+      "imdbUrl": "https://www.imdb.com/title/f2my-its-always-sunny-in-philadelphia/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/08/6GvFdXnzTG5Lkxe78pCWsszLriV-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 202,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-remnants-of-gold-c0bcd6250da07bd2903b4e1b8279f4e5f91ba0ffad1f628c8ebcee815aaf246d",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "Remnants of Gold · S01E13",
+      "baseTitle": "Remnants of Gold",
+      "imdbCode": "f2my-remnants-of-gold",
+      "year": 0,
+      "releaseDate": null,
+      "season": 1,
+      "episode": 13,
+      "href": "/f2my-remnants-of-gold",
+      "imdbUrl": "https://www.imdb.com/title/f2my-remnants-of-gold/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/08/aNlaMTfbII0eu4l42JUGd5xrCi8-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 39,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-the-early-spring-74d2ad3f06598f4cef7d34a70dea7cf24cfa6ed8b0b6ef1cfd555c436e53895f",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "episode",
+      "title": "The Early Spring · S01E24",
+      "baseTitle": "The Early Spring",
+      "imdbCode": "f2my-the-early-spring",
+      "year": 0,
+      "releaseDate": null,
+      "season": 1,
+      "episode": 24,
+      "href": "/f2my-the-early-spring",
+      "imdbUrl": "https://www.imdb.com/title/f2my-the-early-spring/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/08/yiAzR6wGqjyAotZ4DvFvFeo8QS0-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 72,
+      "reason": "A new episode and its available qualities were found.",
+      "changeType": "new-episode",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-85766-240b8412bab26a43335b724ff4b2150f2d7131f5482a0d1d5f53772563822fd5",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "DC",
+      "baseTitle": "DC",
+      "imdbCode": "f2my-85766",
+      "year": 2026,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-85766",
+      "imdbUrl": "https://www.imdb.com/title/f2my-85766/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/1-21-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 3,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-85711-991b5d6ebfb184a0653a224a0cd76428167574b45fa59a4bfe3b604a7c85af59",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Dhamaal 4",
+      "baseTitle": "Dhamaal 4",
+      "imdbCode": "f2my-85711",
+      "year": 2026,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-85711",
+      "imdbUrl": "https://www.imdb.com/title/f2my-85711/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/3-4-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 3,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-85966-4388612c84770402f5cb026daa10cf9562edcd7958ac77b8add7372079491148",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Gandhari",
+      "baseTitle": "Gandhari",
+      "imdbCode": "f2my-85966",
+      "year": 2026,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-85966",
+      "imdbUrl": "https://www.imdb.com/title/f2my-85966/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/1-29-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 3,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-85489-70d8a255b548399310c0d2277e736f501aaabb47740a0695733702fed13fee65",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Just Play Dead",
+      "baseTitle": "Just Play Dead",
+      "imdbCode": "f2my-85489",
+      "year": 2026,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-85489",
+      "imdbUrl": "https://www.imdb.com/title/f2my-85489/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/glALx6QaIgw1u4joXsnfHTjWi6D-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 10,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-85958-8b1ed517237cf0df8eb7d57a2ccf4515529c43d926ac55062a16f60847e454c0",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "One Night Only",
+      "baseTitle": "One Night Only",
+      "imdbCode": "f2my-85958",
+      "year": 2026,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-85958",
+      "imdbUrl": "https://www.imdb.com/title/f2my-85958/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/1-28-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 5,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-85831-97c357a7319ebd81b67ae13aafd59b68db9da47466bc0f7fb42240dfba758e81",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Sathi Leelavathi",
+      "baseTitle": "Sathi Leelavathi",
+      "imdbCode": "f2my-85831",
+      "year": 2026,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-85831",
+      "imdbUrl": "https://www.imdb.com/title/f2my-85831/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/1-23-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 3,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-85955-4bbc9ae15837287fa9eb6072f3dacebe6eea1716adaddddc7a2880fa40d64749",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Sheep in the Box",
+      "baseTitle": "Sheep in the Box",
+      "imdbCode": "f2my-85955",
+      "year": 2026,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-85955",
+      "imdbUrl": "https://www.imdb.com/title/f2my-85955/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/1-27-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 3,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-85486-44bc99a56ec25a6ce3f4c7e2aa27072e12ef24eb1e665e4174a175748b0c026f",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Mongoose",
+      "baseTitle": "The Mongoose",
+      "imdbCode": "f2my-85486",
+      "year": 2026,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-85486",
+      "imdbUrl": "https://www.imdb.com/title/f2my-85486/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/1-3-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 6,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-ben-leman-073921770a540b78b8b63d40a2e8f8227127875a9b7c798d3fd8a0efe3861743",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Ben Leman",
+      "baseTitle": "Ben Leman",
+      "imdbCode": "f2my-ben-leman",
+      "year": 2025,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-ben-leman",
+      "imdbUrl": "https://www.imdb.com/title/f2my-ben-leman/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/tbUjEC6PwdDDm2LZpRz7Si69eiW-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p"
+      ],
+      "linksCount": 39,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-hidden-l-523eea47f3cee74d86161d85c180986901511493fdf33dde1b4611b300ce8325",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Hidden Love",
+      "baseTitle": "Hidden Love",
+      "imdbCode": "f2my-hidden-l",
+      "year": 2023,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-hidden-l",
+      "imdbUrl": "https://www.imdb.com/title/f2my-hidden-l/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/fkqcOXJ2NUw4nnLDpOLQwX4rTmU-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 78,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt7938128-4:1x570a1",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Soul-Mate",
+      "baseTitle": "The Soul-Mate",
+      "imdbCode": "tt7938128",
+      "year": 2018,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/tt7938128",
+      "imdbUrl": "https://www.imdb.com/title/tt7938128/",
+      "imageUrl": "https://www.moviesho.com/wp-content/uploads/2026/09/The-Soul-Mate-2018-Poster-film.jpg",
+      "sourceNames": [
+        "Moviesho / Korean",
+        "moviesho"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 4,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-wynonna-earp-163a94bfc5bce09f0da8919f3ed0eeaf1b1d22ea64a5f373d596393d26c133de",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Wynonna Earp",
+      "baseTitle": "Wynonna Earp",
+      "imdbCode": "f2my-wynonna-earp",
+      "year": 2016,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-wynonna-earp",
+      "imdbUrl": "https://www.imdb.com/title/f2my-wynonna-earp/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/vIoB2PwchfZprHhCFExdTkFJ9Ot-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 73,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-a-livid-ladys-guide-to-getting-even-how-i-crushed-my-homeland-with-my-mighty-grimoires-fbd13a553c67dac87ba314e59d9916c7a345dfd289f7f22303a033aee5943658",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "A Livid Lady’s Guide to Getting Even: How I Crushed My Homeland with My Mighty Grimoires",
+      "baseTitle": "A Livid Lady’s Guide to Getting Even: How I Crushed My Homeland with My Mighty Grimoires",
+      "imdbCode": "f2my-a-livid-ladys-guide-to-getting-even-how-i-crushed-my-homeland-with-my-mighty-grimoires",
+      "year": 0,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-a-livid-ladys-guide-to-getting-even-how-i-crushed-my-homeland-with-my-mighty-grimoires",
+      "imdbUrl": "https://www.imdb.com/title/f2my-a-livid-ladys-guide-to-getting-even-how-i-crushed-my-homeland-with-my-mighty-grimoires/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/a-livid-ladys-guide-to-getting-even-how-i-crushed-m-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p"
+      ],
+      "linksCount": 30,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-a-tale-of-two-cities-45996c3260b9e6b397392479e87afc69ffbae61517e7eb47a4e1465cf3533720",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "A Tale of Two Cities",
+      "baseTitle": "A Tale of Two Cities",
+      "imdbCode": "f2my-a-tale-of-two-cities",
+      "year": 0,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-a-tale-of-two-cities",
+      "imdbUrl": "https://www.imdb.com/title/f2my-a-tale-of-two-cities/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/ht3OVVRBTrTeVtUVQiKSekjIFVH-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 3,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-blood-sacrifice-121ef3c7ab67c6510ef82e6e33a295d26d4eac9a0730362f4396935429324ec5",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Blood Sacrifice",
+      "baseTitle": "Blood Sacrifice",
+      "imdbCode": "f2my-blood-sacrifice",
+      "year": 0,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-blood-sacrifice",
+      "imdbUrl": "https://www.imdb.com/title/f2my-blood-sacrifice/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/8iFUWLKBAWDrJ9rOunscgIDrGQ1-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 15,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-blossom-through-the-cloud-af2012405b6b730131149d8544cd23498e1e9d84d4c3f52d224401c16699cd59",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Blossom Through the Cloud",
+      "baseTitle": "Blossom Through the Cloud",
+      "imdbCode": "f2my-blossom-through-the-cloud",
+      "year": 0,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-blossom-through-the-cloud",
+      "imdbUrl": "https://www.imdb.com/title/f2my-blossom-through-the-cloud/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/08/xX825RTjwGqkCiPiUCnJvT4mgxq-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 48,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-elixer-cd3e2dc45942ca2ad9984eb9c23368f5090c5634f8723109ad45f93bde742911",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Elixer",
+      "baseTitle": "Elixer",
+      "imdbCode": "f2my-elixer",
+      "year": 0,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-elixer",
+      "imdbUrl": "https://www.imdb.com/title/f2my-elixer/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/dlJnKuu3iWXoqDBHLhQsGEA9neV-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 3,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-vigil-ea579054ef219b39d67dd132504dd7cba3f26f774c64141d474dca4a1318d782",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Vigil",
+      "baseTitle": "Vigil",
+      "imdbCode": "f2my-vigil",
+      "year": 0,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-vigil",
+      "imdbUrl": "https://www.imdb.com/title/f2my-vigil/",
+      "imageUrl": "https://intocdn.top/wp-content/uploads/2026/09/iSXY8EIjn93soL7DaYjqnyVsxo7-180x280.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 63,
+      "reason": "New title found in a configured source.",
+      "changeType": "new-title",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt27419466-971be82ab5a13e4a4ddaa8c51ef8af853e2ae614a73c7fcf861a10950ce7ac6c",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Moana",
+      "baseTitle": "Moana",
+      "imdbCode": "tt27419466",
+      "year": 2026,
+      "releaseDate": "2026-07-10",
+      "season": null,
+      "episode": null,
+      "href": "/tt27419466",
+      "imdbUrl": "https://www.imdb.com/title/tt27419466/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BYmRmZmVlOGEtNjFjMS00Y2FiLWE5ZTgtMWNlZjY5ZmFiNTc0XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "moviesho",
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 5,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "quality-added",
+      "addedQualities": [
+        "480p"
+      ]
+    },
+    {
+      "id": "available-tt11365186-bc31e1d59760dc37c29ae17093149fbe1d80cd2eeb4873accf2ef6657e568fd9",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Redeeming Love",
+      "baseTitle": "Redeeming Love",
+      "imdbCode": "tt11365186",
+      "year": 2022,
+      "releaseDate": "2022-01-21",
+      "season": null,
+      "episode": null,
+      "href": "/tt11365186",
+      "imdbUrl": "https://www.imdb.com/title/tt11365186/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZGJkZTUxNTktNWUwZC00YzAzLTg5ODAtYTM5NDE0YTUxODJiXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 7,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "quality-added",
+      "addedQualities": [
+        "480p"
+      ]
+    },
+    {
+      "id": "available-tt26545992-6996a2b70fae603bdc9760eaee7230b222c732657c76e899aa867aa30326ec10",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Lanterns",
+      "baseTitle": "Lanterns",
+      "imdbCode": "tt26545992",
+      "year": 2026,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/tt26545992",
+      "imdbUrl": "https://www.imdb.com/title/tt26545992/",
+      "imageUrl": "https://www.moviesho.com/wp-content/uploads/2026/08/Lanterns-2026-Poster-Serial.jpg",
+      "sourceNames": [
+        "Moviesho / Lanterns",
+        "moviesho",
+        "f2my"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 60,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt42206645-4777ba159cabfe93ec059edfbd06d5f7f0338756c7fedbdc3eb64bceeb591db5",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Reborn Rookie",
+      "baseTitle": "Reborn Rookie",
+      "imdbCode": "tt42206645",
+      "year": 2026,
+      "releaseDate": "2026-05-30",
+      "season": null,
+      "episode": null,
+      "href": "/tt42206645",
+      "imdbUrl": "https://www.imdb.com/title/tt42206645/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMWQxNGNmMDItMGJjNi00ZjcyLThmNmMtMjBkOWZkMzYwZjQ5XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "moviesho"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 108,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt40247521-ff859a49f562907202f911623414ab258557613e3710392a8b33a15155e88614",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Spooky in Love",
+      "baseTitle": "Spooky in Love",
+      "imdbCode": "tt40247521",
+      "year": 2026,
+      "releaseDate": "2026-07-18",
+      "season": null,
+      "episode": null,
+      "href": "/tt40247521",
+      "imdbUrl": "https://www.imdb.com/title/tt40247521/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BM2YxZTZkZWMtYmU4Mi00YzdkLTk2N2MtOTQyZDFiNDM4OTU2XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "moviesho"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 82,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "available-f2my-lanterns-7166b1ef1b8555466577a269f89700c9e1fe8b6e3471051eda0361051668e73e",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Lanterns",
+      "baseTitle": "Lanterns",
+      "imdbCode": "f2my-lanterns",
+      "year": 2026,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/f2my-lanterns",
+      "imdbUrl": "https://www.imdb.com/title/f2my-lanterns/",
+      "imageUrl": "https://www.moviesho.com/wp-content/uploads/2026/08/Lanterns-2026-Poster-Serial.jpg",
+      "sourceNames": [
+        "f2my",
+        "moviesho"
+      ],
+      "qualities": [
+        "2160p",
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 54,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt33049767-2f5f800f3dc5bbeefd833a02787853772184615a306b7cf4f2711539bff609bf",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Adults",
+      "baseTitle": "Adults",
+      "imdbCode": "tt33049767",
+      "year": 2025,
+      "releaseDate": "2025-05-28",
+      "season": null,
+      "episode": null,
+      "href": "/tt33049767",
+      "imdbUrl": "https://www.imdb.com/title/tt33049767/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNjAzOGEyNzAtZmIyMi00MDJjLTlkOGEtOTQwMzYwMTE4NjYzXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 71,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt29028515-30de4b5c2f547d50bdbc6b3fb1837d301da7bc1d7382926be972813f60915889",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Wasteman",
+      "baseTitle": "Wasteman",
+      "imdbCode": "tt29028515",
+      "year": 2025,
+      "releaseDate": null,
+      "season": null,
+      "episode": null,
+      "href": "/tt29028515",
+      "imdbUrl": "https://www.imdb.com/title/tt29028515/",
+      "imageUrl": "/media/moviesho/tt29028515/01-faefc5618a.jpg",
+      "sourceNames": [
+        "moviesho",
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 11,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt30413181-39a10060eca06ee602a064f2afb0969fce61cf034829c6c831520f2b49272126",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Flex x Cop",
+      "baseTitle": "Flex x Cop",
+      "imdbCode": "tt30413181",
+      "year": 2024,
+      "releaseDate": "2024-01-26",
+      "season": null,
+      "episode": null,
+      "href": "/tt30413181",
+      "imdbUrl": "https://www.imdb.com/title/tt30413181/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZjQ3ZjU1MDctOTExNi00NjllLWI3NjQtZmE3MTY5ZTkxNDM2XkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "moviesho"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 247,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt13210838-1b681a78e81ee1d7ae5f0f267e53838bba5b2ec76442b6dcb74cc454abb46fb6",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "The Gentlemen",
+      "baseTitle": "The Gentlemen",
+      "imdbCode": "tt13210838",
+      "year": 2024,
+      "releaseDate": "2024-03-07",
+      "season": null,
+      "episode": null,
+      "href": "/tt13210838",
+      "imdbUrl": "https://www.imdb.com/title/tt13210838/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BM2IyYjMxODItM2ZjMy00ODY4LWEyZGQtOGQ4ZDRhNjA5ZDIxXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "moviesho"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 172,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt13911628-5a75819ca9373777362ded0d53874964c8341feabff0d4e7331794c644790898",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Lessons in Chemistry",
+      "baseTitle": "Lessons in Chemistry",
+      "imdbCode": "tt13911628",
+      "year": 2023,
+      "releaseDate": "2023-10-13",
+      "season": null,
+      "episode": null,
+      "href": "/tt13911628",
+      "imdbUrl": "https://www.imdb.com/title/tt13911628/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZDZjODk4YmYtMDFjNi00MDZlLWI3NzMtNTBjNThkYmUzOWFiXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 112,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt3007572-17ae593e2fa0c82391fe409ab311c962ed93973dc18e8baf240cf771c9446855",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Locke & Key",
+      "baseTitle": "Locke & Key",
+      "imdbCode": "tt3007572",
+      "year": 2020,
+      "releaseDate": "2020-02-07",
+      "season": null,
+      "episode": null,
+      "href": "/tt3007572",
+      "imdbUrl": "https://www.imdb.com/title/tt3007572/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNjUyMTY4MjctOTBhZS00MjY4LWE5NzgtM2YyMmZjZWJiZmNkXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 398,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt11612120-d9c91caf33ecc6fd7d87b7f92900deeadd64f4ef4f6b6083ea1973b45caf1c36",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Sweet Home",
+      "baseTitle": "Sweet Home",
+      "imdbCode": "tt11612120",
+      "year": 2020,
+      "releaseDate": "2020-12-18",
+      "season": null,
+      "episode": null,
+      "href": "/tt11612120",
+      "imdbUrl": "https://www.imdb.com/title/tt11612120/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BYTExOGJmOWUtOGZjYS00OTM5LTgzZjktMjJlNGIwZDRhNTJkXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 198,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt7016936-4341009645e7b95708bbc820144dcfe2d98b166bdf0771493f4c3e1fa1f8715b",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "series",
+      "title": "Killing Eve",
+      "baseTitle": "Killing Eve",
+      "imdbCode": "tt7016936",
+      "year": 2018,
+      "releaseDate": "2018-04-08",
+      "season": null,
+      "episode": null,
+      "href": "/tt7016936",
+      "imdbUrl": "https://www.imdb.com/title/tt7016936/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOWIwMjExMDMtNzlkYy00MDZmLTk0YWQtNDU0ZDg2YWE0NjdjXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 400,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt9225192-550ca6f038243f88e8bba002358f4ad948488f5b20f8483fd4478546060f4b1c",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "Unstoppable",
+      "baseTitle": "Unstoppable",
+      "imdbCode": "tt9225192",
+      "year": 2018,
+      "releaseDate": "2018-11-30",
+      "season": null,
+      "episode": null,
+      "href": "/tt9225192",
+      "imdbUrl": "https://www.imdb.com/title/tt9225192/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMGY0N2E1YmUtYzRiZS00YjcwLTk3ODctY2Q4NDQ3MjVlMzQyXkEyXkFqcGc@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "moviesho",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 12,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt1987680-f9d958eb4650013e46ac920923b0990a0b48a4be0d5401d03666074f92bf6718",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Upside",
+      "baseTitle": "The Upside",
+      "imdbCode": "tt1987680",
+      "year": 2017,
+      "releaseDate": "2019-01-11",
+      "season": null,
+      "episode": null,
+      "href": "/tt1987680",
+      "imdbUrl": "https://www.imdb.com/title/tt1987680/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BODE2NDI3NzUxNV5BMl5BanBnXkFtZTgwNTIzMDQxNzM@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p",
+        "480p"
+      ],
+      "linksCount": 12,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "available-tt3631112-cf57f3787365e95f3f74851e2bb0c20fa3a8607934dbeba1f92225e2f6f5629d",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "available",
+      "kind": "film",
+      "title": "The Girl on the Train",
+      "baseTitle": "The Girl on the Train",
+      "imdbCode": "tt3631112",
+      "year": 2016,
+      "releaseDate": "2016-10-07",
+      "season": null,
+      "episode": null,
+      "href": "/tt3631112",
+      "imdbUrl": "https://www.imdb.com/title/tt3631112/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTUyMDQwMTM1NF5BMl5BanBnXkFtZTgwODM1OTQyMDI@._V1_.jpg",
+      "sourceNames": [
+        "f2my",
+        "donyayeserial"
+      ],
+      "qualities": [
+        "1080p",
+        "720p"
+      ],
+      "linksCount": 4,
+      "reason": "New files or qualities were found in a configured source.",
+      "changeType": "source-added",
+      "addedQualities": []
+    },
+    {
+      "id": "coming-soon-tt41802342",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "coming-soon",
+      "kind": "film",
+      "title": "A Good Little Soldier",
+      "baseTitle": "A Good Little Soldier",
+      "imdbCode": "tt41802342",
+      "year": 2026,
+      "releaseDate": "2026-11-25",
+      "season": null,
+      "episode": null,
+      "href": null,
+      "imdbUrl": "https://www.imdb.com/title/tt41802342/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BODViYzVkNDItMWY2Ni00ODdlLTlkZmQtNzRjODU2NzU4YTljXkEyXkFqcGc@._V1_QL75_UY133_CR4,0,90,133_.jpg",
+      "sourceNames": [],
+      "qualities": [],
+      "linksCount": 0,
+      "reason": "IMDb release found — source scan is queued.",
+      "changeType": "coming-soon"
+    },
+    {
+      "id": "coming-soon-tt37970935",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "coming-soon",
+      "kind": "film",
+      "title": "Camouflage",
+      "baseTitle": "Camouflage",
+      "imdbCode": "tt37970935",
+      "year": 2026,
+      "releaseDate": "2026-10-08",
+      "season": null,
+      "episode": null,
+      "href": null,
+      "imdbUrl": "https://www.imdb.com/title/tt37970935/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNjBhODkzZGYtNWU2MC00ZDE1LTg4YzctMWMzYTg2YWU3MTU1XkEyXkFqcGc@._V1_QL75_UY133_CR2,0,90,133_.jpg",
+      "sourceNames": [],
+      "qualities": [],
+      "linksCount": 0,
+      "reason": "IMDb release found — source scan is queued.",
+      "changeType": "coming-soon"
+    },
+    {
+      "id": "coming-soon-tt27041231",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "coming-soon",
+      "kind": "film",
+      "title": "Musk",
+      "baseTitle": "Musk",
+      "imdbCode": "tt27041231",
+      "year": 2026,
+      "releaseDate": "2026-10-23",
+      "season": null,
+      "episode": null,
+      "href": null,
+      "imdbUrl": "https://www.imdb.com/title/tt27041231/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNjA0MjMyZjAtZjE0OC00MWY1LThjNDktM2QzMjFjNmQxMzM4XkEyXkFqcGc@._V1_QL75_UY133_CR31,0,90,133_.jpg",
+      "sourceNames": [],
+      "qualities": [],
+      "linksCount": 0,
+      "reason": "IMDb release found — source scan is queued.",
+      "changeType": "coming-soon"
+    },
+    {
+      "id": "coming-soon-tt40792103",
+      "eventAt": "2026-09-09T13:48:26.157Z",
+      "status": "coming-soon",
+      "kind": "film",
+      "title": "Union Town",
+      "baseTitle": "Union Town",
+      "imdbCode": "tt40792103",
+      "year": 2026,
+      "releaseDate": "2026-09-19",
+      "season": null,
+      "episode": null,
+      "href": null,
+      "imdbUrl": "https://www.imdb.com/title/tt40792103/",
+      "imageUrl": "https://m.media-amazon.com/images/M/MV5BYWNkN2E4MWYtZGYxOC00MTAxLWJkNjAtNDMzNDZjZTNkYTVjXkEyXkFqcGc@._V1_QL75_UY133_CR55,0,90,133_.jpg",
+      "sourceNames": [],
+      "qualities": [],
+      "linksCount": 0,
+      "reason": "IMDb release found — source scan is queued.",
+      "changeType": "coming-soon"
+    },
     {
       "id": "available-tt43616775-bbdf08cd14dd9e781876d01c3761023037ea620ed0f23addfb0ad27c81bdef65",
       "eventAt": "2026-09-07T11:57:03.105Z",
@@ -4062,1574 +5649,6 @@
       "reason": "New files or qualities were found in a configured source.",
       "changeType": "source-added",
       "addedQualities": []
-    },
-    {
-      "id": "available-tt32897959-592b18921c89e93b0368a0e817e9c75364ce1781d504c372bf891e5c586286c3",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Wuthering Heights",
-      "baseTitle": "Wuthering Heights",
-      "imdbCode": "tt32897959",
-      "year": 2026,
-      "releaseDate": "2026-02-13",
-      "season": null,
-      "episode": null,
-      "href": "/tt32897959",
-      "imdbUrl": "https://www.imdb.com/title/tt32897959/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZGVhYjlkZGYtYzQ2MC00ZTZhLThhYzYtYzY4MDcwZmY2NjQyXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p",
-        "4K"
-      ],
-      "linksCount": 27,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt31887969-360607b35a9927592cb8a6c74bd90b1dc148cda4d95963c0b57603af78f2b04a",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "series",
-      "title": "Zhan Zhao Adventures",
-      "baseTitle": "Zhan Zhao Adventures",
-      "imdbCode": "tt31887969",
-      "year": 2026,
-      "releaseDate": "2026-05-13",
-      "season": null,
-      "episode": null,
-      "href": "/tt31887969",
-      "imdbUrl": "https://www.imdb.com/title/tt31887969/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BM2VmM2RjNzEtY2Q5YS00MjU0LTllODQtMGRmNjc2OTRlMmUxXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 257,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-f2my-84974-8e8cec0783ff6b667007a9ef382ecd7fa2abd4d556100c33e566008af6ca7dec",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Above and Below",
-      "baseTitle": "Above and Below",
-      "imdbCode": "f2my-84974",
-      "year": 2026,
-      "releaseDate": null,
-      "season": null,
-      "episode": null,
-      "href": "/f2my-84974",
-      "imdbUrl": "https://www.imdb.com/title/f2my-84974/",
-      "imageUrl": "https://www.moviesho.com/wp-content/uploads/2026/08/Above-and-Below-2026-Poster-Film.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 10,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-f2my-84565-6221003d8291dd4f6a00416cae2308afbccca2a73af9ab615588d06ab703ee5d",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Mutiny",
-      "baseTitle": "Mutiny",
-      "imdbCode": "f2my-84565",
-      "year": 2026,
-      "releaseDate": null,
-      "season": null,
-      "episode": null,
-      "href": "/f2my-84565",
-      "imdbUrl": "https://www.imdb.com/title/f2my-84565/",
-      "imageUrl": "https://www.moviesho.com/wp-content/uploads/2026/08/Mutiny-2026-Poster-Film.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 17,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-f2my-84865-5ddffdbe041dea1315094c3f4c118dbdbd211d0ea0e3993b90515a14320396ac",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "The Beloved",
-      "baseTitle": "The Beloved",
-      "imdbCode": "f2my-84865",
-      "year": 2026,
-      "releaseDate": null,
-      "season": null,
-      "episode": null,
-      "href": "/f2my-84865",
-      "imdbUrl": "https://www.imdb.com/title/f2my-84865/",
-      "imageUrl": "https://www.moviesho.com/wp-content/uploads/2026/09/The-Beloved-2026-Poster-Film.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 7,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-f2my-85195-e9184cd86e99a56d3c6cae60843f0ee2e9c63f5cbe478e74101d4ab78140f3fd",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "The Secret Woman",
-      "baseTitle": "The Secret Woman",
-      "imdbCode": "f2my-85195",
-      "year": 2026,
-      "releaseDate": null,
-      "season": null,
-      "episode": null,
-      "href": "/f2my-85195",
-      "imdbUrl": "https://www.imdb.com/title/f2my-85195/",
-      "imageUrl": "https://www.moviesho.com/wp-content/uploads/2026/08/The-Secret-Woman-2026-Poster-Film.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 7,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-f2my-84371-a7658d374025b694f8ef9bc2f5748489bdf9ba26c106e96bbcfb4256d9ebae7b",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "The Sheriffs of Savage Wells",
-      "baseTitle": "The Sheriffs of Savage Wells",
-      "imdbCode": "f2my-84371",
-      "year": 2026,
-      "releaseDate": null,
-      "season": null,
-      "episode": null,
-      "href": "/f2my-84371",
-      "imdbUrl": "https://www.imdb.com/title/f2my-84371/",
-      "imageUrl": "https://www.moviesho.com/wp-content/uploads/2026/09/The-Sheriffs-of-Savage-Wells-2026-Poster-Film.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 7,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-f2my-85168-64388ce4e8c7361eeac898c4dcf011a42b2c308b8a020f2e5d64acd4e9fe9eab",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "The Whisper Man",
-      "baseTitle": "The Whisper Man",
-      "imdbCode": "f2my-85168",
-      "year": 2026,
-      "releaseDate": null,
-      "season": null,
-      "episode": null,
-      "href": "/f2my-85168",
-      "imdbUrl": "https://www.imdb.com/title/f2my-85168/",
-      "imageUrl": "https://www.moviesho.com/wp-content/uploads/2026/08/The-Whisper-Man-2026-Poster-Film.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 14,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-f2my-84807-7f9a961ab1815dc9702de86be1fa5428e9415799b17a56406755550d8c75a9be",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Welcome to the Jungle",
-      "baseTitle": "Welcome to the Jungle",
-      "imdbCode": "f2my-84807",
-      "year": 2026,
-      "releaseDate": null,
-      "season": null,
-      "episode": null,
-      "href": "/f2my-84807",
-      "imdbUrl": "https://www.imdb.com/title/f2my-84807/",
-      "imageUrl": "https://www.moviesho.com/wp-content/uploads/2026/07/Welcome-to-the-Jungle-2026-Poster-Film.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 7,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt27960886-61ea7c79ab2317b11a4477f4247f9efc53814963f769c3e1ef91aa6478b187d9",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "series",
-      "title": "Moonlight Mystique",
-      "baseTitle": "Moonlight Mystique",
-      "imdbCode": "tt27960886",
-      "year": 2025,
-      "releaseDate": "2025-01-07",
-      "season": null,
-      "episode": null,
-      "href": "/tt27960886",
-      "imdbUrl": "https://www.imdb.com/title/tt27960886/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjUyZTk2MjAtMjM4Zi00MmZhLThlNTYtYjU4NTFiNjY2YTAyXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 381,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt27722575-45756d3d1cfb695ebc121502ccca2ea4daac7ffc0f6613af292abb6b09f18bc2",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "200% Wolf",
-      "baseTitle": "200% Wolf",
-      "imdbCode": "tt27722575",
-      "year": 2024,
-      "releaseDate": "2024-08-23",
-      "season": null,
-      "episode": null,
-      "href": "/tt27722575",
-      "imdbUrl": "https://www.imdb.com/title/tt27722575/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BM2JlZjkxZGMtMjk5NS00MTdiLTk5OGYtZWExMjE2NDRmOTliXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "zardfilm"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 13,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt9892936-63c49468ca72d14665b410fa94d25fe28fb12d89a92567c2a4c67cc4d6849cd0",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "series",
-      "title": "One Hundred Years of Solitude",
-      "baseTitle": "One Hundred Years of Solitude",
-      "imdbCode": "tt9892936",
-      "year": 2024,
-      "releaseDate": "2024-12-11",
-      "season": null,
-      "episode": null,
-      "href": "/tt9892936",
-      "imdbUrl": "https://www.imdb.com/title/tt9892936/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZjBjYzIxYTEtMmRkMi00M2Y4LThkYjEtMTUzY2M2MzU3ZDVjXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 266,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt18259086-b26473c584f99e04f5dc4e3ff8e516adaf541e37c7834311ea7d8dfeb21887a1",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Sonic the Hedgehog 3",
-      "baseTitle": "Sonic the Hedgehog 3",
-      "imdbCode": "tt18259086",
-      "year": 2024,
-      "releaseDate": "2024-12-20",
-      "season": null,
-      "episode": null,
-      "href": "/tt18259086",
-      "imdbUrl": "https://www.imdb.com/title/tt18259086/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BYTRmMzk2ZGQtODBkZi00MzIzLWI0ZmMtYmM1MTJkYzMxN2U4XkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial",
-        "moviesho"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 34,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt18177528-4fb4cf0b444febaa8157ffdedc1dbe0c9ca5b47488c21d684d7ad4113cb8dfe9",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "series",
-      "title": "The New Look",
-      "baseTitle": "The New Look",
-      "imdbCode": "tt18177528",
-      "year": 2024,
-      "releaseDate": "2024-02-14",
-      "season": null,
-      "episode": null,
-      "href": "/tt18177528",
-      "imdbUrl": "https://www.imdb.com/title/tt18177528/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BYzlhOWI2OTQtNmYxYy00MDUwLThiZGMtOTg2ZjVmZDc5ZGJhXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 60,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-zardfilm-post-25902-90:1q3kqt2",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "سریال X-Men ’97",
-      "baseTitle": "سریال X-Men ’97",
-      "imdbCode": "zardfilm-post-25902",
-      "year": 2024,
-      "releaseDate": null,
-      "season": null,
-      "episode": null,
-      "href": "/zardfilm-post-25902",
-      "imdbUrl": "https://www.imdb.com/title/zardfilm-post-25902/",
-      "imageUrl": "https://zardfilm.in/wp-content/uploads/2024/03/detail.webp",
-      "sourceNames": [
-        "ZardFilm / Animation",
-        "zardfilm"
-      ],
-      "qualities": [],
-      "linksCount": 90,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt15227418-be4da603f3a542f466cfc9b5abd1b632477539b6687192a766306960e9a469e6",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "series",
-      "title": "A Murder at the End of the World",
-      "baseTitle": "A Murder at the End of the World",
-      "imdbCode": "tt15227418",
-      "year": 2023,
-      "releaseDate": "2023-11-14",
-      "season": null,
-      "episode": null,
-      "href": "/tt15227418",
-      "imdbUrl": "https://www.imdb.com/title/tt15227418/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOWY2OWRjNzUtMTU5YS00YzEyLTkyY2QtZWRjM2VhMWE5Y2JhXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 77,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt0429087-8f6aa0e05d1f3d85fdecdf319f5999077118ce3912b34bf7ff21b448a952d45f",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "series",
-      "title": "Shantaram",
-      "baseTitle": "Shantaram",
-      "imdbCode": "tt0429087",
-      "year": 2022,
-      "releaseDate": "2022-10-14",
-      "season": null,
-      "episode": null,
-      "href": "/tt0429087",
-      "imdbUrl": "https://www.imdb.com/title/tt0429087/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjA3ZmIzMDYtYmNlOC00NDdmLTk1NDMtNjU5N2NjZDM3ZTQ5XkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 84,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt12412888-247a1eb1fc47bc9d9dbedf863ae52d9c61f87ca17a595023eb48b9fd343074c5",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Sonic the Hedgehog 2",
-      "baseTitle": "Sonic the Hedgehog 2",
-      "imdbCode": "tt12412888",
-      "year": 2022,
-      "releaseDate": "2022-04-08",
-      "season": null,
-      "episode": null,
-      "href": "/tt12412888",
-      "imdbUrl": "https://www.imdb.com/title/tt12412888/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjlhMDdkN2YtNTUxZC00NGY5LWFkOWEtNzhhZWVhYmFmYzc0XkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 18,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt12851512-75a58c0397bed9dc99aab02da8ce407651d20e5aca8db8710772997d6a2131e5",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "series",
-      "title": "The Girl from Plainville",
-      "baseTitle": "The Girl from Plainville",
-      "imdbCode": "tt12851512",
-      "year": 2022,
-      "releaseDate": "2022-03-29",
-      "season": null,
-      "episode": null,
-      "href": "/tt12851512",
-      "imdbUrl": "https://www.imdb.com/title/tt12851512/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNmM3YzUwOTgtMTE3Ny00ZGI2LWI5Y2MtM2VlMDVhOGJiNWFkXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 80,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt9327706-45:vnhfv2",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "series",
-      "title": "Calls",
-      "baseTitle": "Calls",
-      "imdbCode": "tt9327706",
-      "year": 2021,
-      "releaseDate": "2021-03-19",
-      "season": null,
-      "episode": null,
-      "href": "/tt9327706",
-      "imdbUrl": "https://www.imdb.com/title/tt9327706/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMGUyOTJjNWItZDM4MC00NjI0LThkMWYtN2FkZTVmNzU3ZTlmXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 45,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt15164924-20e8439088250d7bc6feafab9aba6efeabefdcce32c5798365388229b1ff13c4",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Lego Star Wars Terrifying Tales",
-      "baseTitle": "Lego Star Wars Terrifying Tales",
-      "imdbCode": "tt15164924",
-      "year": 2021,
-      "releaseDate": "2021-10-01",
-      "season": null,
-      "episode": null,
-      "href": "/tt15164924",
-      "imdbUrl": "https://www.imdb.com/title/tt15164924/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BN2U1ZmRjZjItZWU1YS00MzVkLTgyNzQtY2E4NDg5NzQwNmI3XkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "donyayeserial"
-      ],
-      "qualities": [
-        "720p"
-      ],
-      "linksCount": 2,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt13293588-76ca4e13183c444b7d9b2caee9d10b96e0d8921bd6523718df31dfb60b6f8c8c",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "series",
-      "title": "Mushoku Tensei: Jobless Reincarnation",
-      "baseTitle": "Mushoku Tensei: Jobless Reincarnation",
-      "imdbCode": "tt13293588",
-      "year": 2021,
-      "releaseDate": "2022-03-29",
-      "season": null,
-      "episode": null,
-      "href": "/tt13293588",
-      "imdbUrl": "https://www.imdb.com/title/tt13293588/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BY2M5OTFhMWUtOGNjYy00NGU0LTlhMzAtNzY4Yjk3YWJiOTc5XkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "zardfilm"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 660,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt9620292-41d2dc39e1e895f4c8ddc6b20e3637589c366b77a992cbf5d05925701d335ea0",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Promising Young Woman",
-      "baseTitle": "Promising Young Woman",
-      "imdbCode": "tt9620292",
-      "year": 2020,
-      "releaseDate": "2020-12-25",
-      "season": null,
-      "episode": null,
-      "href": "/tt9620292",
-      "imdbUrl": "https://www.imdb.com/title/tt9620292/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BODMxNzc5NTEtODNjYi00NTJmLWJiZTctMTRhN2VhODY5NWIzXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 6,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt3794354-50fba5931948a0c9fcadd5442b9248de9026ccc33a2d594549078e34a699dcf8",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Sonic the Hedgehog",
-      "baseTitle": "Sonic the Hedgehog",
-      "imdbCode": "tt3794354",
-      "year": 2020,
-      "releaseDate": "2020-02-14",
-      "season": null,
-      "episode": null,
-      "href": "/tt3794354",
-      "imdbUrl": "https://www.imdb.com/title/tt3794354/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BYjk0ZTAxNDQtZWQyZC00NmZiLWJmZGItMmNkYjMwZWUxYzAzXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 24,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt10982034-4ff9c4d069aef2727dd714d82f46febad40400fc6fc276f2471e569b79700ff0",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "series",
-      "title": "Trying",
-      "baseTitle": "Trying",
-      "imdbCode": "tt10982034",
-      "year": 2020,
-      "releaseDate": "2020-05-01",
-      "season": null,
-      "episode": null,
-      "href": "/tt10982034",
-      "imdbUrl": "https://www.imdb.com/title/tt10982034/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjMxYWE5ZDQtNmY3Ni00NjgzLTk1ZTAtMzFkNzRhN2M3MmIyXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 445,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt4729430-d3f3b984a7d12a6be0d59149c56b6988ca96aa949d9b101570480782e09d9a31",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Klaus",
-      "baseTitle": "Klaus",
-      "imdbCode": "tt4729430",
-      "year": 2019,
-      "releaseDate": "2019-11-15",
-      "season": null,
-      "episode": null,
-      "href": "/tt4729430",
-      "imdbUrl": "https://www.imdb.com/title/tt4729430/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BN2M4MjEwYmQtNzU5My00ZTA3LWI4NTAtNDdhYTJlMmYyMDdjXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 19,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt3647998-0e6b80835df4527c6a62c8a22155928fe2455916c51fe2df63765903261c6c7c",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "series",
-      "title": "Taboo",
-      "baseTitle": "Taboo",
-      "imdbCode": "tt3647998",
-      "year": 2017,
-      "releaseDate": "2017-01-10",
-      "season": null,
-      "episode": null,
-      "href": "/tt3647998",
-      "imdbUrl": "https://www.imdb.com/title/tt3647998/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOGViMjgxYTgtNTE1Mi00NGFhLTg4MDMtODI4N2JmYjZjZGFhXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 128,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt3014866-814a55332753103f8789a7c173774fd96f9d1e1b5662bfdd91aa72faf36b67e7",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Criminal",
-      "baseTitle": "Criminal",
-      "imdbCode": "tt3014866",
-      "year": 2016,
-      "releaseDate": "2016-04-15",
-      "season": null,
-      "episode": null,
-      "href": "/tt3014866",
-      "imdbUrl": "https://www.imdb.com/title/tt3014866/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjMwNDI0OTE1M15BMl5BanBnXkFtZTgwNTYwNDA1ODE@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 7,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt1475582-fd6b64f2e0a37f354e602bf29e54f19edd0045dd4cd6e97b56fc87f0e63cf677",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "series",
-      "title": "Sherlock",
-      "baseTitle": "Sherlock",
-      "imdbCode": "tt1475582",
-      "year": 2010,
-      "releaseDate": "2010-10-24",
-      "season": null,
-      "episode": null,
-      "href": "/tt1475582",
-      "imdbUrl": "https://www.imdb.com/title/tt1475582/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BM2E3N2RjMGEtYTkwNS00ZWRiLWIwNTctOTJiZWRkYTAxMGMzXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 253,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "available-tt0388629-7d3e6ced5578bd98d370accae8360c81f1efe6e1354679e74933bc9d0c8ea264",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "available",
-      "kind": "series",
-      "title": "One Piece",
-      "baseTitle": "One Piece",
-      "imdbCode": "tt0388629",
-      "year": 1999,
-      "releaseDate": "1999-10-20",
-      "season": null,
-      "episode": null,
-      "href": "/tt0388629",
-      "imdbUrl": "https://www.imdb.com/title/tt0388629/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZTIyNzgwZmUtNzgyOS00ZWFjLWJkNTItYjY3ODIxZGQyMDAzXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my"
-      ],
-      "qualities": [
-        "1080p",
-        "720p"
-      ],
-      "linksCount": 3396,
-      "reason": "New files or qualities were found in a configured source.",
-      "changeType": "source-added",
-      "addedQualities": []
-    },
-    {
-      "id": "coming-soon-tt43704480",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "coming-soon",
-      "kind": "film",
-      "title": "Boatbuilders",
-      "baseTitle": "Boatbuilders",
-      "imdbCode": "tt43704480",
-      "year": 2026,
-      "releaseDate": "2026-09-17",
-      "season": null,
-      "episode": null,
-      "href": null,
-      "imdbUrl": "https://www.imdb.com/title/tt43704480/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNmRhZjk0MGMtYWYwMi00YTRjLWJhYmMtNzdlNjA4NzIzYTJhXkEyXkFqcGc@._V1_QL75_UY133_CR55,0,90,133_.jpg",
-      "sourceNames": [],
-      "qualities": [],
-      "linksCount": 0,
-      "reason": "IMDb release found — source scan is queued.",
-      "changeType": "coming-soon"
-    },
-    {
-      "id": "coming-soon-tt43607019",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "coming-soon",
-      "kind": "film",
-      "title": "Diamond Made Man Part 3",
-      "baseTitle": "Diamond Made Man Part 3",
-      "imdbCode": "tt43607019",
-      "year": 2026,
-      "releaseDate": "2026-09-09",
-      "season": null,
-      "episode": null,
-      "href": null,
-      "imdbUrl": "https://www.imdb.com/title/tt43607019/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNGUyOWVlNGItMzNhMy00Mjk3LWFjMjItOGQ3YjNmMzlmODUwXkEyXkFqcGc@._V1_QL75_UY133_CR65,0,90,133_.jpg",
-      "sourceNames": [],
-      "qualities": [],
-      "linksCount": 0,
-      "reason": "IMDb release found — source scan is queued.",
-      "changeType": "coming-soon"
-    },
-    {
-      "id": "coming-soon-tt39019415",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "coming-soon",
-      "kind": "film",
-      "title": "Hombre al agua",
-      "baseTitle": "Hombre al agua",
-      "imdbCode": "tt39019415",
-      "year": 2026,
-      "releaseDate": "2026-09-24",
-      "season": null,
-      "episode": null,
-      "href": null,
-      "imdbUrl": "https://www.imdb.com/title/tt39019415/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNTFjYmYyMzEtNWY0ZC00YzAzLTg0ZWItMWFhOTMzODBhMmU1XkEyXkFqcGc@._V1_QL75_UY133_CR2,0,90,133_.jpg",
-      "sourceNames": [],
-      "qualities": [],
-      "linksCount": 0,
-      "reason": "IMDb release found — source scan is queued.",
-      "changeType": "coming-soon"
-    },
-    {
-      "id": "coming-soon-tt23411728",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "coming-soon",
-      "kind": "film",
-      "title": "L'estranea",
-      "baseTitle": "L'estranea",
-      "imdbCode": "tt23411728",
-      "year": 2026,
-      "releaseDate": "2026-10-08",
-      "season": null,
-      "episode": null,
-      "href": null,
-      "imdbUrl": "https://www.imdb.com/title/tt23411728/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZWI0ZWI5NGQtNGZiYS00ZjAyLTk2YjItNTJjZjdlOTQ1YjU1XkEyXkFqcGc@._V1_QL75_UY133_CR8,0,90,133_.jpg",
-      "sourceNames": [],
-      "qualities": [],
-      "linksCount": 0,
-      "reason": "IMDb release found — source scan is queued.",
-      "changeType": "coming-soon"
-    },
-    {
-      "id": "coming-soon-tt37803364",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "coming-soon",
-      "kind": "film",
-      "title": "Possible Love",
-      "baseTitle": "Possible Love",
-      "imdbCode": "tt37803364",
-      "year": 2026,
-      "releaseDate": "2026-11-06",
-      "season": null,
-      "episode": null,
-      "href": null,
-      "imdbUrl": "https://www.imdb.com/title/tt37803364/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTk4NjU5NjQtZjQxOS00OGIwLThhM2MtYWU1OTc4Y2M4NGVmXkEyXkFqcGc@._V1_QL75_UY133_CR8,0,90,133_.jpg",
-      "sourceNames": [],
-      "qualities": [],
-      "linksCount": 0,
-      "reason": "IMDb release found — source scan is queued.",
-      "changeType": "coming-soon"
-    },
-    {
-      "id": "coming-soon-tt9395802",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "coming-soon",
-      "kind": "film",
-      "title": "The Echo Chamber",
-      "baseTitle": "The Echo Chamber",
-      "imdbCode": "tt9395802",
-      "year": 2026,
-      "releaseDate": "2026-09-10",
-      "season": null,
-      "episode": null,
-      "href": null,
-      "imdbUrl": "https://www.imdb.com/title/tt9395802/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTdlNTVjODEtODI1YS00MzNkLTg0NjEtNDM5ODBiNzY3Yzc0XkEyXkFqcGc@._V1_QL75_UY133_CR8,0,90,133_.jpg",
-      "sourceNames": [],
-      "qualities": [],
-      "linksCount": 0,
-      "reason": "IMDb release found — source scan is queued.",
-      "changeType": "coming-soon"
-    },
-    {
-      "id": "coming-soon-tt30851456",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "coming-soon",
-      "kind": "film",
-      "title": "The Spirit Lock",
-      "baseTitle": "The Spirit Lock",
-      "imdbCode": "tt30851456",
-      "year": 2026,
-      "releaseDate": "2026-09-08",
-      "season": null,
-      "episode": null,
-      "href": null,
-      "imdbUrl": "https://www.imdb.com/title/tt30851456/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMGNmN2JiNWQtMDc3Ny00MzQ4LWFjOGEtMGI4MTlhMWYzMmNjXkEyXkFqcGc@._V1_QL75_UY133_CR8,0,90,133_.jpg",
-      "sourceNames": [],
-      "qualities": [],
-      "linksCount": 0,
-      "reason": "IMDb release found — source scan is queued.",
-      "changeType": "coming-soon"
-    },
-    {
-      "id": "coming-soon-tt43645716",
-      "eventAt": "2026-09-07T11:57:03.105Z",
-      "status": "coming-soon",
-      "kind": "film",
-      "title": "Une femme aujourd'hui",
-      "baseTitle": "Une femme aujourd'hui",
-      "imdbCode": "tt43645716",
-      "year": 2026,
-      "releaseDate": "2026-10-21",
-      "season": null,
-      "episode": null,
-      "href": null,
-      "imdbUrl": "https://www.imdb.com/title/tt43645716/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTk2YmRlODgtNjQyMS00ZWFkLTgxODYtOGZmZGVlNWRmYWQ2XkEyXkFqcGc@._V1_QL75_UY133_CR4,0,90,133_.jpg",
-      "sourceNames": [],
-      "qualities": [],
-      "linksCount": 0,
-      "reason": "IMDb release found — source scan is queued.",
-      "changeType": "coming-soon"
-    },
-    {
-      "id": "available-tt15398776-b5ed5d9bdcfacea83301f968bd209d6b2842bcfbee71d443afc0a39e1a18bc64",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Oppenheimer",
-      "baseTitle": "Oppenheimer",
-      "imdbCode": "tt15398776",
-      "year": 2023,
-      "releaseDate": "2023-07-21",
-      "season": null,
-      "episode": null,
-      "href": "/tt15398776",
-      "imdbUrl": "https://www.imdb.com/title/tt15398776/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTdhN2ZjNjAtNGRiZC00NjUwLTkwYWUtZWViZjk4ODhmMWY1XkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "4K",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 25,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt1160419-fd29a6d170e1f89553a098e5c93c92c229a209436ae276c82efe9607dcbe49aa",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Dune: Part One",
-      "baseTitle": "Dune: Part One",
-      "imdbCode": "tt1160419",
-      "year": 2021,
-      "releaseDate": "2021-10-22",
-      "season": null,
-      "episode": null,
-      "href": "/tt1160419",
-      "imdbUrl": "https://www.imdb.com/title/tt1160419/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZDYyZWE2MTYtOGIzNC00M2RmLTk1YjYtY2RjZjNkMmY3YjUxXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "4K",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 31,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt4154796-2056b395477c7d79ead5236d94a6cda783ce9d887b1605bcec4144eda414c23f",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Avengers: Endgame",
-      "baseTitle": "Avengers: Endgame",
-      "imdbCode": "tt4154796",
-      "year": 2019,
-      "releaseDate": "2019-04-26",
-      "season": null,
-      "episode": null,
-      "href": "/tt4154796",
-      "imdbUrl": "https://www.imdb.com/title/tt4154796/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZTNiNDMyNjQtMjU4Yy00OTBkLWJmMTMtMzY0ZjE0OGI4MWMzXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 29,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt7286456-46148fb697eed959ef04527d6392008cf29f9a622d1cce884c28843f8b798b96",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Joker",
-      "baseTitle": "Joker",
-      "imdbCode": "tt7286456",
-      "year": 2019,
-      "releaseDate": "2019-10-04",
-      "season": null,
-      "episode": null,
-      "href": "/tt7286456",
-      "imdbUrl": "https://www.imdb.com/title/tt7286456/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BYTUxYWNhNmQtNzEyOS00YjdiLTkyZDctZWUwYmFkYzQxZGVhXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 26,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt6751668-3bf4a8a9f614a3457d27b26ffe1fa10ec1b27f5096a2b128fbc427544092a43f",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Parasite",
-      "baseTitle": "Parasite",
-      "imdbCode": "tt6751668",
-      "year": 2019,
-      "releaseDate": "2019-11-08",
-      "season": null,
-      "episode": null,
-      "href": "/tt6751668",
-      "imdbUrl": "https://www.imdb.com/title/tt6751668/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMWNiMjc2ZjUtYTNhMS00NDllLWIzOTktMTQ5NmM0ZjU1ZmExXkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 23,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt4154756-96846f241fc85d151340bf8a17d7162cba3b0f1954c96970ed0bd98ce0ddbded",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Avengers: Infinity War",
-      "baseTitle": "Avengers: Infinity War",
-      "imdbCode": "tt4154756",
-      "year": 2018,
-      "releaseDate": "2018-04-27",
-      "season": null,
-      "episode": null,
-      "href": "/tt4154756",
-      "imdbUrl": "https://www.imdb.com/title/tt4154756/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BNjg2MjI2MjU4NV5BMl5BanBnXkFtZTgwMjgxMjQ0NjM@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 33,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt1431045-3aeb9c3378971b7bdf69a087cfe45053339c6b1e6796a00646841717a4062efd",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Deadpool",
-      "baseTitle": "Deadpool",
-      "imdbCode": "tt1431045",
-      "year": 2016,
-      "releaseDate": "2016-02-12",
-      "season": null,
-      "episode": null,
-      "href": "/tt1431045",
-      "imdbUrl": "https://www.imdb.com/title/tt1431045/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTk3NDE5MzM3NF5BMl5BanBnXkFtZTgwNDQ3Nzk3ODE@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 17,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt4574334-39ae741aad4574ec3d10d9369d18e5c0da3267618c24a4545b7b83f19ea16c16",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "series",
-      "title": "Stranger Things",
-      "baseTitle": "Stranger Things",
-      "imdbCode": "tt4574334",
-      "year": 2016,
-      "releaseDate": "2016-07-15",
-      "season": null,
-      "episode": null,
-      "href": "/tt4574334",
-      "imdbUrl": "https://www.imdb.com/title/tt4574334/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BZjJmYjc2YTYtOTBiYy00OWY4LTkwODAtYWE0NWMxNDFmZmU3XkEyXkFqcGc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "moviesho"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 784,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt1392190-2e31dbba13af67d6779aa9d77773ec875a7299e0c44d73a64887348c2bbb4d40",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Mad Max: Fury Road",
-      "baseTitle": "Mad Max: Fury Road",
-      "imdbCode": "tt1392190",
-      "year": 2015,
-      "releaseDate": "2015-05-15",
-      "season": null,
-      "episode": null,
-      "href": "/tt1392190",
-      "imdbUrl": "https://www.imdb.com/title/tt1392190/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTU3ODM0MjUzOV5BMl5BanBnXkFtZTgwNjY0NDI2MDI@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 23,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt2267998-4fd39099bcaa549960e9d5b6551c117430e93f994ee4d93deaba3135b177b4de",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Gone Girl",
-      "baseTitle": "Gone Girl",
-      "imdbCode": "tt2267998",
-      "year": 2014,
-      "releaseDate": "2014-10-03",
-      "season": null,
-      "episode": null,
-      "href": "/tt2267998",
-      "imdbUrl": "https://www.imdb.com/title/tt2267998/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTY4MzEzMTU0OF5BMl5BanBnXkFtZTgwMjcyOTM3MjE@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 16,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt2015381-c69e14ca506b1ce14d1c58ec70b1172071393212a2ee264725051baad7a910b5",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Guardians of the Galaxy",
-      "baseTitle": "Guardians of the Galaxy",
-      "imdbCode": "tt2015381",
-      "year": 2014,
-      "releaseDate": "2014-08-01",
-      "season": null,
-      "episode": null,
-      "href": "/tt2015381",
-      "imdbUrl": "https://www.imdb.com/title/tt2015381/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BOTIxMzI4NDc4MV5BMl5BanBnXkFtZTgwNTEzOTYxMTI@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 16,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt0816692-a6e9e35c0ae3b251797c2ae2741529fa06acab664e4b0f01b89be4eb4fe4dcb7",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Interstellar",
-      "baseTitle": "Interstellar",
-      "imdbCode": "tt0816692",
-      "year": 2014,
-      "releaseDate": "2014-11-07",
-      "season": null,
-      "episode": null,
-      "href": "/tt0816692",
-      "imdbUrl": "https://www.imdb.com/title/tt0816692/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTc0NDQ4MjkyOF5BMl5BanBnXkFtZTgwNDE2NzUzOTE@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 22,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt2582802-90d6a82f007514119a50b3da49c40c5c81884782764711ec677e2728c70f1c3f",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Whiplash",
-      "baseTitle": "Whiplash",
-      "imdbCode": "tt2582802",
-      "year": 2014,
-      "releaseDate": "2014-10-15",
-      "season": null,
-      "episode": null,
-      "href": "/tt2582802",
-      "imdbUrl": "https://www.imdb.com/title/tt2582802/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTkzNzgwOTY4NV5BMl5BanBnXkFtZTgwMTQ1NTE4MjE@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 16,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt0993846-3be201345215200b4781861372d314022acd5c4b6b27578ff886e0062a0a1886",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "The Wolf of Wall Street",
-      "baseTitle": "The Wolf of Wall Street",
-      "imdbCode": "tt0993846",
-      "year": 2013,
-      "releaseDate": "2013-12-25",
-      "season": null,
-      "episode": null,
-      "href": "/tt0993846",
-      "imdbUrl": "https://www.imdb.com/title/tt0993846/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjA4NjQ5MDI2MV5BMl5BanBnXkFtZTgwNjg0MzQ4MDE@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 19,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt1853728-eb33b42951b1a8b93057a5c6ef02aa4e6fa8bb2f5a508428986c3de4e3549530",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Django Unchained",
-      "baseTitle": "Django Unchained",
-      "imdbCode": "tt1853728",
-      "year": 2012,
-      "releaseDate": "2012-12-25",
-      "season": null,
-      "episode": null,
-      "href": "/tt1853728",
-      "imdbUrl": "https://www.imdb.com/title/tt1853728/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTY2Mzg1ODYyOF5BMl5BanBnXkFtZTcwOTgwMzQ3OA@@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 20,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt0848228-828f25c7771895f8cce9d7d314a59fdc0c919d92d71d8e1ea31a1816b06310a3",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "The Avengers",
-      "baseTitle": "The Avengers",
-      "imdbCode": "tt0848228",
-      "year": 2012,
-      "releaseDate": "2012-05-04",
-      "season": null,
-      "episode": null,
-      "href": "/tt0848228",
-      "imdbUrl": "https://www.imdb.com/title/tt0848228/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTA0NjY0NzE4OTReQTJeQWpwZ15BbWU3MDczODg2Nzc@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 18,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt1345836-ad9cab5b53ec8a10293a32aaab97ed01e04951c560a31ab045e483dc4f13533a",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "The Dark Knight Rises",
-      "baseTitle": "The Dark Knight Rises",
-      "imdbCode": "tt1345836",
-      "year": 2012,
-      "releaseDate": "2012-07-20",
-      "season": null,
-      "episode": null,
-      "href": "/tt1345836",
-      "imdbUrl": "https://www.imdb.com/title/tt1345836/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTU0OTg2MTE2Ml5BMl5BanBnXkFtZTcwNTUwMzQxOA@@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 20,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt1392170-545ea02c062e046e68098542ea30f5b9ba44d75aafb7cd3ed4caf3405fa9f3be",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "The Hunger Games",
-      "baseTitle": "The Hunger Games",
-      "imdbCode": "tt1392170",
-      "year": 2012,
-      "releaseDate": "2012-03-23",
-      "season": null,
-      "episode": null,
-      "href": "/tt1392170",
-      "imdbUrl": "https://www.imdb.com/title/tt1392170/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMTY4NTIzNDA3NF5BMl5BanBnXkFtZTgwNjIzNTYyNzE@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 11,
-      "reason": "New files or qualities were found in a configured source."
-    },
-    {
-      "id": "available-tt1375666-b8e3a77d625f837613a20a3d8f7946c139cf2dba28b9bbb9df992f10ae93b23d",
-      "eventAt": "2026-08-29T09:23:48.119Z",
-      "status": "available",
-      "kind": "film",
-      "title": "Inception",
-      "baseTitle": "Inception",
-      "imdbCode": "tt1375666",
-      "year": 2010,
-      "releaseDate": "2010-07-16",
-      "season": null,
-      "episode": null,
-      "href": "/tt1375666",
-      "imdbUrl": "https://www.imdb.com/title/tt1375666/",
-      "imageUrl": "https://m.media-amazon.com/images/M/MV5BMjIyNjk1OTgzNV5BMl5BanBnXkFtZTcwOTU0OTk1Mw@@._V1_.jpg",
-      "sourceNames": [
-        "f2my",
-        "donyayeserial"
-      ],
-      "qualities": [
-        "2160p",
-        "1080p",
-        "720p",
-        "480p"
-      ],
-      "linksCount": 18,
-      "reason": "New files or qualities were found in a configured source."
     }
   ]
 }
