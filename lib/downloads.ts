@@ -1,4 +1,5 @@
 import type { VodItem, VodLink, VodSubtitleLink } from "./types";
+import { loadEpisodeMetadata } from "./episode-metadata";
 
 export type DownloadSource = {
   label: string;
@@ -51,13 +52,6 @@ export type ExpandedSeasonDownloads = {
   fetchedAt: string;
 };
 
-type EpisodeMeta = {
-  season: number;
-  episode: number;
-  title: string;
-  summary: string | null;
-  imageUrl: string | null;
-};
 
 const VIDEO_EXTENSIONS = /\.(mkv|mp4|m4v|avi|webm|mov|wmv|ts)(?:$|[?#])/i;
 const ARCHIVE_EXTENSIONS = /\.(zip|rar|7z)(?:$|[?#])/i;
@@ -134,7 +128,7 @@ export async function expandSeasonDownloads(item: VodItem, season: number): Prom
   const sources = item.links
     .filter((link) => (link.season ?? parseSeasonEpisode(`${link.label} ${link.url}`).season) === season)
     .map(toDownloadSource);
-  const metadataPromise = fetchEpisodeMetadata(item.imdbCode, season);
+  const metadataPromise = loadEpisodeMetadata(item.imdbCode, season);
   const expandedPromise = Promise.allSettled(sources.map(expandSource));
   const [metadata, expanded] = await Promise.all([metadataPromise, expandedPromise]);
   const metaMap = new Map(metadata.map((episode) => [episode.episode, episode]));
@@ -257,36 +251,6 @@ function parseDirectoryRows(html: string, source: DownloadSource) {
   return files;
 }
 
-async function fetchEpisodeMetadata(imdbCode: string, season: number): Promise<EpisodeMeta[]> {
-  try {
-    const lookup = await fetchWithTimeout(`https://api.tvmaze.com/lookup/shows?imdb=${encodeURIComponent(imdbCode)}`, 2500);
-    if (!lookup.ok) return [];
-    const show = (await lookup.json()) as { id?: number };
-    if (!show.id) return [];
-
-    const episodesResponse = await fetchWithTimeout(`https://api.tvmaze.com/shows/${show.id}/episodes`, 3500);
-    if (!episodesResponse.ok) return [];
-    const episodes = (await episodesResponse.json()) as {
-      season?: number;
-      number?: number;
-      name?: string;
-      summary?: string | null;
-      image?: { medium?: string | null; original?: string | null } | null;
-    }[];
-
-    return episodes
-      .filter((episode) => episode.season === season && episode.number)
-      .map((episode) => ({
-        season,
-        episode: episode.number as number,
-        title: episode.name || `Episode ${episode.number}`,
-        summary: stripHtml(episode.summary ?? ""),
-        imageUrl: episode.image?.medium ?? episode.image?.original ?? null,
-      }));
-  } catch {
-    return [];
-  }
-}
 
 async function fetchWithTimeout(url: string, timeoutMs: number) {
   const controller = new AbortController();

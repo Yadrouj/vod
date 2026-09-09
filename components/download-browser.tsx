@@ -113,13 +113,17 @@ export function DownloadBrowser({ itemId, title, isSeries, seasons, movieFiles, 
 function EpisodeRow({ episode, itemId, seriesTitle, fallbackImage, playable, playUrl, locale }: { episode: EpisodeDownload; itemId: string; seriesTitle: string; fallbackImage: string | null; playable: Set<string>; playUrl?: string; locale: Locale }) {
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(6);
+  const [imageFailed, setImageFailed] = useState(false);
   const fa = locale === "fa";
-  const image = episode.imageUrl ?? fallbackImage;
+  const image = imageFailed ? fallbackImage : episode.imageUrl ?? fallbackImage;
   const identity = episode.episode != null ? `${fa ? "فصل" : "Season"} ${episode.season} · ${fa ? "قسمت" : "Episode"} ${episode.episode}` : fa ? "مجموعه فصل" : "Season pack";
   const subtitle = /^Episode \d+$|^Season pack$/i.test(episode.title) ? "" : episode.title;
   return <details className="episode-row" open={open} onToggle={event => setOpen(event.currentTarget.open)}>
     <summary>
-      <span className="episode-thumb" style={image ? { backgroundImage: `url(${JSON.stringify(sizedImageUrl(image, 320))})` } : undefined}><span>{episode.code}</span></span>
+      <span className="episode-thumb">
+        {image && <img key={image} src={sizedImageUrl(image, 320) ?? image} alt="" loading="lazy" decoding="async" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} onError={event => { if (!imageFailed && image !== fallbackImage) setImageFailed(true); else event.currentTarget.style.visibility = "hidden"; }} />}
+        <span style={{position:"relative"}}>{episode.code}</span>
+      </span>
       <div className="episode-copy"><h3>{identity}</h3><p dir="auto">{subtitle || `${episode.files.length} ${fa ? "نسخه برای دانلود" : "download versions"}`}</p></div>
       <span className="episode-expand"><span>{fa ? "کیفیت و لینک‌ها" : "Versions"}</span><ChevronDown size={20} aria-hidden="true" /></span>
     </summary>
