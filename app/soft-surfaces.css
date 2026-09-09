@@ -74,8 +74,13 @@ html .suggest-input-shell .search:focus-visible {
 
 /* Forms use their labelled surface as the affordance. Keep text entry itself
    deliberately frameless everywhere, including WebKit's tap/focus treatment. */
-html input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
-html input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus-visible {
+html input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="reset"]) {
+  appearance: none;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+html input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="reset"]):focus,
+html input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="reset"]):focus-visible {
   outline: 0 !important;
   box-shadow: none !important;
 }
