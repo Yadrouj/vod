@@ -60,7 +60,10 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
 };
 
-const googleAnalyticsId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
+// Keep this public measurement ID in the application so analytics is enabled
+// on every deployment. A future environment-specific property can still
+// override it without requiring a code change.
+const googleAnalyticsId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || "G-DTDGSJLLXV";
 const hasGoogleAnalytics = Boolean(googleAnalyticsId && /^G-[A-Z0-9]+$/u.test(googleAnalyticsId));
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
