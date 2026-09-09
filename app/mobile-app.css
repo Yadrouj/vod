@@ -15,7 +15,7 @@
 .app-search-dialog .suggest-mobile-head { display: none !important; }
 .app-search-dialog .suggest-menu { position: static !important; display: block; width: 100% !important; max-width: none; max-height: none !important; margin-top: 12px; border-radius: 14px !important; box-shadow: none; }
 .app-search-dialog .suggest-results { max-height: min(420px, 48dvh); overflow-y: auto; overscroll-behavior: contain; }
-.app-search-dialog .suggest-input-shell .search { min-height: 52px; border: 1px solid #ffffff22; border-radius: 14px !important; }
+.app-search-dialog .suggest-input-shell .search { min-height: 52px; border: 0; border-radius: 0 !important; box-shadow: none; }
 .app-search-submit { align-self: start; min-height: 44px; padding: 8px 18px; border: 0; border-radius: 12px !important; background: var(--app-accent); color: #16170e; font-size: 12px; }
 .app-search-tip { color: #aaa89c; font-size: 12px; line-height: 1.9; }
 .app-library-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin-block: 22px 14px; }
