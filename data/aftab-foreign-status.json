@@ -1,19 +1,17 @@
 {
   "state": "complete",
-  "startedAt": "2026-09-08T10:41:18.506Z",
-  "updatedAt": "2026-09-08T10:41:39.810Z",
+  "startedAt": "2026-09-09T23:54:33.239Z",
+  "updatedAt": "2026-09-09T23:54:53.254Z",
   "pages": {
-    "total": 20,
-    "complete": 19,
-    "failed": 1
+    "total": 18,
+    "complete": 18,
+    "failed": 0
   },
   "tracks": {
-    "discovered": 187,
-    "new": 186,
+    "discovered": 180,
+    "new": 179,
     "duplicate": 1
   },
-  "warnings": [
-    "https://aftabmusic.com/foreign/page/20/: 404 Not Found"
-  ],
+  "warnings": [],
   "current": null
 }
