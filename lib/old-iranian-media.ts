@@ -258,6 +258,14 @@ const BATCH_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1355029": [publicYouTubeVideo("I0cAuTWooJE", "فیلم قدیمی؛ غرور و تعصب | ۱۳۵۵ | رنگی شده", "Filmrangi - فیلمرنگی", 6238)],
 };
 
+// Eighth review batch: the remaining clear long-form matches from that
+// fifty-title pass, including one catalogue spelling correction.
+const BATCH_EIGHT_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1356029": [publicYouTubeVideo("PdGA6E3KsEE", "فیلم ایرانی حلقه های ازدواج", "TPM - Top Persian Movies", 5248)],
+  "old-iranian-1356037": [publicYouTubeVideo("_0VtK4jd5a4", "فيلم كلام حق (1356)", "فیلم فارسی", 6118)],
+  "old-iranian-1356055": [publicYouTubeVideo("5DTCzqSTYOs", "Golgo 13 | فیلم گلگو سیزده", "Midnight Pulp", 6241)],
+};
+
 const GHADAGHAN: OldIranianFilmMedia = {
   id: GHADAGHAN_ID,
   originalTitle: "Ghadaghan",
@@ -358,7 +366,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FIVE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SIX_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SEVEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FIVE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SIX_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SEVEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_EIGHT_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
 }
 
 /**
