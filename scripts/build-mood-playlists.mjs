@@ -33,6 +33,25 @@ const tags = t => [t.title, t.persianTitle, t.category, ...(t.moods ?? []), ...(
 export function buildMoodPlaylists(tracks, date = new Date()) {
   const week = Math.floor(date.getTime() / (7 * 86400_000));
   const playlists = [], gaps = [];
+  const freshVideos = tracks
+    .filter(t => t.kind === "video" && t.sources?.some(s => s.available !== false) && t.coverUrl)
+    .sort((a, b) => String(b.publishedAt || b.releaseDate || "").localeCompare(String(a.publishedAt || a.releaseDate || "")));
+  const videoSelection = [], videoArtists = new Map(), videoCovers = new Map(), videoIdentities = new Set();
+  for (const track of freshVideos) {
+    const artist = track.artist.slug;
+    const identity = track.matchKey || `${artist}:${track.title}`;
+    if (videoIdentities.has(identity) || (videoArtists.get(artist) ?? 0) >= 3) continue;
+    videoSelection.push(track); videoIdentities.add(identity);
+    videoArtists.set(artist, (videoArtists.get(artist) ?? 0) + 1);
+    videoCovers.set(track.coverUrl, (videoCovers.get(track.coverUrl) ?? 0) + 1);
+    if (videoSelection.length === 40) break;
+  }
+  if (videoSelection.length) playlists.push({
+    id: "fresh-music-videos", title: "موزیک‌ویدئوهای تازه", scope: "video", mood: "new",
+    description: "آخرین موزیک‌ویدئوهای قابل‌پخش آرشیو؛ هر بار با انتشارهای تازه دوباره مرتب می‌شود.",
+    trackIds: videoSelection.map(t => t.id), covers: [...videoCovers.keys()].slice(0, 4),
+    artistCount: videoArtists.size, selection: "published-video", updatedAt: date.toISOString(),
+  });
   const usable = tracks.filter(t => t.kind === "track" && t.sources?.some(s => s.available !== false) && t.coverUrl);
   for (const [scope, scopeTitle, accepts] of SCOPES) {
     for (const [mood, title, pattern] of MOODS) {

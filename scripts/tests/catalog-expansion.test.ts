@@ -59,6 +59,18 @@ test("mood playlists are stable, diverse and do not invent language coverage", (
   assert.ok(!a.playlists.some(p=>p.scope==="korean"));
   assert.equal(buildMoodPlaylists(tracks.map(t=>({...t,coverUrl:"same"})),date).playlists.length,0);
 });
+test("fresh music video playlist is sorted by publication and caps one artist", () => {
+  const tracks = Array.from({length: 45}, (_, i) => ({
+    id: `video-${i}`, kind: "video", title: `video ${i}`, matchKey: `video-${i}`,
+    publishedAt: new Date(Date.UTC(2026, 8, 10 - i)).toISOString(), coverUrl: `cover-${i}`,
+    artist: { slug: `artist-${i % 4}` }, sources: [{ available: true }],
+  }));
+  const result = buildMoodPlaylists(tracks, new Date("2026-09-10T00:00:00Z"));
+  const playlist = result.playlists.find(item => item.id === "fresh-music-videos");
+  assert.ok(playlist);
+  assert.equal(playlist.trackIds.length, 12);
+  assert.deepEqual(playlist.trackIds.slice(0, 4), ["video-0", "video-1", "video-2", "video-3"]);
+});
 test("only exact approved publisher embed URLs are accepted", () => {
   const source = {provider:"nfb" as const,sourceUrl:"https://www.nfb.ca/film/hypersensitive/",embedUrl:"https://www.nfb.ca/film/hypersensitive/embed/player/",checkedAt:"2026-09-08",playbackStatus:"not-tested" as const};
   assert.ok(validPublisherPlayer(source));
