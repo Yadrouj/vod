@@ -25,6 +25,7 @@ services:
       BOT_API_TOKEN: ${BOT_API_TOKEN:-}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-Sarvnema_bot}
+      SARVNEMA_ADMIN_TOKEN: ${SARVNEMA_ADMIN_TOKEN:-}
     restart: unless-stopped
     stop_grace_period: 20s
     mem_limit: 2g

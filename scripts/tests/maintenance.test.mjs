@@ -13,6 +13,7 @@ test("Tehran window includes 03:00 and excludes exactly 07:00", () => {
   assert.equal(inIdleWindow(6), true); assert.equal(inIdleWindow(7), false);
   const date = new Date("2026-09-07T23:30:00Z");
   assert.equal(localClock(date).hour, 3);
+  assert.equal(localClock(date).weekday, 2);
   assert.equal(new Date(windowDeadline(date)).toISOString(), "2026-09-08T03:30:00.000Z");
   const end = new Date("2026-09-08T03:30:00Z");
   assert.equal(windowDeadline(end), end.getTime());

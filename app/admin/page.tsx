@@ -26,6 +26,7 @@ export default async function AdminPage() {
             <BrandLogo locale={locale} compact />
             <div className="topbar-actions">
               <LanguageToggle locale={locale} />
+              <Link className="chip" href="/admin/scrapers">داشبورد اسکریپرها</Link>
               <Link className="chip" href="/">{t.common.backHome}</Link>
             </div>
           </header>

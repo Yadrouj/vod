@@ -3,7 +3,8 @@ import { mkdir, open, readFile, rename, stat, unlink, writeFile } from "node:fs/
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { assessCapacity, DAILY_JOBS, DEFAULT_IDLE_END_HOUR, DEFAULT_IDLE_START_HOUR, localClock, windowDeadline } from "./maintenance-policy.mjs";
+import { assessCapacity, DAILY_JOBS, DEFAULT_IDLE_END_HOUR, DEFAULT_IDLE_START_HOUR, inIdleWindow, localClock, windowDeadline } from "./maintenance-policy.mjs";
+import { hasScraperDashboardConfig, readScraperDashboardConfig } from "./scraper-dashboard-config.mjs";
 
 const ROOT = process.cwd();
 const DATA = path.join(ROOT, "data");
@@ -14,7 +15,7 @@ const args = new Set(process.argv.slice(2));
 const FORCE = args.has("--force");
 const FULL = args.has("--full");
 const number = (name, fallback) => Number.isFinite(Number(process.env[name])) ? Number(process.env[name]) : fallback;
-const ZONE = process.env.MAINTENANCE_TIME_ZONE || "Asia/Tehran";
+const ENV_ZONE = process.env.MAINTENANCE_TIME_ZONE || "Asia/Tehran";
 const START = Math.min(23, Math.max(0, number("MAINTENANCE_IDLE_START_HOUR", DEFAULT_IDLE_START_HOUR)));
 const END = Math.min(23, Math.max(0, number("MAINTENANCE_IDLE_END_HOUR", DEFAULT_IDLE_END_HOUR)));
 const POLL = Math.max(60_000, number("MAINTENANCE_POLL_MS", 900_000));
@@ -24,9 +25,10 @@ for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => { stopping 
 
 async function main() {
   if (args.has("--check")) {
-    const local = localClock(new Date(), ZONE);
-    const eligibleNow = windowDeadline(new Date(), ZONE, START, END) > Date.now();
-    console.log(JSON.stringify({ timeZone: ZONE, startHour: START, endHourExclusive: END, local, eligibleNow, trigger: { name: "daily-scraper-check", schedule: "daily", active: eligibleNow }, capacity: await checkCapacity(), jobs: DAILY_JOBS }, null, 2));
+    const { schedule, config } = await effectiveDashboardConfig();
+    const local = localClock(new Date(), schedule.timeZone);
+    const eligibleNow = isScheduled(local, schedule) && windowDeadline(new Date(), schedule.timeZone, schedule.startHour, schedule.endHour) > Date.now();
+    console.log(JSON.stringify({ timeZone: schedule.timeZone, startHour: schedule.startHour, endHourExclusive: schedule.endHour, days: schedule.days, local, eligibleNow, trigger: { name: "daily-scraper-check", schedule: "daily", active: eligibleNow }, configuredSources: config.sources.length, capacity: await checkCapacity(), jobs: DAILY_JOBS }, null, 2));
     return;
   }
   do {
@@ -43,16 +45,17 @@ async function main() {
 }
 
 async function runCycle() {
-  const local = localClock(new Date(), ZONE);
-  const deadline = FORCE ? Date.now() + 3 * 60 * 60_000 : windowDeadline(new Date(), ZONE, START, END);
+  const { schedule, config } = await effectiveDashboardConfig();
+  const local = localClock(new Date(), schedule.timeZone);
+  const deadline = FORCE ? Date.now() + 3 * 60 * 60_000 : isScheduled(local, schedule) ? windowDeadline(new Date(), schedule.timeZone, schedule.startHour, schedule.endHour) : Date.now();
   const trigger = {
-    id: `${local.day}@${String(START).padStart(2, "0")}-${String(END).padStart(2, "0")}`,
+    id: `${local.day}@${String(schedule.startHour).padStart(2, "0")}-${String(schedule.endHour).padStart(2, "0")}`,
     name: "daily-scraper-check",
     schedule: "daily",
     source: args.has("--daemon") ? "maintenance-daemon" : "scheduled-worker",
   };
   if (deadline <= Date.now()) {
-    await atomic(STATUS, { state: "waiting", local, trigger: { ...trigger, active: false }, reason: "Outside 03:00–07:00 maintenance window", checkedAt: new Date().toISOString() });
+    await atomic(STATUS, { state: "waiting", local, trigger: { ...trigger, active: false }, reason: "Outside the configured maintenance window or scheduled day", checkedAt: new Date().toISOString() });
     return;
   }
   const lock = await acquireLock();
@@ -67,7 +70,8 @@ async function runCycle() {
     const days = previous.days ?? {};
     const completed = days[local.day] ?? {};
     const steps = [];
-    for (const job of DAILY_JOBS) {
+    const scheduledJobs = DAILY_JOBS.filter((job) => isJobScheduled(job, config, local, schedule));
+    for (const job of scheduledJobs) {
       if (stopping || Date.now() >= deadline) break;
       if (!FORCE && completed[job.id]) continue;
       const capacity = await checkCapacity();
@@ -80,7 +84,8 @@ async function runCycle() {
       steps.push(entry);
       await atomic(STATUS, { state: "running", local, trigger: activeTrigger, steps, deadline: new Date(deadline).toISOString(), checkedAt: new Date().toISOString() });
       try {
-        const jobDeadline = Math.min(deadline, Date.now() + job.minutes * 60_000);
+        const source = config.sources.find((item) => item.id === job.id) || schedule;
+        const jobDeadline = Math.min(deadline, windowDeadline(new Date(), schedule.timeZone, source.startHour, source.endHour), Date.now() + job.minutes * 60_000);
         await runJob(job, jobDeadline, local.day);
         entry.state = "completed";
         completed[job.id] = new Date().toISOString();
@@ -95,7 +100,7 @@ async function runCycle() {
       }
       entry.finishedAt = new Date().toISOString();
     }
-    const complete = DAILY_JOBS.every(job => completed[job.id]);
+    const complete = scheduledJobs.every(job => completed[job.id]);
     await atomic(STATUS, { state: complete ? "completed" : "partial", local, trigger: activeTrigger, steps, completedJobs: Object.keys(completed), checkedAt: new Date().toISOString() });
     if (!complete && !args.has("--daemon")) process.exitCode = 1;
   } finally {
@@ -175,4 +180,24 @@ async function atomic(file, value) {
   await rename(temporary, file);
 }
 async function readJson(file, fallback) { try { return JSON.parse(await readFile(file, "utf8")); } catch { return fallback; } }
+async function effectiveDashboardConfig() {
+  const config = await readScraperDashboardConfig();
+  if (await hasScraperDashboardConfig()) return { config, schedule: config.schedule };
+  return {
+    config,
+    schedule: {
+      ...config.schedule,
+      timeZone: ENV_ZONE,
+      startHour: START,
+      endHour: END,
+    },
+  };
+}
+function isScheduled(local, schedule) { return schedule.days.includes(local.weekday) && inIdleWindow(local.hour, schedule.startHour, schedule.endHour); }
+function isJobScheduled(job, config, local, globalSchedule) {
+  const source = config.sources.find((item) => item.id === job.id);
+  if (source?.enabled === false) return false;
+  const schedule = source || globalSchedule;
+  return schedule.days.includes(local.weekday) && inIdleWindow(local.hour, schedule.startHour, schedule.endHour);
+}
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main().catch(error => { console.error(error); process.exitCode = 1; });
