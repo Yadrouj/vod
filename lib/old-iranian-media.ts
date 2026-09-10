@@ -235,6 +235,29 @@ const BATCH_SIX_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1354060": [publicYouTubeVideo("EK_muy_TNGQ", "فیلم قدیمی؛ مرد شرقی و زن فرنگی", "Filmrangi - فیلمرنگی", 5674)],
 };
 
+// Seventh review batch: long-form, title-matched results from the next fifty
+// archive titles. Short clips and ambiguous title matches remain excluded.
+const BATCH_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1355001": [publicYouTubeVideo("kGNzPMezK08", "فیلم قدیمی؛ شادی‌های زندگی ما | ۱۳۵۵ | رنگی اچ دی", "Filmrangi - فیلمرنگی", 6562)],
+  "old-iranian-1355018": [publicYouTubeVideo("qpwZNcU5ORY", "Classic Film: Ghader | 1976 | Color HD", "Filmrangi - فیلمرنگی", 5211)],
+  "old-iranian-1355058": [publicYouTubeVideo("c5HUHFuKRlg", "Uncensored Persian movie Three People on the Line", "FilmFarsi - فیلمفارسی", 5157)],
+  "old-iranian-1355054": [publicYouTubeVideo("E8FCsVxAkGc", "فیلم قدیمی؛ کلک نزن خوشگله | ۱۳۵۵ | رنگی مرمت شده", "Filmrangi - فیلمرنگی", 5843)],
+  "old-iranian-1355020": [publicYouTubeVideo("vSWqsNif4F0", "چلچراغ | فیلم کامل ایرانی ۱۳۵۵", "Global Vault TV", 5703)],
+  "old-iranian-1355024": [publicYouTubeVideo("DWjLeUnJKZ0", "Uncensored Persian Film: The Tough Guy and the Dancer", "FilmFarsi - فیلمفارسی", 5747)],
+  "old-iranian-1355034": [publicYouTubeVideo("xCEVEGSZ1Nk", "Uncensored Persian Movie: Awake in the City", "FilmFarsi - فیلمفارسی", 5400)],
+  "old-iranian-1355050": [publicYouTubeVideo("xIWaRq9axhg", "تنها حامی - ۱۳۵۵", "Film O Honar", 6272)],
+  "old-iranian-1355006": [publicYouTubeVideo("NCapHlc1sOY", "Persian Film The Nameless | Vintage Film", "FilmFarsi - فیلمفارسی", 5197)],
+  "old-iranian-1354055": [publicYouTubeVideo("Z1TNCQBniGU", "فیلم قدیمی غلام زنگی | کیفیت بالا", "بیکی ها", 5462)],
+  "old-iranian-1355005": [publicYouTubeVideo("qieTg_kTpDw", "غیرت | Gheyrat (1976) | فیلم کامل ایرانی قدیمی", "Global Vault TV", 4585)],
+  "old-iranian-1355010": [publicYouTubeVideo("TfweLevY0Bw", "فیلم قدیمی - فیلم کامل دلقک", "فیلم قدیمی", 3964)],
+  "old-iranian-1355012": [publicYouTubeVideo("TxJ_DLJqNj0", "فیلم کامل مردی در آتش", "Cinema Rex", 5776)],
+  "old-iranian-1355013": [publicYouTubeVideo("nLLvMzhJYm0", "فیلم قدیمی؛ شهر شراب | ۱۳۵۵ | رنگی مرمت شده", "Filmrangi - فیلمرنگی", 5454)],
+  "old-iranian-1355021": [publicYouTubeVideo("kf-SNLs-iec", "Uncensored Persian Movie The Last Supper", "FilmFarsi - فیلمفارسی", 6262)],
+  "old-iranian-1355025": [publicYouTubeVideo("Fqaj2M2uuvc", "فیلم قدیمی تنهایی با شرکت منوچهر وثوق", "FilmFarsi - فیلمفارسی", 7229)],
+  "old-iranian-1355028": [publicYouTubeVideo("i7zEO1ncAuU", "فیلم کامل گل خشخاش", "Cinema Rex", 5571)],
+  "old-iranian-1355029": [publicYouTubeVideo("I0cAuTWooJE", "فیلم قدیمی؛ غرور و تعصب | ۱۳۵۵ | رنگی شده", "Filmrangi - فیلمرنگی", 6238)],
+};
+
 const GHADAGHAN: OldIranianFilmMedia = {
   id: GHADAGHAN_ID,
   originalTitle: "Ghadaghan",
@@ -335,7 +358,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FIVE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SIX_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FIVE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SIX_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SEVEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
 }
 
 /**
