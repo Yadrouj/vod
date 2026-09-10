@@ -11,7 +11,7 @@ import { StructuredData } from "@/components/structured-data";
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { getDictionary } from "@/lib/i18n";
 import { playbackSourceLabel, playableLinks } from "@/lib/link-labels";
-import { getOldIranianFilmMedia } from "@/lib/old-iranian-media";
+import { getOldIranianFilmMedia, getOldIranianYouTubeVideos } from "@/lib/old-iranian-media";
 import { getLocale } from "@/lib/server-locale";
 import { subzoneSearchUrl } from "@/lib/subtitles";
 import { absoluteUrl, titleMetadata, videoJsonLd } from "@/lib/seo";
@@ -55,7 +55,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
   const isSeries = normalizeVodType(item.type) === "series";
   const links = playableLinks(item.links, { isSeries, title: item.title, includeAlternateFiles: true });
   const oldFilmMedia = getOldIranianFilmMedia(item.id) ?? getOldIranianFilmMedia(item.imdbCode);
-  const youtubeSource = !links.length ? oldFilmMedia?.youtubeVideos[0] ?? item.youtubeVideos?.[0] ?? null : null;
+  const youtubeSource = !links.length ? oldFilmMedia?.youtubeVideos[0] ?? getOldIranianYouTubeVideos(item.id)?.[0] ?? getOldIranianYouTubeVideos(item.imdbCode)?.[0] ?? item.youtubeVideos?.[0] ?? null : null;
   const publisher = !links.length && !youtubeSource ? validPublisherPlayer(item.publisherPlayer) : null;
   const partySources = links.map((link, index) => ({
     url: link.url,

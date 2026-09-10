@@ -14,7 +14,7 @@ import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { buildSeasonSummaries, movieDownloadSources } from "@/lib/downloads";
 import { formatNumber, getDictionary, typeLabel } from "@/lib/i18n";
 import { playableLinks } from "@/lib/link-labels";
-import { getOldIranianFilmMedia } from "@/lib/old-iranian-media";
+import { getOldIranianFilmMedia, getOldIranianYouTubeVideos } from "@/lib/old-iranian-media";
 import { getLocale } from "@/lib/server-locale";
 import { vodJsonLd, vodMetadata } from "@/lib/seo";
 import { subzoneSearchUrl } from "@/lib/subtitles";
@@ -47,7 +47,7 @@ export default async function DetailPage({ params }: Props) {
   const movieFiles = isSeries ? [] : movieDownloadSources(downloads);
   const heroVideo = detailHeroVideo(item);
   const oldMedia = getOldIranianFilmMedia(item.id) ?? getOldIranianFilmMedia(item.imdbCode);
-  const youtube = oldMedia?.youtubeVideos[0] ?? item.youtubeVideos?.[0];
+  const youtube = oldMedia?.youtubeVideos[0] ?? getOldIranianYouTubeVideos(item.id)?.[0] ?? getOldIranianYouTubeVideos(item.imdbCode)?.[0] ?? item.youtubeVideos?.[0];
   const publisher = validPublisherPlayer(item.publisherPlayer);
   const canPlay = playable.length > 0 || Boolean(youtube) || Boolean(publisher);
   const watchHref = `/watch/${item.imdbCode}`;
@@ -139,7 +139,7 @@ function toTitleTabsItem(item: VodItem): TitleTabsItem {
   return {
     title: item.title, imdbCode: item.imdbCode, type: item.type, year: item.year,
     overview: item.overview, persianOverview: item.persianOverview, persianTitle: item.persianTitle,
-    youtubeVideos: item.youtubeVideos ?? getOldIranianFilmMedia(item.id)?.youtubeVideos,
+    youtubeVideos: item.youtubeVideos ?? getOldIranianYouTubeVideos(item.id) ?? getOldIranianYouTubeVideos(item.imdbCode) ?? undefined,
     endYear: item.endYear, releaseDate: item.releaseDate, certificate: item.certificate,
     countries: item.countries, languages: item.languages, qualities: item.qualities,
     keywords: item.keywords?.slice(0, 14), companies: item.companies?.slice(0, 8),
