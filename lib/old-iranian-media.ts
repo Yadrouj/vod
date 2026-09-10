@@ -295,6 +295,26 @@ const BATCH_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1343035": [publicYouTubeVideo("iZcnggIkNJg", "فیلم قدیمی گناه من چیست | ۱۳۴۳ | نسخه کامل", "Pars Film Official", 5628)],
 };
 
+// Tenth review batch: additional direct long-form uploads found while
+// continuing the catalogue review. All active results were checked at more
+// than one hour before being added.
+const BATCH_TEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1333002": [publicYouTubeVideo("_j2Qro7lVx0", "فیلم قدیمی مراد | ۱۳۳۳ | نسخه کامل", "Pars Media", 5186)],
+  "old-iranian-1334002": [publicYouTubeVideo("FwEGEAxx2G8", "فیلم قدیمی چهار راه حوادث | ۱۳۳۳ | نسخه کامل", "YouTube archive", 4688)],
+  "old-iranian-1336010": [publicYouTubeVideo("r2xdOE342Xw", "فیلم قدیمی نردبان ترقی | ۱۳۳۶ | نسخه کامل", "Pars Film", 4883)],
+  "old-iranian-1341016": [publicYouTubeVideo("fATi-87vMrg", "فیلم قدیمی انتقام روح | نسخه کامل", "فیلم قدیمی", 3935)],
+  "old-iranian-1342025": [publicYouTubeVideo("LH6nli7gGdo", "فیلم قدیمی مادر فداکار | ۱۳۴۲ | نسخه کامل", "Pars Film Official", 4810)],
+  "old-iranian-1342026": [publicYouTubeVideo("R7LITKoaNr0", "فیلم قدیمی دختر ساری | ۱۳۴۲ | نسخه کامل", "Pars Film Official", 5302)],
+  "old-iranian-1338026": [publicYouTubeVideo("Vb9LZ5nCg9c", "فیلم قدیمی جوانان امروزی | ۱۳۳۸ | نسخه کامل", "Pars Film Official", 4917)],
+  "old-iranian-1339008": [publicYouTubeVideo("ibpaCSZS7go", "فیلم قدیمی فردا روشن است | ۱۳۳۹ | نسخه کامل", "Pars Film Official", 5541)],
+  "old-iranian-1339019": [publicYouTubeVideo("2WJZxCQYx2k", "فیلم قدیمی ستارگان می درخشند | ۱۳۳۹ | نسخه کامل", "Pars Film Official", 4588)],
+  "old-iranian-1339026": [publicYouTubeVideo("lLeyt6BhK3Y", "فیلم قدیمی مروارید سیاه | ۱۳۳۹ | نسخه کامل", "Pars Film Official", 4857)],
+  "old-iranian-1343013": [publicYouTubeVideo("h7tqck7GLOM", "فیلم قدیمی گلهای گیلان | ۱۳۴۳ | نسخه کامل", "فیلم قدیمی", 4779)],
+  "old-iranian-1353035": [publicYouTubeVideo("XJBSFeYV5wY", "فیلم کامل ابرمرد | ۱۳۵۳", "Shouka Film", 5475)],
+  "old-iranian-1353054": [publicYouTubeVideo("0zylCNz_lNM", "فیلم قدیمی مرگ در باران | ۱۳۵۴ | نسخه کامل", "Pars Films", 5229)],
+  "old-iranian-1344004": [publicYouTubeVideo("qoPcbAcOL5o", "فیلم قدیمی یکپارچه آقا | ۱۳۴۴ | نسخه کامل", "Pars Films", 5394)],
+};
+
 const GHADAGHAN: OldIranianFilmMedia = {
   id: GHADAGHAN_ID,
   originalTitle: "Ghadaghan",
@@ -395,7 +415,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FIVE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SIX_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SEVEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_EIGHT_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_NINE_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FIVE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SIX_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SEVEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_EIGHT_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_NINE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
 }
 
 /**
