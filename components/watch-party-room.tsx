@@ -61,7 +61,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const [chatText, setChatText] = useState(""); const [chat, setChat] = useState<PartyChatMessage[]>([]);
   const [reactions, setReactions] = useState<PartyReaction[]>([]);
   const [query, setQuery] = useState(""); const [results, setResults] = useState<SearchItem[]>([]);
-  const [settingsOpen, setSettingsOpen] = useState(false); const [peopleOpen, setPeopleOpen] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false); const [peopleOpen, setPeopleOpen] = useState(false);
   const [subtitlesOpen, setSubtitlesOpen] = useState(false);
   const [mutedLocally, setMutedLocally] = useState<Set<string>>(new Set());
   const [inviteToken, setInviteToken] = useState("");
@@ -524,7 +524,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const latestChat = roomChat.at(-1);
   const queueTitle = isListeningRoom ? "Listen queue" : "Watch queue";
   const queueDescription = isListeningRoom ? "Add tracks, personal audio, or a direct media link for everyone." : "Search, add, or switch movies, episodes, and personal media for everyone.";
-  return <div className={`party-layout ${isListeningRoom ? "party-theme-music" : "party-theme-cinema"}`} data-media-theme={isListeningRoom ? "music" : "cinema"}>
+  return <div className={`party-layout ${isListeningRoom ? "party-theme-music" : "party-theme-cinema"}`} data-media-theme={isListeningRoom ? "music" : "cinema"} data-room-mode={isListeningRoom ? "listen" : "watch"}>
     <Link className="party-sarvnema-corner" href="/" aria-label="Back to SarvNema" title="SarvNema">
       <img src={BRAND_MARK} alt="" />
     </Link>
@@ -537,7 +537,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
         <div className="chips party-header-actions">
           <button className="chip party-share-primary" type="button" onClick={shareInvite}><Share2 size={15} /> <span>Share room</span></button>
           <button className="chip party-copy-action" type="button" onClick={copyInvite}>{inviteCopied ? <Check size={15} /> : <Copy size={15} />} <span>{inviteCopied ? "Copied" : "Copy link"}</span></button>
-          <button className="chip party-people-action" type="button" onClick={() => setPeopleOpen((value) => !value)} aria-expanded={peopleOpen}><Users size={15} /> <span>{snapshot.participants.filter((item) => item.connected).length}</span></button>
+           <button className="chip party-people-action" type="button" onClick={() => setPeopleOpen((value) => !value)} aria-expanded={peopleOpen} aria-controls="party-room-sidebar" aria-label="People and chat" title="People and chat"><Users size={15} /> <span className="party-people-label">People &amp; chat</span><span>{snapshot.participants.filter((item) => item.connected).length}</span></button>
         </div>
       </header>
       <div
@@ -654,7 +654,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
       <PartyTitleDetails media={playback.media} />
     </section>
     <button className={`party-mobile-scrim ${peopleOpen ? "is-open" : ""}`} type="button" aria-label="Close room panel" onClick={() => setPeopleOpen(false)} />
-    <aside className={`party-sidebar ${peopleOpen ? "is-open" : ""}`}>
+     <aside id="party-room-sidebar" className={`party-sidebar ${peopleOpen ? "is-open" : ""}`}>
       <div className="party-tabs"><Users size={17} /><span>Room & chat</span><MessageCircle size={17} /><button className="party-sidebar-close" type="button" onClick={() => setPeopleOpen(false)} aria-label="Close room panel"><X size={18} /></button></div>
       <section className="party-people"><h3>Participants</h3>{snapshot.participants.map((participant) => <Participant key={participant.id} participant={participant} isHost={Boolean(isHost)} mutedLocally={mutedLocally.has(participant.id)} meId={profile.id} guestPermissions={snapshot.guestPermissions} sharingLocalAudio={snapshot.sharedAudio?.userId === participant.id} onMuteLocal={() => muteLocal(participant.id)} onPermission={(permission, value) => socketRef.current?.emit("permissions:user", { roomId, userId: participant.id, permissions: { [permission]: value } })} onModerate={(action) => socketRef.current?.emit("moderation", { roomId, userId: participant.id, action })} />)}{isHost && <details className="party-global-permissions"><summary>Guest permissions</summary>{CAPABILITIES.map(({ id, label }) => <label key={id}><input type="checkbox" checked={snapshot.guestPermissions[id]} onChange={(event) => socketRef.current?.emit("permissions:global", { roomId, permissions: { [id]: event.target.checked } })} />{label}</label>)}</details>}</section>
       <section className="party-chat"><div className="party-chat-log">{roomChat.map((message) => <div key={message.id}><strong>{message.name}</strong><p>{message.text}</p></div>)}</div><form onSubmit={sendChat}><input value={chatText} onChange={(event) => setChatText(event.target.value)} placeholder="Message room…" disabled={!can("chat")} /><button disabled={!can("chat")}>Send</button></form></section>

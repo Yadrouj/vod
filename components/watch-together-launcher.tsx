@@ -460,7 +460,7 @@ export function WatchTogetherLauncher({
                   <span><i />{text.social}</span>
                 </div>
 
-                <div className="watch-builder-section">
+                <div className="watch-builder-section watch-builder-title-section">
                   <div className="watch-builder-section-title">
                     <span>{selected ? text.selected : text.searchLabel}</span>
                     {selected && !media && <button type="button" onClick={clearTitle}>{text.change}</button>}
@@ -512,7 +512,7 @@ export function WatchTogetherLauncher({
                   )}
                 </div>
 
-                <div className="watch-builder-section">
+                <div className="watch-builder-section watch-builder-profile-section">
                   <div className="watch-builder-section-title">
                     <span>{text.profile}</span>
                     {savedProfile && !editingProfile && <button type="button" onClick={() => setEditingProfile(true)}>{text.editProfile}</button>}
@@ -531,7 +531,7 @@ export function WatchTogetherLauncher({
                   )}
                 </div>
 
-                <div className="watch-builder-section watch-builder-access">
+                <div className="watch-builder-section watch-builder-access watch-builder-access-section">
                   <div className="watch-builder-section-title"><span>{locale === "fa" ? "دسترسی به اتاق" : "Room access"}</span></div>
                   <div className="watch-builder-access-options" role="radiogroup" aria-label={locale === "fa" ? "نوع دسترسی اتاق" : "Room visibility"}>
                     <button className={visibility === "private" ? "is-active" : ""} type="button" role="radio" aria-checked={visibility === "private"} onClick={() => setVisibility("private")}><LockKeyhole size={16} /><span><strong>{locale === "fa" ? "خصوصی" : "Private"}</strong><small>{locale === "fa" ? "فقط کسانی که لینک دعوت دارند وارد می‌شوند." : "Only people with the invite link can enter."}</small></span></button>
