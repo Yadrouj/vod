@@ -32,6 +32,15 @@ test("second playlist batch exposes only feature-length direct players", () => {
   assert.equal(getOldIranianYouTubeVideos("old-iranian-1345040"), null);
 });
 
+test("third 50-title search batch exposes only one-hour-plus matches", () => {
+  for (const [id, videoId] of [["old-iranian-1359001", "D__QXGQwUok"], ["old-iranian-1358018", "_n6eEyJg5Rs"], ["old-iranian-1356004", "awmGWn_IFw0"]] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.ok((item[0].durationSeconds ?? 0) >= 3600);
+  }
+});
+
 test("community playlists and review channels are retained as direct YouTube sources", () => {
   assert.ok(OLD_IRANIAN_YOUTUBE_COLLECTIONS.some(collection => collection.playlistId === "PLeHzOz4FtTB40XDHDUtatCriTciww6cfQ"));
   assert.deepEqual(OLD_IRANIAN_YOUTUBE_REVIEW_CHANNELS, ["https://www.youtube.com/@Filmrangi/videos", "https://www.youtube.com/@ShoukaFilm", "https://www.youtube.com/@beikiha/videos"]);

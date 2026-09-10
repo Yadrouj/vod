@@ -126,6 +126,44 @@ const BATCH_TWO_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1349031": [publicYouTubeVideo("04QeK1_zKEE", "فیلم ایرانی - یاقوت سه چشم", "Pars Video", 6138)],
 };
 
+// Third review batch: direct YouTube search results matched against the next
+// fifty catalogue entries. Short clips, trailers, and title mismatches stay
+// excluded even when the search result is otherwise public.
+const BATCH_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1359001": [publicYouTubeVideo("D__QXGQwUok", "فیلم پرواز در قفس از حبیب کاوش سال 1357", "Persian Films Archive", 6410)],
+  "old-iranian-1358031": [publicYouTubeVideo("ngY_5pibLZU", "فیلم عبور از مرز شب ۱۳۵۷", "دوبله کلاسیک", 6188)],
+  "old-iranian-1358025": [publicYouTubeVideo("bfisG2HDaLc", "فیلم سایه های بلند باد", "Mori", 6450)],
+  "old-iranian-1358008": [publicYouTubeVideo("mboMHPwHOQ0", "The Crystal Garden Persian Film | Classic Film", "FilmFarsi - فیلمفارسی", 6085)],
+  "old-iranian-1358023": [publicYouTubeVideo("atRJTT8eDQ8", "فیلم ایرانی کامل و بدون سانسور | بر فراز آسمان‌ها", "Cine Persia", 5892)],
+  "old-iranian-1359007": [publicYouTubeVideo("C5WVZ_hIsHA", "Classic Persian Film: A Tear Falls Tonight", "FilmFarsi - فیلمفارسی", 5891)],
+  "old-iranian-1358007": [publicYouTubeVideo("PuralgNAqcc", "فیلم فریاد مجاهد | مهدی معدنیان | ۱۳۵۸", "mehranshargh", 5935)],
+  "old-iranian-1358018": [publicYouTubeVideo("_n6eEyJg5Rs", "Film Tekye Bar Baad - Full Movie | فیلم سینمایی تکیه بر باد", "FilmNama", 4828)],
+  "old-iranian-1358027": [publicYouTubeVideo("H8DsdUla9Pg", "فیلم کامل خیابانی‌ها", "بیکی ها", 6402)],
+  "old-iranian-1357012": [publicYouTubeVideo("IupJrr5TKE4", "نسخه کامل فیلم مرثیه از امیر نادری بدون سانسور", "4uTube", 6122)],
+  "old-iranian-1357021": [publicYouTubeVideo("tQ_ze0qxeGU", "صمد دربدر می شود", "Pars Video", 5526)],
+  "old-iranian-1358010": [publicYouTubeVideo("z0_MzDsecow", "فیلم ساخت ایران از امیر نادری سال 1357", "Persian Films Archive", 5177)],
+  "old-iranian-1359005": [publicYouTubeVideo("RCvGrhUo6CU", "نفس بریده، محصول 1357", "SAEED ARIAEE", 5852)],
+  "old-iranian-1357001": [publicYouTubeVideo("fy9RkfAp4U0", "فیلم قدیمی؛ کوسه جنوب | ۱۳۵۶ | رنگی اچ دی", "Filmrangi - فیلمرنگی", 6483)],
+  "old-iranian-1357015": [publicYouTubeVideo("555UuGAdTbo", "سفر سنگ؛ Journey of the Stone (1978)", "Global Vault TV", 6386)],
+  "old-iranian-1357033": [publicYouTubeVideo("wsg6rOvb_B4", "caravans (1978) فیلم کاروانها دوبله فارسی", "فیلم فارسی", 7160)],
+  "old-iranian-1358002": [publicYouTubeVideo("ikFjsNdiLyo", "فیلم قدیمی؛ به دادم برس رفیق | ۱۳۵۷ | رنگی اچ دی", "Filmrangi - فیلمرنگی", 5871)],
+  "old-iranian-1358009": [publicYouTubeVideo("qBpOAA0LobI", "ایرج قادری در فیلم زیبای لبه تیغ - نسخه کامل", "Shouka Film", 5874)],
+  "old-iranian-1356050": [publicYouTubeVideo("6-rPOdeYN2Q", "فیلم قدیمی؛ تشنه باران | ۱۳۵۷ | رنگی اچ دی", "Filmrangi - فیلمرنگی", 5579)],
+  "old-iranian-1357016": [publicYouTubeVideo("N-u4Uk7vY0c", "خان نایب | بدون حذفیات و با کیفیت", "Shouka Film", 4411)],
+  "old-iranian-1358029": [publicYouTubeVideo("N-zdZ7OXu48", "فیلم قدیمی سرنوشت‌سازان | کیفیت بالا", "بیکی ها", 5874)],
+  "old-iranian-1358030": [publicYouTubeVideo("3ii-cuJEZvg", "فیلم فارسی زخم خنجر رفیق", "FilmFarsi - فیلمفارسی", 5165)],
+  "old-iranian-1357005": [publicYouTubeVideo("jNwte0jdh74", "Dayereh Mina 1978 | فیلم دایره مینا", "maher", 5934)],
+  "old-iranian-1358015": [publicYouTubeVideo("ACvYrNYFD98", "بن بست، پرویز صیاد", "Shahrouz Tavakol", 4535)],
+  "old-iranian-1356035": [publicYouTubeVideo("1a8Tj1d9m8k", "فیلم کلاغ 1356", "Mori", 6839)],
+  "old-iranian-1357013": [publicYouTubeVideo("ax-K_UwzWtE", "فیلم ایرانی بوی گندم | Persian Movie Booye Gandom", "TPM - Top Persian Movies", 5081)],
+  "old-iranian-1356032": [publicYouTubeVideo("d2OTZg7suVQ", "Gozāresh (1977) | The Report | گزارش", "Enes Çinkay", 6567)],
+  "old-iranian-1356024": [publicYouTubeVideo("BawtJ0hYHOs", "شب آفتابی - ۱۳۵۶", "Film O Honar", 6134)],
+  "old-iranian-1356036": [publicYouTubeVideo("u4LXfT7yCNw", "فیلم سینمایی ایرانی یکی خوش‌صدا، یکی خوش‌دست", "Persian Comedy Channel", 5018)],
+  "old-iranian-1356004": [publicYouTubeVideo("awmGWn_IFw0", "فیلم قبل انقلاب فریاد زیر آب", "Shouka Film", 6112)],
+  "old-iranian-1356022": [publicYouTubeVideo("-Lm5qg9x-S4", "فیلم بدون سانسور عشق و خشونت", "Shouka Film", 5110)],
+  "old-iranian-1357011": [publicYouTubeVideo("SoknEzP9eqY", "فیلم قدیمی؛ طوطی | ۱۳۵۶ | رنگی اچ دی", "Filmrangi - فیلمرنگی", 6266)],
+};
+
 const GHADAGHAN: OldIranianFilmMedia = {
   id: GHADAGHAN_ID,
   originalTitle: "Ghadaghan",
@@ -226,7 +264,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
 }
 
 /**
