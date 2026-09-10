@@ -22,7 +22,7 @@ export default async function sitemap({ id }: { id: Promise<string> }): Promise<
 
 export async function sitemapPartCount() {
   const [vod, music] = await Promise.all([loadVodIndex(), loadMusicIndex()]);
-  const staticCount = 8;
+  const staticCount = 10;
   const vodCount = vod.items.filter((item) => item.linksCount > 0 || Boolean(item.posterUrl) || Boolean(item.overview)).length;
   const trackCount = music.tracks.filter((track) => track.sources.some((source) => source.available !== false)).length;
   const artistCount = music.artists.filter((artist) => artist.trackIds.length > 0).length;
@@ -37,6 +37,8 @@ async function allEntries(): Promise<SitemapEntry[]> {
   const entries: SitemapEntry[] = [
     entry("/", vodUpdatedAt, 1, "daily"),
     entry("/browse", vodUpdatedAt, 0.9, "daily"),
+    entry("/kids", vodUpdatedAt, 0.8, "weekly"),
+    entry("/kids/learn", vodUpdatedAt, 0.75, "weekly"),
     entry("/music", musicUpdatedAt, 0.95, "daily"),
     entry("/music/artists", musicUpdatedAt, 0.85, "weekly"),
     entry("/music/playlists", musicUpdatedAt, 0.75, "daily"),

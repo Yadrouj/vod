@@ -24,9 +24,21 @@ export function MusicPlaybackProvider({ children }: { children: ReactNode }) {
   const [activeId, setActiveId] = useState("");
   const [immersive, setImmersive] = useState(false);
   const container = useRef<HTMLDialogElement>(null);
+  const hasRequest = Boolean(request);
   useLayoutEffect(() => {
     const dialog = container.current;
-    if (!dialog || !request) return;
+    return () => {
+      // Removing a media element alone need not stop its playback/network load.
+      dialog?.querySelectorAll("audio,video").forEach(node => {
+        const player = node as HTMLMediaElement;
+        player.pause(); player.removeAttribute("src"); player.load();
+      });
+      if (dialog && "mediaSession" in navigator) navigator.mediaSession.metadata = null;
+    };
+  }, [hasRequest]);
+  useLayoutEffect(() => {
+    const dialog = container.current;
+    if (!dialog || !hasRequest) return;
     if (immersive) {
       if (dialog.open) dialog.close();
       dialog.showModal();
@@ -36,7 +48,7 @@ export function MusicPlaybackProvider({ children }: { children: ReactNode }) {
     }
     if (dialog.matches(":modal")) dialog.close();
     dialog.open = true;
-  }, [immersive, Boolean(request)]);
+  }, [immersive, hasRequest]);
   const play = useCallback((next: MusicPlaybackRequest) => {
     setRequest(previous => ({ ...next, origin: path.current, serial: (previous?.serial ?? 0) + 1 }));
     setExpandedPath(path.current);

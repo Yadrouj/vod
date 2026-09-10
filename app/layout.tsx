@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Suspense } from "react";
 import { AppMessageCenter } from "@/components/app-message-center";
-import { MusicPlaybackProvider } from "@/components/music-playback-provider";
+import { AudienceBoundary } from "@/components/audience-boundary";
 import { NavigationFeedback } from "@/components/navigation-feedback";
 import { MobileAppShell } from "@/components/mobile-app-shell";
 import { StructuredData } from "@/components/structured-data";
@@ -76,11 +76,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Suspense fallback={null}>
           <NavigationFeedback />
         </Suspense>
-        <MusicPlaybackProvider>{children}</MusicPlaybackProvider>
-        <MobileAppShell locale={locale} />
-        <WatchTogetherLauncher locale={locale} />
-        <AppMessageCenter />
-        {hasGoogleAnalytics && googleAnalyticsId ? <GoogleAnalytics measurementId={googleAnalyticsId} /> : null}
+        <AudienceBoundary measurementId={googleAnalyticsId} adultChrome={<>
+          <MobileAppShell locale={locale} />
+          <WatchTogetherLauncher locale={locale} />
+          <AppMessageCenter />
+          {hasGoogleAnalytics ? <GoogleAnalytics measurementId={googleAnalyticsId} /> : null}
+        </>}>{children}</AudienceBoundary>
       </body>
     </html>
   );
