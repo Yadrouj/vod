@@ -1,5 +1,4 @@
 import type { VodCard, VodItem } from "./types";
-import secondPassReviewedSources from "../scripts/data/old-iranian-source-verified-second-pass.json";
 
 export type YouTubeSource = NonNullable<VodItem["youtubeVideos"]>[number];
 
@@ -30,7 +29,7 @@ const GHADAGHAN_VIDEO_ID = "rtjGa3VGK-k";
 const FRATRICIDE_ID = "old-iranian-1359010";
 const FRATRICIDE_VIDEO_ID = "thO9Em-8ihQ";
 
-function publicYouTubeVideo(videoId: string, title: string, channel: string): YouTubeSource {
+function publicYouTubeVideo(videoId: string, title: string, channel: string, durationSeconds?: number): YouTubeSource {
   return {
     videoId,
     title,
@@ -39,28 +38,15 @@ function publicYouTubeVideo(videoId: string, title: string, channel: string): Yo
     thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
     checkedAt: "2026-09-10",
     playbackStatus: "not-tested",
+    durationSeconds,
   };
 }
-
-type ReviewedYouTubeRecord = {
-  id: string;
-  youtubeVideos?: Array<{ videoId?: string; title?: string; channel?: string }>;
-};
-
-// These are exact title/year matches from the second archival review pass.
-// Keep the publisher's public YouTube page as the source; this never becomes
-// a direct-download URL or a copy of the film.
-const BATCH_TWO_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = Object.fromEntries(
-  (secondPassReviewedSources.records as ReviewedYouTubeRecord[]).flatMap((record) => {
-    const video = record.youtubeVideos?.[0];
-    if (!video || !/^[\w-]{11}$/.test(video.videoId ?? "")) return [];
-    return [[record.id, [publicYouTubeVideo(video.videoId!, video.title || "نسخهٔ عمومی فیلم", video.channel || "YouTube")]]];
-  }),
-);
 
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  // User-confirmed full-length replacement. The previous research candidate was a trailer.
+  "old-iranian-1353020": [publicYouTubeVideo("mSzgo6SRnBs", "فیلم صمد آرتیست می‌شود", "YouTube", 3600)],
   "old-iranian-1358034": [publicYouTubeVideo("gyFhRQJ3RtM", "فیلم مفسدین (۱۳۵۹)", "Pedram M")],
   "old-iranian-1332003": [publicYouTubeVideo("BhbP3qnOkww", "فیلم کامل گلنسا در پاریس", "Cinema Rex - سینما رکس")],
   "old-iranian-1332007": [publicYouTubeVideo("CRwDIfsNWD4", "فیلم مشهدی عباد | ۱۳۳۲", "فیلم قدیمی رنگی")],
@@ -209,7 +195,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
 }
 
 /**

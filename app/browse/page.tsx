@@ -12,6 +12,7 @@ import { titleMetadata } from "@/lib/seo";
 import {
   OLD_IRANIAN_YOUTUBE_CHANNEL_URL,
   OLD_IRANIAN_YOUTUBE_COLLECTIONS,
+  OLD_IRANIAN_YOUTUBE_REVIEW_CHANNELS,
 } from "@/lib/old-iranian-youtube-collections";
 import { browseVodIndex, loadOldIranianVodIndex, loadVodIndex, queryString, SECTION_LABELS } from "@/lib/vod-index";
 
@@ -126,6 +127,9 @@ export default async function BrowsePage({ searchParams }: Props) {
                 <p>
                   لینک‌های عمومیِ فهرست‌شده در توضیحات کانال FilmFarsi؛ برای تماشا در YouTube باز می‌شوند و بخشی از
                   فایل‌های میزبانی‌شده در سرونما نیستند.
+                </p>
+                <p>
+                  منابع بررسی: {OLD_IRANIAN_YOUTUBE_REVIEW_CHANNELS.map((channel, index) => <span key={channel}>{index > 0 && " · "}<a href={channel} target="_blank" rel="noreferrer">{channel.includes("Filmrangi") ? "Filmrangi" : channel.includes("Shouka") ? "ShoukaFilm" : "بیکی‌ها"}</a></span>)}
                 </p>
               </div>
               <a href={OLD_IRANIAN_YOUTUBE_CHANNEL_URL} target="_blank" rel="noreferrer">

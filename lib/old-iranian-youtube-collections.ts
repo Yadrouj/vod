@@ -18,6 +18,11 @@ const filmFarsiPlaylist = (playlistId: string) =>
   `https://www.youtube.com/playlist?list=${playlistId}`;
 
 export const OLD_IRANIAN_YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@filmfarsichannel";
+export const OLD_IRANIAN_YOUTUBE_REVIEW_CHANNELS = [
+  "https://www.youtube.com/@Filmrangi/videos",
+  "https://www.youtube.com/@ShoukaFilm",
+  "https://www.youtube.com/@beikiha/videos",
+] as const;
 
 /**
  * Public collection links listed by FilmFarsi in its channel description.
@@ -25,6 +30,41 @@ export const OLD_IRANIAN_YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@filmfar
  * archive. Playlist availability is controlled by YouTube and its publisher.
  */
 export const OLD_IRANIAN_YOUTUBE_COLLECTIONS: OldIranianYouTubeCollection[] = [
+  // Community-supplied playlists. They are discovery sources only: each item
+  // still needs an exact title match and a verified feature-length runtime
+  // before it can be connected to a SarvNema title player.
+  {
+    id: "community-classics-1",
+    title: "مجموعهٔ ارسالی فیلم‌های قدیمی ایرانی ۱",
+    description: "فهرست پخش عمومی ارسالی برای بررسی عنوان و مدت فیلم",
+    playlistId: "PLeHzOz4FtTB7jpbz4bTaPQEiyXxUdyIHV",
+    url: filmFarsiPlaylist("PLeHzOz4FtTB7jpbz4bTaPQEiyXxUdyIHV"),
+    kind: "films",
+  },
+  {
+    id: "community-samad-school",
+    title: "مجموعهٔ صمد و فیلم‌های قدیمی",
+    description: "فهرست پخش عمومی ارسالی؛ شامل «صمد به مدرسه می‌رود»",
+    playlistId: "PLeHzOz4FtTB40XDHDUtatCriTciww6cfQ",
+    url: filmFarsiPlaylist("PLeHzOz4FtTB40XDHDUtatCriTciww6cfQ"),
+    kind: "films",
+  },
+  {
+    id: "community-classics-2",
+    title: "مجموعهٔ ارسالی فیلم‌های قدیمی ایرانی ۲",
+    description: "فهرست پخش عمومی ارسالی برای بررسی عنوان و مدت فیلم",
+    playlistId: "PLeHzOz4FtTB7bwdB_9Uf1IdvpbLkEXHa9",
+    url: filmFarsiPlaylist("PLeHzOz4FtTB7bwdB_9Uf1IdvpbLkEXHa9"),
+    kind: "films",
+  },
+  {
+    id: "community-classics-3",
+    title: "مجموعهٔ ارسالی فیلم‌های قدیمی ایرانی ۳",
+    description: "فهرست پخش عمومی ارسالی برای بررسی عنوان و مدت فیلم",
+    playlistId: "PLeHzOz4FtTB5iVpfyUVU-wHimAXxkCU6n",
+    url: filmFarsiPlaylist("PLeHzOz4FtTB5iVpfyUVU-wHimAXxkCU6n"),
+    kind: "films",
+  },
   {
     id: "naser-malek-motiei",
     title: "بهترین فیلم‌های ناصر ملک‌مطیعی",
