@@ -164,6 +164,39 @@ const BATCH_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1357011": [publicYouTubeVideo("SoknEzP9eqY", "فیلم قدیمی؛ طوطی | ۱۳۵۶ | رنگی اچ دی", "Filmrangi - فیلمرنگی", 6266)],
 };
 
+// Fourth review batch: the next fifty catalogue entries searched by exact
+// Persian title and year. Only one-hour-plus results are active.
+const BATCH_FOUR_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1357024": [publicYouTubeVideo("g7mIMxifxPo", "فیلم کامل ماجراهای علاءالدین و چراغ جادو", "Cinema Rex", 5815)],
+  "old-iranian-1358028": [publicYouTubeVideo("Uw-YEkOVpQ8", "گدای اشراف زاده - ۱۳۵۷", "Film O Honar", 7137)],
+  "old-iranian-1358017": [publicYouTubeVideo("zP37YCOKgkk", "فیلم قدیمی؛ تا آخرین نفس | ۱۳۵۷ | رنگی اچ دی", "Filmrangi - فیلمرنگی", 5113)],
+  "old-iranian-1358011": [publicYouTubeVideo("wveiQNQtL6w", "فیلم قدیمی حق و ناحق | با بازی بهمن مفید", "بیکی ها", 7229)],
+  "old-iranian-1356034": [publicYouTubeVideo("zKpbeavWUro", "فیلم خاک سر به مهر | The Sealed Soil (1977)", "Reza Rosebud", 5456)],
+  "old-iranian-1356012": [publicYouTubeVideo("9nkanvU5hQI", "همراهان | فیلم کامل بدون سانسور | Hamrahan 1977", "Global Vault TV", 5886)],
+  "old-iranian-1356006": [publicYouTubeVideo("4pU_USar-MA", "فیلم قدیمی؛ واسطه‌ها | ۱۳۵۶ | رنگی مرمت شده", "Filmrangi - فیلمرنگی", 6394)],
+  "old-iranian-1356020": [publicYouTubeVideo("9i4Ikj9tiVQ", "فیلم کامل هزار بار مردن", "FilmFarsi - فیلمفارسی", 5726)],
+  "old-iranian-1356039": [publicYouTubeVideo("m8MVr29ve0M", "Full Movie of Johnny and the Chubby One", "FilmFarsi - فیلمفارسی", 5404)],
+  "old-iranian-1356013": [publicYouTubeVideo("EKzN1ldZ1x0", "فیلم پشت و خنجر از ایرج قادری سال 1356", "Persian Films Archive", 6347)],
+  "old-iranian-1358001": [publicYouTubeVideo("StwqjNurh7I", "فیلم قدیمی؛ حکم تیر | ۱۳۵۶ | رنگی اچ دی", "Filmrangi - فیلمرنگی", 6421)],
+  "old-iranian-1357003": [publicYouTubeVideo("ASaNek7_eO0", "Persian Film: The Lor Goes to the City", "FilmFarsi - فیلمفارسی", 4835)],
+  "old-iranian-1357009": [publicYouTubeVideo("cZnUll5UHwk", "منوچهر وثوق در فیلم سه دلباخته", "Shouka Film", 4872)],
+  "old-iranian-1356026": [publicYouTubeVideo("gbSlyH1cw7s", "فیلم حرمت رفیق از عباس کسایی سال 1356", "Persian Films Archive", 6740)],
+  "old-iranian-1357002": [publicYouTubeVideo("Yy5ltFfjE6g", "فیلم کامل سرسپرده", "Cine Persia", 5242)],
+  "old-iranian-1356028": [publicYouTubeVideo("5l4S6meil2o", "فیلم قدیمی؛ دو کله شق | ۱۳۵۶ | رنگی شده", "Filmrangi - فیلمرنگی", 6082)],
+  "old-iranian-1356021": [publicYouTubeVideo("ZfyK78M2_s0", "صبح خاکستر | Sobh-e Khakestar (1977)", "Global Vault TV", 5696)],
+  "old-iranian-1356010": [publicYouTubeVideo("1pd8t9sDdOQ", "Charlotte Comes to the Marketplace Persian Movie", "FilmFarsi - فیلمفارسی", 4781)],
+  "old-iranian-1356007": [publicYouTubeVideo("_GnsIRylVTk", "فیلم قدیمی؛ رفاقت | ۱۳۵۶ | رنگی اچ دی", "Filmrangi - فیلمرنگی", 5889)],
+  "old-iranian-1356025": [publicYouTubeVideo("DvjnOuWgm6I", "Persian Movie: Nothing New in Town", "FilmFarsi - فیلمفارسی", 5495)],
+  "old-iranian-1356014": [publicYouTubeVideo("Pn9poG41tv0", "فیلم قدیمی؛ نان و نمک | ۱۳۵۶ | رنگی اچ دی", "Filmrangi - فیلمرنگی", 5681)],
+  "old-iranian-1356040": [publicYouTubeVideo("W4ThrtMPev8", "فیلم قدیمی؛ فری دست قشنگ | ۱۳۵۶ | رنگی اچ دی", "Filmrangi - فیلمرنگی", 6086)],
+  "old-iranian-1356003": [publicYouTubeVideo("zT-9NwG851M", "Uncensored Persian Film: Classmate", "FilmFarsi - فیلمفارسی", 5979)],
+  "old-iranian-1356005": [publicYouTubeVideo("Qi8wioIjz_I", "سکوت بزرگ | بدون سانسور و بدون حذفیات", "Shouka Film", 5820)],
+  "old-iranian-1356008": [publicYouTubeVideo("crtpjRffDEo", "فیلم قدیمی؛ تازه عروس | ۱۳۵۶ | رنگی اچ دی", "Filmrangi - فیلمرنگی", 5569)],
+  "old-iranian-1356011": [publicYouTubeVideo("QxVjqpr1xJ0", "فیلم کامل ایرانی خدا قوت | بدون سانسور", "Persian Comedy Channel", 6870)],
+  "old-iranian-1356015": [publicYouTubeVideo("iHhMmTsDWYk", "فیلم قدیمی - فیلم کامل سرباز", "مردگان محترم", 6058)],
+  "old-iranian-1356017": [publicYouTubeVideo("jQwZahY2BUo", "خاتون | فیلم کامل ایرانی | Khatoun 1977", "Global Vault TV", 7570)],
+};
+
 const GHADAGHAN: OldIranianFilmMedia = {
   id: GHADAGHAN_ID,
   originalTitle: "Ghadaghan",
@@ -264,7 +297,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
 }
 
 /**
