@@ -266,6 +266,35 @@ const BATCH_EIGHT_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1356055": [publicYouTubeVideo("5DTCzqSTYOs", "Golgo 13 | فیلم گلگو سیزده", "Midnight Pulp", 6241)],
 };
 
+// Ninth review batch: exact title/year matches found in public YouTube
+// archives. Every active result was checked as a long-form upload (at least
+// one hour) before being added to the catalogue.
+const BATCH_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1330006": [publicYouTubeVideo("9zKdKc6wZ4w", "فیلم ایرانی قدیمی خوابهای طلائی | ۱۳۳۰ | نسخه کامل", "Pars Film Official", 4317)],
+  "old-iranian-1335007": [publicYouTubeVideo("KPIP0FRdKjE", "نسخه کامل فیلم قدیمی خورشید می درخشد | ۱۳۳۵", "هزار و یک شب", 6624)],
+  "old-iranian-1336005": [publicYouTubeVideo("FOJFyT7hFOQ", "فیلم قدیمی بلبل مزرعه | ۱۳۳۶ | نسخه کامل", "Pars Films", 6342)],
+  "old-iranian-1337003": [publicYouTubeVideo("uzc0NM3C3Qw", "فیلم قدیمی روزنه امید | ۱۳۳۸ | نسخه ترمیم شده", "Pars Film Official", 3805)],
+  "old-iranian-1338008": [publicYouTubeVideo("aV3aPF7-al0", "فیلم قدیمی بی‌ستاره‌ها | ۱۳۳۸ | رنگی اچ‌دی", "Pars Film Official", 4740)],
+  "old-iranian-1340002": [publicYouTubeVideo("xQzs4E1Xw-I", "فیلم قدیمی دختر همسایه | نسخه کامل", "Pars Films", 4467)],
+  "old-iranian-1340004": [publicYouTubeVideo("kHvX-_TeE4k", "فیلم فارسی آتشپاره تهران | نسخه کامل", "Pars Films", 4519)],
+  "old-iranian-1340008": [publicYouTubeVideo("Ax1S9nAl6lE", "فیلم قدیمی دام عشق | نسخه کامل", "Cinema Rex", 6315)],
+  "old-iranian-1340013": [publicYouTubeVideo("cq5Bb3e0PNQ", "فیلم فارسی انسان پرنده | نسخه کامل", "Pars Films", 5041)],
+  "old-iranian-1341004": [publicYouTubeVideo("8MwpYpPU3aA", "فیلم قدیمی طلای سفید | ۱۳۴۱ | نسخه کامل", "Pars Film Official", 5433)],
+  "old-iranian-1341005": [publicYouTubeVideo("BGeIAzHDiN8", "فیلم فارسی آخرین گذرگاه | نسخه کامل", "Pars Films", 5168)],
+  "old-iranian-1341011": [publicYouTubeVideo("2YcjyqB37oA", "فیلم قدیمی گل گمشده | ۱۳۴۱ | رنگی اچ‌دی", "Pars Film Official", 5467)],
+  "old-iranian-1341014": [publicYouTubeVideo("obOMr6P-bMs", "فیلم ساحل دور نیست", "فیلم قدیمی", 4482)],
+  "old-iranian-1341025": [publicYouTubeVideo("P_z7S3lM0Rg", "فیلم قدیمی اهریمن زیبا | ۱۳۴۱ | نسخه کامل", "Pars Films", 5831)],
+  "old-iranian-1342004": [publicYouTubeVideo("Dq_w5fiKwx0", "فیلم آراس خان", "فیلم قدیمی", 6027)],
+  "old-iranian-1342010": [publicYouTubeVideo("DzuY_YcF5Yg", "فیلم کامل جاده مرگ | فیلم قدیمی", "فیلم قدیمی", 4688)],
+  "old-iranian-1342014": [publicYouTubeVideo("tsx28uYYgU0", "فیلم فارسی مرد میدان | نسخه کامل", "Pars Films", 4740)],
+  "old-iranian-1343007": [publicYouTubeVideo("MnqBNGrY8qs", "نسخه کامل فیلم قدیمی ترانه‌های روستایی | ۱۳۴۳", "هزار و یک شب", 7479)],
+  "old-iranian-1343010": [publicYouTubeVideo("qnN4GR1b2YE", "فیلم قدیمی دزد شهر | ۱۳۴۳", "بیکی ها", 8923)],
+  "old-iranian-1343017": [publicYouTubeVideo("_2rPJyElYCk", "فیلم قدیمی سه تفنگدار | ۱۳۴۳ | نسخه کامل", "Pars Film Official", 5207)],
+  "old-iranian-1343025": [publicYouTubeVideo("Nw3EauvlLyc", "فیلم شکوفه‌های امید | فیلم قدیمی", "فیلم قدیمی", 4431)],
+  "old-iranian-1343027": [publicYouTubeVideo("I4z3Fv-j1to", "فیلم قدیمی دهکده طلایی | ۱۳۴۴ | نسخه کامل", "Cinema Rex", 7301)],
+  "old-iranian-1343035": [publicYouTubeVideo("iZcnggIkNJg", "فیلم قدیمی گناه من چیست | ۱۳۴۳ | نسخه کامل", "Pars Film Official", 5628)],
+};
+
 const GHADAGHAN: OldIranianFilmMedia = {
   id: GHADAGHAN_ID,
   originalTitle: "Ghadaghan",
@@ -366,7 +395,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FIVE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SIX_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SEVEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_EIGHT_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FIVE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SIX_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SEVEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_EIGHT_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_NINE_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
 }
 
 /**
