@@ -197,6 +197,31 @@ const BATCH_FOUR_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1356017": [publicYouTubeVideo("jQwZahY2BUo", "خاتون | فیلم کامل ایرانی | Khatoun 1977", "Global Vault TV", 7570)],
 };
 
+// Fifth review batch: long-form matches from the next fifty archive titles.
+const BATCH_FIVE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1357004": [publicYouTubeVideo("eTqgoCOgpqs", "The full movie of Mr. Etemad's problem", "FilmFarsi - فیلمفارسی", 6242)],
+  "old-iranian-1356018": [publicYouTubeVideo("9mGfUef3Zvk", "فیلم سینمایی ایرانی جای امن", "TPM - Top Persian Movies", 6410)],
+  "old-iranian-1356019": [publicYouTubeVideo("i6iKSL7piSc", "جمعه | فیلم قدیمی ایرانی | Jomeh 1977", "Global Vault TV", 5684)],
+  "old-iranian-1356027": [publicYouTubeVideo("P4FE72Ix0Ds", "Uncensored Persian Film: The Nomad", "FilmFarsi - فیلمفارسی", 5606)],
+  "old-iranian-1356041": [publicYouTubeVideo("n2h0j0KB0OU", "فیلم قدیمی؛ گلهای کاغذی | ۱۳۵۶ | رنگی شده", "Filmrangi - فیلمرنگی", 6500)],
+  "old-iranian-1356042": [publicYouTubeVideo("Y7XQ7t2KsMY", "فریاد عشق | Faryad-e Eshgh 1977", "Global Vault TV", 5314)],
+  "old-iranian-1356043": [publicYouTubeVideo("zvl8rH6ih_Q", "فیلم قدیمی؛ اشک رقاصه | ۱۳۵۶ | رنگی اچ دی", "Filmrangi - فیلمرنگی", 6206)],
+  "old-iranian-1356046": [publicYouTubeVideo("KRDyRHLL06c", "فیلم قدیمی؛ شب زخمی | ۱۳۵۶ | رنگی فول اچ دی", "Filmrangi - فیلمرنگی", 6523)],
+  "old-iranian-1356047": [publicYouTubeVideo("48DCtz7cwpo", "فیلم کامل غربتی ها", "بیکی ها", 6681)],
+  "old-iranian-1356048": [publicYouTubeVideo("OSZRrG97W3U", "فیلم قدیمی؛ فقط آقا مهدی می تونه | ۱۳۵۶ | رنگی اچ دی", "Filmrangi - فیلمرنگی", 6272)],
+  "old-iranian-1357034": [publicYouTubeVideo("L1nHUhtpOPQ", "قول مرد - ۱۳۵۶", "Film O Honar", 6163)],
+  "old-iranian-1355046": [publicYouTubeVideo("5pVWIkQoKxM", "CHESS OF THE WIND | شطرنج باد", "Contracultura Internacional", 6301)],
+  "old-iranian-1355056": [publicYouTubeVideo("TVMHN2C2r-0", "علفهای هرز - بدون سانسور و رنگی", "Shouka Film", 6375)],
+  "old-iranian-1355007": [publicYouTubeVideo("4ZzLUp8os6w", "فیلم ایرانی کامل و بدون سانسور | سرایدار", "Cine Persia", 6115)],
+  "old-iranian-1355027": [publicYouTubeVideo("vhCdZsVchL8", "Uncensored Persian Film: The Loser", "FilmFarsi - فیلمفارسی", 6634)],
+  "old-iranian-1355040": [publicYouTubeVideo("KH5yOrqMLyY", "فیلم کامل جدال", "Cinema Rex", 6023)],
+  "old-iranian-1356001": [publicYouTubeVideo("C_v_DAAWOro", "فیلم کامل ایرانی یک اصفهانی در سرزمین هیتلر", "Persian Comedy Channel", 6455)],
+  "old-iranian-1355009": [publicYouTubeVideo("xwE9w6pwdbs", "فیلم قدیمی؛ عنتر و منتر | ۱۳۵۵ | رنگی شده", "Filmrangi - فیلمرنگی", 4981)],
+  "old-iranian-1354058": [publicYouTubeVideo("6AujvIp5c9c", "فیلم قدیمی؛ رفیق | ۱۳۵۴ | رنگی مرمت شده", "Filmrangi - فیلمرنگی", 5398)],
+  "old-iranian-1355038": [publicYouTubeVideo("mctoSYCazRE", "فیلم ایرانی - شوهر جونم عاشق شده", "Pars Video", 6149)],
+  "old-iranian-1355030": [publicYouTubeVideo("twTqrfPA4Ok", "فیلم کامل مادر جونم عاشق شده", "بیکی ها", 4680)],
+};
+
 const GHADAGHAN: OldIranianFilmMedia = {
   id: GHADAGHAN_ID,
   originalTitle: "Ghadaghan",
@@ -297,7 +322,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FIVE_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
 }
 
 /**
