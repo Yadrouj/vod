@@ -26,6 +26,8 @@ export type OldIranianFilmMedia = {
 
 const GHADAGHAN_ID = "old-iranian-1359002";
 const GHADAGHAN_VIDEO_ID = "rtjGa3VGK-k";
+const FRATRICIDE_ID = "old-iranian-1359010";
+const FRATRICIDE_VIDEO_ID = "thO9Em-8ihQ";
 
 const GHADAGHAN: OldIranianFilmMedia = {
   id: GHADAGHAN_ID,
@@ -80,8 +82,45 @@ const GHADAGHAN: OldIranianFilmMedia = {
   ],
 };
 
+// Exact title/year match on the publisher's verified FilmFarsi YouTube channel.
+// Keep this as an attributed YouTube reference rather than copying a movie file.
+const FRATRICIDE: OldIranianFilmMedia = {
+  id: FRATRICIDE_ID,
+  originalTitle: "Fratricide",
+  overview: "دو خانواده به‌خاطر کینه‌ای قدیمی درگیرند و رابطهٔ یک دختر و پسر از این دو خانواده، ماجرا را به نقطهٔ بحرانی می‌رساند.",
+  year: 1980,
+  persianYear: 1359,
+  runtimeMinutes: 89,
+  posterUrl: `https://i.ytimg.com/vi/${FRATRICIDE_VIDEO_ID}/hqdefault.jpg`,
+  backdropUrl: `https://i.ytimg.com/vi/${FRATRICIDE_VIDEO_ID}/maxresdefault.jpg`,
+  metadataUrl: "https://cinema.iranicaonline.org/film/%D8%A8%D8%B1%D8%A7%D8%AF%D8%B1%DA%A9%D8%B4%DB%8C/",
+  metadataLabel: "Cinema Iranica",
+  genres: ["Iranian Cinema", "Classic", "Drama"],
+  persianGenres: ["فیلم قدیمی ایرانی", "درام"],
+  countries: ["Iran"],
+  persianCountries: ["ایران"],
+  languages: ["Persian"],
+  persianLanguages: ["فارسی"],
+  credits: [
+    { category: "Director", name_text: "ایرج قادری" },
+    { category: "Writer", name_text: "سعید مطلبی" },
+  ],
+  images: [{ url: `https://i.ytimg.com/vi/${FRATRICIDE_VIDEO_ID}/maxresdefault.jpg`, width: 1280, height: 720, caption: "برادرکشی؛ فیلم قدیمی ایرانی" }],
+  youtubeVideos: [{
+    videoId: FRATRICIDE_VIDEO_ID,
+    title: "فیلم فارسی برادرکشی | فیلم قدیمی",
+    channel: "FilmFarsi - فیلمفارسی",
+    sourceUrl: `https://www.youtube.com/watch?v=${FRATRICIDE_VIDEO_ID}`,
+    thumbnailUrl: `https://i.ytimg.com/vi/${FRATRICIDE_VIDEO_ID}/hqdefault.jpg`,
+    evidenceUrl: `https://www.youtube.com/@filmfarsichannel`,
+    checkedAt: "2026-09-10",
+    playbackStatus: "not-tested",
+  }],
+};
+
 const MEDIA_BY_ID: Record<string, OldIranianFilmMedia> = {
   [GHADAGHAN_ID]: GHADAGHAN,
+  [FRATRICIDE_ID]: FRATRICIDE,
 };
 
 export function getOldIranianFilmMedia(id: string | null | undefined) {
