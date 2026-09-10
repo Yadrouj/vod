@@ -56,6 +56,8 @@ export default async function DetailPage({ params }: Props) {
   const title = fa ? item.persianTitle || item.title : item.title;
   const overview = fa ? item.persianOverview || item.overview : item.overview;
   const genres = fa && item.persianGenres?.length ? item.persianGenres : item.genres ?? [];
+  const isOldIranianArchive = item.source === "old-iranian-archive";
+  const youtubeSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${item.persianTitle || item.title} ${item.year ?? ""} فیلم کامل`)}`;
   const playHint = publisher ? (fa ? "پخش در پلیر رسمی ناشر" : "Official publisher player") : fa ? isSeries ? "انتخاب فصل، قسمت و کیفیت" : "انتخاب کیفیت و شروع تماشا" : isSeries ? "Choose season, episode & quality" : "Choose quality & start watching";
 
   return (
@@ -107,12 +109,14 @@ export default async function DetailPage({ params }: Props) {
                 <Link href="#downloads" className={styles.secondary}><ArrowDown size={18} aria-hidden="true" />{fa ? isSeries ? "فصل‌ها و دانلودها" : "کیفیت‌ها و دانلود" : isSeries ? "Seasons & downloads" : "Quality & downloads"}</Link>
                 <WatchTogetherLauncher locale={locale} placement="inline" preset={canPlay ? { itemId: item.imdbCode, title, posterUrl: posterUrl ?? null } : undefined} />
                 {best && <DownloadButton href={best.url} title={title} itemId={item.imdbCode} posterUrl={posterUrl} label={fa ? `بهترین فایل · ${best.quality || "دانلود"}` : `Best file · ${best.quality || "Download"}`} />}
+                {!canPlay && isOldIranianArchive && <a href={youtubeSearchUrl} target="_blank" rel="noreferrer" className={styles.secondary}><Play size={18} aria-hidden="true" />{fa ? "جست‌وجوی نسخه در YouTube" : "Search YouTube"}</a>}
               </div>
-              {!canPlay && <p className={styles.availability}>{fa ? "نسخه قابل پخش آنلاین هنوز در آرشیو نیست؛ لینک‌های موجود را در بخش دانلود بررسی کنید." : "No browser-playable release is available yet. Check the available download links below."}</p>}
+              {!canPlay && <p className={styles.availability}>{isOldIranianArchive && fa ? "این عنوان در فهرست آرشیوی ثبت شده، اما لینک پخشِ تأییدشده ندارد. لینک منبع و جست‌وجوی YouTube پایین در دسترس‌اند؛ هنگام پیدا شدن نسخهٔ عمومیِ قابل‌پخش، همان‌جا به پلیر اضافه می‌شود." : fa ? "نسخه قابل پخش آنلاین هنوز در آرشیو نیست؛ لینک‌های موجود را در بخش دانلود بررسی کنید." : "No browser-playable release is available yet. Check the available download links below."}</p>}
               {downloads.some(isDonyayeSerial) && <details className="source-region-notice"><summary>{fa ? "راهنمای VPN و محدودیت منبع" : "VPN & source availability"}</summary><p>{regionalPlaybackHint(fa)}</p></details>}
               <div className={styles.externalLinks}>
                 <a href={subzoneSearchUrl(item.title, item.year)} target="_blank" rel="noreferrer">{t.title.subzoneSubtitles}<ArrowUpLeft size={14} aria-hidden="true" /></a>
                 {item.sourcePageUrl && <a href={item.sourcePageUrl} target="_blank" rel="noreferrer">{fa ? "صفحه منبع" : "Source page"}<ArrowUpLeft size={14} aria-hidden="true" /></a>}
+                {!canPlay && isOldIranianArchive && <a href={youtubeSearchUrl} target="_blank" rel="noreferrer">{fa ? "جست‌وجوی YouTube" : "Search YouTube"}<ArrowUpLeft size={14} aria-hidden="true" /></a>}
                 {item.imdbUrl && <a href={item.imdbUrl} target="_blank" rel="noreferrer">IMDb<ArrowUpLeft size={14} aria-hidden="true" /></a>}
               </div>
             </div>
