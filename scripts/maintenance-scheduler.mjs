@@ -3,7 +3,7 @@ import { mkdir, open, readFile, rename, stat, unlink, writeFile } from "node:fs/
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { assessCapacity, DAILY_JOBS, localClock, windowDeadline } from "./maintenance-policy.mjs";
+import { assessCapacity, DAILY_JOBS, DEFAULT_IDLE_END_HOUR, DEFAULT_IDLE_START_HOUR, localClock, windowDeadline } from "./maintenance-policy.mjs";
 
 const ROOT = process.cwd();
 const DATA = path.join(ROOT, "data");
@@ -15,8 +15,8 @@ const FORCE = args.has("--force");
 const FULL = args.has("--full");
 const number = (name, fallback) => Number.isFinite(Number(process.env[name])) ? Number(process.env[name]) : fallback;
 const ZONE = process.env.MAINTENANCE_TIME_ZONE || "Asia/Tehran";
-const START = Math.min(23, Math.max(0, number("MAINTENANCE_IDLE_START_HOUR", 2)));
-const END = Math.min(23, Math.max(0, number("MAINTENANCE_IDLE_END_HOUR", 5)));
+const START = Math.min(23, Math.max(0, number("MAINTENANCE_IDLE_START_HOUR", DEFAULT_IDLE_START_HOUR)));
+const END = Math.min(23, Math.max(0, number("MAINTENANCE_IDLE_END_HOUR", DEFAULT_IDLE_END_HOUR)));
 const POLL = Math.max(60_000, number("MAINTENANCE_POLL_MS", 900_000));
 let stopping = false;
 let activeStop = null;
@@ -25,7 +25,8 @@ for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => { stopping 
 async function main() {
   if (args.has("--check")) {
     const local = localClock(new Date(), ZONE);
-    console.log(JSON.stringify({ timeZone: ZONE, startHour: START, endHourExclusive: END, local, eligibleNow: windowDeadline(new Date(), ZONE, START, END) > Date.now(), capacity: await checkCapacity(), jobs: DAILY_JOBS }, null, 2));
+    const eligibleNow = windowDeadline(new Date(), ZONE, START, END) > Date.now();
+    console.log(JSON.stringify({ timeZone: ZONE, startHour: START, endHourExclusive: END, local, eligibleNow, trigger: { name: "daily-scraper-check", schedule: "daily", active: eligibleNow }, capacity: await checkCapacity(), jobs: DAILY_JOBS }, null, 2));
     return;
   }
   do {
@@ -44,14 +45,25 @@ async function main() {
 async function runCycle() {
   const local = localClock(new Date(), ZONE);
   const deadline = FORCE ? Date.now() + 3 * 60 * 60_000 : windowDeadline(new Date(), ZONE, START, END);
+  const trigger = {
+    id: `${local.day}@${String(START).padStart(2, "0")}-${String(END).padStart(2, "0")}`,
+    name: "daily-scraper-check",
+    schedule: "daily",
+    source: args.has("--daemon") ? "maintenance-daemon" : "scheduled-worker",
+  };
   if (deadline <= Date.now()) {
-    await atomic(STATUS, { state: "waiting", local, reason: "Outside 02:00–05:00 maintenance window", checkedAt: new Date().toISOString() });
+    await atomic(STATUS, { state: "waiting", local, trigger: { ...trigger, active: false }, reason: "Outside 03:00–07:00 maintenance window", checkedAt: new Date().toISOString() });
     return;
   }
   const lock = await acquireLock();
   if (!lock) return;
   try {
     const previous = await readJson(STATE, { days: {} });
+    const activatedAt = previous.lastDailyTrigger?.id === trigger.id ? previous.lastDailyTrigger.activatedAt : new Date().toISOString();
+    const activeTrigger = { ...trigger, active: true, activatedAt, checkedAt: new Date().toISOString() };
+    if (previous.lastDailyTrigger?.id !== trigger.id) {
+      await atomic(STATE, { ...previous, version: 3, lastDailyTrigger: activeTrigger, updatedAt: new Date().toISOString() });
+    }
     const days = previous.days ?? {};
     const completed = days[local.day] ?? {};
     const steps = [];
@@ -60,13 +72,13 @@ async function runCycle() {
       if (!FORCE && completed[job.id]) continue;
       const capacity = await checkCapacity();
       if (!FORCE && !capacity.idle) {
-        await atomic(STATUS, { state: "waiting", local, steps, capacity, checkedAt: new Date().toISOString() });
+        await atomic(STATUS, { state: "waiting", local, trigger: activeTrigger, steps, capacity, checkedAt: new Date().toISOString() });
         return;
       }
       if (stopping || Date.now() >= deadline) break;
       const entry = { id: job.id, script: job.script, state: "running", startedAt: new Date().toISOString() };
       steps.push(entry);
-      await atomic(STATUS, { state: "running", local, steps, deadline: new Date(deadline).toISOString(), checkedAt: new Date().toISOString() });
+      await atomic(STATUS, { state: "running", local, trigger: activeTrigger, steps, deadline: new Date(deadline).toISOString(), checkedAt: new Date().toISOString() });
       try {
         const jobDeadline = Math.min(deadline, Date.now() + job.minutes * 60_000);
         await runJob(job, jobDeadline, local.day);
@@ -74,7 +86,7 @@ async function runCycle() {
         completed[job.id] = new Date().toISOString();
         days[local.day] = completed;
         const recentDays = Object.fromEntries(Object.entries(days).sort(([a], [b]) => b.localeCompare(a)).slice(0, 14));
-        await atomic(STATE, { version: 2, days: recentDays, updatedAt: new Date().toISOString() });
+        await atomic(STATE, { version: 3, lastDailyTrigger: activeTrigger, days: recentDays, updatedAt: new Date().toISOString() });
       } catch (error) {
         entry.state = "failed";
         entry.error = error.message;
@@ -84,7 +96,7 @@ async function runCycle() {
       entry.finishedAt = new Date().toISOString();
     }
     const complete = DAILY_JOBS.every(job => completed[job.id]);
-    await atomic(STATUS, { state: complete ? "completed" : "partial", local, steps, completedJobs: Object.keys(completed), checkedAt: new Date().toISOString() });
+    await atomic(STATUS, { state: complete ? "completed" : "partial", local, trigger: activeTrigger, steps, completedJobs: Object.keys(completed), checkedAt: new Date().toISOString() });
     if (!complete && !args.has("--daemon")) process.exitCode = 1;
   } finally {
     await lock.close();

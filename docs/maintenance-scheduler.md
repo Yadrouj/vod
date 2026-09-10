@@ -4,11 +4,12 @@
 
 پس از یک بار انتشار این نسخه، سرویس `maintenance` در هر دو فایل Compose همراه سایت بالا می‌آید؛ برای خبر یا فیلم و آهنگ جدید نیازی به build، restart یا deploy روزانه نیست.
 
-- بازه دقیق: **۰۲:۰۰ تا قبل از ۰۵:۰۰ به وقت Asia/Tehran**، مستقل از ساعت محلی میزبان.
+- بازه دقیق: **۰۳:۰۰ تا قبل از ۰۷:۰۰ به وقت Asia/Tehran**، مستقل از ساعت محلی میزبان.
 - هر ۱۵ دقیقه بررسی؛ فقط وقتی سایت آماده و کم‌ترافیک است.
+- هر روز اولین بررسی داخل این بازه یک تریگر با نام `daily-scraper-check` فعال می‌کند؛ نتیجهٔ تریگر در `data/maintenance-scheduler-state.json` و `data/maintenance-scheduler-status.json` ثبت می‌شود.
 - کارها پشت‌سرهم، نه موازی؛ محدودیت CPU برابر ۰٫۷۵ هسته و حافظهٔ worker برابر ۳GB.
 - Health Checkها جزو ترافیک نیستند؛ فقط اتاق دارای کاربر متصل شمرده می‌شود.
-- هر کار بودجه زمانی دارد. در پایان بودجه/ساعت ۵، درخت پردازش متوقف می‌شود؛ نتیجه «partial» است، نه موفقیت ساختگی.
+- هر کار بودجه زمانی دارد. در پایان بودجه/ساعت ۷، درخت پردازش متوقف می‌شود؛ نتیجه «partial» است، نه موفقیت ساختگی.
 - موفقیت هر کار و مراحل موسیقی/فیلم برای همان روز checkpoint می‌شود. خرابی یک منبع مانع منابع مستقل بعدی نیست. مراحل ساخت index در retry دوباره اجرا می‌شوند.
 - اگر همه شب سایت شلوغ باشد، هیچ تضمینی برای انجام همه کارها نیست؛ وضعیت انتظار/ناتمام ثبت می‌شود و در پنجرهٔ بعدی تلاش می‌شود.
 
@@ -52,7 +53,7 @@ docker compose -f docker-compose.prod.yml stop maintenance
 sudo crontab -e
 ```
 
-خط [sarvnema-maintenance.cron](../infra/cron/sarvnema-maintenance.cron) را به crontab روت اضافه کنید. مسیر پروژه را بررسی کنید. cron هر ۱۵ دقیقه worker یک‌باره را با `flock` اجرا می‌کند؛ کنترل ساعت تهران و توقف در ساعت ۵ داخل worker انجام می‌شود. اجرای دوبارهٔ `compose up` daemon را دوباره فعال می‌کند؛ در روش cron باید آن را دوباره متوقف کنید. فایل log میزبان را با logrotate محدود کنید.
+خط [sarvnema-maintenance.cron](../infra/cron/sarvnema-maintenance.cron) را به crontab روت اضافه کنید. مسیر پروژه را بررسی کنید. cron هر ۱۵ دقیقه worker یک‌باره را با `flock` اجرا می‌کند؛ تریگر روزانه، کنترل ساعت تهران و توقف در ساعت ۷ داخل worker انجام می‌شود. اجرای دوبارهٔ `compose up` daemon را دوباره فعال می‌کند؛ در روش cron باید آن را دوباره متوقف کنید. فایل log میزبان را با logrotate محدود کنید.
 
 این تغییرات تنظیمات انتشار را آماده می‌کنند؛ نصب cron یا بالا آمدن worker روی سرور واقعی باید همان‌جا بررسی شود.
 
@@ -70,8 +71,8 @@ sudo crontab -e
 
 ```dotenv
 MAINTENANCE_TIME_ZONE=Asia/Tehran
-MAINTENANCE_IDLE_START_HOUR=2
-MAINTENANCE_IDLE_END_HOUR=5
+MAINTENANCE_IDLE_START_HOUR=3
+MAINTENANCE_IDLE_END_HOUR=7
 MAINTENANCE_POLL_MS=900000
 MAINTENANCE_MAX_RECENT_REQUESTS=12
 MAINTENANCE_MAX_ACTIVE_ROOMS=1

@@ -8,13 +8,13 @@ import { refreshStep } from "../refresh-step.mjs";
 import { runJob } from "../maintenance-scheduler.mjs";
 const fixture = path.resolve("scripts/tests/fixtures/maintenance-child.mjs");
 
-test("Tehran window includes 02:00 and excludes exactly 05:00", () => {
-  assert.equal(inIdleWindow(1), false); assert.equal(inIdleWindow(2), true);
-  assert.equal(inIdleWindow(4), true); assert.equal(inIdleWindow(5), false);
-  const date = new Date("2026-09-07T22:30:00Z");
-  assert.equal(localClock(date).hour, 2);
-  assert.equal(new Date(windowDeadline(date)).toISOString(), "2026-09-08T01:30:00.000Z");
-  const end = new Date("2026-09-08T01:30:00Z");
+test("Tehran window includes 03:00 and excludes exactly 07:00", () => {
+  assert.equal(inIdleWindow(2), false); assert.equal(inIdleWindow(3), true);
+  assert.equal(inIdleWindow(6), true); assert.equal(inIdleWindow(7), false);
+  const date = new Date("2026-09-07T23:30:00Z");
+  assert.equal(localClock(date).hour, 3);
+  assert.equal(new Date(windowDeadline(date)).toISOString(), "2026-09-08T03:30:00.000Z");
+  const end = new Date("2026-09-08T03:30:00Z");
   assert.equal(windowDeadline(end), end.getTime());
   assert.equal(inIdleWindow(0, 22, 3), true);
   assert.equal(inIdleWindow(3, 22, 3), false);

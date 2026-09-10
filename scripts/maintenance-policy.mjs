@@ -3,12 +3,15 @@ export function localClock(date = new Date(), timeZone = "Asia/Tehran") {
   return { day: `${parts.year}-${parts.month}-${parts.day}`, hour: Number(parts.hour), minute: Number(parts.minute), second: Number(parts.second), timeZone };
 }
 
-// Half-open interval: 02:00 <= time < 05:00, never 05:59.
-export function inIdleWindow(hour, start = 2, end = 5) {
+export const DEFAULT_IDLE_START_HOUR = 3;
+export const DEFAULT_IDLE_END_HOUR = 7;
+
+// Half-open interval: 03:00 <= time < 07:00, never 07:00 or later.
+export function inIdleWindow(hour, start = DEFAULT_IDLE_START_HOUR, end = DEFAULT_IDLE_END_HOUR) {
   return start < end ? hour >= start && hour < end : start > end ? hour >= start || hour < end : false;
 }
 
-export function windowDeadline(date = new Date(), timeZone = "Asia/Tehran", start = 2, end = 5) {
+export function windowDeadline(date = new Date(), timeZone = "Asia/Tehran", start = DEFAULT_IDLE_START_HOUR, end = DEFAULT_IDLE_END_HOUR) {
   const local = localClock(date, timeZone);
   if (!inIdleWindow(local.hour, start, end)) return date.getTime();
   // Re-evaluate wall time each minute, including zones with daylight-saving changes.

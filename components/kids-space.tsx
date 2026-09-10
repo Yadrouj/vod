@@ -117,6 +117,16 @@ export function KidsSpace({ items, learning = false }: { items: KidsItem[]; lear
       </div><div className={styles.mascot} aria-hidden="true"><span className={styles.sun}>☀</span><div className={styles.cloud}><i /><i /><b>⌣</b></div><span className={styles.book}>📚</span><span className={styles.star}>✦</span><span className={styles.flower}>🌼</span></div>
     </section>
     <div className={styles.status} role="status"><span>🛡️ {parent ? "پنل والدین · پس از ۵ دقیقه قفل می‌شود" : running ? "فقط انتخاب‌های تأییدشدهٔ خانواده" : "برای پخش، بزرگ‌ترها برنامه را شروع کنند"}</span><span>{settings ? `گروه ${settings.age.replace("-", " تا ")} سال` : "بدون نیاز به نام و تاریخ تولد"}</span><strong>{running && !parent ? `${faNumber(Math.floor(seconds / 60))}:${String(seconds % 60).padStart(2, "0")} باقی مانده` : "زمان‌بندی با والدین"}</strong></div>
+    <details className={styles.notice} open>
+      <summary><strong>راهنمای والدین: اول رمز، بعد انتخاب</strong></summary>
+      <ol>
+        <li>روی «برای بزرگ‌ترها» بزنید و در اولین ورود یک رمز ۴ تا ۸ رقمی بسازید؛ رمز را به کودک نگویید و رمز حساب کاربری را اینجا وارد نکنید.</li>
+        <li>در پنل والدین گروه سنی و مدت برنامه را انتخاب کنید. برای خردسالان می‌توانید «فقط صدا» یا رفتن خودکار به عنوان بعدی را فعال کنید.</li>
+        <li>هر کارت را قبل از پخش بررسی کنید و گزینهٔ «بررسی کردم؛ برای کودک من مجاز است» را بزنید. کودک فقط فعالیت‌های داخلی و عنوان‌های تأییدشدهٔ متناسب با سن را می‌بیند.</li>
+        <li>وقتی انتخاب‌ها کامل شد، «شروع برنامه» را بزنید. برای پایان، دوباره وارد پنل شوید و «پایان برنامه و قفل» را انتخاب کنید.</li>
+      </ol>
+      <p className={styles.fine}>رمز و تنظیمات فقط در همین مرورگر ذخیره می‌شوند؛ پاک‌کردن داده‌های مرورگر آن‌ها را حذف می‌کند. منابع بیرونی مثل آپارات ممکن است پیشنهاد یا تبلیغ خودشان را نشان دهند، پس اولین بار همراه کودک تماشا کنید.</p>
+    </details>
     {storageProblem && <p className={styles.notice} role="alert">ذخیره‌سازی مرورگر در دسترس نیست. برای اعمال کنترل والدین، ذخیره‌سازی را فعال کنید.</p>}
     {parent && settings && <section className={styles.parents} aria-labelledby="parents-title">
       <h2 id="parents-title">یک برنامهٔ کوچک برای امروز</h2><p>سن‌ها پیشنهاد تحریریه‌اند، نه رده‌بندی رسمی. قبل از تأیید، نسخهٔ صوتی/دوبله و قسمت‌ها را ببینید. تأیید سریال شامل همهٔ قسمت‌های ارائه‌شدهٔ آن عنوان است.</p>
