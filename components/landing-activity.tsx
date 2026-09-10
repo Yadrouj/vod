@@ -15,8 +15,8 @@ export function openActivity(mode: "watch" | "download") {
 export function LandingActivity({ locale }: { locale: Locale }) {
   const fa = locale === "fa";
   return <nav className={styles.activity} aria-label={fa ? "دسترسی سریع" : "Quick access"}>
-    <button type="button" onClick={() => openActivity("download")} aria-haspopup="dialog"><Download size={18} /><span>{fa ? "دانلودها" : "Downloads"}</span></button>
-    <button type="button" onClick={() => openActivity("watch")} aria-haspopup="dialog"><History size={18} /><span>{fa ? "آخرین نمایش‌ها" : "Recently watched"}</span></button>
+    <button type="button" onClick={() => openActivity("download")} aria-haspopup="dialog" aria-label={fa ? "دانلودها" : "Downloads"} title={fa ? "دانلودها" : "Downloads"}><Download size={19} /></button>
+    <button type="button" onClick={() => openActivity("watch")} aria-haspopup="dialog" aria-label={fa ? "آخرین نمایش‌ها" : "Recently watched"} title={fa ? "آخرین نمایش‌ها" : "Recently watched"}><History size={19} /></button>
   </nav>;
 }
 

@@ -1,7 +1,7 @@
 .landing { --landing-gold: #ebce72; background: #090909; }
-.landing :global(.gradient-menu) { position: relative; padding-bottom: 58px; }
-.activity { position: absolute; left: 0; bottom: 8px; display: flex; gap: 8px; align-items: center; }
-.activity button, .activity a { display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: #d6d1c2; background: #191813; border: 1px solid var(--surface-edge); border-radius: 12px !important; min-height: 40px; padding: 8px 12px; font-size: 12px; cursor: pointer; text-decoration: none; }
+.landing :global(.gradient-menu) { position: relative; padding-bottom: 0; }
+.activity { position: static; display: flex; gap: 6px; align-items: center; }
+.activity button, .activity a { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; color: #d6d1c2; background: #191813; border: 1px solid var(--surface-edge); border-radius: 50% !important; padding: 0; cursor: pointer; text-decoration: none; }
 .activity button:hover { color: #ebce72; border-color: var(--surface-edge-strong); }
 .activity .mobileOnly { display: none; }
 .pulse { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 8px 0 18px; padding: 12px 18px; border: 1px solid var(--surface-edge); border-radius: 16px !important; background: linear-gradient(110deg, #18160f, #101010); font-size: 12px; }
