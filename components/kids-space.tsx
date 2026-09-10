@@ -132,7 +132,7 @@ export function KidsSpace({ items, learning = false }: { items: KidsItem[]; lear
     </section>}
     <div ref={stage} className={styles.stage}>
       {playing && active && <section className={styles.playerPanel} aria-label="پخش انتخاب‌شده"><header><h2>{active.title}</h2><button onClick={() => setActive(null)}>بستن ×</button></header>
-        {active.kind === "resource" && parent ? <FamilyEmbed key={active.id} item={active} /> : active.kind === "activity" ? <KidsActivity key={active.id} item={active} /> : <KidsPlayer key={active.id} item={active} deadline={parent ? 0 : settings!.deadline} onEnded={next} />}
+        {(active.kind === "resource" || active.kind === "embed") ? <FamilyEmbed key={active.id} item={active} approved={active.kind === "embed"} /> : active.kind === "activity" ? <KidsActivity key={active.id} item={active} /> : <KidsPlayer key={active.id} item={active} deadline={parent ? 0 : settings!.deadline} onEnded={next} />}
         <p>{active.note}</p>
       </section>}
       {!running && !parent && ready && settings && <div className={styles.break}><span aria-hidden="true">🌿</span><h2>وقت یک استراحت کوچولو!</h2><p>پخش متوقف است. برای برنامهٔ بعدی از بزرگ‌ترها کمک بگیر.</p></div>}
@@ -151,7 +151,7 @@ export function KidsSpace({ items, learning = false }: { items: KidsItem[]; lear
       {ready && filtered.length === 0 && <div className={styles.empty}><span>🧸</span><h3>این قفسه هنوز انتخابی ندارد</h3><p>{parent ? "دسته یا جستجو را تغییر دهید؛ منابع آموزشی پایین صفحه هم در دسترس‌اند." : "بزرگ‌ترها می‌توانند محتوا را بررسی کنند و به فهرست تو اضافه کنند."}</p><button onClick={openParent}>کمک از بزرگ‌ترها</button></div>}
     </section>
     {parent && <section className={styles.resources}><h2>منابع رسمی برای تماشای همراه خانواده</h2><p>این لینک‌ها از محیط کودک خارج می‌شوند؛ تایمر و فهرست مجاز سرونما روی سایت مقصد اعمال نمی‌شوند. صرف درج لینک، مجوز بازنشر نیست.</p>
-      <div className={styles.resourceGrid}>{KIDS_RESOURCES.filter(resource => !learning || resource.categories.some(c => learningCategories.includes(c))).map(resource => <article key={resource.id}><small>{resource.provider}</small><h3>{resource.title}</h3><p>{resource.note}</p>{kidsEmbedUrl(resource) && <button onClick={() => choose(resource)}>پخش با پلیر آپارات، همراه بزرگ‌تر</button>}<a href={safeKidsUrl(resource.sourceUrl) || undefined} target="_blank" rel="noopener noreferrer">باز کردن منبع اصلی با بزرگ‌تر ↗</a></article>)}</div>
+      <div className={styles.resourceGrid}>{KIDS_RESOURCES.filter(resource => resource.kind === "resource" && (!learning || resource.categories.some(c => learningCategories.includes(c)))).map(resource => <article key={resource.id}><small>{resource.provider}</small><h3>{resource.title}</h3><p>{resource.note}</p>{kidsEmbedUrl(resource) && <button onClick={() => choose(resource)}>پخش با پلیر آپارات، همراه بزرگ‌تر</button>}<a href={safeKidsUrl(resource.sourceUrl) || undefined} target="_blank" rel="noopener noreferrer">باز کردن منبع اصلی با بزرگ‌تر ↗</a></article>)}</div>
       <aside className={styles.notice}><h3>آپارات کودک</h3><p>نام و لینک اصلی حفظ شده است. صفحهٔ این سرویس جاسازی در سایت دیگر را مسدود می‌کند؛ پخش درون سرونما منوط به دریافت کد رسمی قابل‌جاسازی از ارائه‌دهنده است. فایل ویدیو استخراج یا بازنشر نشده است.</p><a href="https://www.aparatkids.com/term" target="_blank" rel="noopener noreferrer">شرایط عمومی آپارات کودک ↗</a></aside>
     </section>}
     <footer className={styles.footer}><strong>سرونما کودک 🌱</strong><p>با انتخاب خانواده، یک تجربهٔ آرام‌تر. بدون چت عمومی، پیشنهاد از آرشیو بزرگسالان یا پخش بی‌پایان.</p><p>پخش رسانه به دسترسی و سازگاری منبع وابسته است؛ هیچ منبع بیرونی را بدون بازبینی، امنِ قطعی نمی‌نامیم.</p></footer>
@@ -185,7 +185,7 @@ function KidsPlayer({ item, deadline, onEnded }: { item: KidsItem; deadline: num
   return <div className={styles.media}>{loading && <p role="status">در حال آماده‌سازی پلیر…</p>}{sources.length > 0 && <><label>قسمت / کیفیت<select value={index} onChange={e => { setIndex(Number(e.target.value)); setError(""); }}>{sources.map((s, i) => <option key={`${s.url}-${i}`} value={i}>{s.label}</option>)}</select></label>{item.kind === "audio" ? <audio key={index} {...props} src={sources[index]?.url} /> : <video key={index} {...props} src={sources[index]?.url} playsInline poster={item.poster || undefined} />}</>}{error && <p role="alert">{error}</p>}<p className={styles.fine}>برای شروع، دکمهٔ پخش را بزنید. تبلیغ و پیشنهاد عمومی به این پلیر اضافه نمی‌شود.</p></div>;
 }
 
-function FamilyEmbed({ item }: { item: KidsItem }) {
+function FamilyEmbed({ item, approved }: { item: KidsItem; approved: boolean }) {
   const [consent, setConsent] = useState(false);
   useEffect(() => {
     const hide = () => { if (document.hidden) setConsent(false); };
@@ -194,8 +194,8 @@ function FamilyEmbed({ item }: { item: KidsItem }) {
   }, []);
   const src = kidsEmbedUrl(item);
   return <div className={styles.media}>
-    <p>تماشای همراه خانواده: پلیر رسمی ممکن است تبلیغ، پیشنهاد یا لینک خارجی نمایش دهد. کنترل محتوای داخل آن با آپارات است؛ به همین دلیل در برنامهٔ مستقل کودک قرار نمی‌گیرد.</p>
-    {consent && src ? <iframe title={item.title} src={src} style={{ width: "100%", aspectRatio: "16 / 9", border: 0 }} allow="fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation" /> : <button onClick={() => setConsent(true)}>همراه کودک هستم؛ پلیر رسمی بارگذاری شود</button>}
+    <p>{approved ? "این قسمت پس از تأیید والد به فهرست کودک اضافه شده است. پخش کاملاً با پلیر رسمی آپارات انجام می‌شود." : "تماشای همراه خانواده: پلیر رسمی ممکن است تبلیغ، پیشنهاد یا لینک خارجی نمایش دهد. کنترل محتوای داخل آن با آپارات است."}</p>
+    {consent && src ? <iframe title={item.title} src={src} style={{ width: "100%", aspectRatio: "16 / 9", border: 0 }} allow="fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation" /> : <button onClick={() => setConsent(true)}>{approved ? "پلیر رسمی آپارات را باز کن" : "همراه کودک هستم؛ پلیر رسمی بارگذاری شود"}</button>}
     <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer">مشاهده در منبع اصلی: {item.provider} ↗</a>
   </div>;
 }

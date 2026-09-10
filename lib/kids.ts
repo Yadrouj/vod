@@ -8,7 +8,7 @@ export const KIDS_CATEGORIES = [
 ] as const;
 export type KidsCategory = typeof KIDS_CATEGORIES[number][0];
 export type KidsItem = {
-  id: string; title: string; kind: "video" | "audio" | "activity" | "resource";
+  id: string; title: string; kind: "video" | "audio" | "activity" | "resource" | "embed";
   categories: KidsCategory[]; ages: KidsAge[]; note: string; provider: string;
   poster?: string | null; sourceUrl?: string; embedHash?: string; catalogId?: string; activity?: "count" | "colors" | "english" | "story";
 };
@@ -66,7 +66,14 @@ export const KIDS_RESOURCES: KidsItem[] = [
   { id: "khan-kids", title: "بازی‌های خواندن و ریاضی", categories: ["math", "language", "fun"], sourceUrl: "https://www.khanacademy.org/kids", provider: "Khan Academy Kids" },
   { id: "pbs-kids", title: "مجموعه‌های آموزشی PBS Kids", categories: ["science", "series", "fun"], sourceUrl: "https://pbskids.org/apps/pbs-kids-video", provider: "PBS Kids" },
   { id: "sesame-play", title: "امروز با هم چه بازی کنیم؟", categories: ["feelings", "art", "fun"], sourceUrl: "https://sesameworkshop.org/resources/what-will-we-do/", provider: "Sesame Workshop" },
-].map(item => ({ ...item, categories: item.categories as KidsCategory[], kind: "resource", ages: [...KIDS_AGES], note: "فقط همراه والدین در سایت رسمی؛ تبلیغات، لینک‌ها، زبان و محدودیت منطقه‌ای آن خارج از کنترل سرونماست." }));
+].map(item => ({ ...item, categories: item.categories as KidsCategory[], kind: "resource" as const, ages: [...KIDS_AGES], note: "فقط همراه والدین در سایت رسمی؛ تبلیغات، لینک‌ها، زبان و محدودیت منطقه‌ای آن خارج از کنترل سرونماست." } as KidsItem)).concat([
+  { id: "aparatkids-colors-green", title: "آموزش رنگ سبز با کامران", kind: "embed" as const, categories: ["art", "language"], ages: ["3-5", "6-8"], sourceUrl: "https://www.aparatkids.com/w/8d1jx", embedHash: "8d1jx", provider: "آپارات کودک", note: "قسمت بررسی‌شده از مجموعهٔ آموزش رنگ‌ها؛ قبل از تأیید، با توجه به نیاز کودکتان مشاهده کنید." },
+  { id: "aparatkids-colors-brown", title: "آموزش رنگ قهوه‌ای با کامران", kind: "embed" as const, categories: ["art", "language"], ages: ["3-5", "6-8"], sourceUrl: "https://www.aparatkids.com/w/kg0d4", embedHash: "kg0d4", provider: "آپارات کودک", note: "قسمت بررسی‌شده از مجموعهٔ آموزش رنگ‌ها؛ قبل از تأیید، با توجه به نیاز کودکتان مشاهده کنید." },
+  { id: "aparatkids-colors-red", title: "آموزش رنگ قرمز با کامران", kind: "embed" as const, categories: ["art", "language"], ages: ["3-5", "6-8"], sourceUrl: "https://www.aparatkids.com/w/k71ea", embedHash: "k71ea", provider: "آپارات کودک", note: "قسمت بررسی‌شده از مجموعهٔ آموزش رنگ‌ها؛ قبل از تأیید، با توجه به نیاز کودکتان مشاهده کنید." },
+  { id: "aparatkids-colors-blue", title: "آموزش رنگ آبی با کامران", kind: "embed" as const, categories: ["art", "language"], ages: ["3-5", "6-8"], sourceUrl: "https://www.aparatkids.com/w/d8ues", embedHash: "d8ues", provider: "آپارات کودک", note: "قسمت بررسی‌شده از مجموعهٔ آموزش رنگ‌ها؛ قبل از تأیید، با توجه به نیاز کودکتان مشاهده کنید." },
+  { id: "aparatkids-balashha-1", title: "بالش‌ها؛ فصل ۱ قسمت ۱", kind: "embed" as const, categories: ["series", "music", "fun"], ages: ["3-5", "6-8"], sourceUrl: "https://www.aparatkids.com/w/TFmZp", embedHash: "TFmZp", provider: "آپارات کودک", note: "سریال موسیقایی؛ تأیید این کارت فقط برای همین قسمت است." },
+  { id: "aparatkids-pat-mat-2", title: "پت و مت؛ فصل ۱ قسمت ۲", kind: "embed" as const, categories: ["series", "fun"], ages: ["6-8", "9-12"], sourceUrl: "https://www.aparatkids.com/w/ibfjm", embedHash: "ibfjm", provider: "آپارات کودک", note: "طنز فیزیکی دارد؛ قبل از تأیید، مناسب‌بودن برای کودک خودتان را ببینید." },
+]);
 export function kidsEmbedUrl(item: KidsItem): string | null {
   const known = KIDS_RESOURCES.find(resource => resource.id === item.id && resource.embedHash === item.embedHash);
   return known?.embedHash ? `https://www.aparat.com/video/video/embed/videohash/${known.embedHash}/vt/frame` : null;

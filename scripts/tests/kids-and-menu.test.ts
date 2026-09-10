@@ -8,14 +8,17 @@ test("parent settings roundtrip and malformed data fail closed", () => {
   assert.deepEqual(parseKidsSettings(JSON.stringify(settings)), settings);
   for (const raw of [null, "{", "{}", JSON.stringify({ ...settings, minutes: 999 }), JSON.stringify({ ...settings, approved: [123] }), JSON.stringify({ ...settings, pinHash: "1234" })]) assert.equal(parseKidsSettings(raw), null);
 });
-test("child visibility requires age and approval, never includes external resources", () => {
+test("child visibility requires age and approval, while external resources stay parent-only", () => {
   assert.equal(kidsVisible(KIDS_ACTIVITIES[0], settings), true);
   const video = { ...KIDS_ACTIVITIES[0], id: "movie", kind: "video" as const };
   assert.equal(kidsVisible(video, settings), false);
   assert.equal(kidsVisible(video, { ...settings, approved: ["movie"] }), true);
   assert.equal(kidsVisible(video, { ...settings, age: "0-2", approved: ["movie"] }), false);
   assert.equal(kidsVisible(video, { ...settings, audioOnly: true, approved: ["movie"] }), false);
-  for (const item of KIDS_RESOURCES) assert.equal(kidsVisible(item, { ...settings, approved: [item.id] }), false);
+  for (const item of KIDS_RESOURCES.filter(item => item.kind === "resource")) assert.equal(kidsVisible(item, { ...settings, approved: [item.id] }), false);
+  const aparatkidsEmbed = KIDS_RESOURCES.find(item => item.id === "aparatkids-colors-green")!;
+  assert.equal(kidsVisible(aparatkidsEmbed, settings), false);
+  assert.equal(kidsVisible(aparatkidsEmbed, { ...settings, approved: [aparatkidsEmbed.id] }), true);
 });
 test("deadline survives reload and stops exactly at expiration", () => {
   const restored = parseKidsSettings(JSON.stringify(settings))!;
@@ -31,6 +34,8 @@ test("embeds are restricted to exact reviewed resources", () => {
   assert.match(kidsEmbedUrl(KIDS_RESOURCES[0])!, /^https:\/\/www.aparat.com\/video\/video\/embed\//);
   assert.equal(kidsEmbedUrl({ ...KIDS_RESOURCES[0], embedHash: "unknown" }), null);
   assert.equal(kidsEmbedUrl(KIDS_ACTIVITIES[0]), null);
+  const aparatkidsEmbed = KIDS_RESOURCES.find(item => item.id === "aparatkids-balashha-1")!;
+  assert.match(kidsEmbedUrl(aparatkidsEmbed)!, /videohash\/TFmZp\/vt\/frame$/);
 });
 test("menu uses a valid small backdrop size and bounded alternate sources", () => {
   const urls = categoryImageCandidates({ backdropUrl: "https://image.tmdb.org/t/p/original/back.jpg", posterUrl: "https://image.tmdb.org/t/p/w500/poster.jpg" });

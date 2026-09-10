@@ -2,7 +2,7 @@ import { loadVodIndex } from "./vod-index";
 import { findVodItem } from "./catalog";
 import { loadMusicIndex, normalizeMusicTrack } from "./music";
 import { playableLinks, isBrowserPlayableVodLink } from "./link-labels";
-import { KIDS_ACTIVITIES, KIDS_MUSIC_SELECTION, KIDS_VIDEO_SELECTION, safeKidsUrl, type KidsItem } from "./kids";
+import { KIDS_ACTIVITIES, KIDS_MUSIC_SELECTION, KIDS_RESOURCES, KIDS_VIDEO_SELECTION, safeKidsUrl, type KidsItem } from "./kids";
 
 export async function loadKidsCatalog(): Promise<KidsItem[]> {
   const [vod, music] = await Promise.all([loadVodIndex(), loadMusicIndex()]);
@@ -14,7 +14,7 @@ export async function loadKidsCatalog(): Promise<KidsItem[]> {
     const found = music.tracks.find(item => item.id === id);
     return found ? [{ id: `audio-${id}`, catalogId: id, title, ages: ["0-2", "3-5", "6-8", "9-12"] as KidsItem["ages"], categories: ["music", ...(id.includes("0564633") ? [] : ["sleep"])] as KidsItem["categories"], kind: "audio" as const, provider: found.artist.name, poster: safeKidsUrl(found.coverUrl || undefined), note: "پیشنهاد از آرشیو موجود؛ عنوان لالایی تضمین محتوای کودک نیست. متن و نسخهٔ صوتی را کامل بررسی کنید." }] : [];
   });
-  return [...KIDS_ACTIVITIES, ...videos, ...tracks];
+  return [...KIDS_ACTIVITIES, ...videos, ...tracks, ...KIDS_RESOURCES.filter(item => item.kind === "embed")];
 }
 export type KidsMediaSource = { url: string; label: string };
 export async function kidsMediaSources(id: string): Promise<KidsMediaSource[]> {
