@@ -1,0 +1,15 @@
+{
+  "_schema": {
+    "description": "Optional per-episode artwork overrides. Key episodes by season:episode or S01E01.",
+    "example": {
+      "tt0903747": {
+        "1:1": {
+          "imageUrl": "https://example.com/custom-episode-art.jpg",
+          "imageAlt": "Custom artwork for episode 1",
+          "imagePosition": "50% 30%",
+          "imageFit": "cover"
+        }
+      }
+    }
+  }
+}

@@ -23,3 +23,17 @@ test("upstream failures preserve saved episode pictures across loader restarts",
   assert.deepEqual(await load("../../bad",1),[]);
  } finally {await rm(root,{recursive:true,force:true});}
 });
+test("custom artwork overrides and series fallback are applied without changing episode identity",async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),"sarvnema-episode-artwork-"));
+ try {
+  await mkdir(path.join(root,"public/data/episode-metadata"),{recursive:true});
+  await writeFile(path.join(root,"public/data/episode-metadata/tt1234567.json"),JSON.stringify({checkedAt:new Date().toISOString(),episodes:[{season:1,episode:1,title:"Pilot",summary:null,imageUrl:null},{season:1,episode:2,title:"Second",summary:null,imageUrl:"https://static.tvmaze.com/uploads/images/second.jpg"}]}));
+  await writeFile(path.join(root,"public/data/episode-artwork-overrides.json"),JSON.stringify({tt1234567:{"1:1":{imageUrl:"https://example.com/custom.jpg",imagePosition:"50% 25%",imageFit:"contain"}}}));
+  const load=createEpisodeMetadataLoader(root,((async()=>{throw new Error("offline");}) as typeof fetch));
+  const episodes=await load("tt1234567",1,{fallbackImage:"https://example.com/series.jpg"});
+  assert.equal(episodes[0].imageUrl,"https://example.com/custom.jpg");
+  assert.equal(episodes[0].imageSource,"custom");
+  assert.equal(episodes[0].imageFit,"contain");
+  assert.equal(episodes[1].imageSource,"tvmaze");
+ } finally {await rm(root,{recursive:true,force:true});}
+});

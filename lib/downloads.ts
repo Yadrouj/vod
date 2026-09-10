@@ -1,5 +1,5 @@
 import type { VodItem, VodLink, VodSubtitleLink } from "./types";
-import { loadEpisodeMetadata } from "./episode-metadata";
+import { loadEpisodeMetadata, type EpisodeImageFit, type EpisodeImageSource } from "./episode-metadata";
 
 export type DownloadSource = {
   label: string;
@@ -41,6 +41,10 @@ export type EpisodeDownload = {
   title: string;
   summary: string | null;
   imageUrl: string | null;
+  imageSource?: EpisodeImageSource;
+  imageAlt?: string | null;
+  imagePosition?: string | null;
+  imageFit?: EpisodeImageFit;
   files: EpisodeFile[];
 };
 
@@ -128,7 +132,7 @@ export async function expandSeasonDownloads(item: VodItem, season: number): Prom
   const sources = item.links
     .filter((link) => (link.season ?? parseSeasonEpisode(`${link.label} ${link.url}`).season) === season)
     .map(toDownloadSource);
-  const metadataPromise = loadEpisodeMetadata(item.imdbCode, season);
+  const metadataPromise = loadEpisodeMetadata(item.imdbCode, season, { fallbackImage: item.backdropUrl ?? item.posterUrl ?? null });
   const expandedPromise = Promise.allSettled(sources.map(expandSource));
   const [metadata, expanded] = await Promise.all([metadataPromise, expandedPromise]);
   const metaMap = new Map(metadata.map((episode) => [episode.episode, episode]));
@@ -149,6 +153,10 @@ export async function expandSeasonDownloads(item: VodItem, season: number): Prom
         title: meta?.title ?? (file.episode ? `Episode ${file.episode}` : "Season pack"),
         summary: meta?.summary ?? null,
         imageUrl: meta?.imageUrl ?? null,
+        imageSource: meta?.imageSource,
+        imageAlt: meta?.imageAlt ?? null,
+        imagePosition: meta?.imagePosition ?? null,
+        imageFit: meta?.imageFit,
         files: [],
       };
       existing.files.push(file.file);

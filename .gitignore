@@ -41,3 +41,4 @@ data/maintenance-scheduler.lock
 data/refresh-checkpoints/
 .media-cache/
 public/data/vod-sync-status.json
+public/data/episode-metadata/index.json

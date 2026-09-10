@@ -44,6 +44,7 @@ export const DAILY_JOBS = [
   { id: "f2my", script: "scripts/scrape-f2my-catalog.mjs", minutes: 25, args: ["--skip-imdb-lookup", "--concurrency=1", "--archive-concurrency=1", "--limit=80"] },
   { id: "curated-video", script: "scripts/refresh-curated-vod.mjs", minutes: 15 },
   { id: "public-archives", script: "scripts/refresh-public-archives.mjs", minutes: 8 },
+  { id: "episode-images", script: "scripts/audit-series-episode-images.mjs", minutes: 20, args: ["--all", "--resume", "--concurrency=4"] },
   { id: "releases", script: "scripts/release-monitor.mjs", minutes: 5 },
   { id: "music", script: "scripts/daily-music-refresh.mjs", minutes: 70 },
 ];

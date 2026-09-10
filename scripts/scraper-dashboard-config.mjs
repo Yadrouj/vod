@@ -26,6 +26,7 @@ export const DEFAULT_SCRAPER_DASHBOARD_CONFIG = {
     source("f2my", "فیلم و سریال F2MY", "https://www.f2my.top/", "scrape-f2my-catalog.mjs"),
     source("curated-video", "منابع منتخب ویدیویی", "https://www.moviesho.com/", "refresh-curated-vod.mjs"),
     source("public-archives", "آرشیوهای عمومی فیلم", "https://archive.org/details/movies", "refresh-public-archives.mjs"),
+    source("episode-images", "Episode artwork audit", "https://api.tvmaze.com/", "audit-series-episode-images.mjs"),
     source("releases", "پیگیری انتشارها", "https://www.imdb.com/calendar/", "release-monitor.mjs"),
     source("music", "موسیقی فارسی و خارجی", "https://rozmusic.com/", "daily-music-refresh.mjs"),
   ],

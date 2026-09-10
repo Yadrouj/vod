@@ -33,8 +33,9 @@ test("news, video source groups and music have independent bounded jobs", () => 
   assert.equal(DAILY_JOBS[0].id, "news");
   assert.ok(DAILY_JOBS.some(job => job.id === "curated-video"));
   assert.ok(DAILY_JOBS.some(job => job.id === "f2my"));
+  assert.ok(DAILY_JOBS.some(job => job.id === "episode-images"));
   assert.equal(DAILY_JOBS.at(-1).id, "music");
-  assert.ok(DAILY_JOBS.reduce((sum, job) => sum + job.minutes, 0) <= 180);
+  assert.ok(DAILY_JOBS.reduce((sum, job) => sum + job.minutes, 0) <= 240);
 });
 test("job failure and deadline are reported, rather than marked successful", async () => {
   await assert.rejects(runJob({ script: fixture, args: ["fail"] }, Date.now() + 5000, "test"), /exit/);
