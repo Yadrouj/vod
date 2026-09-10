@@ -21,6 +21,17 @@ test("user-confirmed full-length replacement supersedes a trailer candidate", ()
   assert.ok((item[0].durationSeconds ?? 0) >= 3600);
 });
 
+test("second playlist batch exposes only feature-length direct players", () => {
+  for (const [id, videoId, minimum] of [["old-iranian-1354001", "dlZv_yfHwlA", 6275], ["old-iranian-1352033", "r1TqClwwDeY", 5490], ["old-iranian-1344025", "B2IK_pNVlh0", 6332]] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.ok((item[0].durationSeconds ?? 0) >= minimum);
+    assert.ok((item[0].durationSeconds ?? 0) >= 3600);
+  }
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1345040"), null);
+});
+
 test("community playlists and review channels are retained as direct YouTube sources", () => {
   assert.ok(OLD_IRANIAN_YOUTUBE_COLLECTIONS.some(collection => collection.playlistId === "PLeHzOz4FtTB40XDHDUtatCriTciww6cfQ"));
   assert.deepEqual(OLD_IRANIAN_YOUTUBE_REVIEW_CHANNELS, ["https://www.youtube.com/@Filmrangi/videos", "https://www.youtube.com/@ShoukaFilm", "https://www.youtube.com/@beikiha/videos"]);
