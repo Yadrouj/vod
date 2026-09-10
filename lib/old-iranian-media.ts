@@ -222,6 +222,19 @@ const BATCH_FIVE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1355030": [publicYouTubeVideo("twTqrfPA4Ok", "فیلم کامل مادر جونم عاشق شده", "بیکی ها", 4680)],
 };
 
+// Sixth review batch: additional exact matches found while checking the next
+// fifty titles. All active entries are long-form results.
+const BATCH_SIX_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1355037": [publicYouTubeVideo("wRCeUyuwy1s", "فیلم زیبای بت شکن - با بازی بهروز وثوق و جمشید مشایخی", "Shouka Film", 4904)],
+  "old-iranian-1355064": [publicYouTubeVideo("bjJkPW8BLBQ", "The Sleeping Lion Persian Film | Classic Film", "FilmFarsi - فیلمفارسی", 4761)],
+  "old-iranian-1355023": [publicYouTubeVideo("TiiWLm2AWQU", "Ghazal 1975 - فیلم سینمایی غزل", "40 سالگی - 40 years old", 6394)],
+  "old-iranian-1357035": [publicYouTubeVideo("5dsXMO97fTU", "فیلم کامل دو مرد خشن", "فیلم قدیمی رنگی", 4976)],
+  "old-iranian-1355068": [publicYouTubeVideo("ZOJFSuJMajU", "Uncensored Persian movie The lady wants a motorbike", "FilmFarsi - فیلمفارسی", 5123)],
+  "old-iranian-1355004": [publicYouTubeVideo("-AvdB_WeSiM", "فیلم ایرانی - نقص فنی", "Pars Video", 6241)],
+  "old-iranian-1355031": [publicYouTubeVideo("LX3rT1-bi2Q", "Persian Youth Romance Film | Classic Movie", "FilmFarsi - فیلمفارسی", 5797)],
+  "old-iranian-1354060": [publicYouTubeVideo("EK_muy_TNGQ", "فیلم قدیمی؛ مرد شرقی و زن فرنگی", "Filmrangi - فیلمرنگی", 5674)],
+};
+
 const GHADAGHAN: OldIranianFilmMedia = {
   id: GHADAGHAN_ID,
   originalTitle: "Ghadaghan",
@@ -322,7 +335,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FIVE_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FIVE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SIX_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
 }
 
 /**
