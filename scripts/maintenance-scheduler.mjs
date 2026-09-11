@@ -82,7 +82,7 @@ async function runCycle() {
       if (stopping || Date.now() >= deadline) break;
       const entry = { id: job.id, script: job.script, state: "running", startedAt: new Date().toISOString() };
       steps.push(entry);
-        await atomic(STATUS, { state: "running", local, trigger: activeTrigger, steps, deadline: new Date(deadline).toISOString(), checkedAt: new Date().toISOString() });
+      await atomic(STATUS, { state: "running", local, trigger: activeTrigger, steps, deadline: new Date(deadline).toISOString(), checkedAt: new Date().toISOString() });
       try {
         const source = config.sources.find((item) => item.id === job.id) || schedule;
         const sourceDeadline = FORCE ? Number.POSITIVE_INFINITY : windowDeadline(new Date(), schedule.timeZone, source.startHour, source.endHour);
