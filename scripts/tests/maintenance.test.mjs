@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { assessCapacity, inIdleWindow, localClock, windowDeadline, DAILY_JOBS } from "../maintenance-policy.mjs";
 import { refreshStep } from "../refresh-step.mjs";
-import { runJob } from "../maintenance-scheduler.mjs";
+import { isJobScheduled, runJob } from "../maintenance-scheduler.mjs";
 const fixture = path.resolve("scripts/tests/fixtures/maintenance-child.mjs");
 
 test("Tehran window includes 03:00 and excludes exactly 07:00", () => {
@@ -36,6 +36,14 @@ test("news, video source groups and music have independent bounded jobs", () => 
   assert.ok(DAILY_JOBS.some(job => job.id === "episode-images"));
   assert.equal(DAILY_JOBS.at(-1).id, "music");
   assert.ok(DAILY_JOBS.reduce((sum, job) => sum + job.minutes, 0) <= 240);
+});
+test("forced maintenance runs enabled jobs outside their normal window", () => {
+  const config = { sources: [{ id: "news", enabled: true, startHour: 3, endHour: 7, days: [0, 1, 2, 3, 4, 5, 6] }] };
+  const local = { hour: 20, weekday: 5 };
+  const schedule = { startHour: 3, endHour: 7, days: [0, 1, 2, 3, 4, 5, 6] };
+  assert.equal(isJobScheduled(DAILY_JOBS[0], config, local, schedule, false), false);
+  assert.equal(isJobScheduled(DAILY_JOBS[0], config, local, schedule, true), true);
+  assert.equal(isJobScheduled(DAILY_JOBS[0], { sources: [{ id: "news", enabled: false }] }, local, schedule, true), false);
 });
 test("job failure and deadline are reported, rather than marked successful", async () => {
   await assert.rejects(runJob({ script: fixture, args: ["fail"] }, Date.now() + 5000, "test"), /exit/);

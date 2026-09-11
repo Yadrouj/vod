@@ -194,9 +194,10 @@ async function effectiveDashboardConfig() {
   };
 }
 function isScheduled(local, schedule) { return schedule.days.includes(local.weekday) && inIdleWindow(local.hour, schedule.startHour, schedule.endHour); }
-function isJobScheduled(job, config, local, globalSchedule) {
+export function isJobScheduled(job, config, local, globalSchedule, force = FORCE) {
   const source = config.sources.find((item) => item.id === job.id);
   if (source?.enabled === false) return false;
+  if (force) return true;
   const schedule = source || globalSchedule;
   return schedule.days.includes(local.weekday) && inIdleWindow(local.hour, schedule.startHour, schedule.endHour);
 }
