@@ -15,6 +15,7 @@ const args = new Set(process.argv.slice(2));
 const all = args.has("--all");
 const force = args.has("--force");
 const resume = args.has("--resume");
+const retryIncomplete = args.has("--retry-incomplete");
 const limit = all ? Number.POSITIVE_INFINITY : Math.max(1, numberArg("--limit", 50));
 const concurrency = Math.min(12, Math.max(1, numberArg("--concurrency", 4)));
 const timeoutMs = Math.min(30_000, Math.max(3_000, numberArg("--timeout-ms", 12_000)));
@@ -184,7 +185,9 @@ async function main() {
       const file = path.join(OUTPUT_DIR, `${item.imdbCode}.json`);
       const saved = await readJson(file, null);
       const age = saved?.checkedAt ? Date.now() - Date.parse(saved.checkedAt) : Number.POSITIVE_INFINITY;
-      if (!force && validSnapshot(saved) && (resume || age < 7 * 86400_000)) {
+      const priorStatus = previous.get(item.imdbCode)?.status;
+      const shouldRetry = retryIncomplete && (priorStatus === "partial" || priorStatus === "unavailable");
+      if (!force && !shouldRetry && validSnapshot(saved) && (resume || age < 7 * 86400_000)) {
         results[index] = resultFromSnapshot(item, saved);
         completed += 1;
         console.log(JSON.stringify({ progress: `${completed}/${selected.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "cached", ...imageStats(saved.episodes) }));
