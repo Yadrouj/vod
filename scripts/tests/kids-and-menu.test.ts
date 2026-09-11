@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { KIDS_ACTIVITIES, KIDS_RESOURCES, kidsEmbedUrl, kidsVisible, parseKidsSettings, safeKidsUrl, sessionSeconds, type KidsSettings } from "../../lib/kids";
+import { isKidsPlayableUrl } from "../../lib/kids-catalog";
 import { categoryImageCandidates } from "../../lib/category-images";
 
 const settings: KidsSettings = { version: 1, age: "6-8", approved: [], minutes: 20, audioOnly: false, autoNext: false, salt: "a".repeat(32), pinHash: "b".repeat(64), deadline: 10000 };
@@ -29,6 +30,11 @@ test("deadline survives reload and stops exactly at expiration", () => {
 test("media URLs reject executable, insecure and credential URLs", () => {
   for (const value of ["javascript:alert(1)", "data:text/html,x", "http://example.com", "https://user:pass@example.com", "//example.com"]) assert.equal(safeKidsUrl(value), null);
   assert.equal(safeKidsUrl("https://example.com/a.mp3"), "https://example.com/a.mp3");
+});
+test("kids playback accepts native extensions and query-formatted MP4 sources", () => {
+  assert.equal(isKidsPlayableUrl("https://cdn.example/video.mp4?token=1"), true);
+  assert.equal(isKidsPlayableUrl("https://cdn.example/download?id=1&format=mp4&quality=3"), true);
+  assert.equal(isKidsPlayableUrl("https://cdn.example/download?id=1&format=zip"), false);
 });
 test("embeds are restricted to exact reviewed resources", () => {
   assert.match(kidsEmbedUrl(KIDS_RESOURCES[0])!, /^https:\/\/www.aparat.com\/video\/video\/embed\//);

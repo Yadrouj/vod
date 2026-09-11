@@ -1,7 +1,7 @@
 import { loadVodIndex } from "./vod-index";
 import { findVodItem } from "./catalog";
 import { loadMusicIndex, normalizeMusicTrack } from "./music";
-import { playableLinks, isBrowserPlayableVodLink } from "./link-labels";
+import { playableLinks } from "./link-labels";
 import { KIDS_ACTIVITIES, KIDS_MUSIC_SELECTION, KIDS_RESOURCES, KIDS_VIDEO_SELECTION, safeKidsUrl, type KidsItem } from "./kids";
 
 export async function loadKidsCatalog(): Promise<KidsItem[]> {
@@ -17,12 +17,16 @@ export async function loadKidsCatalog(): Promise<KidsItem[]> {
   return [...KIDS_ACTIVITIES, ...videos, ...tracks, ...KIDS_RESOURCES.filter(item => item.kind === "embed")];
 }
 export type KidsMediaSource = { url: string; label: string };
+export function isKidsPlayableUrl(raw: string) {
+  return /\.(?:mp4|m4v|webm|mov)(?:$|[?#])/i.test(raw)
+    || /[?&](?:format|mime)=(?:mp4|m4v|webm|mov)(?:[&#]|$)/i.test(raw);
+}
 export async function kidsMediaSources(id: string): Promise<KidsMediaSource[]> {
   if (id.startsWith("vod-") && KIDS_VIDEO_SELECTION.some(item => `vod-${item[0]}` === id)) {
     const item = await findVodItem(id.slice(4));
     if (!item) return [];
     return playableLinks(item.links, { isSeries: /series/i.test(item.type), title: item.title })
-      .filter(link => isBrowserPlayableVodLink(link) && safeKidsUrl(link.url))
+      .filter(link => isKidsPlayableUrl(link.url) && safeKidsUrl(link.url))
       .slice(0, 400).map(link => ({ url: link.url, label: `${link.season ? `فصل ${link.season} / قسمت ${link.episode ?? "؟"} · ` : ""}${link.quality || link.label}` }));
   }
   if (id.startsWith("audio-") && KIDS_MUSIC_SELECTION.some(item => `audio-${item[0]}` === id)) {
