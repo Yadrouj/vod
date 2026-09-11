@@ -141,6 +141,9 @@ async function main() {
     return prior ? { ...prior, ...base } : { ...base, status: "pending", episodes: 0, images: 0, missingImages: 0, distinctImages: 0, checkedAt: null, sourceUrl: null };
   });
   const selected = results.slice(0, limit);
+  const work = selected
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => !retryIncomplete || item.status === "partial" || item.status === "unavailable");
   const reportState = () => ({
     version: 1,
     checkedAt: now(),
@@ -172,13 +175,13 @@ async function main() {
     reportWrite = reportWrite.then(() => writeJsonAtomic(REPORT_FILE, reportState()));
   };
   const worker = async () => {
-    while (cursor < selected.length && Date.now() < deadline) {
-      const index = cursor++;
-      const item = selected[index];
+    while (cursor < work.length && Date.now() < deadline) {
+      const workIndex = cursor++;
+      const { item, index } = work[workIndex];
       if (!/^tt\d+$/.test(item.imdbCode)) {
         results[index] = { ...item, status: "unsupported", episodes: 0, images: 0, missingImages: 0, distinctImages: 0, checkedAt: now(), sourceUrl: null, error: "No IMDb ID; TVMaze lookup requires an IMDb ID" };
         completed += 1;
-        console.log(JSON.stringify({ progress: `${completed}/${selected.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "unsupported" }));
+        console.log(JSON.stringify({ progress: `${completed}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "unsupported" }));
         scheduleReportWrite();
         continue;
       }
@@ -190,7 +193,7 @@ async function main() {
       if (!force && !shouldRetry && validSnapshot(saved) && (resume || age < 7 * 86400_000)) {
         results[index] = resultFromSnapshot(item, saved);
         completed += 1;
-        console.log(JSON.stringify({ progress: `${completed}/${selected.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "cached", ...imageStats(saved.episodes) }));
+        console.log(JSON.stringify({ progress: `${completed}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "cached", ...imageStats(saved.episodes) }));
         scheduleReportWrite();
         continue;
       }
@@ -199,16 +202,16 @@ async function main() {
         const snapshot = { checkedAt: now(), sourceUrl: fetched.sourceUrl, imdbCode: item.imdbCode, seriesTitle: item.title, imdbRating: item.imdbRating, imdbVotes: item.imdbVotes, episodes: fetched.episodes };
         await writeJsonAtomic(file, snapshot);
         results[index] = resultFromSnapshot(item, snapshot);
-        console.log(JSON.stringify({ progress: `${completed + 1}/${selected.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: results[index].status, ...imageStats(fetched.episodes) }));
+        console.log(JSON.stringify({ progress: `${completed + 1}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: results[index].status, ...imageStats(fetched.episodes) }));
       } catch (error) {
         results[index] = { ...item, status: "unavailable", episodes: 0, images: 0, missingImages: 0, distinctImages: 0, checkedAt: now(), sourceUrl: null, error: error instanceof Error ? error.message : String(error) };
-        console.error(JSON.stringify({ progress: `${completed + 1}/${selected.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "unavailable", error: results[index].error }));
+        console.error(JSON.stringify({ progress: `${completed + 1}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "unavailable", error: results[index].error }));
       }
       completed += 1;
       scheduleReportWrite();
     }
   };
-  await Promise.all(Array.from({ length: Math.min(concurrency, selected.length) }, worker));
+  await Promise.all(Array.from({ length: Math.min(concurrency, work.length) }, worker));
   await reportWrite;
   await writeJsonAtomic(REPORT_FILE, reportState());
   const summary = reportState();
