@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { promisify } from "node:util";
 import { parseEpisodeMetadata } from "../lib/episode-metadata.ts";
 import { writeJsonAtomic } from "./atomic-json.mjs";
 import { streamVodArchiveItems } from "./vod-json-stream.mjs";
@@ -18,6 +20,7 @@ const concurrency = Math.min(12, Math.max(1, numberArg("--concurrency", 4)));
 const timeoutMs = Math.min(30_000, Math.max(3_000, numberArg("--timeout-ms", 12_000)));
 const deadline = Number(process.env.MAINTENANCE_DEADLINE || Number.POSITIVE_INFINITY);
 const now = () => new Date().toISOString();
+const execFileAsync = promisify(execFile);
 
 function numberArg(name, fallback) {
   const raw = process.argv.find((value) => value.startsWith(`${name}=`))?.slice(name.length + 1);
@@ -51,7 +54,7 @@ function compactSeries(item, rank) {
 }
 
 async function readJson(file, fallback) {
-  try { return JSON.parse(await readFile(file, "utf8")); } catch { return fallback; }
+  try { return JSON.parse((await readFile(file, "utf8")).replace(/^\uFEFF/, "")); } catch { return fallback; }
 }
 
 function validSnapshot(snapshot) {
@@ -73,16 +76,39 @@ function resultFromSnapshot(series, snapshot, status = "complete") {
   return { ...series, status: stats.missingImages ? "partial" : status, ...stats, checkedAt: snapshot.checkedAt ?? null, sourceUrl: snapshot.sourceUrl ?? "https://api.tvmaze.com" };
 }
 
+async function powershellJson(url) {
+  if (process.platform !== "win32") throw new Error("PowerShell fallback is only available on Windows");
+  const command = [
+    "$ProgressPreference='SilentlyContinue';",
+    "$OutputEncoding=[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false);",
+    `$response=Invoke-WebRequest -UseBasicParsing -TimeoutSec ${Math.ceil(timeoutMs / 1000)} -Uri '${url.replace(/'/g, "''")}';`,
+    "[Console]::Out.Write($response.Content);",
+  ].join("");
+  const { stdout } = await execFileAsync("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", command], {
+    timeout: timeoutMs + 2_000,
+    maxBuffer: 8 * 1024 * 1024,
+    windowsHide: true,
+  });
+  return JSON.parse(stdout.replace(/^\uFEFF/, ""));
+}
+
+async function requestJson(url) {
+  if (process.platform === "win32") return powershellJson(url);
+  try {
+    const response = await fetch(url, {
+      headers: { accept: "application/json", "user-agent": "SarvNema episode-artwork-auditor/1.0" },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
+  } catch (error) { throw error; }
+}
+
 async function json(url) {
   let lastError;
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
-      const response = await fetch(url, {
-        headers: { accept: "application/json", "user-agent": "SarvNema episode-artwork-auditor/1.0" },
-        signal: AbortSignal.timeout(timeoutMs),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return await response.json();
+      return await requestJson(url);
     } catch (error) {
       lastError = error;
       if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
