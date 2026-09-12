@@ -8229,17 +8229,6 @@ html[dir="rtl"] .suggest-item img { order: initial; }
 .film-landing-primary:hover, .film-landing-secondary:hover { transform: translateY(-2px); }
 .film-landing-secondary:hover { border-color: rgba(247, 215, 120, 0.55); background: rgba(230, 180, 57, 0.13); }
 .film-landing-actions .watch-together-inline { min-height: 42px; border-radius: 999px !important; }
-.film-landing-card-actions { display: none; }
-
-@media (min-width: 761px) {
-  .film-landing-copy-actions { display: none; }
-  .film-landing-card-actions { display: grid; gap: 6px; margin-top: -2px; }
-  .film-landing-card-actions > span { color: rgba(255, 225, 142, 0.56); font-size: 9px; font-weight: 900; letter-spacing: 0.05em; }
-  .film-landing-card-actions .film-landing-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 0; }
-  .film-landing-card-actions .film-landing-actions > :is(.film-landing-primary, .watch-together-inline) { width: 100%; min-width: 0; min-height: 42px; padding-inline: 7px; border-radius: 12px !important; font-size: 10px; }
-  .film-landing-card-actions .film-landing-secondary { grid-column: 1 / -1; min-height: 30px; padding-inline: 8px; border-radius: 10px !important; font-size: 10px; }
-  .film-landing-card-actions .film-landing-secondary small { font-size: inherit; }
-}
 
 .film-landing-link-row { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 20px; }
 .film-landing-link-row a { color: rgba(255, 242, 202, 0.62); font-size: 11px; font-weight: 800; transition: color 160ms ease; }

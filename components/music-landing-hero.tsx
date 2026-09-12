@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   ChevronLeft,
   ChevronRight,
-  ListMusic,
   Pause,
   Play,
   Radio,
@@ -15,6 +14,8 @@ import {
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { SearchSuggest } from "@/components/search-suggest";
 import { MobileFeatureCard } from "./mobile-feature-card";
+import { WatchTogetherLauncher } from "./watch-together-launcher";
+import featureStyles from "./landing-feature-actions.module.css";
 
 export type MusicHeroTrack = {
   id: string;
@@ -37,8 +38,6 @@ type Props = {
   initialQuery?: string;
   initialKind?: string;
 };
-
-const WAVE_BARS = [0.54, 0.76, 0.42, 0.95, 0.64, 0.82, 0.5, 0.98, 0.7, 0.39, 0.88, 0.57, 0.75, 0.46, 0.92, 0.6, 0.84, 0.48, 0.73, 0.56];
 
 export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", initialKind = "all" }: Props) {
   const featuredTracks = useMemo(() => tracks.filter((track) => track.id), [tracks]);
@@ -102,11 +101,6 @@ export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", init
             <button type="submit">جست‌وجو</button>
           </form>
 
-          <div className="music-landing-actions">
-            <Link href={`/music/${activeTrack.id}`} className="music-landing-primary"><Play size={17} fill="currentColor" /> پخش این قطعه</Link>
-            <Link href="/music/playlists" className="music-landing-secondary"><ListMusic size={17} /> پلی‌لیست من</Link>
-          </div>
-
           <nav className="music-landing-link-row" aria-label="دسترسی‌های موسیقی">
             <Link href="/music/artists">همهٔ خواننده‌ها</Link>
             <Link href="/music?kind=video">موزیک‌ویدیو</Link>
@@ -114,7 +108,7 @@ export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", init
           </nav>
         </div>
 
-        <aside className="music-landing-now-playing" aria-label="قطعهٔ منتخب">
+        <aside className={`music-landing-now-playing ${featureStyles.card} ${featureStyles.music}`} aria-label="قطعهٔ منتخب">
           <div className="music-landing-now-head">
             <span><Radio size={14} /> انتخاب برای شنیدن</span>
             <button type="button" className="music-landing-visual-toggle" onClick={() => setIsVisualPlaying((current) => !current)} aria-label={isVisualPlaying ? "توقف نمایش متحرک" : "شروع نمایش متحرک"}>
@@ -122,40 +116,27 @@ export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", init
             </button>
           </div>
 
-          <div className="music-landing-artwork">
+          <Link className={`music-landing-artwork ${featureStyles.artwork}`} href={`/music/${activeTrack.id}`} aria-label={`پخش ${trackTitle}`}
+            onPointerEnter={() => setIsVisualPlaying(false)} onFocus={() => setIsVisualPlaying(false)}>
             {activeTrack.coverUrl ? <img src={activeTrack.coverUrl} alt="" decoding="async" fetchPriority="high" /> : <span className="music-landing-fallback-art"><Volume2 size={48} /></span>}
             <span className="music-landing-artwork-shine" aria-hidden="true" />
+            <span className={featureStyles.playOverlay} aria-hidden="true"><span className={featureStyles.playIcon}><Play size={28} fill="currentColor" /></span></span>
             <em>{activeTrack.kind === "video" ? "MUSIC VIDEO" : "TRACK"}</em>
-          </div>
+          </Link>
 
           <div className="music-landing-track-copy" dir="auto">
-            <strong>{trackTitle}</strong>
+            <Link className={featureStyles.titleLink} href={`/music/${activeTrack.id}`} aria-label={`جزئیات ${trackTitle}`}><strong>{trackTitle}</strong></Link>
             <span>{artistLabel}</span>
           </div>
 
-          <div className="music-landing-wave-card" aria-label="نمایشگر صوتی">
-            <div><span>LIVE VISUAL</span><b>VOL 78%</b></div>
-            <svg className="music-landing-waveform" viewBox="0 0 300 70" role="img" aria-label="نوار صوتی متحرک">
-              {WAVE_BARS.map((amplitude, index) => (
-                <rect
-                  key={index}
-                  className="music-landing-wave-bar"
-                  x={index * 15}
-                  y={10 + (1 - amplitude) * 25}
-                  width="8"
-                  height={20 + amplitude * 35}
-                  rx="4"
-                  style={{ "--wave-delay": `${index * -83}ms`, "--wave-amplitude": amplitude } as CSSProperties}
-                />
-              ))}
-            </svg>
-          </div>
-
-          <div className="music-landing-volume-orbit" aria-hidden="true">
-            <span className="music-landing-orbit music-landing-orbit-one" />
-            <span className="music-landing-orbit music-landing-orbit-two" />
-            <span className="music-landing-orbit music-landing-orbit-three" />
-            <Volume2 size={20} />
+          <div className={featureStyles.actions}
+            onPointerEnter={() => setIsVisualPlaying(false)} onFocusCapture={() => setIsVisualPlaying(false)}>
+            <WatchTogetherLauncher
+              locale="fa"
+              placement="inline"
+              experience="listen"
+              preset={{ itemId: activeTrack.id, title: trackTitle, posterUrl: activeTrack.coverUrl }}
+            />
           </div>
 
           {total > 1 && <div className="music-landing-track-picker" aria-label="انتخاب قطعهٔ پیشنهادی">

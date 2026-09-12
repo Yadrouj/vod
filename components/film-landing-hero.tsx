@@ -10,6 +10,7 @@ import { getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
 import type { VodCard } from "@/lib/types";
 import type { TrendingTitle } from "@/lib/imdb-trending";
+import featureStyles from "./landing-feature-actions.module.css";
 
 export function FilmLandingHero({ items, locale }: { items: (VodCard & { popularity?: TrendingTitle["popularity"] })[]; locale: Locale }) {
   const t = getDictionary(locale);
@@ -71,20 +72,9 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
             <Link href="/browse?section=animation">{fa ? "انیمیشن" : "Animation"}</Link>
           </nav>
 
-          <div className="film-landing-actions film-landing-copy-actions">
-            <Link href={activeItem.linksCount > 0 ? `/watch/${activeItem.imdbCode}` : `/${activeItem.imdbCode}`} className="film-landing-primary"><Play size={17} fill="currentColor" /> {activeItem.linksCount > 0 ? t.common.playOnline : t.common.details}</Link>
-            <WatchTogetherLauncher
-              locale={locale}
-              placement="inline"
-              preset={{ itemId: activeItem.imdbCode, title: activeItem.title, posterUrl: activeItem.posterUrl ?? activeItem.backdropUrl }}
-            />
-            <Link href={`/${activeItem.imdbCode}`} className="film-landing-secondary film-landing-details-arrow" aria-label={t.common.details} title={t.common.details}>
-              <ChevronLeft size={20} aria-hidden="true" />
-            </Link>
-          </div>
         </div>
 
-        <aside className="film-landing-now-playing" aria-label={`Selected title: ${activeItem.title}`}>
+        <aside className={`film-landing-now-playing ${featureStyles.card}`} aria-label={`Selected title: ${activeItem.title}`}>
           <div className="film-landing-now-head">
             <span><Film size={14} /> {popularity ? `${chartLabel} · #${popularity.rank.toLocaleString(fa ? "fa-IR" : "en-US")}` : (fa ? "انتخاب امروز" : "FEATURED")}</span>
             <button type="button" className="film-landing-visual-toggle" onClick={() => setIsAutoPlaying((current) => !current)} aria-label={isAutoPlaying ? "Pause title rotation" : "Resume title rotation"}>
@@ -92,38 +82,27 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
             </button>
           </div>
 
-          <div className="film-landing-artwork">
+          <Link className={`film-landing-artwork ${featureStyles.artwork}`}
+            href={activeItem.linksCount > 0 ? `/watch/${activeItem.imdbCode}` : `/${activeItem.imdbCode}`}
+            aria-label={`${activeItem.linksCount > 0 ? t.common.playOnline : t.common.details} · ${displayTitle}`}
+            onPointerEnter={() => setIsAutoPlaying(false)} onFocus={() => setIsAutoPlaying(false)}>
             {posterUrl ? <img src={sizedImageUrl(posterUrl, 760) ?? posterUrl} alt="" decoding="async" fetchPriority="high" /> : <span className="film-landing-fallback-art"><Film size={52} /></span>}
             <span className="film-landing-artwork-shine" aria-hidden="true" />
+            <span className={featureStyles.playOverlay} aria-hidden="true"><span className={featureStyles.playIcon}>{activeItem.linksCount > 0 ? <Play size={28} fill="currentColor" /> : <Film size={28} />}</span></span>
             <em>{activeItem.type === "series" ? "SERIES" : "FILM"}</em>
-          </div>
+          </Link>
 
           <div className="film-landing-title-copy" dir="auto">
-            <strong>{displayTitle}</strong>
+            <Link className={featureStyles.titleLink} href={`/${activeItem.imdbCode}`} aria-label={`${t.common.details} · ${displayTitle}`}><strong>{displayTitle}</strong></Link>
             <span>{[activeItem.year, activeItem.imdbRating ? `IMDb ${activeItem.imdbRating.toFixed(1)}` : null].filter(Boolean).join(" • ")}</span>
           </div>
 
-          <div className="film-landing-card-actions" aria-label={fa ? "گزینه‌های تماشای این عنوان" : "Watch options for this title"}>
-            <span>{fa ? "تماشای این عنوان" : "Watch this title"}</span>
-            <div className="film-landing-actions">
-              <Link href={activeItem.linksCount > 0 ? `/watch/${activeItem.imdbCode}` : `/${activeItem.imdbCode}`} className="film-landing-primary"><Play size={17} fill="currentColor" /> {activeItem.linksCount > 0 ? t.common.playOnline : t.common.details}</Link>
-              <WatchTogetherLauncher
-                locale={locale}
-                placement="inline"
-                preset={{ itemId: activeItem.imdbCode, title: activeItem.title, posterUrl: activeItem.posterUrl ?? activeItem.backdropUrl }}
-              />
-              <Link href={`/${activeItem.imdbCode}`} className="film-landing-secondary film-landing-details-arrow" aria-label={t.common.details} title={t.common.details}>
-                <ChevronLeft size={20} aria-hidden="true" />
-                <small>{t.common.details}</small>
-              </Link>
-            </div>
-          </div>
-
-          <div className="film-landing-info-grid">
-            <span><b>{locale === "fa" ? "نوع" : "TYPE"}</b>{typeLabel(activeItem.type, locale)}</span>
-            <span><b>{locale === "fa" ? "ژانر" : "GENRES"}</b>{activeItem.genres.slice(0, 2).join(" / ") || "—"}</span>
-            <span><b>{locale === "fa" ? "منبع" : "SOURCES"}</b>{activeItem.linksCount.toLocaleString(locale)}</span>
-            <span><b>{locale === "fa" ? "وضعیت" : "STATUS"}</b>{locale === "fa" ? "در آرشیو" : "In archive"}</span>
+          <div className={featureStyles.actions} onPointerEnter={() => setIsAutoPlaying(false)} onFocusCapture={() => setIsAutoPlaying(false)}>
+            <WatchTogetherLauncher
+              locale={locale}
+              placement="inline"
+              preset={{ itemId: activeItem.imdbCode, title: displayTitle, posterUrl }}
+            />
           </div>
 
           {total > 1 && <div className="film-landing-picker" aria-label="Choose a featured title">

@@ -1,0 +1,59 @@
+/* The mobile hero has its own controls; these belong to the desktop card. */
+@media (min-width: 761px) {
+  .card { --feature-accent: #ebcf76; align-self: center; grid-template-columns: minmax(0, 1fr); }
+  .card > * { min-width: 0; }
+  .music { --feature-accent: #a5edc2; }
+  .artwork { display: block; width: 100%; }
+  .playOverlay {
+    position: absolute;
+    z-index: 3;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+  }
+  .playIcon {
+    display: grid;
+    place-items: center;
+    width: 62px;
+    height: 62px;
+    border: 1px solid #ffffff4d;
+    border-radius: 50% !important;
+    background: #101410b8;
+    color: var(--feature-accent);
+    box-shadow: 0 6px 24px #0005;
+    backdrop-filter: blur(10px);
+    transition: transform 160ms ease, background 160ms ease;
+  }
+  .artwork:is(:hover, :focus-visible) .playIcon { transform: scale(1.08); background: #101410e6; }
+  .actions > :global(.watch-together-inline) {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    margin: 0;
+    padding: 7px 12px;
+    border-radius: 12px !important;
+    font-size: 12px;
+    animation: none;
+    box-shadow: none;
+  }
+  .actions :global(.watch-together-launcher-icon) { width: 24px; height: 24px; flex-basis: 24px; }
+  .actions :global(.watch-together-mark) { width: 24px; height: 24px; }
+  .titleLink { display: block; min-width: 0; }
+  .card :is(:global(.film-landing-picker), :global(.music-landing-track-picker)) > div {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 43px));
+    flex: 1;
+    gap: 6px;
+  }
+  .card :is(:global(.film-landing-picker), :global(.music-landing-track-picker)) > div button {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+  .card :is(a, button):focus-visible { outline: 2px solid var(--feature-accent); outline-offset: 3px; }
+  .artwork:focus-visible { outline-offset: -3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .playIcon { transition: none; }
+}
