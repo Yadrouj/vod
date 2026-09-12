@@ -40,6 +40,34 @@ function imageFit(value: unknown): EpisodeImageFit | undefined {
   return value === "contain" || value === "cover" ? value : undefined;
 }
 
+/** A deterministic, distinct artwork URL for episodes without an upstream still. */
+export function episodeArtworkFallbackUrl(id: string, season: number, episode: number) {
+  return `/api/episode-art/${encodeURIComponent(id)}/${season}/${episode}`;
+}
+
+export function materializeEpisodeArtwork(id: string, episodes: EpisodeMetadata[]) {
+  const seen = new Set<string>();
+  const uniqueEpisodes: EpisodeMetadata[] = [];
+  const seenEpisodes = new Set<string>();
+  for (const episode of episodes) {
+    const episodeKey = `${episode.season}:${episode.episode}`;
+    if (seenEpisodes.has(episodeKey)) continue;
+    seenEpisodes.add(episodeKey);
+    uniqueEpisodes.push(episode);
+  }
+  return uniqueEpisodes.map((episode) => {
+    const original = episode.imageUrl && episode.imageSource !== "fallback" && !seen.has(episode.imageUrl) ? episode.imageUrl : null;
+    const imageUrl = original || episodeArtworkFallbackUrl(id, episode.season, episode.episode);
+    seen.add(imageUrl);
+    return {
+      ...episode,
+      imageUrl,
+      imageSource: original ? episode.imageSource || "tvmaze" : "fallback",
+      imageFit: episode.imageFit || "cover",
+    };
+  });
+}
+
 export function parseEpisodeMetadata(value: unknown): EpisodeMetadata[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap(row => {
@@ -108,22 +136,22 @@ export function createEpisodeMetadataLoader(root = process.cwd(), request: typeo
   }
   return async (id: string, season: number, options: EpisodeMetadataOptions = {}) => {
     if (!/^tt\d+$/.test(id)) return [];
+    void options;
     const present = async (episodes: EpisodeMetadata[]) => {
       const [customizations] = await Promise.all([readOverrides()]);
-      const fallbackImage = safeImageUrl(options.fallbackImage);
-      return episodes.filter(row => row.season === season).map(row => {
+      const customized = episodes.filter(row => row.season === season).map(row => {
         const customization = customizations[id]?.[`${row.season}:${row.episode}`] ?? customizations[id]?.[`S${String(row.season).padStart(2, "0")}E${String(row.episode).padStart(2, "0")}`];
         const customImage = safeImageUrl(customization?.imageUrl);
-        const imageUrl = customImage || row.imageUrl || fallbackImage || null;
         return {
           ...row,
-          imageUrl,
-          imageSource: customImage ? "custom" : row.imageUrl ? row.imageSource || "tvmaze" : fallbackImage ? "fallback" : null,
+          imageUrl: customImage || row.imageUrl || null,
+          imageSource: customImage ? "custom" : row.imageUrl ? row.imageSource || "tvmaze" : null,
           imageAlt: typeof customization?.imageAlt === "string" ? customization.imageAlt : row.imageAlt ?? null,
           imagePosition: typeof customization?.imagePosition === "string" ? customization.imagePosition : row.imagePosition ?? null,
           imageFit: imageFit(customization?.imageFit) || row.imageFit || "cover",
         };
       });
+      return materializeEpisodeArtwork(id, customized);
     };
     const cached = memory.get(id);
     if (cached && cached.expires > Date.now()) return present(cached.episodes);

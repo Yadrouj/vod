@@ -3,7 +3,7 @@ import { execFile } from "node:child_process";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
-import { parseEpisodeMetadata } from "../lib/episode-metadata.ts";
+import { materializeEpisodeArtwork, parseEpisodeMetadata } from "../lib/episode-metadata.ts";
 import { writeJsonAtomic } from "./atomic-json.mjs";
 import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 
@@ -16,6 +16,7 @@ const all = args.has("--all");
 const force = args.has("--force");
 const resume = args.has("--resume");
 const retryIncomplete = args.has("--retry-incomplete");
+const skipNetwork = args.has("--skip-network");
 const limit = all ? Number.POSITIVE_INFINITY : Math.max(1, numberArg("--limit", 50));
 const concurrency = Math.min(12, Math.max(1, numberArg("--concurrency", 4)));
 const timeoutMs = Math.min(30_000, Math.max(3_000, numberArg("--timeout-ms", 12_000)));
@@ -27,6 +28,13 @@ function numberArg(name, fallback) {
   const raw = process.argv.find((value) => value.startsWith(`${name}=`))?.slice(name.length + 1);
   const value = Number(raw);
   return Number.isFinite(value) ? Math.floor(value) : fallback;
+}
+
+function logProgress(payload, error = false) {
+  const current = Number(String(payload.progress ?? "").split("/")[0]);
+  if (!error && current > 5 && current % 50 !== 0) return;
+  if (error && current > 5 && current % 25 !== 0) return;
+  (error ? console.error : console.log)(JSON.stringify(payload));
 }
 
 function normalizeType(value) {
@@ -64,17 +72,24 @@ function validSnapshot(snapshot) {
 
 function imageStats(episodes) {
   const images = episodes.filter((episode) => typeof episode.imageUrl === "string" && episode.imageUrl.length > 0);
+  const distinctImages = new Set(images.map((episode) => episode.imageUrl)).size;
   return {
     episodes: episodes.length,
     images: images.length,
     missingImages: episodes.length - images.length,
-    distinctImages: new Set(images.map((episode) => episode.imageUrl)).size,
+    distinctImages,
+    duplicateImages: Math.max(0, images.length - distinctImages),
+    fallbackImages: episodes.filter((episode) => episode.imageSource === "fallback").length,
   };
 }
 
 function resultFromSnapshot(series, snapshot, status = "complete") {
   const stats = imageStats(snapshot.episodes);
-  return { ...series, status: stats.missingImages ? "partial" : status, ...stats, checkedAt: snapshot.checkedAt ?? null, sourceUrl: snapshot.sourceUrl ?? "https://api.tvmaze.com" };
+  return { ...series, status: stats.missingImages || stats.duplicateImages ? "partial" : status, ...stats, checkedAt: snapshot.checkedAt ?? null, sourceUrl: snapshot.sourceUrl ?? "https://api.tvmaze.com" };
+}
+
+function artworkChanged(before, after) {
+  return before.length !== after.length || after.some((episode, index) => episode.imageUrl !== before[index]?.imageUrl || episode.imageSource !== before[index]?.imageSource);
 }
 
 async function powershellJson(url) {
@@ -94,7 +109,6 @@ async function powershellJson(url) {
 }
 
 async function requestJson(url) {
-  if (process.platform === "win32") return powershellJson(url);
   try {
     const response = await fetch(url, {
       headers: { accept: "application/json", "user-agent": "SarvNema episode-artwork-auditor/1.0" },
@@ -102,7 +116,10 @@ async function requestJson(url) {
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
-  } catch (error) { throw error; }
+  } catch (error) {
+    if (process.platform === "win32") return powershellJson(url);
+    throw error;
+  }
 }
 
 async function json(url) {
@@ -138,7 +155,7 @@ async function main() {
   const results = series.map((item, index) => {
     const base = compactSeries(item, index + 1);
     const prior = previous.get(base.imdbCode);
-    return prior ? { ...prior, ...base } : { ...base, status: "pending", episodes: 0, images: 0, missingImages: 0, distinctImages: 0, checkedAt: null, sourceUrl: null };
+    return prior ? { ...prior, ...base } : { ...base, status: "pending", episodes: 0, images: 0, missingImages: 0, distinctImages: 0, duplicateImages: 0, fallbackImages: 0, checkedAt: null, sourceUrl: null };
   });
   const selected = results.slice(0, limit);
   const work = selected
@@ -160,6 +177,7 @@ async function main() {
       unsupported: results.filter((item) => item.status === "unsupported").length,
       pending: results.filter((item) => item.status === "pending").length,
       missingImages: results.reduce((total, item) => total + (item.missingImages ?? 0), 0),
+      duplicateImages: results.reduce((total, item) => total + (item.duplicateImages ?? 0), 0),
     },
     items: results,
   });
@@ -179,9 +197,9 @@ async function main() {
       const workIndex = cursor++;
       const { item, index } = work[workIndex];
       if (!/^tt\d+$/.test(item.imdbCode)) {
-        results[index] = { ...item, status: "unsupported", episodes: 0, images: 0, missingImages: 0, distinctImages: 0, checkedAt: now(), sourceUrl: null, error: "No IMDb ID; TVMaze lookup requires an IMDb ID" };
+        results[index] = { ...item, status: "unsupported", episodes: 0, images: 0, missingImages: 0, distinctImages: 0, duplicateImages: 0, fallbackImages: 0, checkedAt: now(), sourceUrl: null, error: "No IMDb ID; TVMaze lookup requires an IMDb ID" };
         completed += 1;
-        console.log(JSON.stringify({ progress: `${completed}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "unsupported" }));
+        logProgress({ progress: `${completed}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "unsupported" });
         scheduleReportWrite();
         continue;
       }
@@ -190,22 +208,31 @@ async function main() {
       const age = saved?.checkedAt ? Date.now() - Date.parse(saved.checkedAt) : Number.POSITIVE_INFINITY;
       const priorStatus = previous.get(item.imdbCode)?.status;
       const shouldRetry = retryIncomplete && (priorStatus === "partial" || priorStatus === "unavailable");
-      if (!force && !shouldRetry && validSnapshot(saved) && (resume || age < 7 * 86400_000)) {
-        results[index] = resultFromSnapshot(item, saved);
+      if (skipNetwork && !validSnapshot(saved)) {
+        results[index] = { ...item, status: "unavailable", episodes: 0, images: 0, missingImages: 0, distinctImages: 0, duplicateImages: 0, fallbackImages: 0, checkedAt: now(), sourceUrl: null, error: "Network lookup skipped; episode artwork fallback is generated from catalog links" };
         completed += 1;
-        console.log(JSON.stringify({ progress: `${completed}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "cached", ...imageStats(saved.episodes) }));
+        logProgress({ progress: `${completed}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "unavailable" });
+        scheduleReportWrite();
+        continue;
+      }
+      if (!force && !shouldRetry && validSnapshot(saved) && (resume || age < 7 * 86400_000)) {
+        const normalized = { ...saved, episodes: materializeEpisodeArtwork(item.imdbCode, saved.episodes) };
+        if (artworkChanged(saved.episodes, normalized.episodes)) await writeJsonAtomic(file, normalized);
+        results[index] = resultFromSnapshot(item, normalized);
+        completed += 1;
+        logProgress({ progress: `${completed}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "cached", ...imageStats(normalized.episodes) });
         scheduleReportWrite();
         continue;
       }
       try {
         const fetched = await fetchEpisodes(item);
-        const snapshot = { checkedAt: now(), sourceUrl: fetched.sourceUrl, imdbCode: item.imdbCode, seriesTitle: item.title, imdbRating: item.imdbRating, imdbVotes: item.imdbVotes, episodes: fetched.episodes };
+        const snapshot = { checkedAt: now(), sourceUrl: fetched.sourceUrl, imdbCode: item.imdbCode, seriesTitle: item.title, imdbRating: item.imdbRating, imdbVotes: item.imdbVotes, episodes: materializeEpisodeArtwork(item.imdbCode, fetched.episodes) };
         await writeJsonAtomic(file, snapshot);
         results[index] = resultFromSnapshot(item, snapshot);
-        console.log(JSON.stringify({ progress: `${completed + 1}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: results[index].status, ...imageStats(fetched.episodes) }));
+        logProgress({ progress: `${completed + 1}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: results[index].status, ...imageStats(snapshot.episodes) });
       } catch (error) {
-        results[index] = { ...item, status: "unavailable", episodes: 0, images: 0, missingImages: 0, distinctImages: 0, checkedAt: now(), sourceUrl: null, error: error instanceof Error ? error.message : String(error) };
-        console.error(JSON.stringify({ progress: `${completed + 1}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "unavailable", error: results[index].error }));
+        results[index] = { ...item, status: "unavailable", episodes: 0, images: 0, missingImages: 0, distinctImages: 0, duplicateImages: 0, fallbackImages: 0, checkedAt: now(), sourceUrl: null, error: error instanceof Error ? error.message : String(error) };
+        logProgress({ progress: `${completed + 1}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "unavailable", error: results[index].error }, true);
       }
       completed += 1;
       scheduleReportWrite();

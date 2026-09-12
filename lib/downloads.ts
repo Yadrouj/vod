@@ -1,5 +1,5 @@
 import type { VodItem, VodLink, VodSubtitleLink } from "./types";
-import { loadEpisodeMetadata, type EpisodeImageFit, type EpisodeImageSource } from "./episode-metadata";
+import { episodeArtworkFallbackUrl, loadEpisodeMetadata, type EpisodeImageFit, type EpisodeImageSource } from "./episode-metadata";
 
 export type DownloadSource = {
   label: string;
@@ -152,8 +152,8 @@ export async function expandSeasonDownloads(item: VodItem, season: number): Prom
         code: file.episode ? `S${pad(season)}E${pad(file.episode)}` : `S${pad(season)}`,
         title: meta?.title ?? (file.episode ? `Episode ${file.episode}` : "Season pack"),
         summary: meta?.summary ?? null,
-        imageUrl: meta?.imageUrl ?? null,
-        imageSource: meta?.imageSource,
+        imageUrl: meta?.imageUrl ?? episodeArtworkFallbackUrl(item.imdbCode, season, file.episode ?? 0),
+        imageSource: meta?.imageSource ?? "fallback",
         imageAlt: meta?.imageAlt ?? null,
         imagePosition: meta?.imagePosition ?? null,
         imageFit: meta?.imageFit,
