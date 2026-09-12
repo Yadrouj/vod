@@ -71,7 +71,7 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
             <Link href="/browse?section=animation">{fa ? "انیمیشن" : "Animation"}</Link>
           </nav>
 
-          <div className="film-landing-actions">
+          <div className="film-landing-actions film-landing-copy-actions">
             <Link href={activeItem.linksCount > 0 ? `/watch/${activeItem.imdbCode}` : `/${activeItem.imdbCode}`} className="film-landing-primary"><Play size={17} fill="currentColor" /> {activeItem.linksCount > 0 ? t.common.playOnline : t.common.details}</Link>
             <WatchTogetherLauncher
               locale={locale}
@@ -101,6 +101,22 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
           <div className="film-landing-title-copy" dir="auto">
             <strong>{displayTitle}</strong>
             <span>{[activeItem.year, activeItem.imdbRating ? `IMDb ${activeItem.imdbRating.toFixed(1)}` : null].filter(Boolean).join(" • ")}</span>
+          </div>
+
+          <div className="film-landing-card-actions" aria-label={fa ? "گزینه‌های تماشای این عنوان" : "Watch options for this title"}>
+            <span>{fa ? "تماشای این عنوان" : "Watch this title"}</span>
+            <div className="film-landing-actions">
+              <Link href={activeItem.linksCount > 0 ? `/watch/${activeItem.imdbCode}` : `/${activeItem.imdbCode}`} className="film-landing-primary"><Play size={17} fill="currentColor" /> {activeItem.linksCount > 0 ? t.common.playOnline : t.common.details}</Link>
+              <WatchTogetherLauncher
+                locale={locale}
+                placement="inline"
+                preset={{ itemId: activeItem.imdbCode, title: activeItem.title, posterUrl: activeItem.posterUrl ?? activeItem.backdropUrl }}
+              />
+              <Link href={`/${activeItem.imdbCode}`} className="film-landing-secondary film-landing-details-arrow" aria-label={t.common.details} title={t.common.details}>
+                <ChevronLeft size={20} aria-hidden="true" />
+                <small>{t.common.details}</small>
+              </Link>
+            </div>
           </div>
 
           <div className="film-landing-info-grid">
