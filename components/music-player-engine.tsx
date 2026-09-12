@@ -4,6 +4,7 @@ import { Captions, Download, Heart, ListMusic, Pause, Play, Repeat2, Shuffle, Sk
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type RefObject } from "react";
 import type { MusicSource, MusicTrack } from "@/lib/music-types";
 import { MusicLyrics } from "@/components/music-lyrics";
+import { downloadGateUrl } from "@/lib/download-gate";
 
 const PLAYBACK_KEY = "sarvnema-music-playback";
 const LIKES_KEY = "sarvnema-music-likes";
@@ -287,7 +288,7 @@ export function MusicPlayerEngine({
         <div className={`music-player-art ${playing ? "is-spinning" : ""}`} style={activeTrack.coverUrl ? { backgroundImage: `url(${activeTrack.coverUrl})` } : undefined} />
         <div className="music-player-now" dir="auto"><span>{activeTrack.kind === "video" ? "موزیک‌ویدیو" : "در حال پخش"}</span><strong>{activeTrack.persianTitle || activeTrack.title}</strong><small>{activeTrack.artists.map((artist) => artist.name).join(" · ")}</small><button className={`music-lyrics-toggle ${lyricsOpen ? "is-active" : ""}`} type="button" onClick={() => setLyricsOpen((value) => !value)}><Captions size={14} /> متن آهنگ</button></div>
         <button className={`music-icon-button ${liked ? "is-active" : ""}`} type="button" onClick={toggleLiked} aria-label={liked ? "Remove from liked songs" : "Add to liked songs"}><Heart size={18} fill={liked ? "currentColor" : "none"} /></button>
-        <a className="music-download" href={activeTrack.sources.find((item) => item.kind === "download")?.url ?? source.url} target="_blank" rel="noreferrer"><Download size={16} /> دانلود</a>
+        {(() => { const downloadSource = activeTrack.sources.find((item) => item.kind === "download") ?? source; return <a className="music-download" href={downloadGateUrl({ url: downloadSource.url, title: activeTrack.title, quality: downloadSource.quality || downloadSource.label })} target="_blank" rel="noreferrer"><Download size={16} /> دانلود</a>; })()}
       </div>
 
       {sourceIssue && <p className="music-player-source-issue" role="status">{sourceIssue}</p>}

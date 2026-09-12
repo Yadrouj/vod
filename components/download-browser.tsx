@@ -150,7 +150,7 @@ function FileRow({ file, itemId, title, posterUrl, canPlay, locale }: { file: Do
     </div>
     <div className="file-actions">
       {canPlay && <Link className="file-play" href={`/watch/${itemId}?resume=${encodeURIComponent(file.url)}`} aria-label={`${fa ? "پخش" : "Play"} · ${title} · ${identity}`}><Play size={16} fill="currentColor" aria-hidden="true" />{fa ? "پخش" : "Play"}</Link>}
-      <DownloadButton href={file.url} title={title} itemId={itemId} posterUrl={posterUrl} label={`${fa ? "دانلود" : "Download"}${file.quality ? ` · ${file.quality}` : ""}`} />
+      <DownloadButton href={file.url} title={title} quality={file.quality ?? undefined} itemId={itemId} posterUrl={posterUrl} label={`${fa ? "دانلود" : "Download"}${file.quality ? ` · ${file.quality}` : ""}`} />
     </div>
   </div>;
 }

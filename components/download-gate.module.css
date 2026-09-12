@@ -1,0 +1,12 @@
+.page { min-height: 100svh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at 50% 10%, #3a2b0e, #0c0d0c 58%); color: #f7f1df; font-family: inherit; }
+.card { width: min(100%, 560px); padding: clamp(28px, 7vw, 58px); text-align: center; border: 1px solid rgba(245, 197, 66, .34); border-radius: 28px; background: rgba(19, 20, 17, .92); box-shadow: 0 22px 80px rgba(0,0,0,.45); }
+.emoji { display: grid; place-items: center; width: 82px; height: 82px; margin: 0 auto 18px; border-radius: 50%; background: #f5c542; font-size: 42px; animation: bob 1.7s ease-in-out infinite; }
+.eyebrow { margin: 0 0 8px; color: #f5c542; font-size: 12px; font-weight: 800; }
+.card h1 { margin: 0; font-size: clamp(22px, 5vw, 34px); line-height: 1.35; }
+.message { margin: 14px auto 24px; max-width: 430px; color: #d5d0c4; line-height: 1.9; }
+.media { display: grid; gap: 8px; padding: 16px; border-radius: 16px; background: rgba(245,197,66,.09); border: 1px solid rgba(245,197,66,.16); }
+.media strong { font-size: 17px; }.media span { color: #f5c542; font-size: 13px; }
+.countdown { display: grid; gap: 4px; margin: 26px 0 12px; }.countdown span { color: #f5c542; font-size: 56px; font-weight: 900; line-height: 1; }.countdown small { color: #aba79c; }
+.progress { height: 7px; overflow: hidden; border-radius: 99px; background: #2b2b25; }.progress span { display: block; height: 100%; border-radius: inherit; background: #f5c542; transition: width .9s linear; }
+.fallback { display: inline-block; margin-top: 24px; color: #d9d1b8; font-size: 13px; text-decoration: underline; text-underline-offset: 4px; }
+@keyframes bob { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-7px) rotate(3deg); } }

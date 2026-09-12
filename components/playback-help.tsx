@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { isDonyayeSerial, playbackFailureText, regionalPlaybackHint } from "@/lib/playback-help";
 import type { VodLink } from "@/lib/types";
+import { downloadGateUrl } from "@/lib/download-gate";
 
 export function PlaybackHelp({ link, code, fa, itemId, onRetry, onChoose }: { link: VodLink; code: number; fa: boolean; itemId?: string; onRetry: () => void; onChoose: () => void }) {
   const [connection, setConnection] = useState<{ ip: string | null; country: string | null } | null>(null);
@@ -27,7 +28,7 @@ export function PlaybackHelp({ link, code, fa, itemId, onRetry, onChoose }: { li
       <button type="button" onClick={onRetry}>{fa ? "تلاش دوباره" : "Retry"}</button>
       <button type="button" onClick={onChoose}>{fa ? "تغییر کیفیت / منبع" : "Change quality / source"}</button>
       {itemId && <Link href={`/${itemId}#downloads`}>{fa ? "همه لینک‌های دانلود" : "All download links"}</Link>}
-      <a href={link.url} target="_blank" rel="noreferrer">{fa ? "باز کردن فایل اصلی" : "Open original file"}</a>
+      <a href={downloadGateUrl({ url: link.url, title: link.label || (fa ? "فایل اصلی" : "Original file"), quality: link.quality ?? undefined })} target="_blank" rel="noreferrer">{fa ? "باز کردن فایل اصلی" : "Open original file"}</a>
       <button type="button" onClick={checkConnection} disabled={loading}>{loading ? fa ? "در حال بررسی…" : "Checking…" : fa ? "نمایش IP و کشور اتصال" : "Show connection IP & country"}</button>
     </div>
     {connection && <p>{fa ? "IP اتصال:" : "Connection IP:"} <bdi>{connection.ip ?? (fa ? "نامشخص" : "Unknown")}</bdi> · {fa ? "کشور اتصال:" : "Connection country:"} {country ?? (fa ? "نامشخص" : "Unknown")}<small>{fa ? "موقعیت تقریبی اتصال است، نه موقعیت دقیق شما. اطلاعات فقط از پراکسی مورد اعتماد سرور خوانده می‌شود و برای سرویس ثالث ارسال نمی‌شود." : "Approximate connection location, not your physical location. Read only from the server’s trusted proxy; not sent to third parties."}</small></p>}

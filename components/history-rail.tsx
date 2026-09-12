@@ -6,6 +6,7 @@ import { MusicHorizontalRail } from "./music-horizontal-rail";
 import { historyEpisode, safeMediaUrl, type DownloadEntry, type ProgressEntry } from "@/lib/media-history";
 import type { HistoryMetadata } from "@/lib/history-metadata";
 import { sizedImageUrl } from "@/lib/image-url";
+import { downloadGateUrl } from "@/lib/download-gate";
 
 export function HistoryRail({ items, mode }: { items: (ProgressEntry | DownloadEntry)[]; mode: "watch" | "download" }) {
   const [metadata, setMetadata] = useState<Record<string, HistoryMetadata>>({});
@@ -34,7 +35,7 @@ export function HistoryRail({ items, mode }: { items: (ProgressEntry | DownloadE
         const episode = details?.type === "movie" ? null : historyEpisode(item);
         const title = details?.title || item.title.replace(/\s*·\s*S\d+E\d+.*$/i, "");
         const time = "time" in item ? Math.floor(item.time) : 0;
-        const href = mode === "watch" && id ? `/watch/${encodeURIComponent(id)}?resume=${encodeURIComponent(key)}` : key;
+        const href = mode === "watch" && id ? `/watch/${encodeURIComponent(id)}?resume=${encodeURIComponent(key)}` : mode === "download" ? downloadGateUrl({ url: key, title, quality: "label" in item ? item.label : undefined }) : key;
         return <Link key={key} href={href} prefetch={false} target={mode === "download" ? "_blank" : undefined} rel={mode === "download" ? "noreferrer" : undefined} className="personal-history-card" dir="rtl">
           <Film className="personal-history-fallback" aria-hidden="true" />
           {image && (image.startsWith("/") && !image.startsWith("//") || safeMediaUrl(image)) && <img src={sizedImageUrl(image, 500) ?? image} alt="" loading="lazy" decoding="async" onError={(event) => { event.currentTarget.style.opacity = "0"; }} />}
