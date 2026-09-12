@@ -5,6 +5,12 @@ const { chromium } = await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).h
 const origin = process.env.LOAD_BASE_URL || "http://127.0.0.1:3006";
 assert.ok(["localhost", "127.0.0.1"].includes(new URL(origin).hostname));
 const collections = JSON.parse(await readFile("public/data/music-mood-playlists.json", "utf8"));
+const tracks = new Map(JSON.parse(await readFile("public/data/music-mood-tracks.json", "utf8")).tracks.map(track => [track.id, track]));
+const audioCollection = collections.playlists.find(playlist => {
+  const first = playlist.trackIds.map(id => tracks.get(id)).find(Boolean);
+  return first?.kind === "track" && first.sources.length;
+});
+assert.ok(audioCollection, "A collection with an audio track is required for the lyrics test");
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 try {
   const page = await browser.newPage({ viewport: { width:1440, height:1000 } });
@@ -19,10 +25,11 @@ try {
     const start = range ? Number(range[1]) : 0, end = range?.[2] ? Math.min(Number(range[2]),wav.length-1) : wav.length-1;
     return route.fulfill({ status: range ? 206 : 200, contentType:"audio/wav", headers:{"Accept-Ranges":"bytes", ...(range ? {"Content-Range":`bytes ${start}-${end}/${wav.length}`} : {})}, body:wav.subarray(start,end+1) });
   });
-  await page.goto(`${origin}/music/collections/${collections.playlists[0].id}`,{waitUntil:"domcontentloaded",timeout:90000});
+  await page.goto(`${origin}/music/collections/${audioCollection.id}`,{waitUntil:"domcontentloaded",timeout:90000});
+  await page.locator("[data-music-inline] .music-play-toggle").waitFor();
   await page.locator(".artist-track-list button").first().click();
-  const audio = page.locator("[data-music-dock] audio");
-  await page.waitForFunction(()=>document.querySelector("[data-music-dock] audio")?.currentTime>.2).catch(async error=>{console.log({errors,audio:await audio.evaluate(el=>({paused:el.paused,ready:el.readyState,error:el.error?.message,src:el.currentSrc,duration:el.duration})).catch(()=>null)});throw error;});
+  const audio = page.locator("[data-music-player-host] :is(audio,video)");
+  await page.waitForFunction(()=>document.querySelector("[data-music-player-host] :is(audio,video)")?.currentTime>.2).catch(async error=>{console.log({errors,audio:await audio.evaluate(el=>({paused:el.paused,ready:el.readyState,error:el.error?.message,src:el.currentSrc,duration:el.duration})).catch(()=>null)});throw error;});
   await audio.evaluate(el=>el.dataset.instance="persistent");
   await page.getByRole("button",{name:"نمای تمام‌صفحهٔ موسیقی و متن"}).click();
   await page.waitForFunction(()=>document.querySelector("[data-music-dock]")?.matches(":modal"));
@@ -31,7 +38,7 @@ try {
   const file = page.getByLabel("افزودن فایل متن آهنگ");
   await file.setInputFiles({name:"original-fixture.lrc",mimeType:"text/plain",buffer:Buffer.from("[00:00.00]First original fixture\n[00:10.00]Second original fixture\n[00:30.00]Third original fixture")});
   await page.locator(".music-lyrics-lines button").filter({hasText:"Second original fixture"}).click();
-  await page.waitForFunction(()=>{const el=document.querySelector("[data-music-dock] audio");return el&&el.currentTime>=10&&el.currentTime<14;},{},{timeout:5000}).catch(async error=>{console.log(await audio.evaluate(el=>({time:el.currentTime,duration:el.duration,paused:el.paused,ready:el.readyState,seekable:Array.from({length:el.seekable.length},(_,i)=>[el.seekable.start(i),el.seekable.end(i)])})));throw error;});
+  await page.waitForFunction(()=>{const el=document.querySelector("[data-music-player-host] :is(audio,video)");return el&&el.currentTime>=10&&el.currentTime<14;},{},{timeout:5000}).catch(async error=>{console.log(await audio.evaluate(el=>({time:el.currentTime,duration:el.duration,paused:el.paused,ready:el.readyState,seekable:Array.from({length:el.seekable.length},(_,i)=>[el.seekable.start(i),el.seekable.end(i)])})));throw error;});
   assert.equal(await page.locator(".music-lyrics-lines [aria-current=true]").innerText(),"Second original fixture");
   assert.ok((await page.locator(".music-lyrics-lines").boundingBox()).height>=200,"lyrics must have a visible reading area");
   await page.screenshot({path:".media-cache/immersive-music-desktop.png"});
@@ -49,11 +56,12 @@ try {
   await page.keyboard.press("Escape");
   await page.waitForFunction(()=>!document.querySelector("[data-music-dock]")?.matches(":modal"));
   assert.equal(await audio.evaluate(el=>el.paused),false);
-  const mini = await page.locator("[data-music-dock]").boundingBox();
-  const nav = await page.locator(".app-mobile-nav").boundingBox();
-  assert.ok(mini.y + mini.height <= nav.y - 5, "Mini player must clear the floating navigation and raised room action");
+  assert.ok(await page.locator("[data-music-inline]").isVisible());
   await page.locator('a[href="/music/collections"]').first().click();
   await page.waitForURL("**/music/collections");
+  const mini = await page.locator("[data-music-dock]").boundingBox();
+  const nav = await page.locator(".app-mobile-nav").boundingBox();
+  assert.ok(mini.y + mini.height <= nav.y - 5, "Mini player must clear the mobile navigation");
   assert.equal(await audio.getAttribute("data-instance"),"persistent");
   await page.getByRole("button",{name:"بستن و قطع موسیقی"}).click();
   assert.equal(await audio.count(),0);

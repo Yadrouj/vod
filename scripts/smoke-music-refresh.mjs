@@ -24,22 +24,26 @@ try {
   await page.locator(".artist-track-list button").first().waitFor();
   assert.ok(await page.locator(".artist-track-list li").count() <= 50);
   await page.screenshot({ path: ".media-cache/artist-redesign.png" });
+  await page.locator("[data-music-inline] .music-play-toggle").waitFor();
   await page.locator(".artist-track-list button").first().click();
-  const audio = page.locator("[data-music-dock] audio");
+  const audio = page.locator("[data-music-player-host] audio");
   await audio.waitFor({ state: "attached" });
-  await page.waitForFunction(() => document.querySelector("[data-music-dock] audio")?.currentTime > .2);
+  await page.waitForFunction(() => document.querySelector("[data-music-player-host] audio")?.currentTime > .2).catch(async error => {
+    console.log({ errors, media: await page.locator('[data-music-player-host] audio, [data-music-player-host] video').evaluateAll(nodes => nodes.map(el => ({ tag: el.tagName, paused: el.paused, time: el.currentTime, ready: el.readyState, error: el.error?.message, src: el.currentSrc }))), status: await page.locator('[data-music-player-host]').innerText() });
+    throw error;
+  });
   await audio.evaluate(el => { el.dataset.instance = "same-media"; });
   await page.locator(".music-back").click();
-  await page.waitForURL("**/music");
+  await page.waitForURL("**/music", { waitUntil: "domcontentloaded" });
   assert.equal(await audio.getAttribute("data-instance"), "same-media");
   assert.equal(await audio.evaluate(el => el.paused), false);
   const firstSource = await audio.getAttribute("src");
   await audio.evaluate(el => el.dispatchEvent(new Event("ended")));
   await page.waitForFunction(previous => {
-    const el = document.querySelector("[data-music-dock] audio");
+    const el = document.querySelector("[data-music-player-host] audio");
     return el && el.getAttribute("src") !== previous && !el.paused;
   }, firstSource);
-  await page.goBack();
+  await page.goBack({ waitUntil: "domcontentloaded" });
   await page.locator(".artist-track-list button").first().waitFor();
   assert.equal(await audio.getAttribute("data-instance"), "same-media");
   assert.equal(await audio.evaluate(el => el.paused), false);
@@ -47,17 +51,29 @@ try {
     await page.setViewportSize({ width, height: 850 });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `artist overflow at ${width}`);
   }
+  assert.ok(await page.locator("[data-music-inline]").isVisible());
+  await page.locator(".music-back").click();
+  await page.waitForURL("**/music", { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: "بزرگ کردن پلیر", exact: true }).click();
   await page.getByRole("button", { name: "کوچک کردن پلیر", exact: true }).click();
   await page.screenshot({ path: ".media-cache/music-dock-mobile.png" });
   await page.getByRole("button", { name: "بستن و قطع موسیقی" }).click();
   assert.equal(await audio.count(), 0);
-  await page.goto(origin + "/music");
-  const search = page.getByRole("combobox").first();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(origin + "/music", { waitUntil: "domcontentloaded" });
+  // The SSR input is visible before hydration; wait for React's input handler.
+  await page.waitForFunction(() => {
+    const input = document.querySelector('.music-landing-search input[role="combobox"]');
+    return input && Object.keys(input).some(key => key.startsWith('__reactProps$') && typeof input[key]?.onChange === 'function');
+  });
+  const search = page.locator('.music-landing-search input[role="combobox"]');
+  await search.click();
   await search.fill(artist.name);
   await page.locator(".suggest-type-heading").filter({ hasText: "خواننده‌ها" }).waitFor();
   await page.locator(".suggest-type-heading").filter({ hasText: "آثار" }).waitFor();
   assert.ok((await page.locator('.suggest-item').first().getAttribute('href')).startsWith('/music/artists/'));
   await search.press("Escape");
+  await page.setViewportSize({ width: 390, height: 850 });
   await page.evaluate(() => scrollTo(0, 0));
   await page.screenshot({ path: ".media-cache/music-home-mobile.png" });
   assert.deepEqual(errors, []);

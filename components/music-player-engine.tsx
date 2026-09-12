@@ -4,6 +4,9 @@ import { Captions, Download, Heart, ListMusic, Pause, Play, Repeat2, Shuffle, Sk
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type RefObject } from "react";
 import type { MusicSource, MusicTrack } from "@/lib/music-types";
 import { MusicLyrics } from "@/components/music-lyrics";
+import Link from "next/link";
+import { WatchTogetherLauncher } from "./watch-together-launcher";
+import { musicPartyMedia } from "@/lib/watch-party-music";
 import { downloadGateUrl } from "@/lib/download-gate";
 
 const PLAYBACK_KEY = "sarvnema-music-playback";
@@ -18,6 +21,7 @@ export function MusicPlayerEngine({
   playRequest = 0,
   lyricsAutoOpen = false,
   immersive = false,
+  inline = false,
 }: {
   track: MusicTrack;
   queue?: MusicTrack[];
@@ -26,6 +30,7 @@ export function MusicPlayerEngine({
   playRequest?: number;
   lyricsAutoOpen?: boolean;
   immersive?: boolean;
+  inline?: boolean;
 }) {
   const media = useRef<HTMLAudioElement | HTMLVideoElement>(null);
   const autoplayTrackId = useRef<string | null>(null);
@@ -286,7 +291,7 @@ export function MusicPlayerEngine({
 
       <div className="music-player-shell">
         <div className={`music-player-art ${playing ? "is-spinning" : ""}`} style={activeTrack.coverUrl ? { backgroundImage: `url(${activeTrack.coverUrl})` } : undefined} />
-        <div className="music-player-now" dir="auto"><span>{activeTrack.kind === "video" ? "موزیک‌ویدیو" : "در حال پخش"}</span><strong>{activeTrack.persianTitle || activeTrack.title}</strong><small>{activeTrack.artists.map((artist) => artist.name).join(" · ")}</small><button className={`music-lyrics-toggle ${lyricsOpen ? "is-active" : ""}`} type="button" onClick={() => setLyricsOpen((value) => !value)}><Captions size={14} /> متن آهنگ</button></div>
+        <div className="music-player-now" dir="auto"><span>{activeTrack.kind === "video" ? "موزیک‌ویدیو" : playing ? "در حال پخش" : "آهنگ"}</span><strong>{activeTrack.persianTitle || activeTrack.title}</strong><small>{activeTrack.artists.map((artist, index) => <span key={artist.slug}>{index > 0 && " · "}<Link href={`/music/artists/${encodeURIComponent(artist.slug)}`}>{artist.name}</Link></span>)}</small><button className={`music-lyrics-toggle ${lyricsOpen ? "is-active" : ""}`} type="button" onClick={() => setLyricsOpen((value) => !value)}><Captions size={14} /> متن آهنگ</button></div>
         <button className={`music-icon-button ${liked ? "is-active" : ""}`} type="button" onClick={toggleLiked} aria-label={liked ? "Remove from liked songs" : "Add to liked songs"}><Heart size={18} fill={liked ? "currentColor" : "none"} /></button>
         {(() => { const downloadSource = activeTrack.sources.find((item) => item.kind === "download") ?? source; return <a className="music-download" href={downloadGateUrl({ url: downloadSource.url, title: activeTrack.title, quality: downloadSource.quality || downloadSource.label })} target="_blank" rel="noreferrer"><Download size={16} /> دانلود</a>; })()}
       </div>
@@ -301,6 +306,7 @@ export function MusicPlayerEngine({
         <button className="music-play-toggle" type="button" onClick={togglePlayback} aria-label={playing ? "Pause" : "Play"}>{playing ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}</button>
         <button className="music-icon-button" type="button" onClick={() => next()} aria-label="Next"><SkipForward size={20} fill="currentColor" /></button>
         <button className={`music-icon-button ${repeat !== "off" ? "is-active" : ""}`} type="button" onClick={() => setRepeat((value) => value === "off" ? "all" : value === "all" ? "one" : "off")} aria-label={`Repeat ${repeat}`}><Repeat2 size={17} />{repeat === "one" && <small>1</small>}</button>
+        {inline && (() => { const partyMedia = musicPartyMedia(activeTrack); return partyMedia && <div className="music-player-together"><WatchTogetherLauncher locale="fa" placement="inline" experience="listen" media={partyMedia} /></div>; })()}
       </div>
 
       <div className="music-player-controls">
