@@ -49,7 +49,7 @@ services:
       MAINTENANCE_IDLE_START_HOUR: ${MAINTENANCE_IDLE_START_HOUR:-3}
       MAINTENANCE_IDLE_END_HOUR: ${MAINTENANCE_IDLE_END_HOUR:-7}
       MAINTENANCE_POLL_MS: ${MAINTENANCE_POLL_MS:-900000}
-      MAINTENANCE_READY_URL: http://app:3000/readyz
+      MAINTENANCE_READY_URL: http://vod-app:3000/readyz
       MAINTENANCE_MAX_RECENT_REQUESTS: ${MAINTENANCE_MAX_RECENT_REQUESTS:-12}
       MAINTENANCE_MAX_ACTIVE_ROOMS: ${MAINTENANCE_MAX_ACTIVE_ROOMS:-1}
       MAINTENANCE_MAX_MEMORY_MB: ${MAINTENANCE_MAX_MEMORY_MB:-1350}
@@ -83,6 +83,32 @@ services:
       - ./public/data:/app/public/data
       - ./data:/app/data
       - vod_imdb_cache:/app/.media-cache
+    networks:
+      - edge
+
+  telegram-bot:
+    image: vod-app
+    container_name: vod-telegram-bot
+    restart: unless-stopped
+    depends_on:
+      - app
+    env_file:
+      # Supplies BOT_API_TOKEN (Telegram token, also used as the site API token).
+      # required:false so `up` still works before the token is configured.
+      - path: .env.local
+        required: false
+    environment:
+      NODE_ENV: production
+      # `app` is ambiguous on the shared external network; address the container.
+      BOT_SITE_URL: ${BOT_SITE_URL:-http://vod-app:3000}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    init: true
+    stop_grace_period: 20s
+    command: ["node", "scripts/telegram-bot.mjs"]
     networks:
       - edge
 
