@@ -95,6 +95,11 @@
 .page :global(.season-link-bundle small) { display: block; font-size: 11px; margin-top: 4px; color: #bcb7a7; }
 .page :global(.season-link-bundle select) { width: auto; min-height: 44px; background: #1b1b14; color: #eee8d6; border: 1px solid var(--edge); border-radius: 10px !important; padding: 6px 12px; }
 .page :global(.season-bundle-download), .page :global(.download-retry) { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; background: #ebcf761c; color: var(--gold); border: 1px solid var(--edge); border-radius: 10px !important; padding: 8px 14px; cursor: pointer; }
+.page :global(.link-bundle) { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.page :global(.link-bundle .bundle-intro) { flex: 1 1 260px; }
+.page :global(.link-bundle .bundle-filter) { display: grid; flex: 0 1 170px; gap: 4px; }
+.page :global(.link-bundle .bundle-actions) { display: flex; flex-wrap: wrap; gap: 8px; }
+.page :global(.link-bundle button:disabled) { cursor: not-allowed; opacity: .45; }
 .page :global(.episode-list) { display: grid; gap: 12px; }
 .page :global(.episode-row) { display: block; padding: 0; background: #ffffff04; border: 1px solid var(--edge); border-radius: 16px !important; overflow: hidden; }
 .page :global(.episode-row > summary) { display: flex; align-items: center; gap: 16px; padding: 12px; cursor: pointer; list-style: none; }

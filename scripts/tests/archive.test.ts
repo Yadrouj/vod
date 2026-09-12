@@ -19,3 +19,15 @@ test("archive payload excludes descriptions and source lists", () => {
   assert.equal("overview" in archiveCard(items[0]), false);
   assert.equal("links" in archiveCard(items[0]), false);
 });
+test("search results keep all, movie and series tabs in IMDb order", () => {
+  const searchCatalog = {
+    items: [
+      { id: "movie-low", imdbCode: "tt100", title: "Movie low", type: "movie", year: 2024, imdbRating: 6, imdbVotes: 20, genres: [], countries: [], languages: [], qualities: [] },
+      { id: "series-high", imdbCode: "tt101", title: "Series high", type: "series", year: 2023, imdbRating: 9, imdbVotes: 40, genres: [], countries: [], languages: [], qualities: [] },
+      { id: "movie-high", imdbCode: "tt102", title: "Movie high", type: "movie", year: 2022, imdbRating: 8, imdbVotes: 30, genres: [], countries: [], languages: [], qualities: [] },
+    ],
+  } as unknown as VodCatalogIndex;
+  assert.deepEqual(browseVodIndex(searchCatalog, { q: "e" }, 10).items.map(item => item.id), ["series-high", "movie-high", "movie-low"]);
+  assert.deepEqual(browseVodIndex(searchCatalog, { q: "e", type: "movie" }, 10).items.map(item => item.id), ["movie-high", "movie-low"]);
+  assert.deepEqual(browseVodIndex(searchCatalog, { q: "e", type: "series" }, 10).items.map(item => item.id), ["series-high"]);
+});

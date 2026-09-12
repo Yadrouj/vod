@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, Download, Play } from "lucide-react";
+import { ChevronDown, Copy, Download, Play } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { DownloadButton } from "@/components/ui/download-animation";
 import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
@@ -16,13 +16,13 @@ type DownloadBrowserProps = {
   episodePlayback?: Record<string, string>;
 };
 type SeasonResponse = ExpandedSeasonDownloads & { type: "series"; seasons: SeasonSummary[] };
+type BundleLink = { url: string; quality: string | null; group: string; label: string };
 
 export function DownloadBrowser({ itemId, title, isSeries, seasons, movieFiles, fallbackImage, playbackUrls = [], episodePlayback = {}, locale = DEFAULT_LOCALE }: DownloadBrowserProps) {
   const [activeSeason, setActiveSeason] = useState(seasons[0]?.season ?? 1);
   const [cache, setCache] = useState<Record<number, SeasonResponse>>({});
   const [errors, setErrors] = useState<Record<number, string>>({});
   const [retry, setRetry] = useState(0);
-  const [bundleQuality, setBundleQuality] = useState("");
   const [visibleFiles, setVisibleFiles] = useState(8);
   const t = getDictionary(locale);
   const fa = locale === "fa";
@@ -45,24 +45,8 @@ export function DownloadBrowser({ itemId, title, isSeries, seasons, movieFiles, 
   }, [activeSeason, activeData, isSeries, itemId, t.downloads.loadError, retry, seasons.length]);
 
   const activeSummary = seasons.find(season => season.season === activeSeason);
-  const seasonQualities = useMemo(() => Array.from(new Set((activeData?.episodes ?? []).flatMap(episode =>
-    episode.files.map(file => file.quality).filter((quality): quality is string => Boolean(quality))
-  ))), [activeData]);
-  const quality = seasonQualities.includes(bundleQuality) ? bundleQuality : seasonQualities[0] ?? "";
   const error = errors[activeSeason];
   const loading = isSeries && seasons.length > 0 && !activeData && !error;
-
-  function downloadSeasonLinks() {
-    if (!activeData || !quality) return;
-    const urls = Array.from(new Set(activeData.episodes.flatMap(episode => episode.files).filter(file => file.quality === quality).map(file => file.url)));
-    if (!urls.length) return;
-    const blobUrl = URL.createObjectURL(new Blob([`${urls.join("\r\n")}\r\n`], { type: "text/plain;charset=utf-8" }));
-    const anchor = document.createElement("a");
-    anchor.href = blobUrl;
-    anchor.download = `${safeFileName(title)}-S${String(activeSeason).padStart(2, "0")}-${safeFileName(quality)}-links.txt`;
-    document.body.appendChild(anchor); anchor.click(); anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-  }
 
   const intro = <div className="download-intro"><div>
     <h2>{fa ? isSeries ? "فصل و قسمت را انتخاب کنید" : "با کدام کیفیت؟" : isSeries ? "Choose your episode" : "Choose your quality"}</h2>
@@ -72,6 +56,7 @@ export function DownloadBrowser({ itemId, title, isSeries, seasons, movieFiles, 
 
   if (!isSeries || seasons.length === 0) return <div className="download-browser movie-download-browser">
     {intro}
+    {!!movieFiles.length && <LinkBundle files={movieFiles.map(file => ({ url: file.url, quality: file.quality, group: file.group, label: file.label }))} title={title} fileName={title} locale={locale} />}
     {!movieFiles.length ? empty : <div className="movie-file-list">
       {movieFiles.slice(0, visibleFiles).map((file, index) => <FileRow key={`${file.url}-${index}`} file={file} itemId={itemId} title={title} posterUrl={fallbackImage} canPlay={playable.has(file.url)} locale={locale} />)}
       {movieFiles.length > visibleFiles && <button className="download-retry" type="button" onClick={() => setVisibleFiles(count => count + 8)}>{fa ? "نمایش کیفیت‌ها و منابع بیشتر" : "More qualities & sources"} <ChevronDown size={17} /></button>}
@@ -93,21 +78,65 @@ export function DownloadBrowser({ itemId, title, isSeries, seasons, movieFiles, 
       {loading && <div className="episode-list" role="status" aria-label={t.common.loading}>{[0,1,2].map(n => <div key={n} className="episode-row episode-skeleton" />)}</div>}
       {error && <div role="alert"><p className="download-error">{error}</p><button className="download-retry" type="button" onClick={() => { setErrors(current => ({ ...current, [activeSeason]: "" })); setRetry(n => n + 1); }}>{fa ? "تلاش دوباره" : "Try again"}</button></div>}
       {activeData && <>
-        {!!seasonQualities.length && <div className="season-link-bundle"><div>
-          <strong>{fa ? "همه لینک‌های این فصل، یک‌جا" : "All season links, in one file"}</strong>
-          <small>{fa ? "فایل متنی برای دانلود منیجر؛ شامل لینک قسمت‌ها با کیفیت انتخابی." : "A text file for your download manager, with episode links at your chosen quality."}</small>
-        </div>
-          <select aria-label={fa ? "کیفیت لینک‌های فصل" : "Season link quality"} value={quality} onChange={event => setBundleQuality(event.target.value)}>
-            {seasonQualities.map(value => <option key={value} value={value}>{value}</option>)}
-          </select>
-          <button type="button" className="season-bundle-download" onClick={downloadSeasonLinks}><Download size={17} aria-hidden="true" />{fa ? "دانلود لیست TXT" : "Download TXT"}</button>
-        </div>}
+        <LinkBundle
+          files={activeData.episodes.flatMap(episode => episode.files.map(file => ({ url: file.url, quality: file.quality, group: file.group, label: `${episode.code} · ${file.name}` })))}
+          title={`${title} · Season ${activeSeason}`}
+          fileName={`${title}-S${String(activeSeason).padStart(2, "0")}`}
+          locale={locale}
+        />
         {!activeData.episodes.length ? empty : <div className="episode-list">
           {activeData.episodes.map(episode => <EpisodeRow key={`${episode.season}-${episode.episode ?? "pack"}`} episode={episode} itemId={itemId} seriesTitle={title} fallbackImage={fallbackImage} playable={playable} playUrl={episodePlayback[`${episode.season}:${episode.episode}`]} locale={locale} />)}
         </div>}
       </>}
     </div>
   </div>;
+}
+
+function LinkBundle({ files, title, fileName, locale }: { files: BundleLink[]; title: string; fileName: string; locale: Locale }) {
+  const fa = locale === "fa";
+  const [selectedGroup, setSelectedGroup] = useState("all");
+  const [selectedQuality, setSelectedQuality] = useState("all");
+  const [copied, setCopied] = useState(false);
+  const groups = useMemo(() => Array.from(new Set(files.map(file => file.group).filter(Boolean))).sort(), [files]);
+  const qualities = useMemo(() => Array.from(new Set(files.map(file => file.quality).filter((quality): quality is string => Boolean(quality)))).sort(), [files]);
+  const group = selectedGroup === "all" || groups.includes(selectedGroup) ? selectedGroup : "all";
+  const quality = selectedQuality === "all" || qualities.includes(selectedQuality) ? selectedQuality : "all";
+  const filtered = useMemo(() => files.filter(file => (group === "all" || file.group === group) && (quality === "all" || file.quality === quality)), [files, group, quality]);
+  const urls = useMemo(() => Array.from(new Set(filtered.map(file => file.url))), [filtered]);
+
+  async function copyLinks() {
+    if (!urls.length) return;
+    const value = `${urls.join("\n")}\n`;
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = value; textarea.setAttribute("readonly", ""); textarea.style.position = "fixed"; textarea.style.opacity = "0";
+      document.body.appendChild(textarea); textarea.select(); document.execCommand("copy"); textarea.remove();
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  }
+
+  function downloadLinks() {
+    if (!urls.length) return;
+    const blobUrl = URL.createObjectURL(new Blob([`${urls.join("\r\n")}\r\n`], { type: "text/plain;charset=utf-8" }));
+    const anchor = document.createElement("a");
+    anchor.href = blobUrl; anchor.download = `${safeFileName(fileName)}-links.txt`; document.body.appendChild(anchor); anchor.click(); anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  }
+
+  return <div className="season-link-bundle link-bundle" aria-label={`${fa ? "لینک‌های" : "Links for"} ${title}`}>
+    <div className="bundle-intro"><strong>{fa ? "ساخت فایل لینک‌ها" : "Build link list"}</strong><small>{urls.length} {fa ? "لینک آماده است؛ فیلتر نوع نسخه و کیفیت اختیاری است." : "links ready; version type and quality filters are optional."}</small></div>
+    <label className="bundle-filter"><span className="label">{fa ? "نوع نسخه" : "Version type"}</span><select aria-label={fa ? "نوع نسخه" : "Version type"} value={group} onChange={event => setSelectedGroup(event.target.value)}><option value="all">{fa ? "همه نوع‌ها" : "All types"}</option>{groups.map(value => <option key={value} value={value}>{groupLabel(value, fa)}</option>)}</select></label>
+    <label className="bundle-filter"><span className="label">{fa ? "کیفیت" : "Quality"}</span><select aria-label={fa ? "کیفیت" : "Quality"} value={quality} onChange={event => setSelectedQuality(event.target.value)}><option value="all">{fa ? "همه کیفیت‌ها" : "All qualities"}</option>{qualities.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
+    <div className="bundle-actions"><button type="button" className="season-bundle-download" disabled={!urls.length} onClick={() => void copyLinks()}><Copy size={17} aria-hidden="true" />{copied ? (fa ? "کپی شد" : "Copied") : (fa ? "کپی لینک‌ها" : "Copy links")}</button><button type="button" className="season-bundle-download" disabled={!urls.length} onClick={downloadLinks}><Download size={17} aria-hidden="true" />{fa ? "دانلود TXT" : "Download TXT"}</button></div>
+  </div>;
+}
+
+function groupLabel(value: string, fa: boolean) {
+  if (!fa) return value;
+  return ({ Dubbed: "دوبله", HardSub: "هاردساب", SoftSub: "سافت‌ساب" } as Record<string, string>)[value] ?? value;
 }
 
 function EpisodeRow({ episode, itemId, seriesTitle, fallbackImage, playable, playUrl, locale }: { episode: EpisodeDownload; itemId: string; seriesTitle: string; fallbackImage: string | null; playable: Set<string>; playUrl?: string; locale: Locale }) {
