@@ -24,10 +24,13 @@ const profileCommands = [
   { command: "movies", description: "فیلم‌ها و دسته‌بندی‌ها" },
   { command: "series", description: "سریال‌ها، فصل و قسمت" },
   { command: "music", description: "موزیک و موزیک‌ویدئو" },
+  { command: "animation", description: "انیمیشن و محتوای کودک" },
+  { command: "top", description: "۲۵۰ عنوان برتر IMDb" },
+  { command: "iranian", description: "فیلم‌های قدیمی ایرانی" },
   { command: "help", description: "راهنمای استفاده" },
 ];
 
-const intro = [
+let intro = [
   "🎬 <b>به SarvNema خوش آمدید</b>",
   "",
   "فیلم، سریال و موزیک را جست‌وجو کنید؛ پیشنهاد بگیرید، صفحهٔ سایت را ببینید و لینک‌های اصلی دانلود را دریافت کنید.",
@@ -50,12 +53,25 @@ const helpText = [
 ].join("\n");
 
 async function configureTelegramProfile() {
+  const [vod, music] = await Promise.all([api("/api/bot/filters"), api("/api/bot/music?mode=filters")]);
+  const inventory = `آرشیو: ${formatNumber(vod.totals.movies)} فیلم · ${formatNumber(vod.totals.series)} سریال · ${formatNumber(music.totals.tracks)} موزیک · ${formatNumber(music.totals.musicVideos)} موزیک‌ویدئو`;
+  intro = [
+    "🎬 <b>به SarvNema خوش آمدید</b>",
+    "",
+    "فیلم، سریال، انیمیشن و موزیک را جست‌وجو کنید؛ پیشنهاد بگیرید، آنلاین ببینید و لینک امن دانلود را باز کنید.",
+    "",
+    `<b>${inventory}</b>`,
+    "",
+    "برای سریال ابتدا فصل و سپس قسمت را انتخاب می‌کنید.",
+    "",
+    "از کجا شروع کنیم؟",
+  ].join("\n");
   await call("setMyName", { name: "SarvNema | فیلم، سریال و موزیک" });
   await call("setMyShortDescription", {
-    short_description: "جست‌وجو، پیشنهاد و دریافت لینک فیلم، سریال، موزیک و موزیک‌ویدئو.",
+    short_description: `فیلم، سریال، موزیک و دانلود امن · ${formatNumber(vod.totals.titles)} عنوان`,
   });
   await call("setMyDescription", {
-    description: "SarvNema راهی سریع برای پیدا کردن فیلم، سریال، موزیک و موزیک‌ویدئو است. نام اثر را جست‌وجو کنید، دسته‌بندی‌های پیشنهادی را ببینید، فصل و قسمت سریال را انتخاب کنید و لینک‌های اصلی یا فایل TXT لینک‌ها را دریافت کنید.",
+    description: `SarvNema راهی سریع برای پیدا کردن فیلم، سریال، انیمیشن و موزیک است. ${inventory}. نام اثر را جست‌وجو کنید، دسته‌بندی و فیلترها را ببینید، فصل و قسمت سریال را انتخاب کنید و لینک امن سایت را دریافت کنید.`,
   });
   await call("setMyCommands", { commands: profileCommands });
   await call("setChatMenuButton", { menu_button: { type: "commands" } });
@@ -100,6 +116,8 @@ function urlButton(text, url) {
 function mainKeyboard() {
   return keyboard([
     [b("🎵 موزیک", "pick:music"), b("🎬 فیلم", "pick:movie"), b("📺 سریال", "pick:series")],
+    [b("🧸 انیمیشن و کودک", "section:animation"), b("🏆 ۲۵۰ برتر IMDb", "section:top-imdb")],
+    [b("🎞 فیلم ایرانی قدیمی", "section:old-iranian-films"), b("🆕 فیلم‌های ۲۰۲۶", "section:recent-2026")],
     [b("🔎 جست‌وجوی نام اثر", "search")],
   ]);
 }
@@ -121,14 +139,45 @@ async function send(chatId, text, markup = undefined) {
 }
 
 async function edit(chatId, messageId, text, markup = undefined) {
-  return call("editMessageText", {
-    chat_id: chatId,
-    message_id: messageId,
-    text,
-    parse_mode: "HTML",
-    disable_web_page_preview: true,
-    reply_markup: markup,
-  });
+  try {
+    return await call("editMessageText", {
+      chat_id: chatId,
+      message_id: messageId,
+      text,
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+      reply_markup: markup,
+    });
+  } catch (error) {
+    // Result cards use sendPhoto so the poster is visible in Telegram. A
+    // callback from such a card must edit its caption instead of its text.
+    if (!/message is not modified|there is no text in the message/i.test(error.message)) throw error;
+    return call("editMessageCaption", {
+      chat_id: chatId,
+      message_id: messageId,
+      caption: text,
+      parse_mode: "HTML",
+      reply_markup: markup,
+    });
+  }
+}
+
+async function sendVodCard(chatId, item) {
+  const rows = [
+    [urlButton("🌐 صفحه سایت", item.urls.detail), urlButton("▶️ پخش آنلاین", item.urls.watch)],
+    [b("جزئیات و کیفیت‌ها", `vtitle:${item.imdbCode}`)],
+  ];
+  const caption = [
+    `<b>${escapeHtml(item.title)}</b>`,
+    [item.type === "series" ? "سریال" : "فیلم", item.year ?? "—", item.imdbRating ? `IMDb ${item.imdbRating}` : null].filter(Boolean).join(" · "),
+    escapeHtml((item.genres ?? []).slice(0, 3).join(" / ") || "ژانر نامشخص"),
+  ].join("\n");
+  if (item.posterUrl) {
+    try {
+      return await call("sendPhoto", { chat_id: chatId, photo: item.posterUrl, caption, parse_mode: "HTML", reply_markup: keyboard(rows) });
+    } catch {}
+  }
+  return send(chatId, caption, keyboard(rows));
 }
 
 async function sendTextDocument(chatId, filename, content, caption) {
@@ -212,20 +261,19 @@ async function showVodResults(chatId, messageId, session) {
   if (session.vodCountry) params.set("country", session.vodCountry);
   if (session.vodYear) params.set("year", session.vodYear);
   if (session.vodMinImdb) params.set("minImdb", String(session.vodMinImdb));
+  if (session.vodSection) params.set("section", session.vodSection);
   const data = await api(`/api/bot/search?${params}`);
   session.vodPage = data.pagination.page;
   const label = session.vodType === "series" ? "سریال‌ها" : "فیلم‌ها";
-  const rows = (data.items ?? []).map((item) => [
-    b(`${short(item.title, 44)} · IMDb ${item.imdbRating ?? "-"}`, `vtitle:${item.imdbCode}`),
-  ]);
-  rows.push(paginationRow("vpage", data.pagination));
-  rows.push([b("⬅️ دسته‌بندی‌ها", "vcategories"), b("🔎 جست‌وجوی تازه", "search")]);
   await edit(chatId, messageId, [
     `<b>${label}</b> · ${formatNumber(data.pagination.total)} نتیجه`,
     `صفحهٔ ${data.pagination.page} از ${data.pagination.totalPages} · هر صفحه ۱۰ عنوان`,
     "",
-    "برای مشاهدهٔ لینک‌ها، عنوان را انتخاب کنید.",
-  ].join("\n"), keyboard(rows));
+    "کارت‌های پوستر را ورق بزنید و عنوان را انتخاب کنید.",
+  ].join("\n"));
+  for (const item of data.items ?? []) await sendVodCard(chatId, item);
+  const rows = [paginationRow("vpage", data.pagination), [b("⬅️ دسته‌بندی‌ها", "vcategories"), b("🔎 جست‌وجوی تازه", "search")]];
+  return send(chatId, "صفحهٔ بعدی را انتخاب کنید:", keyboard(rows));
 }
 
 async function showVodTitle(chatId, messageId, id, session) {
@@ -241,6 +289,7 @@ async function showVodTitle(chatId, messageId, id, session) {
 
   const actions = [
     [urlButton("🌐 صفحه در سایت", item.urls.detail), urlButton("▶️ پخش آنلاین", item.urls.watch)],
+    [urlButton("👥 تماشای همزمان", item.urls.watch)],
   ];
   if (item.type === "series") {
     const seasonRows = [];
@@ -491,6 +540,24 @@ async function handle(update) {
     return send(chatId, "سریال انتخاب شد.", keyboard([[b("نمایش دسته‌بندی‌ها", "vcategories")]]));
   }
   if (message?.text?.startsWith("/music")) return send(chatId, "موزیک انتخاب شد.", keyboard([[b("نمایش دسته‌بندی‌ها", "mcategories")]]));
+  if (message?.text?.startsWith("/animation")) {
+    session.vodType = "movie";
+    session.vodSection = "animation";
+    session.vodPage = 1;
+    return send(chatId, "انیمیشن و محتوای کودک انتخاب شد.", keyboard([[b("نمایش ۱۰تایی", "section:animation")]]));
+  }
+  if (message?.text?.startsWith("/top")) {
+    session.vodType = "movie";
+    session.vodSection = "top-imdb";
+    session.vodPage = 1;
+    return send(chatId, "فهرست برترین‌های IMDb آماده است.", keyboard([[b("نمایش ۱۰تایی", "section:top-imdb")]]));
+  }
+  if (message?.text?.startsWith("/iranian")) {
+    session.vodType = "movie";
+    session.vodSection = "old-iranian-films";
+    session.vodPage = 1;
+    return send(chatId, "آرشیو فیلم‌های ایرانی قدیمی آماده است.", keyboard([[b("نمایش ۱۰تایی", "section:old-iranian-films")]]));
+  }
 
   if (message?.text && !message.text.startsWith("/")) {
     const text = message.text.trim();
@@ -516,7 +583,17 @@ async function handle(update) {
   if (data === "pick:music" || data === "mcategories") return showMusicCategories(chatId, messageId, session);
   if (data === "pick:movie" || data === "pick:series") {
     session.vodType = data.slice(5);
+    session.vodSection = "";
     return showVodCategories(chatId, messageId, session);
+  }
+  if (data.startsWith("section:")) {
+    const requestedSection = data.slice(8);
+    session.vodSection = requestedSection === "recent-2026" ? "" : requestedSection;
+    session.vodType = requestedSection === "best-series" ? "series" : "movie";
+    clearVodFilters(session);
+    if (requestedSection === "recent-2026") session.vodYear = "2026";
+    session.vodPage = 1;
+    return showVodResults(chatId, messageId, session);
   }
   if (data === "vcategories") return showVodCategories(chatId, messageId, session);
   if (data === "vcountries") return showVodCountries(chatId, messageId, session);
@@ -624,7 +701,7 @@ function paginationRow(prefix, pagination, context = "") {
 }
 
 function fileButtonText(file) {
-  return [file.episode, file.quality, file.release, file.size].filter(Boolean).join(" · ") || file.label || file.name || "دریافت فایل";
+  return [file.episode, file.quality, file.group, file.release, file.size].filter(Boolean).join(" · ") || file.label || file.name || "دریافت فایل";
 }
 
 function makeLinksText(title, files) {

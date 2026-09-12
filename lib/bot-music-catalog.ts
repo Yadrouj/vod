@@ -1,5 +1,6 @@
 import { findMusicTrack, loadMusicIndex, normalizeMusicTrack, searchMusic } from "@/lib/music";
 import type { MusicTrack } from "@/lib/music-types";
+import { downloadGateUrl } from "@/lib/download-gate";
 
 export type BotMusicKind = "all" | "track" | "video";
 
@@ -108,7 +109,9 @@ export async function getBotMusicDetail(id: string, origin: string) {
       album: track.album,
       moods: track.moods ?? [],
       sources: Array.from(sourceMap.values()).map((source) => ({
-        url: source.url,
+        url: source.kind === "download"
+          ? absoluteUrl(origin, downloadGateUrl({ url: source.url, title: track.persianTitle || track.title, quality: source.quality || source.label }))
+          : source.url,
         label: source.label,
         quality: source.quality ?? null,
         kind: source.kind,
@@ -143,6 +146,10 @@ function trackUrls(track: MusicTrack, origin: string) {
     detail: `${origin}/music/${encodeURIComponent(track.id)}`,
     source: track.sourceUrl,
   };
+}
+
+function absoluteUrl(origin: string, value: string) {
+  return value.startsWith("/") ? `${origin.replace(/\/$/, "")}${value}` : value;
 }
 
 function countCategories(tracks: MusicTrack[]) {

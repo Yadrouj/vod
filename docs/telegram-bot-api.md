@@ -51,7 +51,7 @@ GET /api/bot/music?kind=video&category=موزیک%20ویدیو
 GET /api/bot/music?id=classic-7c557a96fb6886
 ```
 
-Music results are paginated in the same shape as VOD results. The item endpoint returns the SarvNema page, original source page, and all available stream/download URLs so Telegram can show the original links and generate a text-file list for the user.
+Music results are paginated in the same shape as VOD results. The item endpoint returns the SarvNema page, original source page, and available stream/download URLs. Download URLs are rewritten to SarvNema's five-second `/download/continue` gate before they are exposed to a bot.
 
 ## Title Detail
 
@@ -61,4 +61,6 @@ GET /api/bot/title/tt0903747?season=1
 GET /api/bot/title/tt0468569?includeDownloads=1
 ```
 
-Movie details include compact metadata and file links. Series details include seasons first; when `season` is sent, the response expands that season into episodes and quality/file buttons.
+Movie details include compact metadata and gated file links. Series details include seasons first; when `season` is sent, the response expands that season into episodes and quality/file buttons. Each result also includes `posterUrl`, title, genre, year, and IMDb score for photo cards.
+
+The ready-to-run Telegram polling adapter is `npm run telegram-bot`. The Bale adapter is `npm run bale-bot`; its shared API contract and profile copy are documented in [`docs/bot-platforms.md`](./bot-platforms.md).

@@ -10,7 +10,8 @@ import {
 } from "./downloads";
 import { subzoneSearchUrl } from "./subtitles";
 import type { VodCard, VodItem } from "./types";
-import { loadVodIndex } from "./vod-index";
+import { loadOldIranianVodIndex, loadVodIndex, selectVodSection } from "./vod-index";
+import { downloadGateUrl } from "./download-gate";
 
 export type BotSort = "relevance" | "rating" | "year" | "title";
 
@@ -29,6 +30,7 @@ export type BotSearchParams = {
   page: number;
   limit: number;
   sort: BotSort;
+  section: string;
 };
 
 const DEFAULT_LIMIT = 10;
@@ -66,12 +68,16 @@ export function parseBotSearchParams(searchParams: URLSearchParams): BotSearchPa
     page: Math.max(1, Math.floor(numberParam(searchParams, ["page"]) ?? 1)),
     limit: clamp(Math.floor(numberParam(searchParams, ["limit", "pageSize"]) ?? DEFAULT_LIMIT), 1, MAX_LIMIT),
     sort: normalizeSort(searchParams.get("sort") ?? ""),
+    section: normalizeSection(searchParams.get("section") ?? ""),
   };
 }
 
 export async function searchBotCatalog(params: BotSearchParams, origin: string) {
-  const index = await loadVodIndex();
-  const scored = index.items
+  const index = params.section === "old-iranian-films" ? await loadOldIranianVodIndex() : await loadVodIndex();
+  const candidates = params.section
+    ? selectVodSection(index.items, params.section)
+    : index.items;
+  const scored = candidates
     .map((item) => ({ item, ...scoreBotItem(item, params.q) }))
     .filter(({ item, score }) => matchesBotFilters(item, params, score))
     .sort((a, b) => sortBotResults(a, b, params.sort, Boolean(params.q)));
@@ -93,6 +99,7 @@ export async function searchBotCatalog(params: BotSearchParams, origin: string) 
       yearFrom: params.yearFrom,
       yearTo: params.yearTo,
       quality: params.quality || "all",
+      section: params.section || "all",
       minImdb: params.minImdb,
       maxImdb: params.maxImdb,
       sort: params.sort,
@@ -130,6 +137,13 @@ export async function getBotFilters(origin: string) {
         { label: "Movies", value: "movie", endpoint: `${origin}/api/bot/search?type=movie` },
         { label: "Series", value: "series", endpoint: `${origin}/api/bot/search?type=series` },
         { label: "Top IMDb", value: "top", endpoint: `${origin}/api/bot/search?minImdb=8&sort=rating` },
+        { label: "Top 250 IMDb", value: "top-250", endpoint: `${origin}/api/bot/search?section=top-imdb&sort=rating&limit=10` },
+        { label: "Animation", value: "animation", endpoint: `${origin}/api/bot/search?section=animation&sort=rating` },
+        { label: "New Animation", value: "latest-animation", endpoint: `${origin}/api/bot/search?section=latest-animation&sort=year` },
+        { label: "Iranian Classics", value: "old-iranian-films", endpoint: `${origin}/api/bot/search?section=old-iranian-films&sort=year` },
+        { label: "Persian Movies", value: "persian-movies", endpoint: `${origin}/api/bot/search?section=persian-movies&sort=year` },
+        { label: "Best Series", value: "best-series", endpoint: `${origin}/api/bot/search?section=best-series&sort=rating` },
+        { label: "2026 Movies", value: "recent-2026", endpoint: `${origin}/api/bot/search?type=movie&year=2026&sort=rating` },
         { label: "Search", value: "search", endpoint: `${origin}/api/bot/search?q=break` },
       ],
       imdbScores: [9, 8.5, 8, 7.5, 7].map((score) => ({
@@ -169,7 +183,7 @@ export async function getBotTitleDetail(id: string, options: { season?: number |
   const includeDownloads = options.includeDownloads || Boolean(options.season);
   const maxFiles = clamp(Math.floor(options.maxFiles ?? 12), 1, 80);
   const firstFile = item.links[0] ? movieDownloadSources([item.links[0]])[0] : null;
-  const bestFile = firstFile ? serializeDownload(firstFile) : null;
+  const bestFile = firstFile ? serializeDownload(firstFile, origin, item.title) : null;
 
   const detail: {
     service: string;
@@ -193,8 +207,8 @@ export async function getBotTitleDetail(id: string, options: { season?: number |
 
   if (type === "movie") {
     detail.movieFiles = includeDownloads
-      ? movieDownloadSources(item.links).slice(0, maxFiles).map(serializeDownload)
-      : movieDownloadSources(item.links).slice(0, 5).map(serializeDownload);
+      ? movieDownloadSources(item.links).slice(0, maxFiles).map((file) => serializeDownload(file, origin, item.title))
+      : movieDownloadSources(item.links).slice(0, 5).map((file) => serializeDownload(file, origin, item.title));
     return detail;
   }
 
@@ -207,7 +221,7 @@ export async function getBotTitleDetail(id: string, options: { season?: number |
 
   if (includeDownloads) {
     const expanded = await expandSeasonDownloads(item, selectedSeason);
-    detail.episodes = expanded.episodes.map((episode) => serializeEpisode(episode, maxFiles));
+    detail.episodes = expanded.episodes.map((episode) => serializeEpisode(episode, maxFiles, origin, item.title));
   }
 
   return detail;
@@ -301,7 +315,7 @@ function titleActions(item: VodItem, origin: string) {
   };
 }
 
-function serializeEpisode(episode: EpisodeDownload, maxFiles: number) {
+function serializeEpisode(episode: EpisodeDownload, maxFiles: number, origin: string, title: string) {
   return {
     season: episode.season,
     episode: episode.episode,
@@ -309,26 +323,38 @@ function serializeEpisode(episode: EpisodeDownload, maxFiles: number) {
     title: episode.title,
     summary: compactText(episode.summary, 260),
     imageUrl: episode.imageUrl,
-    files: episode.files.slice(0, maxFiles).map(serializeDownload),
+    files: episode.files.slice(0, maxFiles).map((file) => serializeDownload(file, origin, `${title} · ${episode.code}`)),
     telegram: {
       text: `${episode.code} - ${episode.title}`,
       buttons: episode.files.slice(0, Math.min(maxFiles, 10)).map((file) => ({
         text: [file.quality, file.size].filter(Boolean).join(" / ") || file.name,
-        url: file.url,
+        url: absoluteUrl(origin, downloadGateUrl({ url: file.url, title: `${title} · ${episode.code}`, quality: file.quality ?? file.name })),
       })),
     },
   };
 }
 
-function serializeDownload(file: DownloadSource | EpisodeFile) {
+function serializeDownload(file: DownloadSource | EpisodeFile, origin: string, title: string) {
+  const quality = file.quality ?? ("label" in file ? file.label : file.name);
   return {
     label: "label" in file ? file.label : file.name,
     name: "name" in file ? file.name : file.fileName ?? file.label,
-    url: file.url,
+    // Bot clients must never receive the archive URL directly. The site gate
+    // keeps the download copy, quality and five-second acknowledgement flow.
+    url: absoluteUrl(origin, downloadGateUrl({ url: file.url, title, quality: quality ?? undefined })),
     quality: file.quality,
     group: file.group,
     release: file.release,
     size: file.size,
+    subtitleUrl: "subtitleUrl" in file && file.subtitleUrl
+      ? absoluteUrl(origin, downloadGateUrl({ url: file.subtitleUrl, title: `${title} · زیرنویس`, quality: "subtitle" }))
+      : null,
+    subtitles: "subtitles" in file
+      ? (file.subtitles ?? []).map((subtitle) => ({
+          ...subtitle,
+          url: absoluteUrl(origin, downloadGateUrl({ url: subtitle.url, title: `${title} · زیرنویس`, quality: subtitle.language })),
+        }))
+      : [],
     season: "season" in file ? file.season ?? null : null,
     episode: "episode" in file ? file.episode ?? null : null,
     modified: "modified" in file ? file.modified ?? null : null,
@@ -464,6 +490,32 @@ function normalizeSort(value: string): BotSort {
   return "relevance";
 }
 
+function normalizeSection(value: string) {
+  const normalized = value.trim().toLowerCase();
+  const aliases: Record<string, string> = {
+    top: "top-imdb",
+    "top-250": "top-imdb",
+    animation: "animation",
+    "new-animation": "latest-animation",
+    "iranian-classics": "old-iranian-films",
+    oldiranian: "old-iranian-films",
+    persian: "persian-movies",
+    series: "best-series",
+  };
+  if (aliases[normalized]) return aliases[normalized];
+  return [
+    "top-imdb",
+    "persian-movies",
+    "old-iranian-films",
+    "recent-films",
+    "best-series",
+    "best-movies",
+    "kids",
+    "animation",
+    "latest-animation",
+  ].includes(normalized) ? normalized : "";
+}
+
 function cleanFilter(value: string) {
   const trimmed = value.trim();
   return trimmed && !/^all$/i.test(trimmed) ? trimmed : "";
@@ -498,4 +550,9 @@ function compactText(value: string | null | undefined, max = 180) {
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+function absoluteUrl(origin: string, value: string) {
+  if (!value.startsWith("/")) return value;
+  return `${origin.replace(/\/$/, "")}${value}`;
 }

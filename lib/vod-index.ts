@@ -214,3 +214,8 @@ type FileCache<T> = FileSnapshot<T>;
 async function loadFreshJson<T>(file: string, cache: FileCache<T>): Promise<T> {
   return readFileSnapshot(file, cache, FILE_CHECK_INTERVAL_MS);
 }
+
+/** Full, unpaged section selection for API consumers such as bot adapters. */
+export function selectVodSection(items: VodCard[], section: string) {
+  return selectSection(items, section);
+}

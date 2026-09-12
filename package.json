@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "tsx watch-party-server.ts --dev",
     "telegram-bot": "node scripts/telegram-bot.mjs",
+    "bale-bot": "node scripts/bale-bot.mjs",
     "build": "next build --webpack",
     "start": "tsx watch-party-server.ts",
     "load-smoke": "node scripts/smoke-load.mjs",
