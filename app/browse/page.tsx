@@ -159,7 +159,7 @@ export default async function BrowsePage({ searchParams }: Props) {
         {params.q && <div className="browse-search-order"><p>{locale === "fa" ? "نتایج بر اساس امتیاز IMDb، از بیشتر به کمتر" : "Results by IMDb rating, highest first"}</p><nav aria-label={locale === "fa" ? "نوع نتیجه" : "Result type"}>
           {(["all", "movie", "series"] as const).map((kind) => <Link key={kind} className={`chip ${params.type === kind || kind === "all" && !params.type ? "active" : ""}`} href={`/browse${queryString({ ...params, type: kind, page: 1 })}`}>{kind === "all" ? t.common.all : kind === "movie" ? t.common.movie : t.common.series}</Link>)}
         </nav></div>}
-        <ArchiveResults key={archiveQuery} initial={result.items.slice(0, batch * ARCHIVE_BATCH_SIZE).map(archiveCard)} totalInPage={result.items.length} query={archiveQuery} page={result.page} locale={locale} grouped={Boolean(params.q)} />
+        <ArchiveResults key={archiveQuery} initial={result.items.slice(0, batch * ARCHIVE_BATCH_SIZE).map(archiveCard)} totalInPage={result.items.length} query={archiveQuery} page={result.page} locale={locale} grouped={Boolean(params.q && params.type && params.type !== "all")} />
 
         <nav className="pagination" aria-label={locale === "fa" ? "صفحه‌بندی آرشیو" : "Archive pagination"}>
           {result.page > 1 && (
