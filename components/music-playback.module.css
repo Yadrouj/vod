@@ -1,12 +1,4 @@
 .slot { min-width: 0; min-height: 340px; }
-.ready { display: flex; align-items: center; gap: 24px; padding: 28px; border: 1px solid #ffffff12; border-radius: 24px !important; background: #13221a; }
-.ready[hidden] { display: none; }
-.ready > img { width: 180px; aspect-ratio: 1; object-fit: cover; border-radius: 16px !important; }
-.ready > div { display: grid; gap: 12px; min-width: 0; }
-.ready strong { font-size: 25px; overflow-wrap: anywhere; }
-.ready :is(small, span) { color: #a6b8ad; }
-.ready button { display: inline-flex; align-items: center; justify-content: center; justify-self: start; width: 56px; height: 56px; padding: 0; border: 0; border-radius: 50% !important; background: #a5edc2; color: #102117; cursor: pointer; font: inherit; }
-.ready button:focus-visible { outline: 2px solid #a5edc2; outline-offset: 4px; }
 
 /* A single persistent media host follows the page slot without reparenting the
    audio/video element. Leaving the route only changes its visual placement. */
@@ -29,6 +21,11 @@
   box-shadow: 0 16px 60px #0003;
 }
 .inlineHost.inlineHost > header { position: absolute; z-index: 3; top: 12px; left: 12px; padding: 0; }
+.inlineHost.previewHost { position: relative; inset: auto; width: 100%; color: #f0fff5; }
+.inlineHost.inlineHost :global(.music-player-controls), .inlineHost.inlineHost :global(.music-player-transport), .inlineHost.inlineHost :global(.music-progress-wrap) { direction: ltr; }
+.inlineHost.inlineHost :global(.music-progress-wrap)::after { background: #a5edc2; pointer-events: none; }
+.inlineHost.inlineHost :global(.music-progress-buffer) { background: #a5edc255; pointer-events: none; }
+.inlineHost.inlineHost :global(.music-volume input) { accent-color: #a5edc2; }
 .inlineHost.inlineHost > header :is(a, span) { display: none; }
 .inlineHost.inlineHost :global(.music-player) { display: flex; flex-direction: column; gap: 20px; padding: 0; margin: 0; border: 0; overflow: visible; background: transparent; box-shadow: none !important; border-radius: 0 !important; }
 .inlineHost.inlineHost :global(.music-player)::before { content: none; }
@@ -84,8 +81,5 @@
   .inlineHost.inlineHost :global(.music-player-together) { flex-basis: 100%; display: flex; justify-content: center; margin: 8px 0 0; }
   .inlineHost.inlineHost :global(.music-player-video .music-player-shell) { grid-template-columns: 64px minmax(0, 1fr); }
   .inlineHost.inlineHost :global(.music-player-video .music-player-art) { width: 64px; height: 64px; }
-  .ready { padding: 18px; gap: 16px; }
-  .ready > img { width: 80px; }
-  .ready strong { font-size: 20px; }
 }
 :global(body):has(.inlineHost) :global(.watch-together-floating) { display: none; }

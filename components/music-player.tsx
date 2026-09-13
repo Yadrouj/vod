@@ -1,8 +1,8 @@
 "use client";
-import { Play } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useMusicPlayback, type MusicPlaybackRequest } from "./music-playback-provider";
+import { MusicPlayerEngine } from "./music-player-engine";
 import styles from "./music-playback.module.css";
 
 export function MusicPlayer(props: MusicPlaybackRequest) {
@@ -18,11 +18,8 @@ export function MusicPlayer(props: MusicPlaybackRequest) {
     if (props.playRequest) play(latest.current);
   }, [props.playRequest, play]);
   return <div ref={slot} className={styles.slot} data-music-slot={props.track.id} aria-owns={attachedId === props.track.id ? "persistent-music-player" : undefined}>
-    <div className={styles.ready} hidden={attachedId === props.track.id}>
-      {props.track.coverUrl && <img src={props.track.coverUrl} alt="" />}
-      <div><small>{props.track.kind === "video" ? "موزیک‌ویدیو" : "آهنگ"}</small><strong>{props.track.persianTitle || props.track.title}</strong><span>{props.track.artists.map(artist => artist.name).join(" · ")}</span>
-        <button type="button" onClick={() => play(props)} aria-label={`پخش ${props.track.persianTitle || props.track.title}`} title="پخش"><Play size={24} fill="currentColor" aria-hidden="true" /></button>
-      </div>
-    </div>
+    {attachedId !== props.track.id && <div className={`${styles.inlineHost} ${styles.previewHost}`} data-music-preview data-media-theme="music" dir="rtl">
+      <MusicPlayerEngine {...props} key={props.track.id} preview inline playRequest={0} onActivate={(track, settings) => play({ ...props, track, queue: [props.track, ...(props.queue ?? [])], settings })} />
+    </div>}
   </div>;
 }

@@ -12,7 +12,23 @@ assert.ok(track && video, "Need one audio and one video catalog entry");
 await mkdir(".media-cache", { recursive: true });
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 try {
+  // The complete player must be in the initial server-rendered page, even
+  // before JavaScript loads. No placeholder click is required to reveal it.
+  const firstPaint = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  // Allow Next's inline streaming reveal, but prevent application hydration.
+  await firstPaint.route('**/_next/**', route => route.request().resourceType() === 'script' ? route.abort() : route.continue());
+  for (const item of [track, video]) {
+    await firstPaint.goto(`${origin}/music/${item.id}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    const preview = firstPaint.locator('[data-music-preview]');
+    await preview.locator('.music-player-controls').waitFor();
+    assert.ok(await preview.locator('.music-play-toggle').isVisible(), 'Full transport is visible before hydration');
+    assert.ok(await preview.locator('.music-source select').isVisible(), 'Quality controls are visible before hydration');
+    assert.equal(await firstPaint.locator('audio,video').count(), 0, 'Server preview cannot autoplay or duplicate media');
+  }
+  await firstPaint.close();
+  console.log('PASS first paint: full audio/video controls before hydration, without a load-player button');
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
+  page.setDefaultNavigationTimeout(90000);
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   // Original silent PCM fixture: exercise actual browser media without relying
@@ -148,15 +164,26 @@ try {
   assert.equal(await media.getAttribute("src"), originalSource, "Browsing another track must not replace playback");
   assert.equal(await media.evaluate(el => el.paused), false);
   assert.ok(await page.locator("[data-music-dock]").isVisible());
-  const directPlay = page.locator("[data-music-slot] button:visible");
-  assert.equal((await directPlay.innerText()).trim(), '', 'The initial play control is an icon, not another text CTA');
-  assert.ok(await directPlay.getAttribute('aria-label'), 'Icon-only play has an accessible name');
+  const preview = page.locator('[data-music-preview]');
+  await preview.locator('.music-player-controls').waitFor();
+  assert.equal(await page.locator('audio,video').count(), 1, 'Browsing another track does not create a second media element');
+  const quality = preview.locator('.music-source select');
+  const selectedQuality = await quality.locator('option').last().getAttribute('value');
+  await quality.selectOption(selectedQuality);
+  await preview.getByRole('combobox', { name: 'Playback speed', exact: true }).selectOption('1.25');
+  await preview.getByRole('button', { name: 'Mute', exact: true }).click();
+  await page.screenshot({ path: '.media-cache/music-ready-full-controls.png' });
+  const directPlay = preview.locator('.music-play-toggle');
+  assert.equal((await directPlay.innerText()).trim(), '', 'Only the real Play control starts playback');
   await directPlay.click();
   await page.locator("[data-music-inline]").waitFor();
   await page.waitForFunction(source => {
     const el = document.querySelector("[data-music-player-host] audio, [data-music-player-host] video");
     return el?.getAttribute("src") !== source && !el.paused && el.currentTime > .1;
   }, originalSource);
+  assert.equal(await host.locator('.music-source select').inputValue(), selectedQuality, 'Preview quality is retained when starting playback');
+  assert.equal(await media.evaluate(el => el.playbackRate), 1.25);
+  assert.equal(await media.evaluate(el => el.muted), true);
   await host.getByRole("button", { name: "Listening queue", exact: true }).click();
   await host.locator('.music-player-queue').waitFor();
   const queueButtons = host.locator('.music-player-queue li button');

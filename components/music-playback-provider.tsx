@@ -5,10 +5,11 @@ import { createContext, lazy, Suspense, useCallback, useContext, useLayoutEffect
 import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import type { MusicTrack } from "@/lib/music-types";
+import type { MusicPlaybackSettings } from "./music-player-engine";
 import styles from "./music-refresh.module.css";
 import playbackStyles from "./music-playback.module.css";
 
-export type MusicPlaybackRequest = { track: MusicTrack; queue?: MusicTrack[]; playRequest?: number; lyricsAutoOpen?: boolean; onTrackPlay?: (track: MusicTrack) => void };
+export type MusicPlaybackRequest = { track: MusicTrack; queue?: MusicTrack[]; playRequest?: number; lyricsAutoOpen?: boolean; onTrackPlay?: (track: MusicTrack) => void; settings?: MusicPlaybackSettings };
 const Engine = lazy(() => import("./music-player-engine").then(module => ({ default: module.MusicPlayerEngine })));
 type PlayerSlot = { pathname: string; trackId: string };
 const PlaybackContext = createContext<{
@@ -32,10 +33,12 @@ export function MusicPlaybackProvider({ children }: { children: ReactNode }) {
   const [expandedPath, setExpandedPath] = useState<string | null>(null);
   const [activeId, setActiveId] = useState("");
   const [immersive, setImmersive] = useState(false);
+  const [ready, setReady] = useState(false);
+  const markReady = useCallback(() => setReady(true), []);
   const container = useRef<HTMLDialogElement>(null);
   const hasRequest = Boolean(request);
   const currentId = request?.started ? activeId : request?.track.id;
-  const inline = Boolean(request && slot && slot.pathname === pathname && (request.origin === pathname || slot.trackId === currentId));
+  const inline = Boolean(ready && request && slot && slot.pathname === pathname && (request.origin === pathname || slot.trackId === currentId));
 
   const attach = useCallback((node: HTMLDivElement, slotPath: string, next: MusicPlaybackRequest) => {
     const entry = { pathname: slotPath, trackId: next.track.id };
@@ -110,12 +113,13 @@ export function MusicPlaybackProvider({ children }: { children: ReactNode }) {
   const close = () => {
     container.current?.querySelectorAll("audio,video").forEach(node => { const media = node as HTMLMediaElement; media.pause(); media.removeAttribute("src"); media.load(); });
     setRequest(null);
+    setReady(false);
     setImmersive(false);
   };
   return <PlaybackContext.Provider value={{ play, attach, attachedId: inline ? slot!.trackId : null }}>
     {children}
     {request && typeof document !== "undefined" && createPortal(<dialog ref={container} id="persistent-music-player" open={!immersive}
-      hidden={!inline && !request.started && !immersive} role={inline && !immersive ? "region" : "dialog"}
+      hidden={!ready || !inline && !request.started && !immersive} role={inline && !immersive ? "region" : "dialog"}
       onCancel={event => { event.preventDefault(); setImmersive(false); }}
       className={`${styles.dock} ${compact ? styles.compact : ""} ${immersive ? styles.immersive : ""} ${inline && !immersive ? playbackStyles.inlineHost : ""}`}
       data-music-player-host data-music-inline={inline && !immersive || undefined} data-music-dock={!inline || immersive || undefined}
@@ -125,7 +129,7 @@ export function MusicPlaybackProvider({ children }: { children: ReactNode }) {
         {(!inline || immersive) && <button type="button" onClick={() => { setImmersive(false); setExpandedPath(compact ? pathname : null); }} aria-label={immersive ? "بازگشت به پلیر" : compact ? "بزرگ کردن پلیر" : "کوچک کردن پلیر"}>{compact ? <Maximize2 size={16} /> : <Minimize2 size={16} />}</button>}
         {!inline && <button type="button" onClick={close} aria-label="بستن و قطع موسیقی"><X size={18} /></button>}
       </header>
-      <Suspense fallback={<p role="status">در حال آماده‌کردن پخش…</p>}><Engine {...request} inline={inline && !immersive} immersive={immersive} playRequest={request.serial} onTrackPlay={track => {
+      <Suspense fallback={null}><Engine {...request} onReady={markReady} inline={inline && !immersive} immersive={immersive} playRequest={request.serial} onTrackPlay={track => {
         setActiveId(track.id);
         setRequest(previous => previous && !previous.started ? { ...previous, started: true } : previous);
         request.onTrackPlay?.(track);

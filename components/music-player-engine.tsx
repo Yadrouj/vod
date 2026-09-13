@@ -1,7 +1,7 @@
 "use client";
 
 import { Captions, Download, Heart, ListMusic, Pause, Play, Repeat2, Shuffle, SkipBack, SkipForward, Volume2, VolumeX, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type RefObject } from "react";
 import type { MusicSource, MusicTrack } from "@/lib/music-types";
 import { MusicLyrics } from "@/components/music-lyrics";
 import Link from "next/link";
@@ -13,6 +13,7 @@ const PLAYBACK_KEY = "sarvnema-music-playback";
 const LIKES_KEY = "sarvnema-music-likes";
 
 type RepeatMode = "off" | "all" | "one";
+export type MusicPlaybackSettings = { trackId: string; sourceUrl?: string; volume: number; muted: boolean; rate: number; shuffle: boolean; repeat: RepeatMode };
 
 export function MusicPlayerEngine({
   track,
@@ -22,6 +23,10 @@ export function MusicPlayerEngine({
   lyricsAutoOpen = false,
   immersive = false,
   inline = false,
+  preview = false,
+  settings,
+  onActivate,
+  onReady,
 }: {
   track: MusicTrack;
   queue?: MusicTrack[];
@@ -31,6 +36,11 @@ export function MusicPlayerEngine({
   lyricsAutoOpen?: boolean;
   immersive?: boolean;
   inline?: boolean;
+  /** Render the complete controls without owning media or interrupting playback. */
+  preview?: boolean;
+  settings?: MusicPlaybackSettings;
+  onActivate?: (track: MusicTrack, settings: MusicPlaybackSettings) => void;
+  onReady?: () => void;
 }) {
   const media = useRef<HTMLAudioElement | HTMLVideoElement>(null);
   const autoplayTrackId = useRef<string | null>(null);
@@ -39,17 +49,19 @@ export function MusicPlayerEngine({
   const [activeIndex, setActiveIndex] = useState(0);
   const activeTrack = library[activeIndex] ?? track;
   const streams = useMemo(() => uniqueSources(activeTrack.sources), [activeTrack.sources]);
-  const [sourceIndex, setSourceIndex] = useState(() => preferredSourceIndex(streams, activeTrack.kind));
+  const selectedSourceIndex = settings?.trackId === activeTrack.id ? streams.findIndex(item => item.url === settings.sourceUrl) : -1;
+  const defaultSourceIndex = selectedSourceIndex >= 0 ? selectedSourceIndex : preferredSourceIndex(streams, activeTrack.kind);
+  const [sourceIndex, setSourceIndex] = useState(defaultSourceIndex);
   const source = streams[sourceIndex] ?? null;
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
-  const [volume, setVolume] = useState(0.9);
-  const [muted, setMuted] = useState(false);
-  const [rate, setRate] = useState(1);
-  const [shuffle, setShuffle] = useState(false);
-  const [repeat, setRepeat] = useState<RepeatMode>("off");
+  const [volume, setVolume] = useState(settings?.volume ?? 0.9);
+  const [muted, setMuted] = useState(settings?.muted ?? false);
+  const [rate, setRate] = useState(settings?.rate ?? 1);
+  const [shuffle, setShuffle] = useState(settings?.shuffle ?? false);
+  const [repeat, setRepeat] = useState<RepeatMode>(settings?.repeat ?? "off");
   const [queueOpen, setQueueOpen] = useState(false);
   const liked = useSyncExternalStore(subscribeLikes, () => readLiked(activeTrack.id), () => false);
   const [sourceIssue, setSourceIssue] = useState("");
@@ -67,13 +79,24 @@ export function MusicPlayerEngine({
   const [loadedId, setLoadedId] = useState(activeTrack.id);
   if (loadedId !== activeTrack.id) {
     setLoadedId(activeTrack.id);
-    setSourceIndex(preferredSourceIndex(streams, activeTrack.kind));
+    setSourceIndex(defaultSourceIndex);
     setCurrentTime(0);
     setDuration(0);
     setBuffered(0);
     setPlaying(false);
     setUseDirectSource(false);
   }
+
+  const [appliedSettings, setAppliedSettings] = useState(settings);
+  if (appliedSettings !== settings) {
+    setAppliedSettings(settings);
+    if (settings) {
+      setSourceIndex(defaultSourceIndex);
+      setVolume(settings.volume); setMuted(settings.muted); setRate(settings.rate);
+      setShuffle(settings.shuffle); setRepeat(settings.repeat);
+    }
+  }
+  useLayoutEffect(() => { onReady?.(); }, [onReady]);
 
   const lyricsKey = `${activeTrack.id}:${lyricsAutoOpen}`;
   const [previousLyricsKey, setPreviousLyricsKey] = useState(lyricsKey);
@@ -179,6 +202,10 @@ export function MusicPlayerEngine({
   }
 
   async function togglePlayback() {
+    if (preview) {
+      activatePreview(activeTrack);
+      return;
+    }
     const player = media.current;
     if (!player) return;
     if (player.paused) {
@@ -201,6 +228,7 @@ export function MusicPlayerEngine({
 
   function chooseTrack(index: number, autoplay = playing) {
     const nextIndex = Math.max(0, Math.min(library.length - 1, index));
+    if (preview && autoplay) { activatePreview(library[nextIndex]); return; }
     if (nextIndex === activeIndex) {
       if (autoplay) {
         autoplayTrackId.current = activeTrack.id;
@@ -215,6 +243,10 @@ export function MusicPlayerEngine({
     autoplayTrackId.current = autoplay ? library[nextIndex]?.id ?? null : null;
     setActiveIndex(nextIndex);
     setQueueOpen(false);
+  }
+
+  function activatePreview(selected: MusicTrack) {
+    onActivate?.(selected, { trackId: selected.id, sourceUrl: selected.id === activeTrack.id ? source?.url : undefined, volume, muted, rate, shuffle, repeat });
   }
 
   function previous() {
@@ -243,6 +275,7 @@ export function MusicPlayerEngine({
   }
 
   function handleMediaError() {
+    const resume = playing || autoplayTrackId.current === activeTrack.id;
     if (!useDirectSource && source?.url) {
       setSourceIssue("Trying the original source…");
       setUseDirectSource(true);
@@ -250,7 +283,7 @@ export function MusicPlayerEngine({
         const player = media.current;
         if (!player) return;
         player.load();
-        void player.play().catch(() => undefined);
+        if (resume) void player.play().catch(() => undefined);
       }, 0);
       return;
     }
@@ -259,7 +292,7 @@ export function MusicPlayerEngine({
       setSourceIssue("This quality is unavailable. Trying another source…");
       setSourceIndex(nextIndex);
       setUseDirectSource(false);
-      window.setTimeout(() => void media.current?.play().catch(() => undefined), 80);
+      if (resume) window.setTimeout(() => void media.current?.play().catch(() => undefined), 80);
       return;
     }
     setSourceIssue("This source cannot be played in this browser. Use Download to open the original file.");
@@ -281,13 +314,13 @@ export function MusicPlayerEngine({
     <section className={`music-player music-player-pro ${hasVideo ? "music-player-video" : "music-player-audio"}`} dir="auto">
       {hasVideo ? (
         <div className="music-player-video-stage">
-          <video ref={media as RefObject<HTMLVideoElement>} className="music-player-video-frame" poster={activeTrack.coverUrl ?? undefined} preload="metadata" playsInline src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={syncProgress} onCanPlay={() => setSourceIssue("")} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} onError={handleMediaError} />
+          {preview ? <div className="music-player-video-frame" style={{ background: `#020203 url(${JSON.stringify(activeTrack.coverUrl ?? "")}) center / contain no-repeat` }} /> : <video ref={media as RefObject<HTMLVideoElement>} className="music-player-video-frame" poster={activeTrack.coverUrl ?? undefined} preload="metadata" playsInline src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={syncProgress} onCanPlay={() => setSourceIssue("")} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} onError={handleMediaError} />}
           <button className={`music-video-play-overlay ${playing ? "is-playing" : ""}`} type="button" onClick={togglePlayback} aria-label={playing ? "Pause video" : "Play video"}>{playing ? <Pause size={23} fill="currentColor" /> : <Play size={25} fill="currentColor" />}</button>
           <span className="music-video-quality">{source.quality || "Video"}</span>
         </div>
-      ) : (
+      ) : !preview ? (
         <audio ref={media as RefObject<HTMLAudioElement>} preload="metadata" src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={syncProgress} onCanPlay={() => setSourceIssue("")} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} onError={handleMediaError} />
-      )}
+      ) : null}
 
       <div className="music-player-shell">
         <div className={`music-player-art ${playing ? "is-spinning" : ""}`} style={activeTrack.coverUrl ? { backgroundImage: `url(${activeTrack.coverUrl})` } : undefined} />

@@ -12,8 +12,16 @@ becomes the compact floating player. Returning to the originating page or the
 current track's detail page restores the inline presentation.
 
 The compact video dock retains a visible 16:9 video above its title and play/pause
-button, with its own grid areas independent of the full-size player. Initial
-track selection uses a directly actionable, accessible play icon, not a text CTA.
+button, with its own grid areas independent of the full-size player.
+
+The complete player UI is server-rendered on first paint, not hidden behind a
+load-player button. A media-free `MusicPlayerEngine` preview uses the same controls
+until the persistent engine is ready, or when another song is already playing.
+It creates no audio/video element and does not claim the browser Media Session.
+Play directly starts the selected track in the persistent engine and carries over
+quality, volume, mute, speed, shuffle and repeat. Browsing alone never replaces
+active playback. The shared layout still lazy-loads its engine; non-music routes
+do not eagerly import it just to eliminate the music page's placeholder.
 
 The host remains in the same body portal throughout these transitions. Do not
 change its portal target, key it by pathname, or move the media element between
