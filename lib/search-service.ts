@@ -3,6 +3,8 @@ import { normalizeSearchQuery, TtlLruCache } from "./runtime-cache";
 import type { VodCard } from "./types";
 import { loadVodIndex } from "./vod-index";
 import { selectRankedSuggestions, type SearchKind } from "./vod-search-order";
+import { matchVodSearch } from "./vod-search-match";
+import type { SearchMatches } from "./typo-search";
 
 type Suggestion = {
   title: string;
@@ -21,37 +23,25 @@ export type AiSearchPayload = {
   reasons: string[];
 };
 
-type SearchDocument = {
-  item: VodCard;
-  title: string;
-  imdbCode: string;
-  haystack: string;
-};
-
-const suggestionCache = new TtlLruCache<string, Suggestion[]>(1_500, 15 * 60_000);
+type SuggestionResult = SearchMatches<Suggestion>;
+const suggestionCache = new TtlLruCache<string, SuggestionResult>(1_500, 15 * 60_000);
 const aiResultCache = new TtlLruCache<string, AiSearchPayload[]>(1_000, 30 * 60_000);
-let documentsPromise: Promise<SearchDocument[]> | null = null;
-let documentsVersion = "";
+let suggestionItems: VodCard[] | null = null;
 
 export async function searchSuggestions(query: string, limit = 8, kind: SearchKind = "all") {
   const normalized = normalizeSearchQuery(query);
-  const documents = await loadSearchDocuments();
+  const index = await loadVodIndex();
+  if (suggestionItems !== index.items) {
+    suggestionItems = index.items;
+    suggestionCache.clear(); aiResultCache.clear();
+  }
   const cacheKey = `${normalized}:${limit}:${kind}`;
   const cached = suggestionCache.get(cacheKey);
-  if (cached) return { items: cached, cache: "HIT" as const };
-
-  const matches: Array<{ item: VodCard; matchRank: number }> = [];
-
-  for (const document of documents) {
-    if (document.title.startsWith(normalized) || document.imdbCode.startsWith(normalized)) {
-      matches.push({ item: document.item, matchRank: 0 });
-    } else if (document.haystack.includes(normalized)) {
-      matches.push({ item: document.item, matchRank: 1 });
-    }
-  }
+  if (cached) return { ...cached, cache: "HIT" as const };
+  const matches = matchVodSearch(index.items, query);
 
   const currentYear = new Date().getUTCFullYear();
-  const items = selectRankedSuggestions(matches.map(({ item }) => item), limit, kind)
+  const items = selectRankedSuggestions(matches.items, limit, kind)
     .map((item) => ({
       title: item.title,
       imdbCode: item.imdbCode,
@@ -63,8 +53,9 @@ export async function searchSuggestions(query: string, limit = 8, kind: SearchKi
       isFresh: (item.year ?? 0) >= currentYear,
     }));
 
-  suggestionCache.set(cacheKey, items);
-  return { items, cache: "MISS" as const };
+  const result = { ...matches, items };
+  suggestionCache.set(cacheKey, result);
+  return { ...result, cache: "MISS" as const };
 }
 
 export async function searchWithAi(query: string, limit = 10) {
@@ -87,38 +78,4 @@ export async function searchWithAi(query: string, limit = 10) {
 
   aiResultCache.set(cacheKey, items);
   return { items, cache: "MISS" as const };
-}
-
-async function loadSearchDocuments() {
-  const index = await loadVodIndex();
-  if (!documentsPromise || documentsVersion !== index.generatedAt) {
-    documentsVersion = index.generatedAt;
-    suggestionCache.clear();
-    aiResultCache.clear();
-    documentsPromise = Promise.resolve(
-      index.items.map((item) => {
-      const title = normalizeSearchQuery(item.title);
-      const imdbCode = normalizeSearchQuery(item.imdbCode);
-      return {
-        item,
-        title,
-        imdbCode,
-        haystack: normalizeSearchQuery(
-          [
-            item.title,
-            item.persianTitle,
-            item.imdbCode,
-            ...item.genres,
-            ...item.countries,
-            ...item.languages,
-            ...(item.persianGenres ?? []),
-            ...(item.persianCountries ?? []),
-            ...(item.persianLanguages ?? []),
-          ].filter(Boolean).join(" "),
-        ),
-      };
-      }),
-    );
-  }
-  return documentsPromise;
 }

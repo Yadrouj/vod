@@ -1,4 +1,4 @@
-import { loadMusicArtistIndex, searchMusic } from "@/lib/music";
+import { loadMusicArtistIndex, resolveMusicSearch } from "@/lib/music";
 import { checkRateLimit, clientIp, publicCacheHeaders, rateLimitedResponse } from "@/lib/runtime-cache";
 import { matchingMusicArtists } from "@/lib/music-search-ranking";
 
@@ -10,9 +10,11 @@ export async function GET(request: Request) {
   const requestedLimit = Number(searchParams.get("limit") ?? 12);
   const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(Math.floor(requestedLimit), 6), 20) : 12;
   const index = await loadMusicArtistIndex();
-  const tracks = searchMusic(index, query).slice(0, limit);
+  const result = resolveMusicSearch(index, query);
+  const tracks = result.items.slice(0, limit);
   return Response.json({
-    artists: searchParams.get("includeArtists") === "1" ? matchingMusicArtists(index.artists, query).slice(0, 4).map(artist => ({
+    corrections: result.corrections, matchedQuery: result.matchedQuery, mode: result.mode,
+    artists: searchParams.get("includeArtists") === "1" ? matchingMusicArtists(index.artists, result.matchedQuery).slice(0, 4).map(artist => ({
       imdbCode: `artist:${artist.slug}`, title: artist.name, href: `/music/artists/${encodeURIComponent(artist.slug)}`,
       type: "artist", year: null, posterUrl: artist.profileImageUrl || artist.coverUrl, imdbRating: null,
       trackCount: artist.trackCount ?? artist.trackIds.length,

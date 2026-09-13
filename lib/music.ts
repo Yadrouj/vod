@@ -1,6 +1,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { compareMusicPopularityYear } from "./music-search-ranking";
+import { searchText, TypoSearchIndex, type SearchMatches } from "./typo-search";
 import type { MusicArtist, MusicArtistIndex, MusicIndex, MusicLandingIndex, MusicTrack } from "@/lib/music-types";
 
 const DATA_FILE = path.join(process.cwd(), "public", "data", "music-index.json");
@@ -121,32 +122,45 @@ export function musicForArtistIndex(index: MusicArtistIndex, slug: string) {
 }
 
 type MusicSearchDocument = { track: MusicTrack; text: string; title: string; artists: string };
-const musicDocuments = new WeakMap<MusicIndex, MusicSearchDocument[]>();
+const musicDocuments = new WeakMap<MusicIndex, { documents: MusicSearchDocument[]; matcher?: TypoSearchIndex<MusicTrack> }>();
 /** Immutable catalog identity invalidates this index on a daily catalog refresh.
  * Normalize and sort once, not 27k tracks on every keystroke. Four relevance
  * buckets preserve the existing relevance > popularity > year ordering. */
 export function searchMusic(index: MusicIndex, query: string, kind = "all", category = "all") {
-  let documents = musicDocuments.get(index);
-  if (!documents) {
-    documents = index.tracks.map(normalizeMusicTrack)
+  return resolveMusicSearch(index, query, kind, category).items;
+}
+
+export function resolveMusicSearch(index: MusicIndex, query: string, kind = "all", category = "all") {
+  let cached = musicDocuments.get(index);
+  if (!cached) {
+    const documents = index.tracks.map(normalizeMusicTrack)
       .sort((a, b) => compareMusicPopularityYear(a, b)
         || Number(Boolean(b.coverUrl)) - Number(Boolean(a.coverUrl)) || a.title.localeCompare(b.title))
       .map(track => ({ track, text: musicSearchText(track),
-        title: normalizeSearchValue([track.title, track.persianTitle].join(" ")),
-        artists: normalizeSearchValue(track.artists.flatMap(artist => [artist.name, ...(artist.aliases ?? [])]).join(" ")) }));
-    musicDocuments.set(index, documents);
+        title: searchText([track.title, track.persianTitle].join(" ")),
+        artists: searchText(track.artists.flatMap(artist => [artist.name, artist.slug, ...(artist.aliases ?? [])]).join(" ")) }));
+    cached = { documents };
+    musicDocuments.set(index, cached);
   }
-  const needle = normalizeSearchValue(query).slice(0, 160);
+  // Ordinary music landing requests do not need a spelling dictionary.
+  if (query.trim() && !cached.matcher) {
+    cached.matcher = new TypoSearchIndex(cached.documents.map(document => ({ item: document.track, text: document.text,
+      names: [document.track.title, document.track.persianTitle ?? "", ...document.track.artists.flatMap(artist => [artist.name, artist.slug, ...(artist.aliases ?? [])])],
+    })));
+  }
+  const result: SearchMatches<MusicTrack> = cached.matcher?.search(query) ?? { items: cached.documents.map(document => document.track), corrections: [], matchedQuery: "", mode: "exact" };
+  const matches = new Set(result.items.map(track => track.id));
+  const needle = searchText(result.matchedQuery);
   const buckets: MusicTrack[][] = [[], [], [], []];
-  for (const document of documents) {
+  for (const document of cached.documents) {
     const { track } = document;
     if (kind !== "all" && track.kind !== kind) continue;
     if (category && category !== "all" && track.category !== category) continue;
-    if (needle && !document.text.includes(needle)) continue;
+    if (!matches.has(track.id)) continue;
     const rank = !needle || document.title === needle ? 0 : document.title.startsWith(needle) ? 1 : document.artists.startsWith(needle) ? 2 : 3;
     buckets[rank].push(track);
   }
-  return buckets.flat();
+  return { ...result, items: buckets.flat() };
 }
 
 export function selectMusicShelfTracks(tracks: MusicTrack[], limit = 15) {
@@ -315,7 +329,7 @@ function musicSearchText(track: MusicTrack) {
     track.title,
     track.persianTitle,
     track.category,
-    ...track.artists.map((artist) => artist.name),
+    ...track.artists.flatMap((artist) => [artist.name, artist.slug]),
     ...track.artists.flatMap((artist) => artist.aliases ?? []),
   ].join(" "));
 }

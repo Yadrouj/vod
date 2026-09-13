@@ -9,6 +9,7 @@ import { DEFAULT_LOCALE, getDictionary, type Locale, typeLabel } from "@/lib/i18
 import { sizedImageUrl } from "@/lib/image-url";
 import type { SearchKind } from "@/lib/vod-search-order";
 import { VoiceSearch } from "./voice-search";
+import { SearchCorrections } from "./search-corrections";
 
 type Suggestion = {
   href?: string;
@@ -50,6 +51,8 @@ export function SearchSuggest({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(defaultValue.trim().length >= 2);
   const [failure, setFailure] = useState("");
+  const [corrections, setCorrections] = useState<string[]>([]);
+  const [matchedQuery, setMatchedQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
   const [kind, setKind] = useState<SearchKind>("all");
   const cinemaSearch = endpoint.split("?")[0] === "/api/suggest";
@@ -69,7 +72,7 @@ export function SearchSuggest({
         clear: "پاک کردن",
         heading: "نتیجه‌های پیشنهادی",
         order: cinemaSearch ? "امتیاز IMDb: بیشتر به کمتر" : "خواننده‌ها و آثار · مرتبط‌ترین‌ها",
-        empty: "چیزی پیدا نشد؛ اسم انگلیسی یا کد IMDb را امتحان کن.",
+        empty: "یک بخش دیگر از نام، نام انگلیسی یا کد IMDb را امتحان کن.",
         hint: "نام فیلم، سریال یا کد IMDb را بنویس",
         viewAll: "دیدن همه نتیجه‌ها",
       }
@@ -78,7 +81,7 @@ export function SearchSuggest({
         clear: "Clear",
         heading: "Best matches",
         order: cinemaSearch ? "IMDb rating: highest first" : "Newest first",
-        empty: "No match yet. Try the English title or an IMDb ID.",
+        empty: "Try another part of the name, an English title or an IMDb ID.",
         hint: "Search by title, series or IMDb ID",
         viewAll: "View all results",
       };
@@ -91,6 +94,7 @@ export function SearchSuggest({
       const params = new URLSearchParams({
         q: query.trim(),
         limit: String(maxItems),
+        suggest: "spelling-v1",
       });
       if (cinemaSearch) {
         params.set("type", kind);
@@ -101,10 +105,12 @@ export function SearchSuggest({
       fetch(`${endpoint}${endpoint.includes("?") ? "&" : "?"}${params.toString()}`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(12_000)]) })
         .then((res) => {
           if (!res.ok) throw new Error(`Suggest ${res.status}`);
-          return res.json() as Promise<{ items?: Suggestion[]; artists?: Suggestion[] }>;
+          return res.json() as Promise<{ items?: Suggestion[]; artists?: Suggestion[]; corrections?: string[]; matchedQuery?: string }>;
         })
         .then((data) => {
+          if (controller.signal.aborted) return;
           setFailure("");
+          setCorrections(data.corrections ?? []); setMatchedQuery(data.matchedQuery ?? "");
           setItems([...(data.artists ?? []), ...(data.items ?? [])]);
           setActiveIndex(-1);
           setLoading(false);
@@ -116,6 +122,7 @@ export function SearchSuggest({
             ? (locale === "fa" ? "درخواست‌ها زیاد است؛ چند لحظه دیگر جستجو کنید." : "Search is busy. Please try again shortly.")
             : (locale === "fa" ? "جستجو دریافت نشد؛ اتصال را بررسی و دوباره تلاش کنید." : "Search unavailable. Check your connection and try again."));
           setItems([]);
+          setCorrections([]); setMatchedQuery("");
           setLoading(false);
           setOpen(true);
         });
@@ -212,6 +219,7 @@ export function SearchSuggest({
 
   function clearSearch() {
     setQuery("");
+    setCorrections([]); setMatchedQuery("");
     setItems([]);
     setLoading(false);
     setOpen(false);
@@ -222,7 +230,7 @@ export function SearchSuggest({
   function updateQuery(value: string) {
     const canSearch = value.trim().length >= 2;
     setQuery(value); setLoading(canSearch); setOpen(canSearch); setActiveIndex(-1); setFailure("");
-    if (!canSearch) setItems([]);
+    setCorrections([]); setMatchedQuery(""); setItems([]);
   }
 
   function handleKeyboard(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -269,6 +277,7 @@ export function SearchSuggest({
           setKind(value); setItems([]); setActiveIndex(-1); setLoading(true); inputRef.current?.focus();
         }}>{value === "all" ? t.common.all : typeLabel(value, locale)}</button>)}
       </div>}
+      {!loading && <SearchCorrections corrections={corrections} matchedQuery={matchedQuery} locale={locale} onSelect={value => { updateQuery(value); inputRef.current?.focus(); }} />}
       <div id={listId} className="suggest-results" role="listbox" aria-label={copy.heading} aria-busy={loading}>
         {visibleItems.map((item, index) => (
           <Fragment key={item.imdbCode}>

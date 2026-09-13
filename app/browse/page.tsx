@@ -6,6 +6,7 @@ import { ArchiveForm, ArchiveResults } from "@/components/archive-results";
 import { archiveCard, ARCHIVE_PAGE_SIZE, ARCHIVE_BATCH_SIZE } from "@/lib/archive-cards";
 import styles from "./archive.module.css";
 import { SearchSuggest } from "@/components/search-suggest";
+import { SearchCorrections } from "@/components/search-corrections";
 import { formatNumber, getDictionary, interpolate, type Locale } from "@/lib/i18n";
 import { getLocale } from "@/lib/server-locale";
 import { titleMetadata } from "@/lib/seo";
@@ -117,6 +118,7 @@ export default async function BrowsePage({ searchParams }: Props) {
       </section>
 
       <section className="section wrap">
+        <SearchCorrections corrections={result.corrections} matchedQuery={result.matchedQuery} locale={locale} hrefForQuery={q => `/browse${queryString({ ...params, q, page: 1, batch: undefined })}`} />
         {result.section === "old-iranian-films" && (
           <details className="old-iranian-youtube-collections" dir="rtl" aria-labelledby="old-iranian-youtube-title">
             <summary>{locale === "fa" ? "مجموعه‌های یوتیوب فیلم‌های قدیمی" : "Classic film YouTube collections"}</summary>

@@ -3,6 +3,7 @@ import path from "node:path";
 import { enrichOldIranianCard } from "./old-iranian-media";
 import type { VodCard, VodCatalogIndex } from "./types";
 import { compareImdbRank } from "./vod-search-order";
+import { matchVodSearch } from "./vod-search-match";
 
 export const HOME_SECTIONS = [
   "top-imdb",
@@ -101,18 +102,10 @@ export function browseVodIndex(index: VodCatalogIndex, params: BrowseParams, req
   const quality = params.quality || "All";
 
   const sectioned = selectSection(index.items, section);
+  const search = needle ? matchVodSearch(index.items, needle) : null;
+  const matchingIds = search ? new Set(search.items.map(item => item.imdbCode)) : null;
   const filtered = sectioned.filter((item) => {
-    const matchesQuery =
-      !needle ||
-      item.title.toLowerCase().includes(needle) ||
-      item.persianTitle?.toLowerCase().includes(needle) ||
-      item.imdbCode.toLowerCase().includes(needle) ||
-      item.genres.join(" ").toLowerCase().includes(needle) ||
-      item.countries.join(" ").toLowerCase().includes(needle) ||
-      item.languages.join(" ").toLowerCase().includes(needle) ||
-      (item.persianGenres ?? []).join(" ").toLowerCase().includes(needle) ||
-      (item.persianCountries ?? []).join(" ").toLowerCase().includes(needle) ||
-      (item.persianLanguages ?? []).join(" ").toLowerCase().includes(needle);
+    const matchesQuery = !matchingIds || matchingIds.has(item.imdbCode);
 
     return (
       matchesQuery &&
@@ -133,6 +126,8 @@ export function browseVodIndex(index: VodCatalogIndex, params: BrowseParams, req
 
   return {
     section,
+    corrections: search?.corrections ?? [],
+    matchedQuery: search?.matchedQuery ?? "",
     items: filtered.slice(start, start + pageSize),
     total: filtered.length,
     page,

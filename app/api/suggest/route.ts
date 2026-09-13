@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   const startedAt = performance.now();
   const { searchParams } = new URL(request.url);
-  const query = (searchParams.get("q") ?? "").trim();
+  const query = (searchParams.get("q") ?? "").trim().slice(0, 160);
   const requestedLimit = Number(searchParams.get("limit") ?? 8);
   const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(Math.floor(requestedLimit), 6), 20) : 8;
 
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   const kind = type === "movie" || type === "series" ? type : "all";
   const result = await searchSuggestions(query, limit, kind);
   return Response.json(
-    { items: result.items },
+    { items: result.items, corrections: result.corrections, matchedQuery: result.matchedQuery, mode: result.mode },
     {
       headers: {
         ...publicCacheHeaders({ browserSeconds: 30, edgeSeconds: 600 }),

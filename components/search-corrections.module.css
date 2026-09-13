@@ -1,0 +1,11 @@
+.corrections { padding: 12px 18px; min-width: 0; border-block-end: 1px solid #ffffff12; background: #ebcf7608; color: #e9e7df; }
+.corrections p { margin: 0 0 8px; font-size: 12px; line-height: 1.8; overflow-wrap: anywhere; }
+.corrections strong { display: inline-block; color: #ebcf76; }
+.corrections > div { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.corrections span { font-size: 11px; color: #a8aaa5; }
+.corrections :is(button, a) { display: inline-flex; align-items: center; min-height: 36px; max-width: 100%; padding: 6px 12px; border: 1px solid #ebcf7633; border-radius: 18px !important; font: inherit; font-size: 12px; background: #ebcf760a; color: #ebcf76; cursor: pointer; overflow-wrap: anywhere; }
+.corrections :is(button, a):hover { background: #ebcf761c; }
+.corrections :is(button, a):focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+:global([data-search-theme="music"]) .corrections { background: #a5edc208; }
+:global([data-search-theme="music"]) .corrections :is(strong, button, a) { color: #a5edc2; border-color: #a5edc233; }
+@media(max-width: 520px) { .corrections { padding: 10px 12px; } }
