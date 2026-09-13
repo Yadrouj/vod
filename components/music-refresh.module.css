@@ -41,17 +41,21 @@
 .dock :global(.music-volume input) { accent-color: #a5edc2; }
 .dock :global(.music-player-now > span), .dock :global(.music-download) { color: #a5edc2; border-color: var(--surface-edge-strong); }
 .compact { width: min(350px, calc(100vw - 32px)); padding: 8px; }
-.compact :global(.music-player) { display: grid; grid-template-columns: minmax(0, 1fr) 48px; gap: 6px; padding: 0; }
-.compact :global(.music-player-shell) { display: flex; gap: 8px; padding: 0; min-width: 0; }
-.compact :global(.music-player-art) { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 10px !important; animation: none; }
-.compact :global(.music-player-now) { min-width: 0; }
-.compact :global(.music-player-now strong) { font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.compact :global(.music-player-now small) { font-size: 10px; }
-.compact :global(.music-player-now > span), .compact :global(.music-player-now button), .compact :global(.music-player-shell > button), .compact :global(.music-download), .compact :global(.music-player-controls), .compact :global(.music-player-queue), .compact :global(.music-lyrics), .compact :global(.music-player-video-stage) { display: none; }
-.compact :global(.music-player-transport) { display: flex; padding: 0; margin: 0; }
-.compact :global(.music-player-transport > button:not(.music-play-toggle)) { display: none; }
-.compact :global(.music-player-source-issue) { grid-column: 1 / -1; font-size: 11px; }
-.compact :global(.music-lyrics-panel) { display: none; }
+/* Explicit areas override the full-size video's named grid on every viewport.
+   Keep the same video element visible; never remount it to make a thumbnail. */
+.compact.compact :global(.music-player) { display: grid; grid-template-columns: minmax(0, 1fr) 48px; grid-template-areas: "stage stage" "shell transport" "issue issue"; grid-template-rows: auto auto auto; align-items: center; gap: 6px; padding: 0; background: transparent; }
+.compact.compact :global(.music-player-shell) { grid-area: shell; position: static; display: flex; align-items: center; gap: 8px; padding: 0; min-width: 0; min-height: 0; background: transparent; }
+.compact.compact :global(.music-player-art) { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 10px !important; animation: none; }
+.compact.compact :global(.music-player-now) { min-width: 0; }
+.compact.compact :global(.music-player-now strong) { font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.compact.compact :global(.music-player-now small) { display: block; font-size: 10px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.compact.compact :global(.music-player-now > span), .compact.compact :global(.music-player-now button), .compact.compact :global(.music-player-shell > button), .compact.compact :global(.music-download), .compact.compact :global(.music-player-controls), .compact.compact :global(.music-player-queue), .compact.compact :global(.music-lyrics), .compact.compact :global(.music-lyrics-panel), .compact.compact :global(.music-player-together) { display: none; }
+.compact.compact :global(.music-player-transport) { grid-area: transport; display: flex; padding: 0; margin: 0; }
+.compact.compact :global(.music-play-toggle) { flex: 0 0 48px; width: 48px; height: 48px; }
+.compact.compact :global(.music-player-transport > button:not(.music-play-toggle)) { display: none; }
+.compact.compact :global(.music-player-source-issue) { grid-area: issue; margin: 0; font-size: 11px; }
+.compact.compact :global(.music-player-video-stage) { grid-area: stage; display: block; width: 100%; min-height: 0; aspect-ratio: 16 / 9; border-radius: 12px !important; overflow: hidden; }
+.compact.compact :global(.music-player-video .music-player-art) { display: none; }
 .page :global([class*="landing-refresh_pulse"]) { border-color: var(--surface-edge-strong); background: #14231a; }
 .page :global([class*="landing-refresh_pulse"]) svg, .page :global([class*="landing-refresh_pulse"]) a { color: #a5edc2; }
 .tools { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }

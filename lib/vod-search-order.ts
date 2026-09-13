@@ -13,15 +13,11 @@ export function compareImdbRank(a: RankedTitle, b: RankedTitle) {
     || a.imdbCode.localeCompare(b.imdbCode);
 }
 
-/** Reserve room for both types before truncating; never let one hide the other. */
+/** Rank the complete matching pool before truncating; type filtering is opt-in. */
 export function selectRankedSuggestions<T extends RankedTitle>(matches: T[], limit: number, kind: SearchKind = "all"): T[] {
   const byId = new Map<string, T>();
   for (const item of [...matches].sort(compareImdbRank)) if (!byId.has(item.imdbCode)) byId.set(item.imdbCode, item);
   const unique = [...byId.values()];
   limit = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 8;
-  if (kind !== "all") return unique.filter((item) => searchTitleKind(item.type) === kind).slice(0, limit);
-  const movies = unique.filter((item) => searchTitleKind(item.type) === "movie");
-  const series = unique.filter((item) => searchTitleKind(item.type) === "series");
-  const movieCount = Math.min(movies.length, Math.max(Math.ceil(limit / 2), limit - series.length));
-  return [...movies.slice(0, movieCount), ...series.slice(0, limit - movieCount)];
+  return unique.filter((item) => kind === "all" || searchTitleKind(item.type) === kind).slice(0, limit);
 }

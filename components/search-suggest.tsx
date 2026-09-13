@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
 import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { DEFAULT_LOCALE, getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
-import { searchTitleKind, type SearchKind } from "@/lib/vod-search-order";
+import type { SearchKind } from "@/lib/vod-search-order";
 import { VoiceSearch } from "./voice-search";
 
 type Suggestion = {
@@ -92,7 +92,11 @@ export function SearchSuggest({
         q: query.trim(),
         limit: String(maxItems),
       });
-      if (cinemaSearch) params.set("type", kind);
+      if (cinemaSearch) {
+        params.set("type", kind);
+        // Keep old grouped responses in browser/edge caches off the new URL.
+        params.set("sort", "imdb-desc");
+      }
       if (endpoint.split("?")[0] === "/api/music/search") params.set("includeArtists", "1");
       fetch(`${endpoint}${endpoint.includes("?") ? "&" : "?"}${params.toString()}`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(12_000)]) })
         .then((res) => {
@@ -269,9 +273,6 @@ export function SearchSuggest({
         {visibleItems.map((item, index) => (
           <Fragment key={item.imdbCode}>
           {!cinemaSearch && (index === 0 || (visibleItems[index - 1].type === "artist") !== (item.type === "artist")) && <div className="suggest-type-heading" role="presentation">{item.type === "artist" ? (locale === "fa" ? "خواننده‌ها" : "Artists") : (locale === "fa" ? "آثار" : "Tracks")}</div>}
-          {cinemaSearch && (index === 0 || searchTitleKind(visibleItems[index - 1].type) !== searchTitleKind(item.type)) && (
-            <div className="suggest-type-heading" role="presentation">{typeLabel(searchTitleKind(item.type), locale)}</div>
-          )}
           <Link
             id={`${listId}-${index}`}
             key={item.imdbCode}

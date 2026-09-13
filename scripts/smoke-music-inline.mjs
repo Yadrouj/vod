@@ -67,6 +67,23 @@ try {
     assert.equal(await media.getAttribute("data-instance"), "persistent");
     assert.equal(await media.evaluate(el => el.paused), false);
     assert.ok(await media.evaluate(el => el.currentTime) >= before);
+    for (const width of [1440, 390, 320]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.screenshot({ path: `.media-cache/music-mini-${item.kind}-${width}.png` });
+      assert.ok(await host.evaluate(el => el.scrollWidth <= el.clientWidth + 1), `Mini player has no horizontal overflow at ${width}`);
+      const bounds = await host.boundingBox();
+      const toggle = await host.locator('.music-play-toggle').boundingBox();
+      assert.ok(toggle && toggle.x >= bounds.x && toggle.x + toggle.width <= bounds.x + bounds.width + 1, 'Mini play button stays inside its box');
+      assert.ok(toggle.y >= bounds.y && toggle.y + toggle.height <= bounds.y + bounds.height + 1, 'Mini play button remains visible');
+      if (item.kind === 'video') {
+        const stage = await host.locator('.music-player-video-stage').boundingBox();
+        assert.ok(stage && stage.width > 200 && stage.height > 100, 'Mini video remains visible');
+        assert.ok(Math.abs(stage.width / stage.height - 16 / 9) < .02, 'Mini video retains 16:9 aspect ratio');
+        assert.ok(bounds.height < 360, 'Video dock stays compact');
+      } else assert.ok(bounds.height < 170, 'Audio dock stays compact');
+      assert.equal(await media.getAttribute('data-interruptions'), '0');
+    }
+    await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goBack();
     await page.locator("[data-music-inline]").waitFor();
     assert.equal(await page.locator("[data-music-dock]:visible").count(), 0);
@@ -85,6 +102,36 @@ try {
     assert.equal(await media.count(), 0);
     console.log(`PASS ${item.kind}: inline, matching room, responsive, uninterrupted back/return, fullscreen, close`);
   }
+  // Reproduce the reported path with actual browser Back/Forward, not just the
+  // in-page return link. This must keep the original video node and playback.
+  await page.setViewportSize({ width: 390, height: 1000 });
+  await page.goto(`${origin}/music?kind=video`, { waitUntil: 'domcontentloaded' });
+  const videoLink = `a[href="/music/${video.id}"]`;
+  await page.waitForFunction(selector => {
+    const link = document.querySelector(selector);
+    return link && Object.keys(link).some(key => key.startsWith('__reactProps$') && typeof link[key]?.onClick === 'function');
+  }, videoLink);
+  await page.locator(videoLink).first().click();
+  await page.waitForURL(`**/music/${video.id}`, { waitUntil: 'domcontentloaded' });
+  await host.locator('.music-play-toggle').click();
+  await page.waitForFunction(() => document.querySelector('[data-music-player-host] video')?.currentTime > .2);
+  await media.evaluate(el => {
+    el.dataset.instance = 'browser-history';
+    el.dataset.interruptions = '0';
+    for (const event of ['pause', 'emptied']) el.addEventListener(event, () => el.dataset.interruptions = String(Number(el.dataset.interruptions) + 1));
+  });
+  await page.goBack({ waitUntil: 'domcontentloaded' });
+  await page.locator('[data-music-dock] .music-player-video-stage').waitFor();
+  assert.equal(await media.getAttribute('data-instance'), 'browser-history');
+  assert.equal(await media.evaluate(el => el.paused), false);
+  await page.goForward({ waitUntil: 'domcontentloaded' });
+  await page.locator('[data-music-inline]').waitFor();
+  assert.equal(await media.getAttribute('data-instance'), 'browser-history');
+  assert.equal(await media.getAttribute('data-interruptions'), '0');
+  await page.goBack({ waitUntil: 'domcontentloaded' });
+  await host.getByRole('button', { name: 'بستن و قطع موسیقی' }).click();
+  console.log('PASS browser Back/Forward: visible mini video and uninterrupted original media');
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(`${origin}/music/${track.id}`, { waitUntil: "domcontentloaded" });
   await page.locator("[data-music-inline] .music-play-toggle").waitFor();
   await page.locator(".music-back").click();
@@ -101,7 +148,10 @@ try {
   assert.equal(await media.getAttribute("src"), originalSource, "Browsing another track must not replace playback");
   assert.equal(await media.evaluate(el => el.paused), false);
   assert.ok(await page.locator("[data-music-dock]").isVisible());
-  await page.locator("[data-music-slot] button:visible").click();
+  const directPlay = page.locator("[data-music-slot] button:visible");
+  assert.equal((await directPlay.innerText()).trim(), '', 'The initial play control is an icon, not another text CTA');
+  assert.ok(await directPlay.getAttribute('aria-label'), 'Icon-only play has an accessible name');
+  await directPlay.click();
   await page.locator("[data-music-inline]").waitFor();
   await page.waitForFunction(source => {
     const el = document.querySelector("[data-music-player-host] audio, [data-music-player-host] video");

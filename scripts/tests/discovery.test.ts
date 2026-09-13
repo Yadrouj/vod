@@ -16,13 +16,18 @@ test("search rating wins over release year and uses votes to break ties", () => 
   assert.deepEqual([...items].sort(compareImdbRank).map(i => i.id), ["voted", "old", "new"]);
   assert.equal(items[0].id, "new");
 });
-test("search reserves space for both film and TV without mixing their order", () => {
-  const items = Array.from({ length: 20 }, (_, i) => card(`movie${i}`, 10 - i / 10));
-  items.push(card("show1", 8, "series"), card("show2", 9, "tvMiniSeries"));
-  const result = selectRankedSuggestions(items, 8);
-  assert.equal(result.length, 8);
-  assert.deepEqual(result.slice(-2).map(i => i.id), ["show2", "show1"]);
-  assert.ok(result.slice(0, 6).every(i => i.type === "movie"));
+test("all search suggestions mix film and TV in descending IMDb order", () => {
+  const items = [card("film1", 8.6), card("show2", 8.5, "tvMiniSeries"), card("film2", 7.5), card("house", 8.7, "series")];
+  assert.deepEqual(selectRankedSuggestions(items, 4).map(i => i.id), ["house", "film1", "show2", "film2"]);
+  assert.deepEqual(selectRankedSuggestions(items, 1).map(i => i.id), ["house"]);
+  assert.deepEqual(items.map(i => i.id), ["film1", "show2", "film2", "house"], "Do not mutate the catalog");
+});
+test("all search takes the highest scores before applying the limit, with no type quota", () => {
+  for (const dominantType of ["movie", "series"]) {
+    const items = Array.from({ length: 20 }, (_, i) => card(`top${i}`, 10 - i / 10, dominantType));
+    items.push(card("lower", 8.5, dominantType === "movie" ? "series" : "movie"));
+    assert.deepEqual(selectRankedSuggestions(items, 8).map(i => i.id), Array.from({ length: 8 }, (_, i) => `top${i}`));
+  }
 });
 test("search type filter, missing scores, duplicate IDs and limits are stable", () => {
   const missing = { ...card("missing"), imdbRating: null };

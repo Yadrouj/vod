@@ -21,7 +21,7 @@ export function MusicPlayer(props: MusicPlaybackRequest) {
     <div className={styles.ready} hidden={attachedId === props.track.id}>
       {props.track.coverUrl && <img src={props.track.coverUrl} alt="" />}
       <div><small>{props.track.kind === "video" ? "موزیک‌ویدیو" : "آهنگ"}</small><strong>{props.track.persianTitle || props.track.title}</strong><span>{props.track.artists.map(artist => artist.name).join(" · ")}</span>
-        <button type="button" onClick={() => play(props)} aria-label={`پخش ${props.track.persianTitle || props.track.title}`}><Play size={20} fill="currentColor" /> پخش این آهنگ</button>
+        <button type="button" onClick={() => play(props)} aria-label={`پخش ${props.track.persianTitle || props.track.title}`} title="پخش"><Play size={24} fill="currentColor" aria-hidden="true" /></button>
       </div>
     </div>
   </div>;

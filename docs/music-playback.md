@@ -11,6 +11,10 @@ that slot and reserves its measured height. On other routes, started playback
 becomes the compact floating player. Returning to the originating page or the
 current track's detail page restores the inline presentation.
 
+The compact video dock retains a visible 16:9 video above its title and play/pause
+button, with its own grid areas independent of the full-size player. Initial
+track selection uses a directly actionable, accessible play icon, not a text CTA.
+
 The host remains in the same body portal throughout these transitions. Do not
 change its portal target, key it by pathname, or move the media element between
 parents: those changes can reload or pause audio/video. A ResizeObserver plus
