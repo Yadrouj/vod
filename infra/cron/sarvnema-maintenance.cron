@@ -1,5 +1,7 @@
 # Alternative to the Docker maintenance service. Install this on the Linux host
 # only when Docker Compose does not run the `maintenance` service.
+# Also disable sarvnema-maintenance.timer; deploy/SCHEDULER.md is the recommended
+# persistent host-timer setup. Keep only ONE scheduling method active.
 # The script itself verifies the Asia/Tehran idle window, current app traffic,
 # active watch rooms, memory and load before it starts any crawler.
 # Host timezone does not matter: the worker gates precisely 03:00 <= Tehran < 07:00.

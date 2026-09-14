@@ -1,0 +1,14 @@
+[Unit]
+Description=Check SarvNema scraping schedule every five minutes
+
+[Timer]
+# Calendar retries are independent of host timezone. Node enforces 03:00-07:00
+# Asia/Tehran (or the saved admin schedule), including after a missed trigger.
+OnCalendar=*-*-* *:0/5:00
+OnBootSec=2min
+Persistent=true
+AccuracySec=1s
+Unit=sarvnema-maintenance.service
+
+[Install]
+WantedBy=timers.target

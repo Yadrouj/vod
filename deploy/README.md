@@ -43,6 +43,12 @@ cd /home/ubuntu/vod && bash deploy/deploy.sh
 ```
 
 ## Notes
+
+- **Daily server scraping:** follow [SCHEDULER.md](./SCHEDULER.md). After updating
+  this checkout, run `sudo bash deploy/install-maintenance-timer.sh` once. It
+  replaces the old daemon with an enabled host timer and preserves archive data.
+- `deploy.sh` now stops if Git has local changes, rather than resetting live
+  archive/LFS data. Back up and preserve those changes before updating Git.
 - The watch-party uses websockets (`/socket.io/`); the nginx block already sets
   the upgrade headers + long timeouts. If Arvan strips websockets, enable
   websocket/HTTP2 passthrough for the domain in the Arvan panel.

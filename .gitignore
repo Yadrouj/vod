@@ -38,6 +38,8 @@ data/music-artwork.lock
 data/maintenance-scheduler-status.json
 data/maintenance-scheduler-state.json
 data/maintenance-scheduler.lock
+data/maintenance-scheduler.flock
+data/maintenance-scheduler-last-run.json
 data/refresh-checkpoints/
 .media-cache/
 public/data/vod-sync-status.json

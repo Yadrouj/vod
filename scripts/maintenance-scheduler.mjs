@@ -10,11 +10,12 @@ const ROOT = process.cwd();
 const DATA = path.join(ROOT, "data");
 const STATE = path.join(DATA, "maintenance-scheduler-state.json");
 const STATUS = path.join(DATA, "maintenance-scheduler-status.json");
+const LAST_RUN = path.join(DATA, "maintenance-scheduler-last-run.json");
 const LOCK = path.join(DATA, "maintenance-scheduler.lock");
 const args = new Set(process.argv.slice(2));
 const FORCE = args.has("--force");
 const FULL = args.has("--full");
-const number = (name, fallback) => Number.isFinite(Number(process.env[name])) ? Number(process.env[name]) : fallback;
+const number = (name, fallback) => process.env[name]?.trim() && Number.isFinite(Number(process.env[name])) ? Number(process.env[name]) : fallback;
 const ENV_ZONE = process.env.MAINTENANCE_TIME_ZONE || "Asia/Tehran";
 const START = Math.min(23, Math.max(0, number("MAINTENANCE_IDLE_START_HOUR", DEFAULT_IDLE_START_HOUR)));
 const END = Math.min(23, Math.max(0, number("MAINTENANCE_IDLE_END_HOUR", DEFAULT_IDLE_END_HOUR)));
@@ -28,13 +29,31 @@ async function main() {
     const { schedule, config } = await effectiveDashboardConfig();
     const local = localClock(new Date(), schedule.timeZone);
     const eligibleNow = isScheduled(local, schedule) && windowDeadline(new Date(), schedule.timeZone, schedule.startHour, schedule.endHour) > Date.now();
-    console.log(JSON.stringify({ timeZone: schedule.timeZone, startHour: schedule.startHour, endHourExclusive: schedule.endHour, days: schedule.days, local, eligibleNow, trigger: { name: "daily-scraper-check", schedule: "daily", active: eligibleNow }, configuredSources: config.sources.length, capacity: await checkCapacity(), jobs: DAILY_JOBS }, null, 2));
+    const state = await readJson(STATE, { days: {} });
+    console.log(JSON.stringify({ timeZone: schedule.timeZone, startHour: schedule.startHour, endHourExclusive: schedule.endHour, days: schedule.days, local, eligibleNow, trigger: { name: "daily-scraper-check", schedule: "daily", active: eligibleNow }, configuredSources: config.sources.length, capacity: await checkCapacity(), completedToday: Object.keys(state.days?.[local.day] || {}), lastDailyTrigger: state.lastDailyTrigger ?? null, lastRun: await readJson(LAST_RUN, null), status: await readJson(STATUS, null), jobs: DAILY_JOBS }, null, 2));
+    return;
+  }
+  // The Linux kernel releases this lock after a crash/reboot. An abandoned
+  // file must not block the entire following night's maintenance window.
+  if (process.platform === "linux" && !args.has("--lock-held")) {
+    await mkdir(DATA, { recursive: true });
+    const child = spawn("flock", ["--nonblock", "--conflict-exit-code", "75", "--no-fork", path.join(DATA, "maintenance-scheduler.flock"), process.execPath, process.argv[1], ...process.argv.slice(2), "--lock-held"], { stdio: "inherit" });
+    activeStop = () => child.kill("SIGTERM");
+    await new Promise((resolve, reject) => {
+      child.once("error", reject);
+      child.once("exit", (code, signal) => {
+        activeStop = null;
+        if (code === 75) console.log("[maintenance] Another scheduler owns the lock; skipping this trigger");
+        process.exitCode = code === 75 ? 0 : code ?? (signal ? 1 : 0);
+        resolve();
+      });
+    });
     return;
   }
   do {
     await runCycle().catch(async error => {
       console.error(error);
-      await atomic(STATUS, { state: "failed", checkedAt: new Date().toISOString(), error: error.message });
+      await writeStatus({ state: "failed", checkedAt: new Date().toISOString(), error: error.message });
       if (!args.has("--daemon")) process.exitCode = 1;
     });
     if (!args.has("--daemon") || stopping) break;
@@ -55,11 +74,15 @@ async function runCycle() {
     source: args.has("--daemon") ? "maintenance-daemon" : "scheduled-worker",
   };
   if (deadline <= Date.now()) {
-    await atomic(STATUS, { state: "waiting", local, trigger: { ...trigger, active: false }, reason: "Outside the configured maintenance window or scheduled day", checkedAt: new Date().toISOString() });
+    await writeStatus({ state: "waiting", local, trigger: { ...trigger, active: false }, reason: "Outside the configured maintenance window or scheduled day", checkedAt: new Date().toISOString() });
     return;
   }
-  const lock = await acquireLock();
-  if (!lock) return;
+  const kernelLocked = process.platform === "linux" && args.has("--lock-held");
+  const lock = kernelLocked ? null : await acquireLock();
+  if (!kernelLocked && !lock) {
+    console.log("[maintenance] Another scheduler owns the lock; skipping this trigger");
+    return;
+  }
   try {
     const previous = await readJson(STATE, { days: {} });
     const activatedAt = previous.lastDailyTrigger?.id === trigger.id ? previous.lastDailyTrigger.activatedAt : new Date().toISOString();
@@ -71,18 +94,22 @@ async function runCycle() {
     const completed = days[local.day] ?? {};
     const steps = [];
     const scheduledJobs = DAILY_JOBS.filter((job) => isJobScheduled(job, config, local, schedule));
+    if (!scheduledJobs.length) {
+      await writeStatus({ state: "waiting", local, trigger: activeTrigger, steps, reason: "No enabled sources are scheduled at this time; check the per-source days and hours", checkedAt: new Date().toISOString() });
+      return;
+    }
     for (const job of scheduledJobs) {
       if (stopping || Date.now() >= deadline) break;
       if (!FORCE && completed[job.id]) continue;
       const capacity = await checkCapacity();
       if (!FORCE && !capacity.idle) {
-        await atomic(STATUS, { state: "waiting", local, trigger: activeTrigger, steps, capacity, checkedAt: new Date().toISOString() });
+        await writeStatus({ state: "waiting", local, trigger: activeTrigger, steps, capacity, completedJobs: Object.keys(completed), checkedAt: new Date().toISOString() });
         return;
       }
       if (stopping || Date.now() >= deadline) break;
       const entry = { id: job.id, script: job.script, state: "running", startedAt: new Date().toISOString() };
       steps.push(entry);
-      await atomic(STATUS, { state: "running", local, trigger: activeTrigger, steps, deadline: new Date(deadline).toISOString(), checkedAt: new Date().toISOString() });
+      await writeStatus({ state: "running", local, trigger: activeTrigger, steps, deadline: new Date(deadline).toISOString(), checkedAt: new Date().toISOString() });
       try {
         const source = config.sources.find((item) => item.id === job.id) || schedule;
         const sourceDeadline = FORCE ? Number.POSITIVE_INFINITY : windowDeadline(new Date(), schedule.timeZone, source.startHour, source.endHour);
@@ -102,11 +129,13 @@ async function runCycle() {
       entry.finishedAt = new Date().toISOString();
     }
     const complete = scheduledJobs.every(job => completed[job.id]);
-    await atomic(STATUS, { state: complete ? "completed" : "partial", local, trigger: activeTrigger, steps, completedJobs: Object.keys(completed), checkedAt: new Date().toISOString() });
+    await writeStatus({ state: complete ? "completed" : "partial", local, trigger: activeTrigger, steps, completedJobs: Object.keys(completed), checkedAt: new Date().toISOString() });
     if (!complete && !args.has("--daemon")) process.exitCode = 1;
   } finally {
-    await lock.close();
-    await unlink(LOCK).catch(() => {});
+    if (lock) {
+      await lock.close();
+      await unlink(LOCK).catch(() => {});
+    }
   }
 }
 
@@ -151,7 +180,7 @@ async function checkCapacity() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const ready = await response.json();
     return { ...assessCapacity(ready, os.loadavg()[0], {
-      requests: number("MAINTENANCE_MAX_RECENT_REQUESTS", 12), rooms: number("MAINTENANCE_MAX_ACTIVE_ROOMS", 1),
+      requests: number("MAINTENANCE_MAX_RECENT_REQUESTS", undefined), rooms: number("MAINTENANCE_MAX_ACTIVE_ROOMS", 1),
       memory: number("MAINTENANCE_MAX_MEMORY_MB", 1350), load: number("MAINTENANCE_MAX_LOAD_AVG", 1.25),
     }), ready };
   } catch (error) { return { idle: false, reason: error.message }; }
@@ -181,6 +210,13 @@ async function atomic(file, value) {
   await rename(temporary, file);
 }
 async function readJson(file, fallback) { try { return JSON.parse(await readFile(file, "utf8")); } catch { return fallback; } }
+async function writeStatus(value) {
+  await atomic(STATUS, value);
+  // Preserve the nightly outcome when daytime checks switch back to waiting.
+  if (value.trigger?.active !== false) await atomic(LAST_RUN, value);
+  const job = value.steps?.at(-1)?.id;
+  console.log(`[maintenance] ${value.checkedAt} ${value.state}${job ? ` ${job}` : ""}: ${value.reason || value.capacity?.reason || value.error || `${value.completedJobs?.length ?? 0} jobs completed`}`);
+}
 async function effectiveDashboardConfig() {
   const config = await readScraperDashboardConfig();
   if (await hasScraperDashboardConfig()) return { config, schedule: config.schedule };

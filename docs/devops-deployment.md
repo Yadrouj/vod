@@ -181,6 +181,11 @@ journalctl -u sarvnema-bale.service -n 100 --no-pager
 
 ## maintenance و اسکریپرها
 
+برای `sarvnema.ir` روش پیشنهادی جدید تایمر میزبان است؛ دستور نصب و کنترل روزانه
+در [deploy/SCHEDULER.md](../deploy/SCHEDULER.md) قرار دارد. این تایمر جایگزین
+daemon زیر می‌شود، نه اجرای هم‌زمان با آن. برای فایل Compose همین راهنما:
+`sudo bash deploy/install-maintenance-timer.sh docker-compose.production.yml`.
+
 سرویس `maintenance` هر ۱۵ دقیقه بررسی می‌کند و فقط در پنجرهٔ **۰۳:۰۰ تا قبل از ۰۷:۰۰ Asia/Tehran** تریگر روزانه را فعال می‌کند:
 
 ```bash

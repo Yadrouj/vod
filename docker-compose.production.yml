@@ -36,7 +36,7 @@ services:
     expose:
       - "3004"
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3004/readyz"]
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "2", "http://127.0.0.1:3004/readyz"]
       interval: 20s
       timeout: 3s
       start_period: 30s
@@ -55,7 +55,8 @@ services:
       MAINTENANCE_IDLE_END_HOUR: ${MAINTENANCE_IDLE_END_HOUR:-7}
       MAINTENANCE_POLL_MS: ${MAINTENANCE_POLL_MS:-900000}
       MAINTENANCE_READY_URL: http://app:3004/readyz
-      MAINTENANCE_MAX_RECENT_REQUESTS: ${MAINTENANCE_MAX_RECENT_REQUESTS:-12}
+      # Empty: use actual request queues; set a number only for a strict traffic cap.
+      MAINTENANCE_MAX_RECENT_REQUESTS: ${MAINTENANCE_MAX_RECENT_REQUESTS:-}
       MAINTENANCE_MAX_ACTIVE_ROOMS: ${MAINTENANCE_MAX_ACTIVE_ROOMS:-1}
       MAINTENANCE_MAX_MEMORY_MB: ${MAINTENANCE_MAX_MEMORY_MB:-1350}
       MAINTENANCE_MAX_LOAD_AVG: ${MAINTENANCE_MAX_LOAD_AVG:-1.25}

@@ -25,8 +25,19 @@ export function windowDeadline(date = new Date(), timeZone = "Asia/Tehran", star
 
 export function assessCapacity(ready, loadAverage, limits = {}) {
   if (!ready || ready.status !== "ready") return { idle: false, reason: "Application is not ready" };
+  // Completed asset/API requests are not current pressure. Prefer the actual
+  // admission queues so a responsive site is not starved of daily updates.
+  const lanes = ready.requests && ["pages", "media", "uploads", "assets"].map(name => ready.requests[name]);
+  const hasLanes = lanes?.every(lane => lane && [lane.active, lane.queued, lane.capacity].every(Number.isFinite)
+    && lane.active >= 0 && lane.queued >= 0 && lane.capacity > 0);
+  if (ready.requests && !hasLanes) return { idle: false, reason: "Request queue telemetry unavailable" };
+  if (hasLanes && lanes.some(lane => lane.queued > 0 || lane.active / lane.capacity >= 0.5)) {
+    return { idle: false, reason: "Requests queued or at least half of a request lane is occupied" };
+  }
   const checks = [
-    [Number(ready.recentRequests5m), limits.requests ?? 12, "Traffic"],
+    // An explicit historical cap is still a hard limit. Older app versions
+    // without queue telemetry retain the conservative fallback of 12 requests.
+    ...(!hasLanes || limits.requests !== undefined ? [[Number(ready.recentRequests5m), limits.requests ?? 12, "Traffic"]] : []),
     [Number(ready.activeRooms ?? ready.rooms), limits.rooms ?? 1, "Active rooms"],
     [Number(ready.memoryMb?.rss), limits.memory ?? 1350, "Application memory"],
     [loadAverage, limits.load ?? 1.25, "Host load"],
@@ -34,7 +45,7 @@ export function assessCapacity(ready, loadAverage, limits = {}) {
   for (const [value, limit, name] of checks) {
     if (!Number.isFinite(value) || value > limit) return { idle: false, reason: `${name} unavailable or above idle limit` };
   }
-  return { idle: true, reason: "Application and host are idle" };
+  return { idle: true, reason: hasLanes ? "Request queues and host have spare capacity" : "Application and host are idle" };
 }
 
 export const DAILY_JOBS = [

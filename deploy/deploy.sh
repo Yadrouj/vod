@@ -18,9 +18,13 @@ fi
 # 1) clone-or-pull ------------------------------------------------------------
 if [ -d "$DIR/.git" ]; then
   echo "==> Updating existing repo in $DIR"
+  if ! git -C "$DIR" diff --quiet || ! git -C "$DIR" diff --cached --quiet; then
+    echo "Uncommitted changes (including live archive data). Back up and preserve them before deploying; no reset was performed." >&2
+    exit 1
+  fi
   git -C "$DIR" fetch origin "$BRANCH"
   git -C "$DIR" checkout "$BRANCH"
-  git -C "$DIR" reset --hard "origin/$BRANCH"   # leaves untracked .env.local intact
+  git -C "$DIR" pull --ff-only origin "$BRANCH"
 else
   echo "==> Cloning $REPO into $DIR"
   git clone -b "$BRANCH" "$REPO" "$DIR"
@@ -32,7 +36,11 @@ git lfs install --local
 git lfs pull
 
 # 3) build + start ------------------------------------------------------------
-docker compose -f "$COMPOSE_FILE" up -d --build
+maintenance_args=()
+if command -v systemctl >/dev/null && systemctl is-enabled --quiet sarvnema-maintenance.timer; then
+  maintenance_args=(--scale maintenance=0)
+fi
+docker compose -f "$COMPOSE_FILE" up -d --build "${maintenance_args[@]}"
 
 echo
 echo "==> Status:"

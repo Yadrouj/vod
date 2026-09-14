@@ -1,0 +1,18 @@
+[Unit]
+Description=SarvNema daily catalog maintenance
+Wants=network-online.target
+Requires=docker.service
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=@ROOT@
+ExecStart=/usr/bin/bash @ROOT@/deploy/run-maintenance.sh @COMPOSE@
+ExecStopPost=-/usr/bin/bash @ROOT@/deploy/run-maintenance.sh @COMPOSE@ --stop
+# All nine job budgets total 196 minutes; the worker also enforces its window.
+TimeoutStartSec=4h10min
+TimeoutStopSec=40s
+KillMode=control-group
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sarvnema-maintenance
