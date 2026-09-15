@@ -74,8 +74,10 @@ function ack(socket, event, payload) { return new Promise((resolve, reject) => s
 try {
   if (!process.env.PANELS_ROOMS_ONLY) {
   await page.goto(`${origin}/watch/tt0903747`, { waitUntil: 'domcontentloaded' });
+  // Production streaming can briefly contain the hidden replacement segment
+  // and its visible predecessor. Wait for the real, hydrated player to settle.
+  await page.waitForFunction(() => { const players = document.querySelectorAll('.pro-player'); if (players.length !== 1) return false; const button = players[0].querySelector('button'); return button && Object.keys(button).some(key => key.startsWith('__reactProps$') && typeof button[key]?.onClick === 'function'); });
   await page.locator('.pro-player').waitFor();
-  await page.waitForFunction(() => { const button = document.querySelector('.pro-player button'); return button && Object.keys(button).some(key => key.startsWith('__reactProps$') && typeof button[key]?.onClick === 'function'); });
   await fit('source'); await dialog.locator(':scope > footer button').click(); await dialog.waitFor({ state: 'detached' });
   const movie = page.locator('.pro-player video').first();
   await page.waitForFunction(() => document.querySelector('.pro-player video')?.currentTime > .1);
