@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, type ReactNode } from "react";
 import { MusicPlaybackProvider } from "./music-playback-provider";
+import { TelegramMiniAppBridge } from "./telegram-mini-app-bridge";
 
 export function AudienceBoundary({ children, adultChrome, measurementId }: { children: ReactNode; adultChrome: ReactNode; measurementId: string }) {
   const pathname = usePathname();
@@ -12,5 +13,5 @@ export function AudienceBoundary({ children, adultChrome, measurementId }: { chi
     Object.assign(window, { [`ga-disable-${measurementId}`]: kids });
   }, [kids, measurementId]);
   if (kids) return <>{children}</>;
-  return <MusicPlaybackProvider>{children}{adultChrome}</MusicPlaybackProvider>;
+  return <MusicPlaybackProvider><TelegramMiniAppBridge />{children}{adultChrome}</MusicPlaybackProvider>;
 }

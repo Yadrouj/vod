@@ -26,6 +26,12 @@ GET /api/bot/filters
 
 Returns menu-ready values for movies, series, genres, countries, languages, years, qualities, and IMDb score presets.
 
+Pass the same `type`, `section`, genre/country/year/quality/IMDb filters as search
+to scope the choices, e.g. `/api/bot/filters?type=series&country=United%20States`.
+`matchingTitles` counts the current selection; `totals` remains overall inventory.
+Each facet ignores its own selected value but respects the other filters, so
+users can change a selection. Years are numeric descending, never count-ranked.
+
 ## Search
 
 ```text
@@ -41,6 +47,12 @@ q, type, genre, country, language, year, yearFrom, yearTo, quality, minImdb, max
 ```
 
 Types are `movie`, `series`, or `all`. Sort can be `relevance`, `rating`, `year`, or `title`. The response includes `telegram.text` and `telegram.buttons` for each result.
+
+Responses also expose `mode` (`exact`, `similar`, `none`), `matchedQuery` and up
+to five `corrections`. `breakng bud` resolves to `Breaking Bad` as a whole phrase;
+it must not return unrelated titles containing only `bud`. The music search
+endpoint exposes the same correction fields. Original query and filters remain
+available in the response. See [search corrections](./search-corrections.md).
 
 ## Music
 

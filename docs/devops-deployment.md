@@ -1,6 +1,6 @@
 # راهنمای دواپس انتشار SarvNema
 
-این runbook برای استقرار نسخه‌های جدید سایت، کاتالوگ‌های بزرگ Git LFS، workerهای اسکریپر و بات‌های Telegram/Bale نوشته شده است. آخرین تغییرات بات در کامیت `65c5789` روی `origin/main` قرار دارد.
+این runbook برای استقرار نسخه‌های جدید سایت، کاتالوگ‌های بزرگ Git LFS، workerهای اسکریپر و بات‌های Telegram/Bale نوشته شده است. برای منوی لایه‌ای جدید، تصحیح جست‌وجو و Mini App، [راهنمای انتشار بات‌ها و Mini App](./telegram-mini-app.md) را هم اجرا کنید؛ app و workerها باید با هم به‌روزرسانی شوند.
 
 ## معماری production
 
@@ -137,7 +137,7 @@ curl -fsS -H "x-bot-token: $BOT_API_TOKEN" "https://sarvnema.ir/api/bot/title/tt
 
 ## اجرای workerهای بات
 
-بات‌ها در compose فعلی سرویس مستقل ندارند؛ آن‌ها را به‌عنوان process دائمی جدا اجرا کنید. روی host با Node 22:
+در `docker-compose.production.yml` بات‌ها process جدا هستند. در `docker-compose.prod.yml` سرویس `telegram-bot` وجود دارد؛ آن را دوباره روی host اجرا نکنید. برای workerهای جدا، روی host با Node 22:
 
 ```bash
 cd /srv/sarvnema/vod

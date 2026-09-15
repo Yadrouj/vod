@@ -12,6 +12,8 @@ import { subzoneSearchUrl } from "./subtitles";
 import type { VodCard, VodItem } from "./types";
 import { loadOldIranianVodIndex, loadVodIndex, selectVodSection } from "./vod-index";
 import { downloadGateUrl } from "./download-gate";
+import { matchVodSearch } from "./vod-search-match";
+import { searchText } from "./typo-search";
 
 export type BotSort = "relevance" | "rating" | "year" | "title";
 
@@ -74,12 +76,18 @@ export function parseBotSearchParams(searchParams: URLSearchParams): BotSearchPa
 
 export async function searchBotCatalog(params: BotSearchParams, origin: string) {
   const index = params.section === "old-iranian-films" ? await loadOldIranianVodIndex() : await loadVodIndex();
+  return searchBotItems(index.items, params, origin);
+}
+
+export function searchBotItems(items: VodCard[], params: BotSearchParams, origin: string) {
   const candidates = params.section
-    ? selectVodSection(index.items, params.section)
-    : index.items;
-  const scored = candidates
-    .map((item) => ({ item, ...scoreBotItem(item, params.q) }))
-    .filter(({ item, score }) => matchesBotFilters(item, params, score))
+    ? selectVodSection(items, params.section)
+    : items;
+  const matches = params.q ? matchVodSearch(candidates, params.q)
+    : { items: candidates, corrections: [], matchedQuery: "", mode: "exact" as const };
+  const scored = matches.items
+    .map((item) => ({ item, ...scoreBotItem(item, matches.matchedQuery) }))
+    .filter(({ item }) => matchesBotFilters(item, params))
     .sort((a, b) => sortBotResults(a, b, params.sort, Boolean(params.q)));
 
   const total = scored.length;
@@ -90,6 +98,9 @@ export async function searchBotCatalog(params: BotSearchParams, origin: string) 
   return {
     service: BRAND_NAME,
     query: params.q,
+    matchedQuery: matches.matchedQuery,
+    corrections: matches.corrections,
+    mode: matches.mode,
     filters: {
       type: params.type,
       genre: params.genre || "all",
@@ -118,14 +129,18 @@ export async function searchBotCatalog(params: BotSearchParams, origin: string) 
   };
 }
 
-export async function getBotFilters(origin: string) {
+export async function getBotFilters(origin: string, params = parseBotSearchParams(new URLSearchParams())) {
   const index = await loadVodIndex();
   const typeCounts = countTypes(index.items);
+  const scopedIndex = params.section === "old-iranian-films" ? await loadOldIranianVodIndex() : index;
+  const scoped = params.section ? selectVodSection(scopedIndex.items, params.section) : scopedIndex.items;
+  const facets = botFilterFacets(scoped, params);
 
   return {
     service: BRAND_NAME,
     sourceUrl: index.sourceUrl,
     generatedAt: index.generatedAt,
+    matchingTitles: scoped.filter(item => matchesBotFilters(item, params)).length,
     totals: {
       titles: index.totalTitles,
       links: index.totalLinks,
@@ -158,11 +173,7 @@ export async function getBotFilters(origin: string) {
         { value: "movie", label: "Movies", count: typeCounts.movie },
         { value: "series", label: "Series", count: typeCounts.series },
       ],
-      genres: countValues(index.items, (item) => item.genres),
-      countries: countValues(index.items, (item) => item.countries),
-      languages: countValues(index.items, (item) => item.languages),
-      years: countValues(index.items, (item) => (item.year ? [String(item.year)] : [])),
-      qualities: countValues(index.items, (item) => item.qualities),
+      ...facets,
     },
     examples: [
       `${origin}/api/bot/search?q=break`,
@@ -171,6 +182,18 @@ export async function getBotFilters(origin: string) {
       `${origin}/api/bot/title/tt0903747`,
       `${origin}/api/bot/title/tt0903747?season=1`,
     ],
+  };
+}
+
+export function botFilterFacets(items: VodCard[], params: BotSearchParams) {
+  const facet = (key: "genre" | "country" | "language" | "year" | "quality", getter: (item: VodCard) => string[]) => {
+    const scope = { ...params, q: "", [key]: "", ...(key === "year" ? { yearFrom: null, yearTo: null } : {}) };
+    return countValues(items.filter(item => matchesBotFilters(item, scope)), getter);
+  };
+  return {
+    genres: facet("genre", item => item.genres), countries: facet("country", item => item.countries),
+    languages: facet("language", item => item.languages), qualities: facet("quality", item => item.qualities),
+    years: facet("year", item => item.year ? [String(item.year)] : []).sort((a, b) => Number(b.value) - Number(a.value)),
   };
 }
 
@@ -362,7 +385,7 @@ function serializeDownload(file: DownloadSource | EpisodeFile, origin: string, t
 }
 
 function scoreBotItem(item: VodCard, rawQuery: string) {
-  const query = rawQuery.trim().toLowerCase();
+  const query = searchText(rawQuery);
   if (!query) {
     return {
       score: Math.round((item.imdbRating ?? 0) * 10 + Math.min(20, Math.log10((item.imdbVotes ?? 0) + 1) * 3)),
@@ -371,7 +394,7 @@ function scoreBotItem(item: VodCard, rawQuery: string) {
   }
 
   const tokens = query.split(/\s+/).filter(Boolean);
-  const title = item.title.toLowerCase();
+  const title = searchText(item.persianTitle && searchText(item.persianTitle).includes(query) ? item.persianTitle : item.title);
   const imdb = item.imdbCode.toLowerCase();
   let score = 0;
   const reasons: string[] = [];
@@ -408,8 +431,9 @@ function scoreBotItem(item: VodCard, rawQuery: string) {
   return { score: Math.round(score), reasons: reasons.slice(0, 3) };
 }
 
-function matchesBotFilters(item: VodCard, params: BotSearchParams, score: number) {
-  if (params.q && score <= 0) return false;
+function matchesBotFilters(item: VodCard, params: BotSearchParams) {
+  // Text eligibility is decided by the shared whole-query matcher, not by an
+  // OR of individual word scores (e.g. matching only "bud" in "breakng bud").
   if (params.type !== "all" && normalizeVodType(item.type) !== params.type) return false;
   if (params.genre && !hasValue(item.genres, params.genre)) return false;
   if (params.country && !hasValue(item.countries, params.country)) return false;

@@ -338,6 +338,11 @@
   border-radius: 0 !important;
 }
 
+html[data-telegram-mini-app="true"] body {
+  padding-top: var(--telegram-safe-top, 0px);
+  padding-bottom: var(--telegram-safe-bottom, 0px);
+}
+
 html,
 body {
   min-height: 100%;

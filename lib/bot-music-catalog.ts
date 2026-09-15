@@ -1,4 +1,4 @@
-import { findMusicTrack, loadMusicIndex, normalizeMusicTrack, searchMusic } from "@/lib/music";
+import { findMusicTrack, loadMusicIndex, normalizeMusicTrack, resolveMusicSearch } from "@/lib/music";
 import type { MusicTrack } from "@/lib/music-types";
 import { downloadGateUrl } from "@/lib/download-gate";
 
@@ -64,8 +64,9 @@ export async function getBotMusicFilters(origin: string) {
 
 export async function searchBotMusic(params: BotMusicSearchParams, origin: string) {
   const index = await loadMusicIndex();
-  const ranked = searchMusic(index, params.q, params.kind, params.category || "all")
-    .map((track) => ({ track: normalizeMusicTrack(track), score: scoreMusic(track, params.q) }))
+  const matches = resolveMusicSearch(index, params.q, params.kind, params.category || "all");
+  const ranked = matches.items
+    .map((track) => ({ track: normalizeMusicTrack(track), score: scoreMusic(track, matches.matchedQuery) }))
     .sort((left, right) => right.score - left.score || (right.track.publishedAt ?? "").localeCompare(left.track.publishedAt ?? "") || left.track.title.localeCompare(right.track.title));
 
   const total = ranked.length;
@@ -76,6 +77,7 @@ export async function searchBotMusic(params: BotMusicSearchParams, origin: strin
   return {
     service: "SarvNema",
     query: params.q,
+    matchedQuery: matches.matchedQuery, corrections: matches.corrections, mode: matches.mode,
     filters: { kind: params.kind, category: params.category || "all" },
     pagination: {
       page,

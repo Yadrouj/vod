@@ -33,6 +33,7 @@ export class TypoSearchIndex<T> {
   private readonly documents: Document<T>[];
   private readonly words = new Map<number, Map<string, number>>();
   private readonly names = new Map<string, string>();
+  private readonly wordNames = new Map<string, Set<string>>();
   private readonly compact = new Map<string, Set<string>>();
   private readonly cache = new Map<string, SearchMatches<T>>();
 
@@ -41,6 +42,11 @@ export class TypoSearchIndex<T> {
       const names = document.names.filter(Boolean).map(name => {
         const key = searchText(name);
         if (key) this.names.set(key, this.names.get(key) ?? name.trim());
+        for (const word of new Set(key.split(" "))) {
+          const entries = this.wordNames.get(word) ?? new Set<string>();
+          entries.add(key);
+          this.wordNames.set(word, entries);
+        }
         if (key.includes(" ") && key.length <= 80) {
           const compact = key.replace(/ /g, "");
           const entries = this.compact.get(compact) ?? new Set<string>();
@@ -80,6 +86,11 @@ export class TypoSearchIndex<T> {
     // Short fragments, IDs, numbers and huge inputs must not produce guesses.
     if (key.length < 3 || key.length > 80 || tokens.length > 8 || /^tt\d/i.test(key) || !/\p{L}/u.test(key)) return empty;
 
+    // Multiword corrections are evaluated against real contiguous title
+    // phrases. A frequent standalone word must never prune the correct phrase
+    // or allow us to silently drop a misspelled first word.
+    if (tokens.length > 1) return this.resolvePhrase(tokens, empty);
+
     let beam = [{ text: "", cost: 0, frequency: 0 }];
     for (const token of tokens) {
       const options = [{ text: token, cost: 0, frequency: this.words.get(token.length)?.get(token) ?? 0 }];
@@ -114,5 +125,46 @@ export class TypoSearchIndex<T> {
       matchedQuery: this.names.get(best.text) ?? best.text,
       mode: "similar",
     };
+  }
+
+  private resolvePhrase(tokens: string[], empty: SearchMatches<T>): SearchMatches<T> {
+    const anchor = tokens.filter(token => token.length >= 3 && /^\p{L}+$/u.test(token)).sort((a, b) => b.length - a.length)[0];
+    if (!anchor) return empty;
+    const names = new Set<string>();
+    const anchorLimit = anchor.length >= 6 ? 2 : 1;
+    for (let length = anchor.length - anchorLimit; length <= anchor.length + anchorLimit; length++) {
+      for (const word of this.words.get(length)?.keys() ?? []) {
+        if (spellingDistance(anchor, word, anchorLimit) <= anchorLimit) {
+          for (const name of this.wordNames.get(word) ?? []) names.add(name);
+        }
+      }
+    }
+    const phrases = new Map<string, number>();
+    for (const name of names) {
+      const words = name.split(" ");
+      for (let start = 0; start <= words.length - tokens.length; start++) {
+        let cost = 0;
+        for (let index = 0; index < tokens.length; index++) {
+          const token = tokens[index], word = words[start + index];
+          if (token === word) continue;
+          if (index === tokens.length - 1 && token.length >= 2 && word.startsWith(token)) { cost += .25; continue; }
+          const limit = token.length >= 6 ? 2 : token.length >= 3 ? 1 : 0;
+          const distance = /^\p{L}+$/u.test(token) ? spellingDistance(token, word, limit) : limit + 1;
+          if (distance > limit) { cost = Infinity; break; }
+          cost += distance;
+        }
+        if (!Number.isFinite(cost)) continue;
+        const phrase = words.slice(start, start + tokens.length).join(" ");
+        phrases.set(phrase, Math.min(phrases.get(phrase) ?? Infinity, cost));
+      }
+    }
+    for (const name of this.compact.get(tokens.join("")) ?? []) phrases.set(name, .25);
+    const candidates = [...phrases].map(([phrase, cost]) => ({ phrase, cost,
+      hits: this.documents.filter(document => document.names.some(name => name.includes(phrase))),
+    })).filter(candidate => candidate.hits.length).sort((a, b) => a.cost - b.cost || b.hits.length - a.hits.length || a.phrase.localeCompare(b.phrase)).slice(0, 5);
+    const best = candidates[0];
+    if (!best) return empty;
+    return { items: best.hits.map(hit => hit.item), corrections: candidates.map(candidate => this.names.get(candidate.phrase) ?? candidate.phrase),
+      matchedQuery: this.names.get(best.phrase) ?? best.phrase, mode: "similar" };
   }
 }

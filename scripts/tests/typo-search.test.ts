@@ -29,6 +29,23 @@ test("valid queries and partial titles are not corrected; ID/numeric/short/garba
   }
   for (const query of ["zz", "tt0412143", "1998", "!!!!!!!!", "z".repeat(200), "zzzzzzzz"]) assert.deepEqual(index.search(query).items, [], query);
 });
+
+test("a typo in every word resolves the entire phrase, never just the second word", () => {
+  const names = ["Breaking Bad", "Breaking Bad: Extras", "Air Bud", "Bud", "Buddies", "Bad", "Breaking News", "The Breaking Point",
+    ...Array.from({ length: 100 }, (_, i) => `Bearing Buddy ${i}`),
+    ...Array.from({ length: 100 }, (_, i) => `Bud Boy ${i}`)];
+  const full = new TypoSearchIndex(names.map(item => ({ item, names: [item], text: item })));
+  for (const query of ["breakng bud", "breking bed", "brekaing bda", "breakng ba"]) {
+    const result = full.search(query);
+    assert.equal(result.mode, "similar", query);
+    assert.equal(result.matchedQuery, "Breaking Bad", query);
+    assert.deepEqual(result.items, ["Breaking Bad", "Breaking Bad: Extras"], query);
+    assert.ok(!result.corrections.includes("Bud"));
+  }
+  assert.deepEqual(full.search("zzzzzz bud").items, []);
+  assert.equal(full.search("air bud").mode, "exact");
+  assert.deepEqual(full.search("breaking 2026").items, []);
+});
 test("Persian/Arabic variants, diacritics, accented names and Persian typos", () => {
   assert.equal(searchText(" كِياني  "), "کیانی");
   assert.equal(index.search("مَهْسَتی").mode, "exact");

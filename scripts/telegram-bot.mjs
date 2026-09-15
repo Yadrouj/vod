@@ -1,4 +1,8 @@
 import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { createBotNavigation } from "./bot-navigation.mjs";
+import { miniAppUrl, miniAppButton } from "./telegram-mini-app.mjs";
 
 try {
   const env = await readFile(".env.local", "utf8");
@@ -15,8 +19,8 @@ const apiBase = (process.env.BOT_SITE_URL || "http://localhost:3004").replace(/\
 const telegram = token ? `https://api.telegram.org/bot${token}` : "";
 const sessions = new Map();
 const PAGE_SIZE = 10;
-
-if (!token) throw new Error("BOT_API_TOKEN is missing from .env.local");
+const appUrl = miniAppUrl();
+const navigation = createBotNavigation({ api, send, edit, sendCard: sendVodCard, openVod: showVodTitle, openMusic: showMusicTitle });
 
 const profileCommands = [
   { command: "start", description: "شروع و انتخاب محتوا" },
@@ -28,6 +32,7 @@ const profileCommands = [
   { command: "top", description: "۲۵۰ عنوان برتر IMDb" },
   { command: "iranian", description: "فیلم‌های قدیمی ایرانی" },
   { command: "help", description: "راهنمای استفاده" },
+  { command: "app", description: "بازکردن مینی‌اپ سرونما" },
 ];
 
 let intro = [
@@ -44,7 +49,8 @@ const helpText = [
   "<b>راهنمای SarvNema</b>",
   "",
   "• از منو فیلم، سریال یا موزیک را انتخاب کنید.",
-  "• در هر بخش، دسته‌بندی‌های پیشنهادی را ببینید و نتیجه‌ها را ۱۰تایی ورق بزنید.",
+  "• در هر بخش ژانر، کشور، سال و IMDb را اختیاری تنظیم کنید؛ سپس «نمایش نتایج» را بزنید و فهرست را ۱۰تایی ورق بزنید.",
+  "• بازگشت، فیلترها و صفحهٔ قبلی را حفظ می‌کند. سال‌ها از جدید به قدیم‌اند.",
   "• در صفحهٔ هر عنوان، لینک سایت و فایل‌های اصلی در دسترس‌اند.",
   "• برای سریال: عنوان ← فصل ← قسمت ← لینک‌ها یا فایل TXT.",
   "• با /search یا نوشتن نام اثر، پیشنهادهای نزدیک را دریافت می‌کنید.",
@@ -53,6 +59,7 @@ const helpText = [
 ].join("\n");
 
 async function configureTelegramProfile() {
+  await call("setChatMenuButton", { menu_button: appUrl ? { type: "web_app", text: "سرونما", web_app: { url: appUrl } } : { type: "commands" } });
   const [vod, music] = await Promise.all([api("/api/bot/filters"), api("/api/bot/music?mode=filters")]);
   const inventory = `آرشیو: ${formatNumber(vod.totals.movies)} فیلم · ${formatNumber(vod.totals.series)} سریال · ${formatNumber(music.totals.tracks)} موزیک · ${formatNumber(music.totals.musicVideos)} موزیک‌ویدئو`;
   intro = [
@@ -74,7 +81,6 @@ async function configureTelegramProfile() {
     description: `SarvNema راهی سریع برای پیدا کردن فیلم، سریال، انیمیشن و موزیک است. ${inventory}. نام اثر را جست‌وجو کنید، دسته‌بندی و فیلترها را ببینید، فصل و قسمت سریال را انتخاب کنید و لینک امن سایت را دریافت کنید.`,
   });
   await call("setMyCommands", { commands: profileCommands });
-  await call("setChatMenuButton", { menu_button: { type: "commands" } });
 }
 
 async function call(method, body = {}) {
@@ -82,6 +88,7 @@ async function call(method, body = {}) {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(method === "getUpdates" ? 40_000 : 15_000),
   });
   const data = await response.json();
   if (!data.ok) throw new Error(data.description || method);
@@ -89,14 +96,14 @@ async function call(method, body = {}) {
 }
 
 async function callForm(method, form) {
-  const response = await fetch(`${telegram}/${method}`, { method: "POST", body: form });
+  const response = await fetch(`${telegram}/${method}`, { method: "POST", body: form, signal: AbortSignal.timeout(30_000) });
   const data = await response.json();
   if (!data.ok) throw new Error(data.description || method);
   return data.result;
 }
 
 async function api(path) {
-  const response = await fetch(`${apiBase}${path}`, { headers: { "x-bot-token": token } });
+  const response = await fetch(`${apiBase}${path}`, { headers: { "x-bot-token": token }, signal: AbortSignal.timeout(15_000) });
   if (!response.ok) throw new Error(`API ${response.status}`);
   return response.json();
 }
@@ -113,12 +120,13 @@ function urlButton(text, url) {
   return { text, url };
 }
 
-function mainKeyboard() {
+function mainKeyboard(chatId) {
   return keyboard([
     [b("🎵 موزیک", "pick:music"), b("🎬 فیلم", "pick:movie"), b("📺 سریال", "pick:series")],
     [b("🧸 انیمیشن و کودک", "section:animation"), b("🏆 ۲۵۰ برتر IMDb", "section:top-imdb")],
     [b("🎞 فیلم ایرانی قدیمی", "section:old-iranian-films"), b("🆕 فیلم‌های ۲۰۲۶", "section:recent-2026")],
     [b("🔎 جست‌وجوی نام اثر", "search")],
+    ...(appUrl ? [[miniAppButton(appUrl, Number(chatId) > 0)]] : []),
   ]);
 }
 
@@ -151,7 +159,11 @@ async function edit(chatId, messageId, text, markup = undefined) {
   } catch (error) {
     // Result cards use sendPhoto so the poster is visible in Telegram. A
     // callback from such a card must edit its caption instead of its text.
-    if (!/message is not modified|there is no text in the message/i.test(error.message)) throw error;
+    if (/message is not modified/i.test(error.message)) return;
+    if (!/there is no text in the message/i.test(error.message)) throw error;
+    // Captions are limited to 1024 characters. A long filter/search view needs
+    // its own text message instead of overflowing the existing poster caption.
+    if (text.length > 1000) return send(chatId, text, markup);
     return call("editMessageCaption", {
       chat_id: chatId,
       message_id: messageId,
@@ -162,10 +174,10 @@ async function edit(chatId, messageId, text, markup = undefined) {
   }
 }
 
-async function sendVodCard(chatId, item) {
+async function sendVodCard(chatId, item, detailCallback) {
   const rows = [
     [urlButton("🌐 صفحه سایت", item.urls.detail), urlButton("▶️ پخش آنلاین", item.urls.watch)],
-    [b("جزئیات و کیفیت‌ها", `vtitle:${item.imdbCode}`)],
+    [b("جزئیات و کیفیت‌ها", detailCallback || `vtitle:${item.imdbCode}`)],
   ];
   const caption = [
     `<b>${escapeHtml(item.title)}</b>`,
@@ -188,94 +200,6 @@ async function sendTextDocument(chatId, filename, content, caption) {
   return callForm("sendDocument", form);
 }
 
-async function showVodCategories(chatId, messageId, session) {
-  const filters = await api("/api/bot/filters");
-  session.vodGenres = filters.filters.genres;
-  session.vodCountries = filters.filters.countries;
-  session.vodYears = filters.filters.years;
-  session.vodPage = 1;
-  clearVodFilters(session);
-
-  const genres = filters.filters.genres.slice(0, 18);
-  const genreRows = [];
-  for (let index = 0; index < genres.length; index += 2) {
-    genreRows.push(genres.slice(index, index + 2).map((genre, offset) => b(`${genre.label} (${genre.count})`, `vgenre:${index + offset}`)));
-  }
-  const typeLabel = session.vodType === "series" ? "سریال" : "فیلم";
-  await edit(chatId, messageId, [
-    `<b>${typeLabel}</b> · مرحلهٔ ۲ از ۴`,
-    "",
-    "یکی از پیشنهادها یا ژانر دلخواه را انتخاب کنید:",
-  ].join("\n"), keyboard([
-    [b("⭐ امتیاز IMDb بالای ۸", "vquick:top"), b("🆕 تازه‌ترها", "vquick:new")],
-    [b("همهٔ ژانرها", "vgenre:any")],
-    ...genreRows,
-    [b("🔎 جست‌وجوی نام", "search"), b("🏠 شروع", "home")],
-  ]));
-}
-
-async function showVodCountries(chatId, messageId, session) {
-  const countries = (session.vodCountries ?? []).slice(0, 14);
-  const rows = [];
-  for (let index = 0; index < countries.length; index += 2) {
-    rows.push(countries.slice(index, index + 2).map((country, offset) => b(`🌍 ${country.label} (${country.count})`, `vcountry:${index + offset}`)));
-  }
-  await edit(chatId, messageId, [
-    "<b>مرحلهٔ ۳ از ۴</b>",
-    "",
-    `ژانر انتخاب‌شده: <b>${escapeHtml(session.vodGenre || "همه")}</b>`,
-    "کشور سازنده را انتخاب کنید:",
-  ].join("\n"), keyboard([
-    ...rows,
-    [b("⏭ بدون فیلتر کشور", "vcountry:any")],
-    [b("⬅️ دسته‌بندی‌ها", "vcategories")],
-  ]));
-}
-
-async function showVodYears(chatId, messageId, session) {
-  const years = (session.vodYears ?? []).slice(0, 16);
-  const rows = [];
-  for (let index = 0; index < years.length; index += 4) {
-    rows.push(years.slice(index, index + 4).map((year, offset) => b(`${year.label} (${year.count})`, `vyear:${index + offset}`)));
-  }
-  await edit(chatId, messageId, [
-    "<b>مرحلهٔ ۴ از ۴</b>",
-    "",
-    `کشور انتخاب‌شده: <b>${escapeHtml(session.vodCountry || "همه")}</b>`,
-    "سال ساخت را انتخاب کنید:",
-  ].join("\n"), keyboard([
-    ...rows,
-    [b("⏭ همهٔ سال‌ها", "vyear:any")],
-    [b("⬅️ کشور", "vcountries")],
-  ]));
-}
-
-async function showVodResults(chatId, messageId, session) {
-  const params = new URLSearchParams({
-    type: session.vodType || "movie",
-    sort: session.vodSort || "rating",
-    page: String(session.vodPage || 1),
-    limit: String(PAGE_SIZE),
-  });
-  if (session.vodGenre) params.set("genre", session.vodGenre);
-  if (session.vodCountry) params.set("country", session.vodCountry);
-  if (session.vodYear) params.set("year", session.vodYear);
-  if (session.vodMinImdb) params.set("minImdb", String(session.vodMinImdb));
-  if (session.vodSection) params.set("section", session.vodSection);
-  const data = await api(`/api/bot/search?${params}`);
-  session.vodPage = data.pagination.page;
-  const label = session.vodType === "series" ? "سریال‌ها" : "فیلم‌ها";
-  await edit(chatId, messageId, [
-    `<b>${label}</b> · ${formatNumber(data.pagination.total)} نتیجه`,
-    `صفحهٔ ${data.pagination.page} از ${data.pagination.totalPages} · هر صفحه ۱۰ عنوان`,
-    "",
-    "کارت‌های پوستر را ورق بزنید و عنوان را انتخاب کنید.",
-  ].join("\n"));
-  for (const item of data.items ?? []) await sendVodCard(chatId, item);
-  const rows = [paginationRow("vpage", data.pagination), [b("⬅️ دسته‌بندی‌ها", "vcategories"), b("🔎 جست‌وجوی تازه", "search")]];
-  return send(chatId, "صفحهٔ بعدی را انتخاب کنید:", keyboard(rows));
-}
-
 async function showVodTitle(chatId, messageId, id, session) {
   const data = await api(`/api/bot/title/${encodeURIComponent(id)}`);
   const item = data.item;
@@ -296,13 +220,13 @@ async function showVodTitle(chatId, messageId, id, session) {
     for (let index = 0; index < (data.seasons ?? []).length; index += 2) {
       seasonRows.push((data.seasons ?? []).slice(index, index + 2).map((season) => b(`فصل ${season.season} (${season.sourceCount})`, `vseason:${id}:${season.season}:1`)));
     }
-    actions.push(...seasonRows, [b("⬅️ نتایج", "vresults")]);
+    actions.push(...seasonRows, [b("⬅️ نتایج", session.navigation ? "nav:return" : "vresults")]);
     await edit(chatId, messageId, `${info}\n\n<b>فصل موردنظر را انتخاب کنید:</b>`, keyboard(actions));
     return;
   }
 
   actions.push([b("⬇️ فایل‌های دانلود", `vfiles:${id}:1`), b("🧾 دریافت TXT لینک‌ها", `vtxtmovie:${id}`)]);
-  actions.push([b("⬅️ نتایج", "vresults")]);
+  actions.push([b("⬅️ نتایج", session.navigation ? "nav:return" : "vresults")]);
   await edit(chatId, messageId, `${info}\n\nفایل‌های موجود را ببینید یا صفحهٔ سایت را باز کنید.`, keyboard(actions));
 }
 
@@ -346,7 +270,8 @@ async function showEpisodeFiles(chatId, messageId, id, season, episodeValue, pag
   const rows = visible.map((file) => [urlButton(short(fileButtonText(file), 58), file.url)]);
   rows.push(paginationRow("vfpage", { page: activePage, totalPages, hasPrevious: activePage > 1, hasNext: activePage < totalPages }, `${id}:${season}:${episodeValue}`));
   rows.push([b("🧾 دریافت TXT همین قسمت", `vtxtepisode:${id}:${season}:${episodeValue}`)]);
-  rows.push([b("⬅️ قسمت‌ها", `vseason:${id}:${season}:1`), urlButton("🌐 صفحه در سایت", data.item.urls.detail)]);
+  const episodePage = Math.floor((data.episodes ?? []).indexOf(episode) / PAGE_SIZE) + 1;
+  rows.push([b("⬅️ قسمت‌ها", `vseason:${id}:${season}:${episodePage}`), urlButton("🌐 صفحه در سایت", data.item.urls.detail)]);
   await edit(chatId, messageId, [
     `<b>${escapeHtml(data.item.title)}</b> · ${episode.code}`,
     escapeHtml(episode.title),
@@ -418,7 +343,7 @@ async function showMusicResults(chatId, messageId, session) {
   ].join("\n"), keyboard(rows));
 }
 
-async function showMusicTitle(chatId, messageId, id) {
+async function showMusicTitle(chatId, messageId, id, session) {
   const data = await api(`/api/bot/music?id=${encodeURIComponent(id)}`);
   const item = data.item;
   const rows = [
@@ -427,7 +352,7 @@ async function showMusicTitle(chatId, messageId, id) {
   for (const source of item.sources.slice(0, 8)) {
     rows.push([urlButton(short(`${source.kind === "stream" ? "▶️ پخش" : "⬇️ دانلود"} · ${source.quality || source.label || "فایل"}`, 58), source.url)]);
   }
-  rows.push([b("🧾 دریافت TXT لینک‌ها", `mtxt:${id}`), b("⬅️ نتایج", "mresults")]);
+  rows.push([b("🧾 دریافت TXT لینک‌ها", `mtxt:${id}`), b("⬅️ نتایج", session?.navigation?.view === "search" ? "nav:return" : "mresults")]);
   await edit(chatId, messageId, [
     `<b>${escapeHtml(item.title)}</b>`,
     escapeHtml((item.artists ?? []).join("، ") || "هنرمند نامشخص"),
@@ -435,25 +360,6 @@ async function showMusicTitle(chatId, messageId, id) {
     item.description ? `\n${escapeHtml(short(item.description, 420))}` : "",
     `\n${item.sources.length} لینک ثبت شده`,
   ].filter(Boolean).join("\n"), keyboard(rows));
-}
-
-async function showSearchSuggestions(chatId, messageId, query, mode = "edit") {
-  const [vod, music] = await Promise.all([
-    api(`/api/bot/search?q=${encodeURIComponent(query)}&sort=relevance&limit=5`),
-    api(`/api/bot/music?q=${encodeURIComponent(query)}&limit=5`),
-  ]);
-  const rows = [
-    ...(vod.items ?? []).map((item) => [b(`🎬 ${short(item.title, 36)} · IMDb ${item.imdbRating ?? "-"}`, `vtitle:${item.imdbCode}`)]),
-    ...(music.items ?? []).map((item) => [b(`🎵 ${short(item.title, 31)} · ${short((item.artists ?? []).join("، "), 16)}`, `mtitle:${item.id}`)]),
-  ];
-  rows.push([b("🔎 جست‌وجوی دیگر", "search"), b("🏠 شروع", "home")]);
-  const text = [
-    `نتایج پیشنهادی برای <b>${escapeHtml(query)}</b>`,
-    "",
-    "۵ نتیجهٔ فیلم/سریال و ۵ نتیجهٔ موزیک نمایش داده شده است.",
-  ].join("\n");
-  if (mode === "send") return send(chatId, text, keyboard(rows));
-  return edit(chatId, messageId, text, keyboard(rows));
 }
 
 async function sendMovieLinksTxt(chatId, id) {
@@ -513,57 +419,59 @@ async function handleInlineQuery(query) {
   return call("answerInlineQuery", { inline_query_id: query.id, results, cache_time: 5, is_personal: true });
 }
 
-async function handle(update) {
+export async function handle(update) {
   if (update.inline_query) return handleInlineQuery(update.inline_query);
 
   const message = update.message;
   const query = update.callback_query;
   const chatId = message?.chat.id ?? query?.message?.chat.id;
   if (!chatId) return;
-  const session = sessionFor(chatId);
+  const sessionKey = `${chatId}:${message?.from?.id ?? query?.from?.id ?? chatId}`;
+  const session = sessionFor(sessionKey);
 
   if (message?.text?.startsWith("/start")) {
-    sessions.set(chatId, {});
-    return send(chatId, intro, mainKeyboard());
+    sessions.set(sessionKey, {});
+    return send(chatId, intro, mainKeyboard(chatId));
   }
-  if (message?.text?.startsWith("/help")) return send(chatId, helpText, mainKeyboard());
+  if (message?.text?.startsWith("/help")) return send(chatId, helpText, mainKeyboard(chatId));
+  if (message?.text?.startsWith("/app")) return send(chatId, "فیلم، سریال و موسیقی را در اپ سرونما پیدا کنید.", keyboard(appUrl ? [[miniAppButton(appUrl, message.chat.type === "private")]] : [[b("🏠 شروع", "home")]]));
   if (message?.text?.startsWith("/search")) {
     session.waitingSearch = true;
     return send(chatId, "نام فیلم، سریال، خواننده یا موزیک را بفرستید تا ۱۰ پیشنهاد نزدیک نمایش بدهم.", keyboard([[b("لغو", "home")]]));
   }
   if (message?.text?.startsWith("/movies")) {
     session.vodType = "movie";
-    return send(chatId, "فیلم انتخاب شد.", keyboard([[b("نمایش دسته‌بندی‌ها", "vcategories")]]));
+    return navigation.start(chatId, null, session, "movie");
   }
   if (message?.text?.startsWith("/series")) {
     session.vodType = "series";
-    return send(chatId, "سریال انتخاب شد.", keyboard([[b("نمایش دسته‌بندی‌ها", "vcategories")]]));
+    return navigation.start(chatId, null, session, "series");
   }
   if (message?.text?.startsWith("/music")) return send(chatId, "موزیک انتخاب شد.", keyboard([[b("نمایش دسته‌بندی‌ها", "mcategories")]]));
   if (message?.text?.startsWith("/animation")) {
     session.vodType = "movie";
     session.vodSection = "animation";
     session.vodPage = 1;
-    return send(chatId, "انیمیشن و محتوای کودک انتخاب شد.", keyboard([[b("نمایش ۱۰تایی", "section:animation")]]));
+    return navigation.start(chatId, null, session, "animation");
   }
   if (message?.text?.startsWith("/top")) {
     session.vodType = "movie";
     session.vodSection = "top-imdb";
     session.vodPage = 1;
-    return send(chatId, "فهرست برترین‌های IMDb آماده است.", keyboard([[b("نمایش ۱۰تایی", "section:top-imdb")]]));
+    return navigation.start(chatId, null, session, "top-imdb");
   }
   if (message?.text?.startsWith("/iranian")) {
     session.vodType = "movie";
     session.vodSection = "old-iranian-films";
     session.vodPage = 1;
-    return send(chatId, "آرشیو فیلم‌های ایرانی قدیمی آماده است.", keyboard([[b("نمایش ۱۰تایی", "section:old-iranian-films")]]));
+    return navigation.start(chatId, null, session, "old-iranian-films");
   }
 
   if (message?.text && !message.text.startsWith("/")) {
     const text = message.text.trim();
     if (session.waitingSearch || text.length >= 2) {
       session.waitingSearch = false;
-      return showSearchSuggestions(chatId, null, text, "send");
+      return navigation.search(chatId, null, session, text);
     }
   }
 
@@ -572,9 +480,12 @@ async function handle(update) {
   const messageId = query.message.message_id;
   const data = query.data;
 
+  if (data.startsWith("nav:")) return navigation.handle(chatId, messageId, session, data);
+  if (/^(vgenre:|vcountry:|vyear:|vquick:|vpage:)/.test(data) || data === "vcountries") return send(chatId, "این منو قدیمی است؛ از دسته‌بندی جدید استفاده کنید.", keyboard([[b("بازکردن تنظیمات", "vcategories")]]));
+
   if (data === "home") {
-    sessions.set(chatId, {});
-    return edit(chatId, messageId, intro, mainKeyboard());
+    sessions.set(sessionKey, {});
+    return edit(chatId, messageId, intro, mainKeyboard(chatId));
   }
   if (data === "search") {
     session.waitingSearch = true;
@@ -584,7 +495,7 @@ async function handle(update) {
   if (data === "pick:movie" || data === "pick:series") {
     session.vodType = data.slice(5);
     session.vodSection = "";
-    return showVodCategories(chatId, messageId, session);
+    return navigation.start(chatId, messageId, session, session.vodType);
   }
   if (data.startsWith("section:")) {
     const requestedSection = data.slice(8);
@@ -593,44 +504,12 @@ async function handle(update) {
     clearVodFilters(session);
     if (requestedSection === "recent-2026") session.vodYear = "2026";
     session.vodPage = 1;
-    return showVodResults(chatId, messageId, session);
+    return navigation.start(chatId, messageId, session, requestedSection);
   }
-  if (data === "vcategories") return showVodCategories(chatId, messageId, session);
-  if (data === "vcountries") return showVodCountries(chatId, messageId, session);
-  if (data === "vresults") return showVodResults(chatId, messageId, session);
+  if (data === "vcategories") return navigation.start(chatId, messageId, session, session.vodType || "movie");
+  if (data === "vresults") return navigation.restore(chatId, messageId, session);
   if (data === "mresults") return showMusicResults(chatId, messageId, session);
 
-  if (data.startsWith("vquick:")) {
-    clearVodFilters(session);
-    session.vodPage = 1;
-    if (data === "vquick:top") {
-      session.vodMinImdb = 8;
-      session.vodSort = "rating";
-    } else {
-      session.vodSort = "year";
-    }
-    return showVodResults(chatId, messageId, session);
-  }
-  if (data.startsWith("vgenre:")) {
-    const value = data.slice(7);
-    session.vodGenre = value === "any" ? "" : session.vodGenres?.[Number(value)]?.value ?? "";
-    return showVodCountries(chatId, messageId, session);
-  }
-  if (data.startsWith("vcountry:")) {
-    const value = data.slice(9);
-    session.vodCountry = value === "any" ? "" : session.vodCountries?.[Number(value)]?.value ?? "";
-    return showVodYears(chatId, messageId, session);
-  }
-  if (data.startsWith("vyear:")) {
-    const value = data.slice(6);
-    session.vodYear = value === "any" ? "" : session.vodYears?.[Number(value)]?.value ?? "";
-    session.vodPage = 1;
-    return showVodResults(chatId, messageId, session);
-  }
-  if (data.startsWith("vpage:")) {
-    session.vodPage = Number(data.slice(6)) || 1;
-    return showVodResults(chatId, messageId, session);
-  }
   if (data.startsWith("vtitle:")) return showVodTitle(chatId, messageId, data.slice(7), session);
   if (data.startsWith("vfiles:")) {
     const [, id, page] = data.split(":");
@@ -733,28 +612,32 @@ function formatNumber(value) {
   return new Intl.NumberFormat("fa-IR").format(Number(value) || 0);
 }
 
-let offset = 0;
-try {
-  await configureTelegramProfile();
-  console.log("Telegram profile and command menu configured.");
-} catch (error) {
-  console.error(`Telegram profile setup skipped: ${error.message}`);
-}
-
-console.log("SarvNema Telegram bot is running...");
-while (true) {
+async function runBot() {
+  if (!token) throw new Error("BOT_API_TOKEN is missing from .env.local");
+  let offset = 0;
   try {
-    const updates = await call("getUpdates", {
-      offset,
-      timeout: 30,
-      allowed_updates: ["message", "callback_query", "inline_query"],
-    });
-    for (const update of updates) {
-      offset = update.update_id + 1;
-      await handle(update).catch((error) => console.error(error.message));
-    }
+    await configureTelegramProfile();
+    console.log("Telegram profile and command menu configured.");
   } catch (error) {
-    console.error(error.message);
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    console.error(`Telegram profile setup skipped: ${error.message}`);
+  }
+
+  console.log("SarvNema Telegram bot is running...");
+  while (true) {
+    try {
+      const updates = await call("getUpdates", {
+        offset,
+        timeout: 30,
+        allowed_updates: ["message", "callback_query", "inline_query"],
+      });
+      for (const update of updates) {
+        offset = update.update_id + 1;
+        await handle(update).catch((error) => console.error(error.message));
+      }
+    } catch (error) {
+      console.error(error.message);
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
   }
 }
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) await runBot();

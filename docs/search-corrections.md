@@ -17,6 +17,16 @@ a normal search. Submitted `/browse` queries and archive pagination use the same
 matcher, and correction links preserve other filters. Music artist suggestions
 use the resolved spelling too. Network errors stay distinct from empty results.
 
+Telegram and Bale now call this same matcher through `/api/bot/search` and
+`/api/bot/music`. Both return `mode`, `matchedQuery` and actionable `corrections`.
+For `breakng bud`, both misspelled words resolve together to **Breaking Bad**;
+`bud` alone no longer qualifies unrelated results when the first word fails.
+Multiword candidates must be real contiguous title phrases, matching every input
+word in order. An index of words to titles narrows the candidate pool before
+whole-phrase validation, so frequent individual words cannot displace a closer
+title. Exact matching phrases still win; bot search ranks relevance within the
+resolved phrase, while the website retains global IMDb ordering.
+
 ## Limits and caching
 
 - No external API, query logging, new dependency or environment variable.
@@ -25,7 +35,9 @@ use the resolved spelling too. Network errors stay distinct from empty results.
 - Short tokens (under three letters), numeric queries, IMDb IDs and oversized
   inputs are not fuzzily expanded. No plausible candidate means a neutral hint.
 - At most one edit for short words, two for words of six or more letters;
-  eight tokens, 24 phrase candidates and a 64-entry per-index query cache.
+  eight tokens, an 80-character fuzzy-query limit and a 64-entry per-index cache.
+  The last word of a multiword title may be an unfinished prefix of at least two
+  letters; no word is discarded. Singleword candidates retain bounded expansion.
 - Immutable catalog snapshots invalidate indexes. Music's dictionary is built
   only when needed for a search, not for ordinary music landing requests.
 - Suggestion requests include `suggest=spelling-v1` to avoid old cached responses.
