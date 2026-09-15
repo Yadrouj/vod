@@ -44,15 +44,20 @@ try {
   await page.screenshot({path:".media-cache/immersive-music-desktop.png"});
   for(const width of [390,320]) {
     await page.setViewportSize({width,height:850});
+    await page.locator('[data-music-player-host] .music-lyrics-toggle').click();
+    await page.locator('dialog[data-responsive-dialog] .music-lyrics-lines').waitFor();
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`page overflow ${width}`);
     const box = await page.locator("[data-music-dock]").boundingBox();
     assert.ok(box.x>=-1&&box.x+box.width<=width+1,`dialog overflow ${width}`);
     assert.ok(await page.locator("[data-music-dock]").evaluate(el=>el.scrollWidth<=el.clientWidth+1),`dialog content overflow ${width}`);
     await page.screenshot({path:`.media-cache/immersive-music-${width}.png`});
+    await page.keyboard.press('Escape');
   }
+  await page.locator('[data-music-player-host] .music-lyrics-toggle').click();
   await file.setInputFiles({name:"plain.txt",mimeType:"text/plain",buffer:Buffer.from("Original plain line\nSecond untimed line")});
   await page.getByText("این متن زمان‌بندی ندارد.",{exact:false}).waitFor();
   assert.equal(await page.locator(".music-lyrics-lines [aria-current=true]").count(),0);
+  await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
   await page.waitForFunction(()=>!document.querySelector("[data-music-dock]")?.matches(":modal"));
   assert.equal(await audio.evaluate(el=>el.paused),false);

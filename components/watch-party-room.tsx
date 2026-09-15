@@ -9,6 +9,7 @@ import { newPartyProfile, readPartyProfile, savePartyProfile } from "@/lib/watch
 import { WatchPartyVoice } from "@/components/watch-party-voice";
 import { WatchPartyAccessibility } from "@/components/watch-party-accessibility";
 import { PlayerSubtitles } from "@/components/player-subtitles";
+import { ResponsiveDialog, useMobilePlayer } from "@/components/responsive-dialog";
 import { WatchTogetherMark } from "@/components/watch-together-mark";
 import { BRAND_MARK } from "@/lib/brand";
 import { sizedImageUrl } from "@/lib/image-url";
@@ -36,6 +37,7 @@ const CAPABILITIES: { id: PartyCapability; label: string }[] = [
 const REACTION_EMOJIS = ["\u2764\uFE0F", "\uD83D\uDE02", "\uD83D\uDC4F", "\uD83D\uDD25", "\uD83D\uDE2E", "\uD83D\uDE22"];
 
 export function WatchPartyRoom({ roomId }: { roomId: string }) {
+  const mobile = useMobilePlayer();
   const socketRef = useRef<Socket | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -315,6 +317,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     setHudVisible(true);
     if (stagePanel || settingsOpen || subtitlesOpen) return;
     hudTimerRef.current = window.setTimeout(() => {
+      if (document.querySelector("dialog[data-responsive-dialog][open]")) { hudTimerRef.current = null; return; }
       setHudVisible(false);
       hudTimerRef.current = null;
     }, delay);
@@ -569,6 +572,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
         )}
 
         {stagePanel === "chat" && (
+          <ResponsiveDialog open mobileOnly onClose={() => { setStagePanel(null); revealHud(); }} title="گفت‌وگوی اتاق" closeLabel="بستن گفت‌وگو">
           <section className="party-stage-chat-panel" data-player-ui="true" aria-label="Room chat">
             <header>
               <div><MessageCircle size={17} /><span><strong>Room chat</strong><small>{snapshot.participants.filter((item) => item.connected).length} watching</small></span></div>
@@ -586,6 +590,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
               <button type="submit" disabled={!can("chat") || !chatText.trim()} aria-label="Send message"><Send size={16} /></button>
             </form>
           </section>
+          </ResponsiveDialog>
         )}
 
         {stagePanel === "reactions" && (
@@ -603,7 +608,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
           <button className={settingsOpen ? "is-active" : ""} type="button" onClick={() => { clearHudTimer(); setHudVisible(true); setStagePanel(null); setSettingsOpen((value) => !value); setSubtitlesOpen(false); }} aria-label="Playback settings" title="Playback settings"><Settings /></button>
           <button type="button" onClick={() => void toggleStageFullscreen()} aria-label={cinemaFullscreen ? "Exit fullscreen" : "Enter fullscreen"} title={cinemaFullscreen ? "Exit fullscreen" : "Fullscreen"}>{cinemaFullscreen ? <Minimize2 /> : <Maximize2 />}</button>
         </div>
-        {settingsOpen && <div className="party-player-settings" data-player-ui="true"><label>{isListeningRoom ? "Audio source" : "Source"}<select className="select" value={playback.media.source.url} disabled={!can("changeSource")} onChange={(event) => { const source = playback.media.sources.find((item) => item.url === event.target.value); if (source) command("source", { source, time: (isListeningRoom ? audioRef.current : videoRef.current)?.currentTime }); }}>{playback.media.sources.map((source) => <option value={source.url} key={source.url}>{source.label}</option>)}</select></label><label>Speed<select className="select" value={playback.playbackRate} disabled={!can("playback")} onChange={(event) => command("rate", { rate: Number(event.target.value) })}>{[.5,.75,1,1.25,1.5,2].map((rate) => <option key={rate} value={rate}>{rate}x</option>)}</select></label></div>}
+        {settingsOpen && <ResponsiveDialog open mobileOnly onClose={() => setSettingsOpen(false)} title="تنظیمات پخش اتاق" closeLabel="بستن تنظیمات پخش"><div className="party-player-settings" data-player-ui="true"><label>{isListeningRoom ? "Audio source" : "Source"}<select className="select" value={playback.media.source.url} disabled={!can("changeSource")} onChange={(event) => { const source = playback.media.sources.find((item) => item.url === event.target.value); if (source) command("source", { source, time: (isListeningRoom ? audioRef.current : videoRef.current)?.currentTime }); }}>{playback.media.sources.map((source) => <option value={source.url} key={source.url}>{source.label}</option>)}</select></label><label>Speed<select className="select" value={playback.playbackRate} disabled={!can("playback")} onChange={(event) => command("rate", { rate: Number(event.target.value) })}>{[.5,.75,1,1.25,1.5,2].map((rate) => <option key={rate} value={rate}>{rate}x</option>)}</select></label></div></ResponsiveDialog>}
         {!isListeningRoom && <PlayerSubtitles videoRef={videoRef} itemId={playback.media.itemId} title={playback.media.title} sourceKey={playback.media.source.url} sourceLabel={playback.media.source.label} sourceSubtitleUrl={playback.media.source.subtitleUrl ?? null} open={subtitlesOpen} onClose={() => setSubtitlesOpen(false)} selection={snapshot.subtitle} onSelectionChange={changeSubtitle} canChange={can("subtitles")} shared />}
       </div>
       <section className="party-queue">
@@ -654,11 +659,13 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
       <PartyTitleDetails media={playback.media} />
     </section>
     <button className={`party-mobile-scrim ${peopleOpen ? "is-open" : ""}`} type="button" aria-label="Close room panel" onClick={() => setPeopleOpen(false)} />
+    <ResponsiveDialog open={peopleOpen || !mobile} mobileOnly onClose={() => setPeopleOpen(false)} title="افراد و تنظیمات اتاق" closeLabel="بستن تنظیمات اتاق">
      <aside id="party-room-sidebar" className={`party-sidebar ${peopleOpen ? "is-open" : ""}`}>
       <div className="party-tabs"><Users size={17} /><span>Room & chat</span><MessageCircle size={17} /><button className="party-sidebar-close" type="button" onClick={() => setPeopleOpen(false)} aria-label="Close room panel"><X size={18} /></button></div>
       <section className="party-people"><h3>Participants</h3>{snapshot.participants.map((participant) => <Participant key={participant.id} participant={participant} isHost={Boolean(isHost)} mutedLocally={mutedLocally.has(participant.id)} meId={profile.id} guestPermissions={snapshot.guestPermissions} sharingLocalAudio={snapshot.sharedAudio?.userId === participant.id} onMuteLocal={() => muteLocal(participant.id)} onPermission={(permission, value) => socketRef.current?.emit("permissions:user", { roomId, userId: participant.id, permissions: { [permission]: value } })} onModerate={(action) => socketRef.current?.emit("moderation", { roomId, userId: participant.id, action })} />)}{isHost && <details className="party-global-permissions"><summary>Guest permissions</summary>{CAPABILITIES.map(({ id, label }) => <label key={id}><input type="checkbox" checked={snapshot.guestPermissions[id]} onChange={(event) => socketRef.current?.emit("permissions:global", { roomId, permissions: { [id]: event.target.checked } })} />{label}</label>)}</details>}</section>
       <section className="party-chat"><div className="party-chat-log">{roomChat.map((message) => <div key={message.id}><strong>{message.name}</strong><p>{message.text}</p></div>)}</div><form onSubmit={sendChat}><input value={chatText} onChange={(event) => setChatText(event.target.value)} placeholder="Message room…" disabled={!can("chat")} /><button disabled={!can("chat")}>Send</button></form></section>
     </aside>
+    </ResponsiveDialog>
   </div>;
 }
 

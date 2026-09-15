@@ -1,9 +1,9 @@
 "use client";
 
-import { Check, Copy, Globe2, Headphones, Link2, LockKeyhole, Plus, Radio, Search, Share2, UsersRound, X } from "lucide-react";
+import { Check, Copy, Globe2, Headphones, Link2, LockKeyhole, Plus, Radio, Search, Share2, UsersRound } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { ResponsiveDialog } from "@/components/responsive-dialog";
 import type { Socket } from "socket.io-client";
 import { sizedImageUrl } from "@/lib/image-url";
 import type { Locale } from "@/lib/i18n";
@@ -195,33 +195,6 @@ export function WatchTogetherLauncher({
   }, []);
 
   useEffect(() => {
-    if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    const trigger = triggerRef.current;
-    const focusTimer = window.setTimeout(() => builderRef.current?.querySelector<HTMLButtonElement>(".watch-builder-close")?.focus(), 0);
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeLauncher();
-      if (event.key === "Tab") {
-        const controls = Array.from(builderRef.current?.querySelectorAll<HTMLElement>('a[href],button:not(:disabled),input:not(:disabled),select,textarea,[tabindex="0"]') ?? []).filter(el => el.getClientRects().length);
-        const first = controls[0], last = controls.at(-1);
-        if (first && (event.shiftKey ? document.activeElement === first : document.activeElement === last)) {
-          event.preventDefault(); (event.shiftKey ? last : first)?.focus();
-        }
-      }
-    };
-    document.body.style.overflow = "hidden";
-    document.documentElement.classList.add("watch-builder-is-open");
-    window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.documentElement.classList.remove("watch-builder-is-open");
-      window.removeEventListener("keydown", closeOnEscape);
-      window.clearTimeout(focusTimer);
-      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
-    };
-  }, [open]);
-
-  useEffect(() => {
     const normalized = query.trim();
     if (!open || selected || normalized.length < 2) return;
     const controller = new AbortController();
@@ -392,28 +365,9 @@ export function WatchTogetherLauncher({
         </span>
       </button>
 
-      {open && typeof document !== "undefined" && createPortal((
-        <div className="watch-builder-backdrop" onClick={closeLauncher}>
-          <section
-            ref={builderRef}
-            className={`watch-builder watch-builder-step-${builderStep}`}
-            data-media-theme={effectiveExperience === "listen" ? "music" : "cinema"}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="watch-builder-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <header className="watch-builder-header">
-              <div className="watch-builder-mark"><WatchTogetherMark /></div>
-              <div>
-                <span className="label">{text.eyebrow}</span>
-                <h2 id="watch-builder-title">{inviteUrl ? text.ready : text.title}</h2>
-              </div>
-              <button className="watch-builder-close" type="button" onClick={closeLauncher} aria-label={text.cancel}>
-                <X size={19} />
-              </button>
-            </header>
-
+      {open && <ResponsiveDialog open={open} onClose={closeLauncher} title={inviteUrl ? text.ready : text.title} theme={effectiveExperience === "listen" ? "music" : "cinema"} dir={locale === "fa" ? "rtl" : "ltr"} closeLabel={locale === "fa" ? "بستن ساخت اتاق" : "Close room setup"}
+        footer={!inviteUrl && selected ? <button type="button" disabled={busy} onClick={createRoom}><UsersRound size={18} /> {busy ? text.creating : text.create}</button> : undefined}>
+          <section ref={builderRef} className={`watch-builder watch-builder-step-${builderStep}`} data-media-theme={effectiveExperience === "listen" ? "music" : "cinema"}>
             <div className="watch-builder-progress" aria-label="Room setup progress">
               {[
                 { step: 1, label: text.titleStep },
@@ -491,7 +445,6 @@ export function WatchTogetherLauncher({
                           setError("");
                         }}
                         placeholder={text.searchPlaceholder}
-                        autoFocus
                         autoComplete="off"
                       />
                       {searching && <span className="watch-builder-searching" />}
@@ -540,17 +493,10 @@ export function WatchTogetherLauncher({
                 </div>
 
                 {error && <p className="watch-builder-error">{error}</p>}
-                <div className="watch-builder-actions">
-                  <button type="button" className="play-glow" disabled={busy || !selected} onClick={createRoom}>
-                    <UsersRound size={18} /> {busy ? text.creating : text.create}
-                  </button>
-                  <button type="button" className="hover-button" onClick={closeLauncher}>{text.cancel}</button>
-                </div>
               </>
             )}
           </section>
-        </div>
-      ), document.body)}
+      </ResponsiveDialog>}
     </>
   );
 }

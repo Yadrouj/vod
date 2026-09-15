@@ -1,8 +1,9 @@
 "use client";
 
-import { Captions, Download, Heart, ListMusic, Pause, Play, Repeat2, Shuffle, SkipBack, SkipForward, Volume2, VolumeX, X } from "lucide-react";
+import { Captions, Download, Heart, ListMusic, Pause, Play, Repeat2, Settings, Shuffle, SkipBack, SkipForward, Volume2, VolumeX, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type RefObject } from "react";
 import type { MusicSource, MusicTrack } from "@/lib/music-types";
+import { ResponsiveDialog, useMobilePlayer } from "@/components/responsive-dialog";
 import { MusicLyrics } from "@/components/music-lyrics";
 import Link from "next/link";
 import { WatchTogetherLauncher } from "./watch-together-launcher";
@@ -62,6 +63,8 @@ export function MusicPlayerEngine({
   const [rate, setRate] = useState(settings?.rate ?? 1);
   const [shuffle, setShuffle] = useState(settings?.shuffle ?? false);
   const [repeat, setRepeat] = useState<RepeatMode>(settings?.repeat ?? "off");
+  const mobile = useMobilePlayer();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
   const liked = useSyncExternalStore(subscribeLikes, () => readLiked(activeTrack.id), () => false);
   const [sourceIssue, setSourceIssue] = useState("");
@@ -324,14 +327,14 @@ export function MusicPlayerEngine({
 
       <div className="music-player-shell">
         <div className={`music-player-art ${playing ? "is-spinning" : ""}`} style={activeTrack.coverUrl ? { backgroundImage: `url(${activeTrack.coverUrl})` } : undefined} />
-        <div className="music-player-now" dir="auto"><span>{activeTrack.kind === "video" ? "موزیک‌ویدیو" : playing ? "در حال پخش" : "آهنگ"}</span><strong>{activeTrack.persianTitle || activeTrack.title}</strong><small>{activeTrack.artists.map((artist, index) => <span key={artist.slug}>{index > 0 && " · "}<Link href={`/music/artists/${encodeURIComponent(artist.slug)}`}>{artist.name}</Link></span>)}</small><button className={`music-lyrics-toggle ${lyricsOpen ? "is-active" : ""}`} type="button" onClick={() => setLyricsOpen((value) => !value)}><Captions size={14} /> متن آهنگ</button></div>
+        <div className="music-player-now" dir="auto"><span>{activeTrack.kind === "video" ? "موزیک‌ویدیو" : playing ? "در حال پخش" : "آهنگ"}</span><strong>{activeTrack.persianTitle || activeTrack.title}</strong><small>{activeTrack.artists.map((artist, index) => <span key={artist.slug}>{index > 0 && " · "}<Link href={`/music/artists/${encodeURIComponent(artist.slug)}`}>{artist.name}</Link></span>)}</small><button className={`music-lyrics-toggle ${lyricsOpen ? "is-active" : ""}`} type="button" onClick={() => { setQueueOpen(false); setSettingsOpen(false); setLyricsOpen((value) => !value); }}><Captions size={14} /> متن آهنگ</button></div>
         <button className={`music-icon-button ${liked ? "is-active" : ""}`} type="button" onClick={toggleLiked} aria-label={liked ? "Remove from liked songs" : "Add to liked songs"}><Heart size={18} fill={liked ? "currentColor" : "none"} /></button>
         {(() => { const downloadSource = activeTrack.sources.find((item) => item.kind === "download") ?? source; return <a className="music-download" href={downloadGateUrl({ url: downloadSource.url, title: activeTrack.title, quality: downloadSource.quality || downloadSource.label })} target="_blank" rel="noreferrer"><Download size={16} /> دانلود</a>; })()}
       </div>
 
       {sourceIssue && <p className="music-player-source-issue" role="status">{sourceIssue}</p>}
 
-      <MusicLyrics key={activeTrack.id} trackId={activeTrack.id} title={activeTrack.persianTitle || activeTrack.title} artist={activeTrack.artists.map((item) => item.name).join(" · ")} currentTime={currentTime} duration={duration} open={lyricsOpen || immersive} immersive={immersive} onSeek={seek} onClose={() => setLyricsOpen(false)} />
+      <MusicLyrics key={activeTrack.id} trackId={activeTrack.id} title={activeTrack.persianTitle || activeTrack.title} artist={activeTrack.artists.map((item) => item.name).join(" · ")} currentTime={currentTime} duration={duration} open={lyricsOpen || (immersive && !mobile)} immersive={immersive} onSeek={seek} onClose={() => setLyricsOpen(false)} />
 
       <div className="music-player-transport">
         <button className={`music-icon-button ${shuffle ? "is-active" : ""}`} type="button" onClick={() => setShuffle((value) => !value)} aria-label="Shuffle"><Shuffle size={17} /></button>
@@ -349,10 +352,19 @@ export function MusicPlayerEngine({
         <label className="music-source"><select aria-label={hasVideo ? "Video quality" : "Audio quality"} value={source.url} onChange={(event) => { setSourceIssue(""); setUseDirectSource(false); setSourceIndex(Math.max(0, streams.findIndex((item) => item.url === event.target.value))); }}>{streams.map((item) => <option value={item.url} key={item.url}>{item.quality || item.label}</option>)}</select></label>
         <label className="music-volume"><button type="button" onClick={() => setMuted((value) => !value)} aria-label={muted ? "Unmute" : "Mute"}>{muted ? <VolumeX size={15} /> : <Volume2 size={15} />}</button><input aria-label="Volume" type="range" min="0" max="1" step="0.05" value={volume} onChange={(event) => setVolume(Number(event.target.value))} /></label>
         <label className="music-rate"><select aria-label="Playback speed" value={rate} onChange={(event) => setRate(Number(event.target.value))}>{[0.75, 1, 1.25, 1.5, 2].map((value) => <option key={value} value={value}>{value}×</option>)}</select></label>
-        <button className={`music-icon-button ${queueOpen ? "is-active" : ""}`} type="button" onClick={() => setQueueOpen((value) => !value)} aria-label="Listening queue"><ListMusic size={18} /></button>
+        <button className="music-icon-button music-mobile-settings" type="button" onClick={() => { setQueueOpen(false); setLyricsOpen(false); setSettingsOpen(true); }} aria-label="تنظیمات پخش موسیقی"><Settings size={20} /></button>
+        <button className={`music-icon-button ${queueOpen ? "is-active" : ""}`} type="button" onClick={() => { setLyricsOpen(false); setSettingsOpen(false); setQueueOpen((value) => !value); }} aria-label="Listening queue"><ListMusic size={18} /></button>
       </div>
 
-      {(queueOpen || immersive) && <aside className="music-player-queue" aria-label="Listening queue"><header><span><ListMusic size={16} /><strong>صف پخش</strong><small>{library.length.toLocaleString("fa-IR")} آهنگ</small></span>{!immersive && <button className="music-icon-button" type="button" onClick={() => setQueueOpen(false)} aria-label="Close queue"><X size={16} /></button>}</header><ol>{library.map((item, index) => <li className={index === activeIndex ? "is-active" : ""} key={item.id}><button type="button" onClick={() => chooseTrack(index, true)}>{item.coverUrl ? <img src={item.coverUrl} alt="" loading="lazy" /> : <span />}{index === activeIndex && playing ? <i className="music-equalizer"><b /><b /><b /></i> : <em>{String(index + 1).padStart(2, "0")}</em>}<span><strong>{item.persianTitle || item.title}</strong><small>{item.artists.map((artist) => artist.name).join(" · ")}</small></span></button></li>)}</ol></aside>}
+      <ResponsiveDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} title="تنظیمات پخش موسیقی" description={activeTrack.persianTitle || activeTrack.title} theme="music" closeLabel="بستن تنظیمات موسیقی">
+        <div className="media-settings-form">
+          <label>کیفیت پخش<select value={source.url} onChange={event => { setSourceIssue(""); setUseDirectSource(false); setSourceIndex(Math.max(0, streams.findIndex(item => item.url === event.target.value))); }}>{streams.map(item => <option value={item.url} key={item.url}>{item.quality || item.label}</option>)}</select></label>
+          <label>سرعت پخش<select value={rate} onChange={event => setRate(Number(event.target.value))}>{[0.75, 1, 1.25, 1.5, 2].map(value => <option key={value} value={value}>{value}×</option>)}</select></label>
+          <label>بلندی صدا<input aria-label="بلندی صدا" type="range" min="0" max="1" step="0.05" value={volume} onChange={event => setVolume(Number(event.target.value))} /></label>
+          <button type="button" onClick={() => setMuted(value => !value)}>{muted ? "وصل‌کردن صدا" : "بی‌صدا کردن"}</button>
+        </div>
+      </ResponsiveDialog>
+      {(queueOpen || (immersive && !mobile)) && <ResponsiveDialog open mobileOnly onClose={() => setQueueOpen(false)} title="صف پخش" description={`${library.length.toLocaleString("fa-IR")} آهنگ`} theme="music" closeLabel="بستن صف پخش"><aside className="music-player-queue" aria-label="Listening queue"><header><span><ListMusic size={16} /><strong>صف پخش</strong><small>{library.length.toLocaleString("fa-IR")} آهنگ</small></span>{!immersive && <button className="music-icon-button" type="button" onClick={() => setQueueOpen(false)} aria-label="Close queue"><X size={16} /></button>}</header><ol>{library.map((item, index) => <li className={index === activeIndex ? "is-active" : ""} key={item.id}><button type="button" onClick={() => chooseTrack(index, true)}>{item.coverUrl ? <img src={item.coverUrl} alt="" loading="lazy" /> : <span />}{index === activeIndex && playing ? <i className="music-equalizer"><b /><b /><b /></i> : <em>{String(index + 1).padStart(2, "0")}</em>}<span><strong>{item.persianTitle || item.title}</strong><small>{item.artists.map((artist) => artist.name).join(" · ")}</small></span></button></li>)}</ol></aside></ResponsiveDialog>}
     </section>
   );
 }

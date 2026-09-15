@@ -1,4 +1,5 @@
 "use client";
+import { ResponsiveDialog } from "@/components/responsive-dialog";
 
 import { Accessibility, Camera, CameraOff, FileAudio, Headphones, Mic, MicOff, Move, PhoneOff, Radio, RefreshCw, ShieldAlert, ShieldCheck, Square, Upload, Users, Volume2, Wifi, WifiOff } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
@@ -754,6 +755,7 @@ export function WatchPartyVoice({
           <span><strong>Media Lounge</strong><small>{joined ? `${Math.max(peerIds.size, 1)} online` : "Voice + camera"}</small></span>
         </button>
         {panelVisible && (
+          <ResponsiveDialog open mobileOnly onClose={() => setPanelOpen(false)} title="صدا و دوربین" description="میکروفون و دوربین فقط با انتخاب شما روشن می‌شوند." closeLabel="بستن صدا و دوربین">
           <div className="party-voice-panel">
             <div className="party-voice-copy"><Headphones size={19} /><span><strong>Voice & camera</strong><small>Private until you turn them on.</small></span></div>
             {joined && <div className={`party-network-quality is-${network.quality}`}>{network.quality === "weak" ? <WifiOff size={15} /> : <Wifi size={15} />}<span><strong>{networkLabel}</strong><small>{network.rttMs !== null ? `${network.rttMs} ms` : "Direct WebRTC"}{network.loss !== null ? ` · ${network.loss.toFixed(1)}% loss` : ""}</small></span></div>}
@@ -784,6 +786,7 @@ export function WatchPartyVoice({
 
             {joined && <div className="party-voice-meta"><Users size={15} /><span>{Math.max(peerIds.size, 1)} in lounge</span><button type="button" onClick={leaveVoice}><PhoneOff size={15} /> Leave</button></div>}
           </div>
+          </ResponsiveDialog>
         )}
         <div className="party-voice-audio" ref={audioContainerRef} aria-hidden="true" />
       </div>

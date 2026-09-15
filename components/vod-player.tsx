@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Captions, Cast, Maximize, Minimize, Pause, PictureInPicture2, Play, RotateCcw, RotateCw, Settings, Volume2, VolumeX } from "lucide-react";
 import { BrandLoader } from "@/components/brand-loader";
 import { PlayerSubtitles } from "@/components/player-subtitles";
+import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 import { playableLinks, playbackSourceLabel } from "@/lib/link-labels";
 import type { VodLink } from "@/lib/types";
@@ -467,6 +468,7 @@ export function VodPlayer({
         </div>
 
         {settingsOpen && (
+          <ResponsiveDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} title={t.player.settings} description={title} dir={locale === "fa" ? "rtl" : "ltr"}>
           <div className="player-settings">
             <label>
               <span className="label">{t.player.quality}</span>
@@ -489,9 +491,11 @@ export function VodPlayer({
               </select>
             </label>
           </div>
+          </ResponsiveDialog>
         )}
         {itemId && (
           <PlayerSubtitles
+            locale={locale}
             videoRef={videoRef}
             itemId={itemId}
             title={title}
@@ -503,9 +507,9 @@ export function VodPlayer({
           />
         )}
         {selectionOpen && sources.length > 1 && (
-          <div className="player-choice-overlay">
+          <ResponsiveDialog open={selectionOpen} onClose={() => setSelectionOpen(false)} title={locale === "fa" ? "انتخاب نسخهٔ پخش" : "Choose playback"} dir={locale === "fa" ? "rtl" : "ltr"}
+            footer={<button type="button" onClick={confirmSource}><Play size={18} fill="currentColor" />{locale === "fa" ? "شروع پخش" : "Start playback"}</button>}>
             <div className="player-choice-card" dir={locale === "fa" ? "rtl" : "ltr"}>
-              <span className="label">{locale === "fa" ? "انتخاب نسخه پخش" : "Choose playback"}</span>
               <h3>{title}</h3>
               <p>
                 {isSeries
@@ -546,9 +550,8 @@ export function VodPlayer({
                   {sources.map((source, index) => <option key={`${source.url}-${index}`} value={index}>{source.label}</option>)}
                 </select>
               )}
-              <button type="button" className="play-glow" onClick={confirmSource}><Play size={18} fill="currentColor" />{locale === "fa" ? "شروع پخش" : "Start playback"}</button>
             </div>
-          </div>
+          </ResponsiveDialog>
         )}
       </div>
       {mediaError > 0 && active && <PlaybackHelp key={active.url} link={active} code={mediaError} fa={locale === "fa"} itemId={itemId}

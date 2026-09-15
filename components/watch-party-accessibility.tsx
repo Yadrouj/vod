@@ -1,4 +1,5 @@
 "use client";
+import { ResponsiveDialog } from "@/components/responsive-dialog";
 
 import { Accessibility, Captions, Languages, Mic2, Square, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -223,9 +224,10 @@ export function WatchPartyAccessibility({
           <span><strong>Accessibility</strong><small>{enabled ? "Live captions on" : "Captions & signs"}</small></span>
         </button>
         {panelVisible && (
+          <ResponsiveDialog open mobileOnly onClose={() => setPanelOpen(false)} title="دسترسی‌پذیری و گفتار زنده" closeLabel="بستن دسترسی‌پذیری">
           <section className="party-accessibility-panel" aria-label="Accessibility tools">
             <header><div><Accessibility size={18} /><span><strong>Accessible room</strong><small>Movie subtitles, speech captions, translation</small></span></div><button type="button" onClick={() => setPanelOpen(false)} aria-label="Close accessibility panel"><X size={15} /></button></header>
-            <button className="party-accessibility-movie" type="button" onClick={onOpenMovieSubtitles}><Captions size={17} /><span><strong>Movie subtitles</strong><small>Auto, online, URL, or a local file</small></span></button>
+            <button className="party-accessibility-movie" type="button" onClick={() => { setPanelOpen(false); onOpenMovieSubtitles(); }}><Captions size={17} /><span><strong>Movie subtitles</strong><small>Auto, online, URL, or a local file</small></span></button>
             <div className="party-accessibility-live">
               <div><Mic2 size={17} /><span><strong>Caption my microphone</strong><small>Shared with your name · live draft</small></span></div>
               <button type="button" className={enabled ? "is-live" : ""} onClick={enabled ? stopCaptioning : startCaptioning} disabled={!canCaption}>{enabled ? <><Square size={12} /> Stop</> : "Start"}</button>
@@ -240,6 +242,7 @@ export function WatchPartyAccessibility({
             <div className="party-interpreter-help"><Accessibility size={16} /><p><strong>Sign interpreter</strong><span>A host can grant Interpreter permission, then that person turns on camera and pins their signed interpretation for the room.</span></p></div>
             <small className="party-accessibility-presence">{participants.filter((participant) => participant.connected).length} people can receive these captions instantly</small>
           </section>
+          </ResponsiveDialog>
         )}
       </div>
     </>

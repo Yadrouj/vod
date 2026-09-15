@@ -1,6 +1,8 @@
 "use client";
 
 import { Captions, Check, Clock3, FileUp, Link2, LoaderCircle, RefreshCw, Search, Subtitles, X } from "lucide-react";
+import { ResponsiveDialog } from "@/components/responsive-dialog";
+import type { Locale } from "@/lib/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { cuesToVtt, decodeSubtitleBytes, normalizeSubtitleToVtt, parseSubtitleCues } from "@/lib/subtitle-format";
 import { AUTO_SUBTITLE_SELECTION, OFF_SUBTITLE_SELECTION, type SubtitleSelection } from "@/lib/subtitle-types";
@@ -35,6 +37,7 @@ type Props = {
   onSelectionChange?: (selection: SubtitleSelection) => void;
   canChange?: boolean;
   shared?: boolean;
+  locale?: Locale;
 };
 
 const LOCAL_SUBTITLE_LIMIT = 320 * 1024;
@@ -52,6 +55,7 @@ export function PlayerSubtitles({
   onSelectionChange,
   canChange = true,
   shared = false,
+  locale = "fa",
 }: Props) {
   const [internalSelection, setInternalSelection] = useState<SubtitleSelection>(AUTO_SUBTITLE_SELECTION);
   const activeSelection = selection ?? internalSelection;
@@ -306,24 +310,21 @@ export function PlayerSubtitles({
   if (!open) return null;
 
   return (
-    <div className="subtitle-panel" role="dialog" aria-label="Subtitle controls">
-      <header>
-        <div><Captions size={18} /><span><strong>Subtitles</strong><small>{shared ? "Synced for everyone in this room" : `For ${title}`}</small></span></div>
-        <button type="button" onClick={onClose} aria-label="Close subtitles"><X size={17} /></button>
-      </header>
+    <ResponsiveDialog open={open} onClose={onClose} title={locale === "fa" ? "زیرنویس" : "Subtitles"} description={shared ? (locale === "fa" ? "انتخاب زیرنویس برای همهٔ اتاق همگام می‌شود" : "Synced for everyone in this room") : title} closeLabel={locale === "fa" ? "بستن زیرنویس" : "Close subtitles"} dir={locale === "fa" ? "rtl" : "ltr"}>
+    <div className="subtitle-panel">
 
       <div className="subtitle-now"><Check size={14} /><span>{status}</span></div>
 
       <div className="subtitle-quick-actions">
-        <button className={activeSelection.mode === "auto" ? "is-active" : ""} type="button" disabled={!canChange} onClick={() => choose(AUTO_SUBTITLE_SELECTION)}><RefreshCw size={14} /> Auto</button>
-        <button className={activeSelection.mode === "off" ? "is-active" : ""} type="button" disabled={!canChange} onClick={() => choose(OFF_SUBTITLE_SELECTION)}><X size={14} /> Off</button>
-        <button type="button" disabled={!canChange} onClick={() => fileInputRef.current?.click()}><FileUp size={14} /> Add local</button>
+        <button className={activeSelection.mode === "auto" ? "is-active" : ""} type="button" disabled={!canChange} onClick={() => choose(AUTO_SUBTITLE_SELECTION)}><RefreshCw size={14} /> {locale === "fa" ? "خودکار" : "Auto"}</button>
+        <button className={activeSelection.mode === "off" ? "is-active" : ""} type="button" disabled={!canChange} onClick={() => choose(OFF_SUBTITLE_SELECTION)}><X size={14} /> {locale === "fa" ? "خاموش" : "Off"}</button>
+        <button type="button" disabled={!canChange} onClick={() => fileInputRef.current?.click()}><FileUp size={14} /> {locale === "fa" ? "فایل شخصی" : "Add file"}</button>
         <input ref={fileInputRef} type="file" hidden accept=".vtt,.srt,.ass,.ssa,.txt,text/vtt,application/x-subrip" onChange={(event) => void addLocalFile(event.target.files?.[0])} />
       </div>
 
       {nativeTracks.length > 0 && (
         <section className="subtitle-source-group">
-          <div className="subtitle-group-title"><Subtitles size={14} /><span>Inside this video</span></div>
+          <div className="subtitle-group-title"><Subtitles size={14} /><span>{locale === "fa" ? "داخل فایل ویدیو" : "Inside this video"}</span></div>
           <div className="subtitle-option-list">
             {nativeTracks.map((track) => (
               <button type="button" disabled={!canChange} className={activeSelection.mode === "embedded" && activeSelection.nativeTrackId === track.id ? "is-active" : ""} key={track.id} onClick={() => choose({ id: track.id, mode: "embedded", label: track.label, language: track.language, nativeTrackId: track.id })}>
@@ -336,35 +337,38 @@ export function PlayerSubtitles({
 
       {sourceSubtitle && (
         <section className="subtitle-source-group">
-          <div className="subtitle-group-title"><Subtitles size={14} /><span>Included with this file</span></div>
+          <div className="subtitle-group-title"><Subtitles size={14} /><span>{locale === "fa" ? "همراه این نسخه" : "Included with this file"}</span></div>
           <div className="subtitle-option-list">
             <button type="button" disabled={!canChange} className={activeSelection.id === sourceSubtitle.id ? "is-active" : ""} onClick={() => choose(sourceSubtitle)}>
-              <span><strong>{sourceSubtitle.label}</strong><small>Matched to this exact movie or episode</small></span><Check size={14} />
+              <span><strong>{sourceSubtitle.label}</strong><small>{locale === "fa" ? "هماهنگ با همین فیلم یا قسمت" : "Matched to this exact movie or episode"}</small></span><Check size={14} />
             </button>
           </div>
         </section>
       )}
 
       <section className="subtitle-source-group">
-        <div className="subtitle-group-title"><Search size={14} /><span>Online subtitles</span>{onlineLoading && <LoaderCircle className="spin" size={13} />}</div>
+        <div className="subtitle-group-title"><Search size={14} /><span>{locale === "fa" ? "زیرنویس‌های آنلاین" : "Online subtitles"}</span>{onlineLoading && <LoaderCircle className="spin" size={13} />}</div>
         <div className="subtitle-option-list subtitle-online-list">
           {sortedOnlineItems.length ? sortedOnlineItems.slice(0, 10).map((item) => {
             const next = onlineSelection(item);
             return <button type="button" disabled={!canChange} className={activeSelection.id === next.id ? "is-active" : ""} key={item.detailUrl} onClick={() => choose(next)}><span><strong>{item.language}</strong><small>{item.releases.slice(0, 2).join(" · ") || item.author || "Matched online"}</small></span>{item.rating === "good" ? <Check size={14} /> : <Captions size={14} />}</button>;
-          }) : <p>{onlineLoading ? "Searching Persian and English sources…" : "No online subtitle matched this title."}</p>}
+          }) : <p>{onlineLoading ? (locale === "fa" ? "در حال پیدا کردن زیرنویس فارسی و انگلیسی…" : "Searching Persian and English sources…") : (locale === "fa" ? "زیرنویس آنلاین پیدا نشد؛ می‌توانید فایل یا لینک خودتان را اضافه کنید." : "No online subtitle matched; add your own file or link.")}</p>}
         </div>
       </section>
 
+      <details className="subtitle-advanced"><summary>{locale === "fa" ? "لینک شخصی، اندازه و هماهنگی" : "Custom link, size & timing"}</summary>
       <section className="subtitle-url-row">
-        <label><Link2 size={14} /><input value={urlInput} disabled={!canChange || urlLoading} onChange={(event) => setUrlInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void addFromUrl(); }} placeholder="Paste a direct .srt or .vtt URL" /></label>
-        <button type="button" disabled={!canChange || !urlInput.trim() || urlLoading} onClick={() => void addFromUrl()}>{urlLoading ? <LoaderCircle className="spin" size={15} /> : "Add"}</button>
+        <label><Link2 size={14} /><input value={urlInput} disabled={!canChange || urlLoading} onChange={(event) => setUrlInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void addFromUrl(); }} dir="ltr" aria-label={locale === "fa" ? "لینک زیرنویس" : "Subtitle URL"} placeholder="https://…/subtitle.srt" /></label>
+        <button type="button" disabled={!canChange || !urlInput.trim() || urlLoading} onClick={() => void addFromUrl()}>{urlLoading ? <LoaderCircle className="spin" size={15} /> : (locale === "fa" ? "افزودن" : "Add")}</button>
       </section>
 
       <footer>
-        <label>Size<select value={size} onChange={(event) => setSize(event.target.value as typeof size)}><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label>
-        <div className="subtitle-offset"><Clock3 size={13} /><span>Sync</span><button type="button" onClick={() => setOffset((value) => Math.max(-10, Number((value - .5).toFixed(1))))}>−0.5s</button><button type="button" onClick={() => setOffset(0)}>{offset > 0 ? "+" : ""}{offset.toFixed(1)}s</button><button type="button" onClick={() => setOffset((value) => Math.min(10, Number((value + .5).toFixed(1))))}>+0.5s</button></div>
+        <label>{locale === "fa" ? "اندازهٔ متن" : "Size"}<select value={size} onChange={(event) => setSize(event.target.value as typeof size)}><option value="small">{locale === "fa" ? "کوچک" : "Small"}</option><option value="medium">{locale === "fa" ? "متوسط" : "Medium"}</option><option value="large">{locale === "fa" ? "بزرگ" : "Large"}</option></select></label>
+        <div className="subtitle-offset"><Clock3 size={13} /><span>{locale === "fa" ? "هماهنگی" : "Sync"}</span><button type="button" onClick={() => setOffset((value) => Math.max(-10, Number((value - .5).toFixed(1))))}>−0.5s</button><button type="button" onClick={() => setOffset(0)}>{offset > 0 ? "+" : ""}{offset.toFixed(1)}s</button><button type="button" onClick={() => setOffset((value) => Math.min(10, Number((value + .5).toFixed(1))))}>+0.5s</button></div>
       </footer>
+      </details>
     </div>
+    </ResponsiveDialog>
   );
 }
 

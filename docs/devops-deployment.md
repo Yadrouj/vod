@@ -4,6 +4,8 @@
 
 ## معماری production
 
+برای اصلاح رابط موبایل پلیر و اتاق همزمان، [راهنمای پنل‌های موبایل و تست انتشار](./mobile-player-panels.md) را ببینید. این تغییر فقط به rebuild/restart سرویس app نیاز دارد و فایل LFS، migration یا تنظیمات جدید ندارد.
+
 فایل اصلی استقرار کامل `docker-compose.production.yml` است:
 
 ```text

@@ -60,7 +60,7 @@ try {
       for (const event of ["pause", "emptied"]) el.addEventListener(event, () => el.dataset.interruptions = String(Number(el.dataset.interruptions) + 1));
     });
     await host.locator(".music-player-together button").click();
-    const room = page.locator(".watch-builder[role=dialog]");
+    const room = page.locator("dialog[data-responsive-dialog]:has(.watch-builder)");
     await room.waitFor();
     assert.ok((await room.locator(".watch-builder-selected").innerText()).includes(item.persianTitle || item.title));
     await page.keyboard.press("Escape");
@@ -192,7 +192,7 @@ try {
     await queueButtons.nth(1).click();
     await page.waitForFunction(() => document.querySelector("[data-music-player-host] audio, [data-music-player-host] video")?.currentTime > .1);
     await host.locator('.music-player-together button').click();
-    await page.locator('.watch-builder[role=dialog]').waitFor();
+    await page.locator('dialog[data-responsive-dialog]:has(.watch-builder)').waitFor();
     assert.ok((await page.locator('.watch-builder-selected').innerText()).includes(nextTitle), "Room follows the queue selection");
     await page.keyboard.press('Escape');
   }

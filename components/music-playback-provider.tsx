@@ -4,6 +4,7 @@ import { Minimize2, Maximize2, Expand, X } from "lucide-react";
 import { createContext, lazy, Suspense, useCallback, useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
+import { useMobilePlayer } from "./responsive-dialog";
 import type { MusicTrack } from "@/lib/music-types";
 import type { MusicPlaybackSettings } from "./music-player-engine";
 import styles from "./music-refresh.module.css";
@@ -24,6 +25,7 @@ export function useMusicPlayback() {
 }
 
 export function MusicPlaybackProvider({ children }: { children: ReactNode }) {
+  const mobile = useMobilePlayer();
   const pathname = usePathname();
   const path = useRef(pathname);
   useLayoutEffect(() => { path.current = pathname; }, [pathname]);
@@ -123,10 +125,10 @@ export function MusicPlaybackProvider({ children }: { children: ReactNode }) {
       onCancel={event => { event.preventDefault(); setImmersive(false); }}
       className={`${styles.dock} ${compact ? styles.compact : ""} ${immersive ? styles.immersive : ""} ${inline && !immersive ? playbackStyles.inlineHost : ""}`}
       data-music-player-host data-music-inline={inline && !immersive || undefined} data-music-dock={!inline || immersive || undefined}
-      data-immersive={immersive || undefined} data-media-theme="music" dir="rtl" aria-label="پخش‌کنندهٔ موسیقی">
+      data-music-compact={compact || undefined} data-immersive={immersive || undefined} data-media-theme="music" dir="rtl" aria-label="پخش‌کنندهٔ موسیقی">
       <header><Link href={`/music/${currentId}`} onClick={() => setImmersive(false)}>صفحهٔ آهنگ ↗</Link><span />
         {!immersive && <button type="button" onClick={() => setImmersive(true)} aria-label="نمای تمام‌صفحهٔ موسیقی و متن"><Expand size={18} /></button>}
-        {(!inline || immersive) && <button type="button" onClick={() => { setImmersive(false); setExpandedPath(compact ? pathname : null); }} aria-label={immersive ? "بازگشت به پلیر" : compact ? "بزرگ کردن پلیر" : "کوچک کردن پلیر"}>{compact ? <Maximize2 size={16} /> : <Minimize2 size={16} />}</button>}
+        {(!inline || immersive) && <button type="button" onClick={() => { setImmersive(mobile && compact); setExpandedPath(compact ? pathname : null); }} aria-label={immersive ? "بازگشت به پلیر" : compact ? "بزرگ کردن پلیر" : "کوچک کردن پلیر"}>{compact ? <Maximize2 size={16} /> : <Minimize2 size={16} />}</button>}
         {!inline && <button type="button" onClick={close} aria-label="بستن و قطع موسیقی"><X size={18} /></button>}
       </header>
       <Suspense fallback={null}><Engine {...request} onReady={markReady} inline={inline && !immersive} immersive={immersive} playRequest={request.serial} onTrackPlay={track => {
