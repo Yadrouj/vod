@@ -171,6 +171,15 @@ try {
     await page.locator('.party-player-stage').waitFor();
     for (const size of sizes) {
       await page.setViewportSize(size);
+      const controls = await page.locator('.party-controls').evaluate(el => {
+        const play = el.querySelector('button').getBoundingClientRect();
+        return { width: play.width, height: play.height, overflow: el.scrollWidth - el.clientWidth,
+          gap: parseFloat(getComputedStyle(el.closest('.party-player-stage')).marginTop) };
+      });
+      assert.equal(controls.width, 44, 'Play is a compact touch-sized button, never stretched');
+      assert.equal(controls.height, 44);
+      assert.ok(controls.overflow <= 1, 'Controls stay inside the mobile stage');
+      if (size.width < size.height) assert.ok(controls.gap >= 24, 'Portrait video has breathing room above it');
       for (const [selector, label] of [['button[aria-label="Room chat"]','chat'], ['button[aria-label="Playback settings"]','settings'], ['.party-voice-toggle','voice'], ['.party-accessibility-toggle','accessibility'], ['.party-people-action','people']]) {
         if (mode === 'listen' && label === 'accessibility') continue; // Video/caption tools are intentionally absent in audio rooms.
         await page.locator('.party-player-stage').hover();

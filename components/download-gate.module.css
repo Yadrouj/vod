@@ -9,4 +9,8 @@
 .countdown { display: grid; gap: 4px; margin: 26px 0 12px; }.countdown span { color: #f5c542; font-size: 56px; font-weight: 900; line-height: 1; }.countdown small { color: #aba79c; }
 .progress { height: 7px; overflow: hidden; border-radius: 99px; background: #2b2b25; }.progress span { display: block; height: 100%; border-radius: inherit; background: #f5c542; transition: width .9s linear; }
 .fallback { display: inline-block; margin-top: 24px; color: #d9d1b8; font-size: 13px; text-decoration: underline; text-underline-offset: 4px; }
+.fallback { min-height: 44px; padding: 10px; border: 0; background: transparent; cursor: pointer; font-family: inherit; }
+.fallback[aria-disabled="true"] { opacity: .5; cursor: wait; text-decoration: none; }
+.media { min-width: 0; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .emoji { animation: none; }.progress span { transition: none; } }
 @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-7px) rotate(3deg); } }

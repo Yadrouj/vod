@@ -1,5 +1,6 @@
 import { loadMusicIndex } from "@/lib/music";
 import { fetchStreamHeaders } from "@/lib/upstream-stream";
+import { musicAttachment } from "@/lib/music-download";
 
 const MAX_ID_LENGTH = 180;
 const MAX_URL_LENGTH = 4096;
@@ -16,6 +17,7 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const id = requestUrl.searchParams.get("id")?.trim() ?? "";
   const sourceUrl = requestUrl.searchParams.get("url")?.trim() ?? "";
+  const download = requestUrl.searchParams.get("download") === "1";
 
   if (!id || id.length > MAX_ID_LENGTH || !sourceUrl || sourceUrl.length > MAX_URL_LENGTH) {
     return Response.json({ error: "Invalid music source." }, { status: 400 });
@@ -57,6 +59,10 @@ export async function GET(request: Request) {
 
   const headers = new Headers();
   const upstreamContentType = upstream.headers.get("content-type")?.split(";")[0].trim().toLocaleLowerCase() ?? "";
+  if (download && /(?:text\/|json|html|xml)/i.test(upstreamContentType)) {
+    await upstream.body?.cancel();
+    return Response.json({ error: "The source returned a page instead of a media file. Please try another quality." }, { status: 502 });
+  }
   const contentType = isGenericContentType(upstreamContentType)
     ? inferMediaContentType(resolvedSourceUrl, track?.kind === "video")
     : upstreamContentType || inferMediaContentType(resolvedSourceUrl, track?.kind === "video");
@@ -67,6 +73,7 @@ export async function GET(request: Request) {
   }
   headers.set("Cache-Control", "public, max-age=300, s-maxage=900");
   headers.set("X-Content-Type-Options", "nosniff");
+  if (download) headers.set("Content-Disposition", musicAttachment(track?.persianTitle || track?.title || "SarvNema", source.url));
   if (resolvedSourceUrl !== source.url) headers.set("X-Sarvnema-Source-Fallback", "http");
 
   return new Response(upstream.body, { status: upstream.status, headers });

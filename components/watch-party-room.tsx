@@ -1,5 +1,7 @@
 "use client";
 
+import { enterPlayerFullscreen } from "@/lib/player-fullscreen";
+
 import Link from "next/link";
 import { Captions, Check, Clock3, Copy, Disc3, ExternalLink, FileUp, Film, Globe2, Link2, LoaderCircle, Maximize2, MessageCircle, Minimize2, Pause, Play, Send, Settings, Share2, SmilePlus, Star, Upload, Users, Video, Volume2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -360,7 +362,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
       return;
     }
     try {
-      await stage.requestFullscreen();
+      await enterPlayerFullscreen(stage);
     } catch {
       setPseudoFullscreen(true);
     }

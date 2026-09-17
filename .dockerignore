@@ -10,5 +10,7 @@ dev-server.err.log
 dev-server.pid
 npm-debug.log*
 .DS_Store
+data/telegram-deliveries/
+.media-cache/
 # NOTE: public/ (the LFS-backed catalog) and .env.local are intentionally kept —
 # the catalog is served at runtime and .env.local is needed at build for NEXT_PUBLIC_*.

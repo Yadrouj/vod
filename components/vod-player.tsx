@@ -1,5 +1,7 @@
 "use client";
 
+import { enterPlayerFullscreen } from "@/lib/player-fullscreen";
+
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Captions, Cast, Maximize, Minimize, Pause, PictureInPicture2, Play, RotateCcw, RotateCw, Settings, Volume2, VolumeX } from "lucide-react";
 import { BrandLoader } from "@/components/brand-loader";
@@ -218,7 +220,7 @@ export function VodPlayer({
     try { if (document.fullscreenElement) {
       await document.exitFullscreen();
     } else {
-      await el.requestFullscreen();
+      await enterPlayerFullscreen(el);
     }
     } catch { setMessage(locale === "fa" ? "تمام‌صفحه در این مرورگر در دسترس نیست." : "Fullscreen is unavailable in this browser."); }
   }

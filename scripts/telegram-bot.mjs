@@ -3,6 +3,8 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createBotNavigation } from "./bot-navigation.mjs";
 import { miniAppUrl, miniAppButton } from "./telegram-mini-app.mjs";
+import { telegramDeliveryLink } from "../lib/telegram-delivery-token.mjs";
+import { runDeliveryWorker } from "./telegram-file-delivery.mjs";
 
 try {
   const env = await readFile(".env.local", "utf8");
@@ -14,9 +16,9 @@ try {
   }
 } catch {}
 
-const token = process.env.BOT_API_TOKEN;
+const token = process.env.BOT_API_TOKEN?.trim();
 const apiBase = (process.env.BOT_SITE_URL || "http://localhost:3004").replace(/\/$/, "");
-const telegram = token ? `https://api.telegram.org/bot${token}` : "";
+const telegram = token ? `${(process.env.TELEGRAM_API_BASE_URL || "https://api.telegram.org").replace(/\/$/, "")}/bot${token}` : "";
 const sessions = new Map();
 const PAGE_SIZE = 10;
 const appUrl = miniAppUrl();
@@ -118,6 +120,11 @@ function b(text, data) {
 
 function urlButton(text, url) {
   return { text, url };
+}
+
+function fileButtons(chatId, file, item, episode = "") {
+  const delivery = telegramDeliveryLink(Number(chatId), file, item, token, appUrl || "https://sarvnema.ir", episode);
+  return [urlButton(short(fileButtonText(file), 45), file.url), ...(delivery ? [urlButton("📎 فایل در تلگرام", delivery)] : [])];
 }
 
 function mainKeyboard(chatId) {
@@ -267,7 +274,7 @@ async function showEpisodeFiles(chatId, messageId, id, season, episodeValue, pag
   const totalPages = Math.max(1, Math.ceil(files.length / PAGE_SIZE));
   const activePage = Math.min(Math.max(1, page), totalPages);
   const visible = files.slice((activePage - 1) * PAGE_SIZE, activePage * PAGE_SIZE);
-  const rows = visible.map((file) => [urlButton(short(fileButtonText(file), 58), file.url)]);
+  const rows = visible.map((file) => fileButtons(chatId, file, data.item, episode.code));
   rows.push(paginationRow("vfpage", { page: activePage, totalPages, hasPrevious: activePage > 1, hasNext: activePage < totalPages }, `${id}:${season}:${episodeValue}`));
   rows.push([b("🧾 دریافت TXT همین قسمت", `vtxtepisode:${id}:${season}:${episodeValue}`)]);
   const episodePage = Math.floor((data.episodes ?? []).indexOf(episode) / PAGE_SIZE) + 1;
@@ -285,7 +292,7 @@ async function showMovieFiles(chatId, messageId, id, page) {
   const files = data.movieFiles ?? [];
   const totalPages = Math.max(1, Math.ceil(files.length / PAGE_SIZE));
   const activePage = Math.min(Math.max(1, page), totalPages);
-  const rows = files.slice((activePage - 1) * PAGE_SIZE, activePage * PAGE_SIZE).map((file) => [urlButton(short(fileButtonText(file), 58), file.url)]);
+  const rows = files.slice((activePage - 1) * PAGE_SIZE, activePage * PAGE_SIZE).map((file) => fileButtons(chatId, file, data.item));
   rows.push(paginationRow("vmfpage", { page: activePage, totalPages, hasPrevious: activePage > 1, hasNext: activePage < totalPages }, id));
   rows.push([b("🧾 دریافت TXT همهٔ لینک‌ها", `vtxtmovie:${id}`)]);
   rows.push([b("⬅️ جزئیات", `vtitle:${id}`), urlButton("🌐 صفحه در سایت", data.item.urls.detail)]);
@@ -293,7 +300,7 @@ async function showMovieFiles(chatId, messageId, id, page) {
     `<b>${escapeHtml(data.item.title)}</b>`,
     `${files.length} فایل موجود · صفحهٔ ${activePage} از ${totalPages}`,
     "",
-    "روی هر کیفیت بزنید تا لینک اصلی باز شود.",
+    "کیفیت را انتخاب کنید: دانلود سایت، یا ارسال خود فایل در تلگرام پس از صفحهٔ انتظار پنج‌ثانیه‌ای. انتقال فایل‌های بزرگ زمان بیشتری می‌برد و محدودیت حجم دارد.",
   ].join("\n"), keyboard(rows));
 }
 
@@ -350,7 +357,7 @@ async function showMusicTitle(chatId, messageId, id, session) {
     [urlButton("🌐 صفحه در سایت", item.urls.detail), urlButton("↗️ منبع اصلی", item.urls.source)],
   ];
   for (const source of item.sources.slice(0, 8)) {
-    rows.push([urlButton(short(`${source.kind === "stream" ? "▶️ پخش" : "⬇️ دانلود"} · ${source.quality || source.label || "فایل"}`, 58), source.url)]);
+    rows.push(source.kind === "download" ? fileButtons(chatId, source, item) : [urlButton(short(`▶️ پخش · ${source.quality || source.label || "فایل"}`, 58), source.url)]);
   }
   rows.push([b("🧾 دریافت TXT لینک‌ها", `mtxt:${id}`), b("⬅️ نتایج", session?.navigation?.view === "search" ? "nav:return" : "mresults")]);
   await edit(chatId, messageId, [
@@ -623,6 +630,7 @@ async function runBot() {
   }
 
   console.log("SarvNema Telegram bot is running...");
+  void runDeliveryWorker({ apiBase, token, telegram, send });
   while (true) {
     try {
       const updates = await call("getUpdates", {
