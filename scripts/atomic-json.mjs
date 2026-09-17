@@ -12,9 +12,23 @@ export async function writeJsonAtomic(file, value) {
     // writers are serialized by their callers, so removing the old snapshot
     // is safe and lets the next rename complete instead of killing a scraper.
     if (process.platform !== "win32" || !["EPERM", "EEXIST", "ENOTEMPTY"].includes(error?.code)) throw error;
-    await unlink(file).catch((unlinkError) => {
-      if (unlinkError?.code !== "ENOENT") throw unlinkError;
-    });
+    await unlinkWithRetry(file);
     await rename(temporary, file);
   }
+}
+
+async function unlinkWithRetry(file) {
+  let lastError;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      await unlink(file);
+      return;
+    } catch (error) {
+      if (error?.code === "ENOENT") return;
+      if (error?.code !== "EBUSY" && error?.code !== "EPERM") throw error;
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 125));
+    }
+  }
+  throw lastError;
 }

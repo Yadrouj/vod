@@ -417,11 +417,25 @@ async function writeJsonAtomic(file, value) {
     await rename(temporary, file);
   } catch (error) {
     if (process.platform !== "win32" || !["EPERM", "EEXIST", "ENOTEMPTY"].includes(error?.code)) throw error;
-    await unlink(file).catch((unlinkError) => {
-      if (unlinkError?.code !== "ENOENT") throw unlinkError;
-    });
+    await unlinkWithRetry(file);
     await rename(temporary, file);
   }
+}
+
+async function unlinkWithRetry(file) {
+  let lastError;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      await unlink(file);
+      return;
+    } catch (error) {
+      if (error?.code === "ENOENT") return;
+      if (error?.code !== "EBUSY" && error?.code !== "EPERM") throw error;
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 125));
+    }
+  }
+  throw lastError;
 }
 function emptyIndex() { return { version: 1, source: "multi-source", updatedAt: "", scanned: { musicPages: 0, videoPages: 0, full: false }, tracks: [], artists: [], categories: [] }; }
 function emptyCheckpoint() { return { version: 1, updatedAt: "", tracks: {}, completed: { track: {}, video: {} } }; }
