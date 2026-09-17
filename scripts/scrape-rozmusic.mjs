@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { buildArtists as buildCanonicalArtists, canonicalizeTrackArtists, cleanText as cleanCatalogText, normalizeComparable as normalizeCatalogText } from "./music-catalog.mjs";
 
@@ -409,7 +409,20 @@ async function waitForRequestSlot() {
 }
 async function mapPool(values, workers, callback) { let cursor = 0; await Promise.all(Array.from({ length: Math.min(workers, values.length || 1) }, async () => { while (true) { const index = cursor++; if (index >= values.length) return; await callback(values[index]); } })); }
 async function readJson(file, fallback) { try { return JSON.parse(await readFile(file, "utf8")); } catch { return fallback; } }
-async function writeJsonAtomic(file, value) { await mkdir(path.dirname(file), { recursive: true }); const temporary = `${file}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`; await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, "utf8"); await rename(temporary, file); }
+async function writeJsonAtomic(file, value) {
+  await mkdir(path.dirname(file), { recursive: true });
+  const temporary = `${file}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
+  await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  try {
+    await rename(temporary, file);
+  } catch (error) {
+    if (process.platform !== "win32" || !["EPERM", "EEXIST", "ENOTEMPTY"].includes(error?.code)) throw error;
+    await unlink(file).catch((unlinkError) => {
+      if (unlinkError?.code !== "ENOENT") throw unlinkError;
+    });
+    await rename(temporary, file);
+  }
+}
 function emptyIndex() { return { version: 1, source: "multi-source", updatedAt: "", scanned: { musicPages: 0, videoPages: 0, full: false }, tracks: [], artists: [], categories: [] }; }
 function emptyCheckpoint() { return { version: 1, updatedAt: "", tracks: {}, completed: { track: {}, video: {} } }; }
 async function saveCheckpoint(checkpoint) {
