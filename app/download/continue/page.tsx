@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { DownloadGate } from "@/components/download-gate";
-import { downloadGateUrl, isDownloadUrl } from "@/lib/download-gate";
+import { decodeCompact, downloadGateUrl, isDownloadUrl } from "@/lib/download-gate";
 import { resolveMusicDownload } from "@/lib/music-download";
 import { verifyDelivery } from "@/lib/telegram-delivery-token.mjs";
 import { getLocale } from "@/lib/server-locale";
@@ -13,7 +13,7 @@ function first(value: string | string[] | undefined) { return Array.isArray(valu
 
 export default async function DownloadContinuePage({ searchParams }: Props) {
   const query = await searchParams;
-  const url = first(query?.url);
+  const url = first(query?.url) || decodeCompact(first(query?.u));
   const locale = await getLocale();
   const delivery = first(query?.delivery);
   if (delivery) {

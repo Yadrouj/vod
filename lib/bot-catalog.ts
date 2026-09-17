@@ -351,7 +351,7 @@ function serializeEpisode(episode: EpisodeDownload, maxFiles: number, origin: st
       text: `${episode.code} - ${episode.title}`,
       buttons: episode.files.slice(0, Math.min(maxFiles, 10)).map((file) => ({
         text: [file.quality, file.size].filter(Boolean).join(" / ") || file.name,
-        url: absoluteUrl(origin, downloadGateUrl({ url: file.url, title: `${title} · ${episode.code}`, quality: file.quality ?? file.name })),
+        url: absoluteUrl(origin, downloadGateUrl({ url: file.url, compact: true, title: `${title} · ${episode.code}`, quality: file.quality ?? file.name })),
       })),
     },
   };
@@ -364,7 +364,7 @@ function serializeDownload(file: DownloadSource | EpisodeFile, origin: string, t
     name: "name" in file ? file.name : file.fileName ?? file.label,
     // Bot clients must never receive the archive URL directly. The site gate
     // keeps the download copy, quality and five-second acknowledgement flow.
-    url: absoluteUrl(origin, downloadGateUrl({ url: file.url, title, quality: quality ?? undefined })),
+    url: absoluteUrl(origin, downloadGateUrl({ url: file.url, compact: true, title, quality: quality ?? undefined })),
     quality: file.quality,
     group: file.group,
     release: file.release,

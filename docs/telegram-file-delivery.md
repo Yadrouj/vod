@@ -1,8 +1,14 @@
 # Telegram file delivery and music downloads
 
+> Direct movie/series delivery into Telegram is currently disabled. The bot's
+> active flow is the website download gate: open the SarvNema link, wait for
+> the five-second countdown, then follow the original download. This document
+> keeps the old delivery implementation notes for a later opt-in; it is not
+> started by `scripts/telegram-bot.mjs`.
+
 ## What changed
 
-- In private Telegram chats, each film/episode/music download quality has a separate **📎 فایل در تلگرام** button. The existing website download and TXT options remain.
+- In private Telegram chats, each film/episode/music download quality has a short website download button. The existing site and TXT options remain.
 - The signed link opens SarvNema's five-second waiting page. Merely generating a link or fetching its HTML does not send a file. The page starts a server-timed wait, then queues that exact file for that exact chat.
 - The worker uploads an actual document with title, year, IMDb rating, genre, quality/dubbing information, episode code when applicable, and the title's site link. It does not send a TXT file instead of the movie.
 - Five seconds is the waiting period, **not a promise that a movie transfers in five seconds**, and not a video-watching requirement.

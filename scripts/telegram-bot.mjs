@@ -3,8 +3,6 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createBotNavigation } from "./bot-navigation.mjs";
 import { miniAppUrl, miniAppButton } from "./telegram-mini-app.mjs";
-import { telegramDeliveryLink } from "../lib/telegram-delivery-token.mjs";
-import { runDeliveryWorker } from "./telegram-file-delivery.mjs";
 
 try {
   const env = await readFile(".env.local", "utf8");
@@ -122,9 +120,9 @@ function urlButton(text, url) {
   return { text, url };
 }
 
-function fileButtons(chatId, file, item, episode = "") {
-  const delivery = telegramDeliveryLink(Number(chatId), file, item, token, appUrl || "https://sarvnema.ir", episode);
-  return [urlButton(short(fileButtonText(file), 45), file.url), ...(delivery ? [urlButton("📎 فایل در تلگرام", delivery)] : [])];
+function downloadButton(file) {
+  if (!isHttpUrl(file.url)) return null;
+  return [urlButton(`⬇️ ${short(fileButtonText(file), 45)}`, file.url)];
 }
 
 function mainKeyboard(chatId) {
@@ -274,7 +272,7 @@ async function showEpisodeFiles(chatId, messageId, id, season, episodeValue, pag
   const totalPages = Math.max(1, Math.ceil(files.length / PAGE_SIZE));
   const activePage = Math.min(Math.max(1, page), totalPages);
   const visible = files.slice((activePage - 1) * PAGE_SIZE, activePage * PAGE_SIZE);
-  const rows = visible.map((file) => fileButtons(chatId, file, data.item, episode.code));
+  const rows = visible.map(downloadButton).filter(Boolean);
   rows.push(paginationRow("vfpage", { page: activePage, totalPages, hasPrevious: activePage > 1, hasNext: activePage < totalPages }, `${id}:${season}:${episodeValue}`));
   rows.push([b("🧾 دریافت TXT همین قسمت", `vtxtepisode:${id}:${season}:${episodeValue}`)]);
   const episodePage = Math.floor((data.episodes ?? []).indexOf(episode) / PAGE_SIZE) + 1;
@@ -292,7 +290,7 @@ async function showMovieFiles(chatId, messageId, id, page) {
   const files = data.movieFiles ?? [];
   const totalPages = Math.max(1, Math.ceil(files.length / PAGE_SIZE));
   const activePage = Math.min(Math.max(1, page), totalPages);
-  const rows = files.slice((activePage - 1) * PAGE_SIZE, activePage * PAGE_SIZE).map((file) => fileButtons(chatId, file, data.item));
+  const rows = files.slice((activePage - 1) * PAGE_SIZE, activePage * PAGE_SIZE).map(downloadButton).filter(Boolean);
   rows.push(paginationRow("vmfpage", { page: activePage, totalPages, hasPrevious: activePage > 1, hasNext: activePage < totalPages }, id));
   rows.push([b("🧾 دریافت TXT همهٔ لینک‌ها", `vtxtmovie:${id}`)]);
   rows.push([b("⬅️ جزئیات", `vtitle:${id}`), urlButton("🌐 صفحه در سایت", data.item.urls.detail)]);
@@ -300,7 +298,7 @@ async function showMovieFiles(chatId, messageId, id, page) {
     `<b>${escapeHtml(data.item.title)}</b>`,
     `${files.length} فایل موجود · صفحهٔ ${activePage} از ${totalPages}`,
     "",
-    "کیفیت را انتخاب کنید: دانلود سایت، یا ارسال خود فایل در تلگرام پس از صفحهٔ انتظار پنج‌ثانیه‌ای. انتقال فایل‌های بزرگ زمان بیشتری می‌برد و محدودیت حجم دارد.",
+    "کیفیت را انتخاب کنید؛ لینک سایت باز می‌شود و پس از شمارش پنج‌ثانیه‌ای دانلود را شروع می‌کند.",
   ].join("\n"), keyboard(rows));
 }
 
@@ -356,8 +354,8 @@ async function showMusicTitle(chatId, messageId, id, session) {
   const rows = [
     [urlButton("🌐 صفحه در سایت", item.urls.detail), urlButton("↗️ منبع اصلی", item.urls.source)],
   ];
-  for (const source of item.sources.slice(0, 8)) {
-    rows.push(source.kind === "download" ? fileButtons(chatId, source, item) : [urlButton(short(`▶️ پخش · ${source.quality || source.label || "فایل"}`, 58), source.url)]);
+  for (const source of item.sources.filter((entry) => entry.available !== false && isHttpUrl(entry.url)).slice(0, 8)) {
+    rows.push(source.kind === "download" ? downloadButton(source) : [urlButton(short(`▶️ پخش · ${source.quality || source.label || "فایل"}`, 58), source.url)]);
   }
   rows.push([b("🧾 دریافت TXT لینک‌ها", `mtxt:${id}`), b("⬅️ نتایج", session?.navigation?.view === "search" ? "nav:return" : "mresults")]);
   await edit(chatId, messageId, [
@@ -615,6 +613,10 @@ function safeFilename(value) {
   return normalized.slice(0, 72) || "sarvnema";
 }
 
+function isHttpUrl(value) {
+  try { const url = new URL(value); return url.protocol === "http:" || url.protocol === "https:"; } catch { return false; }
+}
+
 function formatNumber(value) {
   return new Intl.NumberFormat("fa-IR").format(Number(value) || 0);
 }
@@ -630,7 +632,6 @@ async function runBot() {
   }
 
   console.log("SarvNema Telegram bot is running...");
-  void runDeliveryWorker({ apiBase, token, telegram, send });
   while (true) {
     try {
       const updates = await call("getUpdates", {

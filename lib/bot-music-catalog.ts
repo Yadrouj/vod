@@ -112,7 +112,7 @@ export async function getBotMusicDetail(id: string, origin: string) {
       moods: track.moods ?? [],
       sources: Array.from(sourceMap.values()).map((source) => ({
         url: source.kind === "download"
-          ? absoluteUrl(origin, downloadGateUrl({ url: source.url, musicId: track.id, title: track.persianTitle || track.title, quality: source.quality || source.label }))
+          ? absoluteUrl(origin, downloadGateUrl({ url: source.url, compact: true, musicId: track.id, title: track.persianTitle || track.title, quality: source.quality || source.label }))
           : source.url,
         label: source.label,
         quality: source.quality ?? null,
