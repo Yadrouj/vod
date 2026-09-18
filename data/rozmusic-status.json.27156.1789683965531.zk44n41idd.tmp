@@ -1,0 +1,31 @@
+{
+  "state": "running",
+  "startedAt": "2026-09-17T22:22:31.073Z",
+  "updatedAt": "2026-09-17T22:26:05.527Z",
+  "full": false,
+  "rebuildOnly": false,
+  "pages": {
+    "music": {
+      "total": 3,
+      "complete": 1777
+    },
+    "video": {
+      "total": 3,
+      "complete": 60
+    }
+  },
+  "tracks": {
+    "discovered": 0,
+    "new": 0,
+    "updated": 0,
+    "failures": 0
+  },
+  "details": {
+    "requested": 18717,
+    "complete": 232,
+    "cached": 0
+  },
+  "rateLimited": 0,
+  "current": "details: Dozdaki",
+  "warnings": []
+}

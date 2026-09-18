@@ -1,31 +1,31 @@
 {
   "state": "complete",
-  "startedAt": "2026-09-11T18:55:01.471Z",
-  "updatedAt": "2026-09-11T18:55:02.922Z",
+  "startedAt": "2026-09-18T03:46:15.913Z",
+  "updatedAt": "2026-09-18T15:09:59.308Z",
   "full": false,
-  "rebuildOnly": true,
+  "rebuildOnly": false,
   "pages": {
     "music": {
-      "total": 3,
-      "complete": 1777
+      "total": 1777,
+      "complete": 3554
     },
     "video": {
-      "total": 3,
-      "complete": 60
+      "total": 60,
+      "complete": 120
     }
   },
   "tracks": {
-    "discovered": 0,
-    "new": 0,
-    "updated": 0,
+    "discovered": 18370,
+    "new": 4,
+    "updated": 18366,
     "failures": 0
   },
   "details": {
-    "requested": 0,
-    "complete": 0,
+    "requested": 18368,
+    "complete": 18368,
     "cached": 0
   },
-  "rateLimited": 0,
+  "rateLimited": 47,
   "current": null,
   "warnings": []
 }

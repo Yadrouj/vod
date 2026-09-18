@@ -1,0 +1,32 @@
+{
+  "state": "failed",
+  "startedAt": "2026-09-17T19:15:29.778Z",
+  "updatedAt": "2026-09-17T19:19:19.152Z",
+  "full": false,
+  "rebuildOnly": false,
+  "pages": {
+    "music": {
+      "total": 3,
+      "complete": 1777
+    },
+    "video": {
+      "total": 3,
+      "complete": 60
+    }
+  },
+  "tracks": {
+    "discovered": 0,
+    "new": 0,
+    "updated": 0,
+    "failures": 0
+  },
+  "details": {
+    "requested": 18717,
+    "complete": 124,
+    "cached": 0
+  },
+  "rateLimited": 0,
+  "current": "details: Dareh",
+  "warnings": [],
+  "error": "EPERM: operation not permitted, rename 'C:\\Users\\yadro\\vod\\data\\rozmusic-status.json.34960.1789672759147.b30hnv99976.tmp' -> 'C:\\Users\\yadro\\vod\\data\\rozmusic-status.json'"
+}

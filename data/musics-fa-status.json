@@ -1,21 +1,61 @@
 {
-  "state": "complete",
-  "startedAt": "2026-09-11T18:54:43.994Z",
-  "updatedAt": "2026-09-11T18:55:01.299Z",
+  "state": "running",
+  "startedAt": "2026-09-18T15:10:01.545Z",
+  "updatedAt": "2026-09-18T16:26:24.747Z",
   "pages": {
-    "total": 1,
-    "complete": 1
+    "total": 1247,
+    "complete": 1208
   },
   "tracks": {
-    "discovered": 20,
-    "new": 0,
-    "updated": 20,
-    "failures": 0
+    "discovered": 24160,
+    "new": 23370,
+    "updated": 790,
+    "failures": 39
   },
   "details": {
-    "requested": 12,
-    "complete": 12
+    "requested": 23370,
+    "complete": 1637
   },
-  "current": null,
-  "warnings": []
+  "current": "details: Yeki Yedoneh",
+  "warnings": [
+    "page 1033: 429 Too Many Requests",
+    "page 1034: 429 Too Many Requests",
+    "page 1035: 429 Too Many Requests",
+    "page 1036: 429 Too Many Requests",
+    "page 1037: 429 Too Many Requests",
+    "page 1038: 429 Too Many Requests",
+    "page 1039: 429 Too Many Requests",
+    "page 1040: 429 Too Many Requests",
+    "page 1041: 429 Too Many Requests",
+    "page 1042: 429 Too Many Requests",
+    "page 1043: 429 Too Many Requests",
+    "page 1044: 429 Too Many Requests",
+    "page 1045: 429 Too Many Requests",
+    "page 1046: 429 Too Many Requests",
+    "page 1047: 429 Too Many Requests",
+    "page 1048: 429 Too Many Requests",
+    "page 1049: 429 Too Many Requests",
+    "page 1050: 429 Too Many Requests",
+    "page 1051: 429 Too Many Requests",
+    "page 1052: 429 Too Many Requests",
+    "page 1053: 429 Too Many Requests",
+    "page 1054: 429 Too Many Requests",
+    "page 1055: 429 Too Many Requests",
+    "page 1056: 429 Too Many Requests",
+    "page 1057: 429 Too Many Requests",
+    "page 1058: 429 Too Many Requests",
+    "page 1059: 429 Too Many Requests",
+    "page 1060: 429 Too Many Requests",
+    "page 1061: 429 Too Many Requests",
+    "page 1062: 429 Too Many Requests",
+    "page 1063: 429 Too Many Requests",
+    "page 1064: 429 Too Many Requests",
+    "page 1065: 429 Too Many Requests",
+    "page 1066: 429 Too Many Requests",
+    "page 1067: 429 Too Many Requests",
+    "page 1068: 429 Too Many Requests",
+    "page 1069: 429 Too Many Requests",
+    "page 1070: 429 Too Many Requests",
+    "page 1071: 429 Too Many Requests"
+  ]
 }

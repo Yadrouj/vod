@@ -1,0 +1,31 @@
+{
+  "state": "running",
+  "startedAt": "2026-09-17T19:07:03.221Z",
+  "updatedAt": "2026-09-17T19:08:25.719Z",
+  "full": false,
+  "rebuildOnly": false,
+  "pages": {
+    "music": {
+      "total": 3,
+      "complete": 1777
+    },
+    "video": {
+      "total": 3,
+      "complete": 60
+    }
+  },
+  "tracks": {
+    "discovered": 0,
+    "new": 0,
+    "updated": 0,
+    "failures": 0
+  },
+  "details": {
+    "requested": 18717,
+    "complete": 56,
+    "cached": 0
+  },
+  "rateLimited": 0,
+  "current": "details: Mano Bash",
+  "warnings": []
+}

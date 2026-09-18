@@ -1,21 +1,21 @@
 {
-  "state": "running",
-  "startedAt": "2026-09-11T18:48:14.588Z",
-  "updatedAt": "2026-09-11T18:51:34.857Z",
+  "state": "complete",
+  "startedAt": "2026-09-13T02:39:05.282Z",
+  "updatedAt": "2026-09-13T02:40:37.500Z",
   "artists": {
-    "discovered": 51,
-    "complete": 51,
+    "discovered": 20,
+    "complete": 20,
     "failures": 0
   },
   "albums": {
-    "discovered": 14170,
-    "complete": 86,
+    "discovered": 50,
+    "complete": 50,
     "failures": 0
   },
   "tracks": {
-    "discovered": 880,
-    "playable": 880
+    "discovered": 9024,
+    "playable": 9024
   },
-  "current": "album: A-Violet-Pine-Crown-Shyness",
+  "current": null,
   "warnings": []
 }

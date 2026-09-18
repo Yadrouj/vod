@@ -1,0 +1,38 @@
+{
+  "state": "failed",
+  "startedAt": "2026-09-17T22:51:24.116Z",
+  "updatedAt": "2026-09-17T23:00:23.892Z",
+  "full": false,
+  "rebuildOnly": false,
+  "pages": {
+    "music": {
+      "total": 3,
+      "complete": 1777
+    },
+    "video": {
+      "total": 3,
+      "complete": 60
+    }
+  },
+  "tracks": {
+    "discovered": 0,
+    "new": 0,
+    "updated": 0,
+    "failures": 0
+  },
+  "details": {
+    "requested": 18717,
+    "complete": 683,
+    "cached": 0
+  },
+  "rateLimited": 0,
+  "current": "details: Gole Sangem",
+  "warnings": [
+    "detail https://rozmusic.com/%d8%a2%d8%b1%d8%a7%d8%af-%d8%b9%d8%a8%d8%a7%d8%b3%db%8c-%d8%b1%d9%85%d8%a7%d9%86%d8%aa%db%8c%da%a9.html: The operation was aborted due to timeout",
+    "detail https://rozmusic.com/%d9%85%d9%87%db%8c%d8%a7%d8%b1-%da%a9%d8%a7%d8%a8%d9%88%d8%b3.html: The operation was aborted due to timeout",
+    "detail https://rozmusic.com/%d9%85%d9%87%d8%b1%d8%b3%d8%a7%d9%86-%d8%af%db%8c%da%af%d9%87-%d8%a8%d8%b1%d9%86%d9%85%db%8c%da%af%d8%b1%d8%af%db%8c.html: The operation was aborted due to timeout",
+    "detail https://rozmusic.com/%d9%87%d8%a7%d8%af%db%8c-%d8%ad%d8%a7%d8%ac%db%8c%d9%84%d9%88-%d8%a8%d9%85%d8%a7%d9%86.html: The operation was aborted due to timeout",
+    "detail https://rozmusic.com/%da%a9%d8%a7%d9%88%d9%87-%da%a9%d8%a7%d9%85%db%8c%d8%a7%d8%b1-%d9%88%d8%a7%db%8c-%d8%a8%d9%87-%d8%ad%d8%a7%d9%84%d9%85.html: The operation was aborted due to timeout"
+  ],
+  "error": "EBUSY: resource busy or locked, unlink 'C:\\Users\\yadro\\vod\\data\\rozmusic-status.json'"
+}
