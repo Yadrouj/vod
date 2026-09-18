@@ -1,7 +1,7 @@
 {
-  "state": "running",
+  "state": "complete",
   "startedAt": "2026-09-18T16:29:31.283Z",
-  "updatedAt": "2026-09-18T16:31:21.243Z",
+  "updatedAt": "2026-09-18T16:55:45.209Z",
   "pages": {
     "total": 35,
     "complete": 35
@@ -14,8 +14,8 @@
   },
   "details": {
     "requested": 700,
-    "complete": 31
+    "complete": 700
   },
-  "current": "details: Delgir Remix",
+  "current": null,
   "warnings": []
 }
