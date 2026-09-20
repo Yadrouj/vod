@@ -345,7 +345,7 @@ function serializeEpisode(episode: EpisodeDownload, maxFiles: number, origin: st
     code: episode.code,
     title: episode.title,
     summary: compactText(episode.summary, 260),
-    imageUrl: episode.imageUrl,
+    imageUrl: episode.imageUrl ? absoluteUrl(origin, episode.imageUrl) : null,
     files: episode.files.slice(0, maxFiles).map((file) => serializeDownload(file, origin, `${title} · ${episode.code}`)),
     telegram: {
       text: `${episode.code} - ${episode.title}`,

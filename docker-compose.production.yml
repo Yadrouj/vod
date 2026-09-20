@@ -33,6 +33,8 @@ services:
     volumes:
       - ./public/data:/app/public/data
       - ./data:/app/data
+      # Mirrored TVMaze episode stills served by /api/episode-image.
+      - vod_episode_images:/app/.media-cache/episode-images
     expose:
       - "3004"
     healthcheck:
@@ -94,6 +96,7 @@ services:
       - ./public/data:/app/public/data
       - ./data:/app/data
       - vod_imdb_cache:/app/.media-cache
+      - vod_episode_images:/app/.media-cache/episode-images
 
   nginx:
     image: nginx:1.28-alpine
@@ -112,3 +115,4 @@ services:
 volumes:
   nginx_cache:
   vod_imdb_cache:
+  vod_episode_images:

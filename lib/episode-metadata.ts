@@ -40,6 +40,120 @@ function imageFit(value: unknown): EpisodeImageFit | undefined {
   return value === "contain" || value === "cover" ? value : undefined;
 }
 
+const EPISODE_IMAGE_HOST = "static.tvmaze.com";
+const EPISODE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
+const EPISODE_IMAGE_TIMEOUT_MS = 10_000;
+
+/** Only TVMaze stills are mirrored locally; custom artwork keeps its own URL. */
+export function isStorableEpisodeImage(value: string | null | undefined): value is string {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === EPISODE_IMAGE_HOST && !url.port && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
+
+/** Same-origin URL for a mirrored still, so visitors never have to reach TVMaze. */
+export function episodeImageUrl(id: string, season: number, episode: number) {
+  return `/api/episode-image/${encodeURIComponent(id)}/${season}/${episode}`;
+}
+
+export function episodeImageDir(root = process.cwd()) {
+  return process.env.EPISODE_IMAGE_DIR || path.join(root, ".media-cache/episode-images");
+}
+
+export function episodeImageFile(dir: string, id: string, season: number, episode: number) {
+  const inRange = (value: number) => Number.isInteger(value) && value >= 0 && value <= 999;
+  if (!/^tt\d+$/.test(id) || !inRange(season) || !inRange(episode)) return null;
+  return path.join(dir, id, `${season}-${episode}`);
+}
+
+/** Identifies image bytes by signature, never by an upstream header. */
+export function episodeImageType(bytes: Uint8Array) {
+  const ascii = (start: number, end: number) => String.fromCharCode(...bytes.subarray(start, end));
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
+  if (bytes[0] === 0x89 && ascii(1, 4) === "PNG") return "image/png";
+  if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "image/webp";
+  if (ascii(0, 4) === "GIF8") return "image/gif";
+  return null;
+}
+
+export async function readStoredEpisodeImage(file: string) {
+  try {
+    const bytes = await readFile(file);
+    return episodeImageType(bytes) ? bytes : null;
+  } catch {
+    return null;
+  }
+}
+
+const imageDownloads = new Map<string, Promise<Uint8Array | null>>();
+
+/** Downloads one TVMaze still into the image store; concurrent requests share a download. */
+export function storeEpisodeImage(url: string, file: string, request: typeof fetch = fetch) {
+  let job = imageDownloads.get(file);
+  if (!job) {
+    job = downloadEpisodeImage(url, file, request).catch(() => null).finally(() => imageDownloads.delete(file));
+    imageDownloads.set(file, job);
+  }
+  return job;
+}
+
+async function downloadEpisodeImage(url: string, file: string, request: typeof fetch) {
+  if (!isStorableEpisodeImage(url)) return null;
+  const response = await request(url, {redirect: "error", signal: AbortSignal.timeout(EPISODE_IMAGE_TIMEOUT_MS)});
+  if (!response.ok || !response.body) return null;
+  if (Number(response.headers.get("content-length") || 0) > EPISODE_IMAGE_MAX_BYTES) return null;
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  const reader = response.body.getReader();
+  for (;;) {
+    const {done, value} = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > EPISODE_IMAGE_MAX_BYTES) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = Buffer.concat(chunks);
+  if (!episodeImageType(bytes)) return null;
+  try {
+    await mkdir(path.dirname(file), {recursive: true});
+    const temp = `${file}.${process.pid}.${Date.now()}.tmp`;
+    await writeFile(temp, bytes);
+    await rename(temp, file);
+  } catch { /* A full or read-only store can still serve this response. */ }
+  return bytes;
+}
+
+function snapshotFiles(root: string, id: string) {
+  return [path.join(root, ".media-cache/episode-metadata", `${id}.json`), path.join(root, "public/data/episode-metadata", `${id}.json`)];
+}
+
+/** The newest saved episode snapshot for a series, from the runtime cache or the catalog. */
+export async function readSavedEpisodeSnapshot(id: string, root = process.cwd()) {
+  let saved: Snapshot | null = null;
+  for (const file of snapshotFiles(root, id)) {
+    try {
+      const candidate = JSON.parse(await readFile(file, "utf8")) as Snapshot;
+      if (Array.isArray(candidate.episodes) && candidate.episodes.length && (!saved || Date.parse(candidate.checkedAt) > Date.parse(saved.checkedAt))) saved = candidate;
+    } catch { /* Cache can be absent on the first request. */ }
+  }
+  return saved;
+}
+
+/** The TVMaze still behind an episode's mirrored image URL. */
+export async function findEpisodeImageSource(id: string, season: number, episode: number, root = process.cwd()) {
+  if (!/^tt\d+$/.test(id)) return null;
+  const saved = await readSavedEpisodeSnapshot(id, root);
+  const row = saved?.episodes.find(candidate => candidate.season === season && candidate.episode === episode);
+  return row && row.imageSource !== "fallback" && isStorableEpisodeImage(row.imageUrl) ? row.imageUrl : null;
+}
+
 /** A deterministic, distinct artwork URL for episodes without an upstream still. */
 export function episodeArtworkFallbackUrl(id: string, season: number, episode: number) {
   return `/api/episode-art/${encodeURIComponent(id)}/${season}/${episode}`;
@@ -100,14 +214,8 @@ export function createEpisodeMetadataLoader(root = process.cwd(), request: typeo
     return overrides;
   };
   async function load(id: string): Promise<EpisodeMetadata[]> {
-    const files = [path.join(root, ".media-cache/episode-metadata", `${id}.json`), path.join(root, "public/data/episode-metadata", `${id}.json`)];
-    let saved: Snapshot | null = null;
-    for (const file of files) {
-      try {
-        const candidate = JSON.parse(await readFile(file, "utf8")) as Snapshot;
-        if (Array.isArray(candidate.episodes) && candidate.episodes.length && (!saved || Date.parse(candidate.checkedAt) > Date.parse(saved.checkedAt))) saved = candidate;
-      } catch { /* Cache can be absent on the first request. */ }
-    }
+    const files = snapshotFiles(root, id);
+    const saved = await readSavedEpisodeSnapshot(id, root);
     if (saved && Date.now() - Date.parse(saved.checkedAt) < 7 * 86400_000) return saved.episodes;
     try {
       const lookup = await request(`https://api.tvmaze.com/lookup/shows?imdb=${id}`, {signal: AbortSignal.timeout(3500)});
@@ -151,7 +259,13 @@ export function createEpisodeMetadataLoader(root = process.cwd(), request: typeo
           imageFit: imageFit(customization?.imageFit) || row.imageFit || "cover",
         };
       });
-      return materializeEpisodeArtwork(id, customized);
+      // Rewritten only when presented: saved snapshots keep the original TVMaze URL,
+      // which the image route needs to fill its store.
+      return materializeEpisodeArtwork(id, customized).map(row => (
+        row.imageSource === "tvmaze" && isStorableEpisodeImage(row.imageUrl)
+          ? {...row, imageUrl: episodeImageUrl(id, row.season, row.episode)}
+          : row
+      ));
     };
     const cached = memory.get(id);
     if (cached && cached.expires > Date.now()) return present(cached.episodes);

@@ -28,6 +28,8 @@ services:
     volumes:
       - ./public/data:/app/public/data
       - ./data:/app/data
+      # Mirrored TVMaze episode stills served by /api/episode-image.
+      - vod_episode_images:/app/.media-cache/episode-images
     networks:
       - edge
 
@@ -84,6 +86,7 @@ services:
       - ./public/data:/app/public/data
       - ./data:/app/data
       - vod_imdb_cache:/app/.media-cache
+      - vod_episode_images:/app/.media-cache/episode-images
     networks:
       - edge
 
@@ -121,3 +124,4 @@ networks:
 
 volumes:
   vod_imdb_cache:
+  vod_episode_images:

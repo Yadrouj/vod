@@ -58,6 +58,7 @@
     "maintenance-full-now": "node scripts/maintenance-scheduler.mjs --force --full",
     "audit-series-episode-images": "node scripts/audit-series-episode-images.mjs",
     "audit-series-episode-images:all": "node scripts/audit-series-episode-images.mjs --all --concurrency=4",
+    "cache-episode-images": "node scripts/cache-episode-images.mjs",
     "scrape-rozmusic": "node scripts/scrape-rozmusic.mjs --details",
     "scrape-rozmusic:full": "node scripts/scrape-rozmusic.mjs --full --no-details --concurrency=1 --delay-ms=1800",
     "scrape-worldofmusic": "node scripts/scrape-worldofmusic.mjs",
