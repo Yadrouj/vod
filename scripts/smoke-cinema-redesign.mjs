@@ -70,8 +70,12 @@ try {
       viewportHeight: document.documentElement.clientHeight,
       headerTop: headerRect?.top,
       headerBottom: headerRect?.bottom,
+      headerLeft: headerRect?.left,
+      headerRight: headerRect?.right,
       headerPosition: headerStyle?.position,
       headerShadow: headerStyle?.boxShadow,
+      headerRadius: headerStyle?.borderTopLeftRadius,
+      headerFade: header ? getComputedStyle(header, '::after').backgroundImage : null,
     };
   });
   assert.equal(geometry.width, geometry.viewport, 'Hero fills the viewport excluding the browser scrollbar');
@@ -79,7 +83,10 @@ try {
   assert.ok(geometry.height >= geometry.viewportHeight - 1, 'Hero occupies the full first viewport');
   assert.equal(geometry.headerPosition, 'absolute', 'Landing header overlays the hero artwork');
   assert.ok(geometry.headerTop >= geometry.top && geometry.headerBottom <= geometry.top + geometry.height, 'Landing header stays within the hero');
-  assert.notEqual(geometry.headerShadow, 'none', 'Landing header has contrast shadow over artwork');
+  assert.ok(Math.abs(geometry.headerLeft) <= 1 && Math.abs(geometry.headerRight - geometry.viewport) <= 1, 'Landing header is an edge-to-edge overlay, not a floating box');
+  assert.equal(geometry.headerRadius, '0px', 'Landing header has no card corners');
+  assert.equal(geometry.headerShadow, 'none', 'Landing header has no raised-card shadow');
+  assert.match(geometry.headerFade ?? '', /gradient/, 'Landing header fades softly into the hero artwork');
   await hero.getByText('Latest recorded IMDb trend', { exact: true }).waitFor();
   assert.equal(await hero.locator('a[href*="imdb.com/chart/"]').count(), 1, 'Hero exposes the IMDb trend source and rank');
   const before = await hero.locator('h1').innerText();
