@@ -57,8 +57,8 @@ try {
   // Next streaming may briefly retain a hidden copy before hydration reveals it.
   const hero = page.locator('[data-cinema-hero]:visible');
   await hero.waitFor();
-  const box = await hero.boundingBox();
-  assert.equal(box.width, 1440, 'Hero uses the full viewport width');
+  const geometry = await hero.evaluate(element => ({ width: element.getBoundingClientRect().width, viewport: document.documentElement.clientWidth }));
+  assert.equal(geometry.width, geometry.viewport, 'Hero fills the viewport excluding the browser scrollbar');
   const before = await hero.locator('h1').innerText();
   await hero.getByRole('button', { name: 'Next title', exact: true }).click();
   assert.notEqual(await hero.locator('h1').innerText(), before);
