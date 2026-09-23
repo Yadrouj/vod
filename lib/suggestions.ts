@@ -47,7 +47,11 @@ function franchiseFamily(title: string) {
 }
 
 function sequelRelation(source: string, candidate: string) {
-  const sourceWords = titleTokens(source);
-  const candidateWords = titleTokens(candidate);
-  return sourceWords.length > 0 && candidateWords.some((word) => sourceWords.includes(word));
+  const words = (value: string) => value.normalize("NFKC").toLowerCase().split(/[^\p{L}\p{N}]+/u)
+    .filter(word => word && !["the", "a", "an"].includes(word));
+  const sourceWords = words(source);
+  const candidateWords = words(candidate);
+  const [shorter, longer] = sourceWords.length < candidateWords.length ? [sourceWords, candidateWords] : [candidateWords, sourceWords];
+  // One shared stem (Breaking / Breaking Bad) is not evidence of a sequel.
+  return shorter.length >= 2 && shorter.every((word, index) => longer[index] === word);
 }

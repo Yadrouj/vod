@@ -44,6 +44,8 @@ async function watch(page, id = 'tt0903747') {
   const response = await page.goto(`${origin}/watch/${id}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   assert.equal(response.status(), 200);
   await page.waitForFunction(() => document.querySelector('video.player')?.duration === 180);
+  // Wait until React removes hidden streaming segments, not just the visible player.
+  await page.waitForFunction(() => document.querySelectorAll('.pro-player').length === 1);
   assert.equal(await page.locator('dialog[open]').count(), 0, 'No source gate on first visit');
   const box = await page.locator('.player-center').boundingBox();
   assert.ok(box.width <= 65 && box.height <= 65, 'Play button stays bounded');

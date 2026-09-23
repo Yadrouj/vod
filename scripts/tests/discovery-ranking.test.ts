@@ -43,3 +43,11 @@ test("trending cannot insert unrelated genres into similar titles", () => {
   const source = card("source", { title: "Original Story" }) as unknown as VodItem;
   assert.deepEqual(similarTitles(source, [card("a"), unrelated], { now, trends: [trend(unrelated)] }).map(item => item.imdbCode), ["a"]);
 });
+test("a shared single word is not a sequel and cannot outrank a relevant franchise title", () => {
+  const source = card("source", { title: "Breaking Bad", type: "series", genres: ["Crime", "Drama", "Thriller"] }) as unknown as VodItem;
+  const suggestions = similarTitles(source, [
+    card("breaking", { title: "Breaking", imdbRating: 6.3, genres: ["Crime", "Drama", "Thriller"] }),
+    card("saul", { title: "Better Call Saul", type: "series", imdbRating: 9, genres: ["Crime", "Drama"] }),
+  ]);
+  assert.equal(suggestions[0].imdbCode, "saul");
+});
