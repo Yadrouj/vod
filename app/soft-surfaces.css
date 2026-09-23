@@ -105,7 +105,8 @@ html input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([t
   html :is(.film-spotify-page, .music-spotify-page) > .wrap,
   html .film-spotify-page .film-landing-shell > .wrap { width: calc(100% - 24px); padding-inline: 0; }
   html .film-spotify-page .gradient-menu { min-height: 60px; padding-block: 8px; margin-bottom: 6px; background: transparent; }
-  html .film-spotify-page .gradient-menu::before, html .film-spotify-page .gradient-menu::after { display: none; }
+  html .film-spotify-page .gradient-menu::before { display: none; }
+  html .film-spotify-page .gradient-menu::after { display: block; inset-inline: -10px; }
   html .mega-button { min-height: 42px; padding: 8px 12px; background: #ffffff06; }
   html :is(.film-landing-search, .music-landing-search) { display: none !important; }
   html .mobile-music-statline { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 9px; margin: 8px 0 18px; color: #a6aaa8; font-size: 10px; line-height: 1.8; }

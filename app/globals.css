@@ -8054,19 +8054,19 @@ html[dir="rtl"] .suggest-item img { order: initial; }
   border: 0;
   border-radius: 0;
   isolation: isolate;
-  background: rgba(4, 5, 7, 0.95);
+  background: transparent;
   box-shadow: none;
-  backdrop-filter: blur(12px) saturate(112%);
+  backdrop-filter: none;
 }
 
 .film-landing-shell > .gradient-menu::after {
   position: absolute;
   z-index: -1;
-  top: calc(100% - 1px);
+  top: 0;
   right: 0;
   left: 0;
-  height: 84px;
-  background: linear-gradient(180deg, rgba(4, 5, 7, 0.82) 0%, rgba(4, 5, 7, 0.42) 42%, rgba(4, 5, 7, 0) 100%);
+  height: calc(100% + 48px);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.38) 0%, rgba(0, 0, 0, 0.16) 45%, rgba(0, 0, 0, 0) 100%);
   content: "";
   pointer-events: none;
 }
@@ -8074,6 +8074,8 @@ html[dir="rtl"] .suggest-item img { order: initial; }
 .film-landing-shell > .gradient-menu .gradient-nav-item,
 .film-landing-shell > .gradient-menu .mega-button,
 .film-landing-shell > .gradient-menu .hover-button {
+  color: #fff;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
   border-radius: 999px !important;
   transition: color 180ms ease, background 180ms ease, border-color 180ms ease, transform 180ms ease;
 }
