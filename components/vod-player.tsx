@@ -3,7 +3,7 @@
 import { enterPlayerFullscreen } from "@/lib/player-fullscreen";
 
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
-import { Captions, Cast, Maximize, Minimize, Pause, PictureInPicture2, Play, RotateCcw, RotateCw, Settings, Volume2, VolumeX } from "lucide-react";
+import { Captions, Cast, ListVideo, Maximize, Minimize, Pause, PictureInPicture2, Play, Settings, SkipForward, Volume2, VolumeX, X } from "lucide-react";
 import { BrandLoader } from "@/components/brand-loader";
 import { PlayerSubtitles } from "@/components/player-subtitles";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
@@ -14,6 +14,7 @@ import { readProgress, saveHistoryValue, PROGRESS_KEY } from "@/lib/media-histor
 import Link from "next/link";
 import { PlaybackHelp } from "@/components/playback-help";
 import { isDonyayeSerial, regionalPlaybackHint } from "@/lib/playback-help";
+import styles from "./vod-player.module.css";
 
 type CastableVideo = HTMLVideoElement & {
   webkitShowPlaybackTargetPicker?: () => void;
@@ -45,6 +46,9 @@ export function VodPlayer({
   const previewTimeRef = useRef(Number.NaN);
   const bufferedRef = useRef(0);
   const playAfterSourceReadyRef = useRef(false);
+  const pendingSeekRef = useRef<number | null>(null);
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [choiceIndex, setChoiceIndex] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [speed, setSpeed] = useState("1");
   const [volume, setVolume] = useState("0.85");
@@ -93,20 +97,28 @@ export function VodPlayer({
           setActiveIndex(match);
           setSelectionOpen(false);
           setSourceReady(true);
-        } else if (playableSources.length > 1) {
-          setActiveIndex(0);
-          setSourceReady(false);
-          setSelectionOpen(true);
         } else {
+          setActiveIndex(0);
+          setSelectionOpen(false);
           setSourceReady(playableSources.length > 0);
         }
       } catch {
-        setSourceReady(playableSources.length <= 1 && playableSources.length > 0);
-        if (playableSources.length > 1) setSelectionOpen(true);
+        setSourceReady(playableSources.length > 0);
       }
     });
     return () => { current = false; };
   }, [initialSource, playableSources]);
+
+  useEffect(() => () => { if (clickTimerRef.current) clearTimeout(clickTimerRef.current); }, []);
+
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const dismiss = (event: PointerEvent) => {
+      if (!(event.target as HTMLElement).closest('[data-player-settings], [data-settings-trigger], dialog')) setSettingsOpen(false);
+    };
+    document.addEventListener('pointerdown', dismiss);
+    return () => document.removeEventListener('pointerdown', dismiss);
+  }, [settingsOpen]);
 
   useEffect(() => {
     const syncFullscreen = () => setFullscreen(Boolean(document.fullscreenElement));
@@ -141,11 +153,19 @@ export function VodPlayer({
     [isSeries, playableSources, t.player.source]
   );
   const hasStructuredEpisodes = isSeries && sources.some((source) => source.season != null && source.episode != null);
-  const selectedSeason = hasStructuredEpisodes ? sources[activeIndex]?.season ?? sources.find((source) => source.season != null)?.season ?? 0 : 0;
-  const selectedEpisode = hasStructuredEpisodes ? sources[activeIndex]?.episode ?? sources.find((source) => source.season === selectedSeason)?.episode ?? 0 : 0;
+  const selectedIndex = selectionOpen ? choiceIndex : activeIndex;
+  const selectedSeason = hasStructuredEpisodes ? sources[selectedIndex]?.season ?? sources.find((source) => source.season != null)?.season ?? 0 : 0;
+  const selectedEpisode = hasStructuredEpisodes ? sources[selectedIndex]?.episode ?? sources.find((source) => source.season === selectedSeason)?.episode ?? 0 : 0;
   const seasons = hasStructuredEpisodes
     ? [...new Set(sources.map((source) => source.season).filter((season): season is number => season != null))].sort((a, b) => a - b)
     : [];
+
+  const nextEpisodeIndex = hasStructuredEpisodes ? sources.map((source, index) => ({ source, index }))
+    .filter(({ source }) => source.season != null && source.episode != null &&
+      (source.season > (active?.season ?? 0) || (source.season === active?.season && source.episode > (active?.episode ?? 0))))
+    .sort((a, b) => a.source.season! - b.source.season! || a.source.episode! - b.source.episode!)[0]?.index ?? -1 : -1;
+
+  function openEpisodes() { setChoiceIndex(activeIndex); setSelectionOpen(true); setSettingsOpen(false); }
   const episodes = hasStructuredEpisodes
     ? [...new Set(sources.filter((source) => source.season === selectedSeason).map((source) => source.episode).filter((episode): episode is number => episode != null))].sort((a, b) => a - b)
     : [];
@@ -157,7 +177,7 @@ export function VodPlayer({
 
   function togglePlay() {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !sourceReady || !active?.url) return;
     revealControls();
     if (video.paused) {
       setBuffering(true);
@@ -173,7 +193,8 @@ export function VodPlayer({
   function seek(value: string) {
     const video = videoRef.current;
     if (!video) return;
-    const next = Number(value);
+    if (!Number.isFinite(video.duration)) return;
+    const next = Math.max(0, Math.min(video.duration, Number(value)));
     video.currentTime = next;
     setTime(next);
   }
@@ -181,7 +202,8 @@ export function VodPlayer({
   function skip(seconds: number) {
     const video = videoRef.current;
     if (!video) return;
-    video.currentTime = Math.max(0, Math.min(video.duration || 0, video.currentTime + seconds));
+    seek(String(video.currentTime + seconds));
+    revealControls();
   }
 
   function updateSpeed(value: string) {
@@ -190,8 +212,9 @@ export function VodPlayer({
   }
 
   function updateVolume(value: string) {
-    setVolume(value);
-    if (videoRef.current) videoRef.current.volume = Number(value);
+    const next = Math.max(0, Math.min(1, Number(value)));
+    setVolume(String(next));
+    if (videoRef.current) { videoRef.current.volume = next; videoRef.current.muted = next === 0; }
   }
 
   function toggleMuted() {
@@ -203,13 +226,22 @@ export function VodPlayer({
   }
 
   function changeSource(value: string) {
+    const nextIndex = Number(value);
+    if (nextIndex === activeIndex) return;
+    const next = playableSources[nextIndex];
+    if (!next) return;
+    const sameEpisode = !isSeries || (next.season === active?.season && next.episode === active?.episode);
+    pendingSeekRef.current = sameEpisode ? videoRef.current?.currentTime ?? 0 : null;
+    saveProgress(videoRef.current?.currentTime ?? 0);
     setMediaError(0);
     setMessage("");
     const wasPlaying = Boolean(videoRef.current && !videoRef.current.paused);
-    setActiveIndex(Number(value));
+    setActiveIndex(nextIndex);
     setPaused(true);
     setBuffering(true);
     setTime(0);
+    setDuration(0);
+    setBuffered(0);
     setSourceReady(true);
     playAfterSourceReadyRef.current = wasPlaying;
   }
@@ -287,11 +319,12 @@ export function VodPlayer({
   }
 
   function confirmSource() {
-    setMediaError(0);
+    changeSource(String(choiceIndex));
     playAfterSourceReadyRef.current = true;
     setMessage("");
     setSourceReady(true);
     setSelectionOpen(false);
+    if (choiceIndex === activeIndex) void videoRef.current?.play().catch(() => setMessage(t.player.playbackBlocked));
   }
 
   function chooseSeriesSource(next: { season?: number; episode?: number }) {
@@ -301,7 +334,7 @@ export function VodPlayer({
       source.season === season
       && source.episode === episode
     ));
-    if (index >= 0) setActiveIndex(index);
+    if (index >= 0) setChoiceIndex(index);
   }
 
   return (
@@ -309,19 +342,23 @@ export function VodPlayer({
       {isDonyayeSerial(active) && <details className="source-region-notice" dir={locale === "fa" ? "rtl" : "ltr"}><summary>{locale === "fa" ? "این منبع ممکن است به IP ایران نیاز داشته باشد · راهنمای VPN" : "This source may require an Iranian IP · VPN help"}</summary><p>{regionalPlaybackHint(locale === "fa")}</p></details>}
       <div
         ref={playerFrameRef}
-        className={`pro-player ${paused ? "is-paused" : "is-playing"} ${controlsShowing ? "is-controls-visible" : "is-controls-hidden"}`}
+        className={`${styles.player} pro-player ${paused ? "is-paused" : "is-playing"} ${controlsShowing ? "is-controls-visible" : "is-controls-hidden"}`}
         dir="ltr"
         tabIndex={0}
         aria-label={locale === "fa" ? "پلیر ویدئو؛ فاصله برای پخش، جهت‌ها برای جابه‌جایی" : "Video player: Space to play, arrows to seek"}
         onKeyDown={(event) => {
+          if (event.key === "Escape") { setSettingsOpen(false); setSubtitlesOpen(false); return; }
           if ((event.target as HTMLElement).closest("button, input, select, textarea, a") || selectionOpen) return;
-          if ([" ", "k", "ArrowLeft", "ArrowRight", "f", "m"].includes(event.key)) event.preventDefault();
-          if (event.key === " " || event.key === "k") togglePlay();
-          if (event.key === "ArrowLeft") skip(-10);
-          if (event.key === "ArrowRight") skip(10);
-          if (event.key === "f") void toggleFullscreen();
-          if (event.key === "m") toggleMuted();
-          if (event.key === "Escape") { setSettingsOpen(false); setSubtitlesOpen(false); }
+          if (event.ctrlKey || event.metaKey || event.altKey) return;
+          const key = event.key.toLowerCase();
+          if ([" ", "k", "j", "l", "arrowleft", "arrowright", "arrowup", "arrowdown", "f", "m"].includes(key) || /^\d$/.test(key)) { event.preventDefault(); revealControls(); }
+          if (key === " " || key === "k") togglePlay();
+          if (key === "arrowleft" || key === "j") skip(key === "j" ? -10 : -5);
+          if (key === "arrowright" || key === "l") skip(key === "l" ? 10 : 5);
+          if (key === "arrowup" || key === "arrowdown") updateVolume(String(Number(volume) + (key === "arrowup" ? .05 : -.05)));
+          if (/^\d$/.test(key)) seek(String(duration * Number(key) / 10));
+          if (key === "f") void toggleFullscreen();
+          if (key === "m") toggleMuted();
         }}
         onMouseMove={revealControls}
         onMouseLeave={handlePointerLeave}
@@ -341,13 +378,18 @@ export function VodPlayer({
             setMediaError(0);
             event.currentTarget.volume = Number(volume);
             event.currentTarget.playbackRate = Number(speed);
-            setDuration(event.currentTarget.duration || 0);
+            const duration = Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0;
+            setDuration(duration);
             const saved = readProgress()[active?.url ?? ""];
-            const resumeAt = typeof saved === "number" ? saved : saved?.time;
-            if (resumeAt && resumeAt < event.currentTarget.duration - 8) {
-              event.currentTarget.currentTime = resumeAt;
-              setTime(resumeAt);
-              setMessage(locale === "fa" ? `ادامه پخش از ${formatTime(resumeAt)}` : `Resuming from ${formatTime(resumeAt)}`);
+            const switchingQuality = pendingSeekRef.current !== null;
+            const resumeAt = pendingSeekRef.current ?? (typeof saved === "number" ? saved : saved?.time);
+            pendingSeekRef.current = null;
+            event.currentTarget.muted = muted;
+            if (resumeAt && duration > 0 && (switchingQuality || resumeAt < duration - 8)) {
+              const restoredTime = Math.min(resumeAt, Math.max(0, duration - .1));
+              event.currentTarget.currentTime = restoredTime;
+              setTime(restoredTime);
+              if (!switchingQuality) setMessage(locale === "fa" ? `ادامه پخش از ${formatTime(restoredTime)}` : `Resuming from ${formatTime(restoredTime)}`);
             }
             setBuffering(false);
             bufferedRef.current = 0;
@@ -377,13 +419,25 @@ export function VodPlayer({
               }
             }
           }}
-          onEnded={() => { if (active?.url) { const progress = readProgress(); delete progress[active.url]; saveHistoryValue(PROGRESS_KEY, progress, "sarvnema-progress"); } }}
+          onEnded={() => { setPaused(true); if (active?.url) { const progress = readProgress(); delete progress[active.url]; saveHistoryValue(PROGRESS_KEY, progress, "sarvnema-progress"); } }}
           onPlaying={() => setBuffering(false)}
           onPlay={() => { setPaused(false); setControlsVisible(true); }}
           onPause={() => { setPaused(true); setControlsVisible(true); }}
           onVolumeChange={(event) => setMuted(event.currentTarget.muted)}
-          onClick={togglePlay}
-          onDoubleClick={() => void toggleFullscreen()}
+          onClick={event => {
+            if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+            if (event.detail > 1) return;
+            const touchMode = matchMedia('(pointer: coarse)').matches;
+            if (touchMode && !controlsShowing) { revealControls(); return; }
+            clickTimerRef.current = setTimeout(() => { if (touchMode) revealControls(); else togglePlay(); }, 230);
+          }}
+          onDoubleClick={event => {
+            if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+            if (matchMedia('(pointer: coarse)').matches) {
+              const rect = event.currentTarget.getBoundingClientRect();
+              skip(event.clientX < rect.left + rect.width / 2 ? -10 : 10);
+            } else void toggleFullscreen();
+          }}
           onError={(event) => {
             setBuffering(false);
             setMediaError(event.currentTarget.error?.code ?? 2);
@@ -397,8 +451,8 @@ export function VodPlayer({
           </div>
         )}
 
-        <button className="player-center" type="button" onClick={togglePlay} disabled={!active?.url} aria-label={paused ? t.common.play : t.player.pause}>
-          <span className={paused ? "player-play-icon" : "player-pause-icon"} />
+        <button className="player-center" type="button" onClick={togglePlay} disabled={!active?.url || !sourceReady} aria-label={paused ? t.common.play : t.player.pause}>
+          {paused ? <Play size={30} fill="currentColor" /> : <Pause size={30} fill="currentColor" />}
         </button>
 
         {!active?.url && (
@@ -419,7 +473,7 @@ export function VodPlayer({
 
         <div className="player-bar">
           <div className="player-timeline-wrap" onMouseMove={showTimelinePreview} onMouseLeave={clearTimelinePreview}>
-            {preview && duration > 0 && <div className="player-frame-preview" style={{ left: `${preview.x}%` }}>{posterUrl ? <span className="player-frame-preview-image" style={{ backgroundImage: `url(${posterUrl})` }} aria-hidden="true" /> : <span className="player-frame-preview-empty" />}<span>{formatTime(preview.time)}</span></div>}
+            {preview && duration > 0 && <div className={styles.preview} style={{ left: `clamp(36px, ${preview.x}%, calc(100% - 36px))` }}>{formatTime(preview.time)}</div>}
             <span className="player-timeline-track" aria-hidden="true">
               <span className="player-buffer-progress" style={{ width: `${buffered}%` }} />
               <span className="player-played-progress" style={{ width: `${duration > 0 ? Math.min(100, (time / duration) * 100) : 0}%` }} />
@@ -432,16 +486,17 @@ export function VodPlayer({
               step="0.1"
               value={Math.min(time, duration || 0)}
               onChange={(event) => seek(event.target.value)}
-              aria-label="Seek"
+              disabled={!duration}
+              aria-label={locale === "fa" ? "جابه‌جایی زمان پخش" : "Seek"}
+              aria-valuetext={`${formatTime(time)} / ${formatTime(duration)}`}
             />
           </div>
 
           <div className="player-actions">
             <div className="player-actions-start">
               <button type="button" className="player-btn player-btn-primary player-btn-icon" onClick={togglePlay} aria-label={paused ? t.common.play : t.player.pause} title={paused ? t.common.play : t.player.pause}>{paused ? <Play size={18} fill="currentColor" /> : <Pause size={18} fill="currentColor" />}</button>
-              <button type="button" className="player-btn player-btn-icon" onClick={() => skip(-10)} aria-label="Back 10 seconds" title="Back 10 seconds"><RotateCcw size={17} /><small>10</small></button>
-              <button type="button" className="player-btn player-btn-icon" onClick={() => skip(10)} aria-label="Forward 10 seconds" title="Forward 10 seconds"><RotateCw size={17} /><small>10</small></button>
-              <span className="player-time">{formatTime(time)} <i>/</i> {formatTime(duration)}</span>
+              {nextEpisodeIndex >= 0 && <button type="button" className="player-btn player-btn-icon" onClick={() => changeSource(String(nextEpisodeIndex))} aria-label={locale === "fa" ? "قسمت بعدی" : "Next episode"} title={locale === "fa" ? "قسمت بعدی" : "Next episode"}><SkipForward size={20} fill="currentColor" /></button>}
+              <span className="player-time">{formatTime(time)} <span className={styles.duration}><i>/</i> {formatTime(duration)}</span></span>
               <label className="player-volume" title={t.player.volume}>
                 <button type="button" onClick={toggleMuted} aria-label={muted ? "Unmute" : "Mute"}>{muted || Number(volume) === 0 ? <VolumeX size={17} /> : <Volume2 size={17} />}</button>
                 <input
@@ -456,12 +511,11 @@ export function VodPlayer({
               </label>
             </div>
             <div className="player-actions-end">
-              <button type="button" className="player-btn player-btn-icon" onClick={castVideo} aria-label={t.player.cast} title={t.player.cast}><Cast size={17} /></button>
-              <button type="button" className="player-btn player-btn-icon" onClick={openPictureInPicture} aria-label="Picture in picture" title="Picture in picture"><PictureInPicture2 size={17} /></button>
+              {hasStructuredEpisodes && <button type="button" className="player-icon-btn" onClick={openEpisodes} aria-label={locale === "fa" ? "قسمت‌ها" : "Episodes"} title={locale === "fa" ? "قسمت‌ها" : "Episodes"}><ListVideo size={20} /></button>}
               <button type="button" className={`player-icon-btn ${subtitlesOpen ? "is-active" : ""}`} onClick={() => { setSubtitlesOpen((value) => !value); setSettingsOpen(false); }} aria-label="Subtitles" title="Subtitles">
                 <Captions size={17} />
               </button>
-              <button type="button" className={`player-icon-btn ${settingsOpen ? "is-active" : ""}`} onClick={() => { setSettingsOpen((value) => !value); setSubtitlesOpen(false); }} aria-label={t.player.settings} title={t.player.settings}>
+              <button type="button" data-settings-trigger aria-expanded={settingsOpen} className={`player-icon-btn ${settingsOpen ? "is-active" : ""}`} onClick={() => { setSettingsOpen((value) => !value); setSubtitlesOpen(false); }} aria-label={t.player.settings} title={t.player.settings}>
                 <Settings size={17} />
               </button>
               <button type="button" className="player-btn player-btn-icon" onClick={toggleFullscreen} aria-label={fullscreen ? "Exit fullscreen" : t.player.full} title={fullscreen ? "Exit fullscreen" : t.player.full}>{fullscreen ? <Minimize size={17} /> : <Maximize size={17} />}</button>
@@ -470,21 +524,24 @@ export function VodPlayer({
         </div>
 
         {settingsOpen && (
-          <ResponsiveDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} title={t.player.settings} description={title} dir={locale === "fa" ? "rtl" : "ltr"}>
-          <div className="player-settings">
+          <ResponsiveDialog mobileOnly open={settingsOpen} onClose={() => setSettingsOpen(false)} title={t.player.settings} description={title} closeLabel={locale === "fa" ? "بستن" : "Close"} dir={locale === "fa" ? "rtl" : "ltr"}>
+          <div className={styles.settings} data-player-settings role="group" aria-label={t.player.settings} dir={locale === "fa" ? "rtl" : "ltr"}>
+            <header><strong>{t.player.settings}</strong><button type="button" onClick={() => setSettingsOpen(false)} aria-label={locale === "fa" ? "بستن" : "Close"}><X size={18} /></button></header>
             <label>
               <span className="label">{t.player.quality}</span>
-              <select className="select" value={activeIndex} onChange={(event) => changeSource(event.target.value)}>
-                {sources.map((source, index) => (
+              <select className="select" aria-label={t.player.quality} value={activeIndex} onChange={(event) => changeSource(event.target.value)}>
+                {(hasStructuredEpisodes ? episodeVariants : sources.map((source, index) => ({source, index}))).map(({source, index}) => (
                   <option key={`${source.url}-${index}`} value={index}>
-                    {source.label}
+                    {playbackSourceLabel(source, index, false, t.player.source)}
                   </option>
                 ))}
               </select>
             </label>
+            <div className={styles.extra}><button type="button" onClick={openPictureInPicture}><PictureInPicture2 size={18} />{locale === "fa" ? "تصویر در تصویر" : "Picture in picture"}</button><button type="button" onClick={castVideo}><Cast size={18} />{t.player.cast}</button></div>
+            {hasStructuredEpisodes && <button type="button" onClick={openEpisodes}><ListVideo size={18} />{locale === "fa" ? "انتخاب قسمت" : "Choose episode"}</button>}
             <label>
               <span className="label">{t.player.speed}</span>
-              <select className="select" value={speed} onChange={(event) => updateSpeed(event.target.value)}>
+              <select className="select" aria-label={t.player.speed} value={speed} onChange={(event) => updateSpeed(event.target.value)}>
                 {["0.5", "0.75", "1", "1.25", "1.5", "2"].map((value) => (
                   <option key={value} value={value}>
                     {value}x
@@ -526,7 +583,7 @@ export function VodPlayer({
                 <div className="player-series-choice-grid">
                   <label>
                     <span>{locale === "fa" ? "فصل" : "Season"}</span>
-                    <select className="select" value={selectedSeason} onChange={(event) => {
+                    <select className="select" aria-label={locale === "fa" ? "فصل" : "Season"} value={selectedSeason} onChange={(event) => {
                       const season = Number(event.target.value);
                       const firstEpisode = sources.find((source) => source.season === season)?.episode;
                       chooseSeriesSource({ season, episode: firstEpisode ?? 0 });
@@ -536,19 +593,19 @@ export function VodPlayer({
                   </label>
                   <label>
                     <span>{locale === "fa" ? "قسمت" : "Episode"}</span>
-                    <select className="select" value={selectedEpisode} onChange={(event) => chooseSeriesSource({ episode: Number(event.target.value) })}>
+                    <select className="select" aria-label={locale === "fa" ? "قسمت" : "Episode"} value={selectedEpisode} onChange={(event) => chooseSeriesSource({ episode: Number(event.target.value) })}>
                       {episodes.map((episode) => <option key={episode} value={episode}>{locale === "fa" ? `قسمت ${episode}` : `Episode ${episode}`}</option>)}
                     </select>
                   </label>
                   <label>
                     <span>{locale === "fa" ? "کیفیت و نسخه" : "Quality & version"}</span>
-                    <select className="select" value={activeIndex} onChange={(event) => setActiveIndex(Number(event.target.value))}>
+                    <select className="select" value={choiceIndex} onChange={(event) => setChoiceIndex(Number(event.target.value))}>
                       {episodeVariants.map(({ source, index }) => <option key={`${source.url}-${index}`} value={index}>{[source.quality ?? "Auto", source.release, source.group].filter(Boolean).join(" / ")}</option>)}
                     </select>
                   </label>
                 </div>
               ) : (
-                <select className="select" aria-label={locale === "fa" ? "کیفیت و منبع پخش" : "Playback quality and source"} value={activeIndex} onChange={(event) => setActiveIndex(Number(event.target.value))}>
+                <select className="select" aria-label={locale === "fa" ? "کیفیت و منبع پخش" : "Playback quality and source"} value={choiceIndex} onChange={(event) => setChoiceIndex(Number(event.target.value))}>
                   {sources.map((source, index) => <option key={`${source.url}-${index}`} value={index}>{source.label}</option>)}
                 </select>
               )}
@@ -565,7 +622,8 @@ export function VodPlayer({
 
 function formatTime(value: number) {
   if (!Number.isFinite(value) || value <= 0) return "0:00";
-  const minutes = Math.floor(value / 60);
+  const hours = Math.floor(value / 3600);
+  const minutes = Math.floor(value / 60) % 60;
   const seconds = Math.floor(value % 60).toString().padStart(2, "0");
-  return `${minutes}:${seconds}`;
+  return hours ? `${hours}:${String(minutes).padStart(2, "0")}:${seconds}` : `${minutes}:${seconds}`;
 }

@@ -1,4 +1,4 @@
-// Only public IMDb popularity charts, not the all-time Top 250 or user ratings.
+// Public IMDb popularity charts with their published rating/vote aggregates.
 export const CHART_URLS = {
   movie: 'https://www.imdb.com/chart/moviemeter/',
   series: 'https://www.imdb.com/chart/tvmeter/',
@@ -12,7 +12,10 @@ export function parseImdbChart(html, kind) {
     const title = node.titleText?.text ?? node.name;
     const year = Number(node.releaseYear?.year ?? String(node.datePublished ?? '').slice(0, 4)) || null;
     if (!imdbCode || typeof title !== 'string' || !Number.isInteger(rank) || rank < 1 || rank > 100) return;
-    candidates.push({ imdbCode, title, year, rank, kind });
+    const rating = Number(node.ratingsSummary?.aggregateRating ?? node.aggregateRating?.ratingValue);
+    const votes = Number(node.ratingsSummary?.voteCount ?? node.aggregateRating?.ratingCount);
+    const ratings = Number.isFinite(rating) && rating > 0 && rating <= 10 && Number.isInteger(votes) && votes > 0 ? { imdbRating: rating, imdbVotes: votes } : {};
+    candidates.push({ imdbCode, title, year, rank, kind, ...ratings });
   };
   const visit = (value) => {
     if (!value || typeof value !== 'object') return;
@@ -71,6 +74,7 @@ export function matchChartToCatalog(entries, cards) {
       else if (matches.length === 1) card = matches[0];
     }
     // No phantom detail routes, no trailer-as-full-movie imports here.
-    return card && (card.posterUrl || card.backdropUrl) ? { rank: entry.rank, card } : null;
+    return card && (card.posterUrl || card.backdropUrl) ? { rank: entry.rank, card: { ...card,
+      ...(Number.isFinite(entry.imdbRating) && entry.imdbRating > 0 && entry.imdbRating <= 10 && Number.isInteger(entry.imdbVotes) && entry.imdbVotes > 0 ? { imdbRating: entry.imdbRating, imdbVotes: entry.imdbVotes } : {}) } } : null;
   }).filter(Boolean);
 }

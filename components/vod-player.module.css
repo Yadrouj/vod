@@ -1,0 +1,54 @@
+.player:global(.pro-player) { position: relative; width: 100%; min-height: 0; height: auto; padding: 0; background: #000; border: 0; border-radius: 12px !important; box-shadow: none; aspect-ratio: 16/9; overflow: hidden; color: #fff; }
+.player :global(video.player) { width: 100%; height: 100%; min-height: 0; max-height: none; aspect-ratio: auto; object-fit: contain; border: 0; border-radius: 0 !important; background: #000; }
+.player :global(.player-top-glass) { inset: 0 0 auto; padding: 22px 24px 48px; background: linear-gradient(#0009, transparent); backdrop-filter: none; border: 0; border-radius: 0 !important; pointer-events: none; }
+.player :global(.player-top-glass strong) { font-size: 16px; }
+.player :global(.player-top-glass span) { font-size: 11px; opacity: .75; }
+.player :global(.player-bar) { inset: auto 0 0; width: 100%; padding: 40px 16px 8px; border: 0; border-radius: 0 !important; background: linear-gradient(transparent, #000c); backdrop-filter: none; }
+.player :global(.player-center) { width: 64px; height: 64px; min-width: 64px; max-width: 64px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50% !important; background: #161616b3; color: white; box-shadow: none; }
+.player:global(.is-playing) :global(.player-center) { opacity: 0; pointer-events: none; }
+.player:global(.is-controls-hidden) { cursor: none; }
+.player :global(.player-actions) { display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 8px; direction: ltr; }
+.player :global(.player-actions-start), .player :global(.player-actions-end) { display: flex; flex-direction: row; align-items: center; gap: 2px; }
+.player :global(.player-actions button), .player :global(.player-volume button) { width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 8px !important; color: white; background: transparent; }
+.player :global(.player-actions button:hover) { background: #ffffff20; }
+.player :global(.player-actions button svg) { width: 22px; height: 22px; }
+.player :global(.player-time) { font: 12px/1.4 Arial, sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; padding-inline: 8px; }
+.player :global(.player-volume) { order: -1; }
+.player :global(.player-btn-primary) { order: -2; }
+.player :global(.player-volume input) { width: 0; opacity: 0; transition: width .2s, opacity .2s; accent-color: white; }
+.player :global(.player-volume:hover input), .player :global(.player-volume:focus-within input) { width: 70px; opacity: 1; }
+.player :global(.player-timeline-track) { height: 3px; transition: height .15s; }
+.player :global(.player-timeline-wrap:hover .player-timeline-track), .player :global(.player-timeline-wrap:focus-within .player-timeline-track) { height: 5px; }
+.player :global(.player-played-progress) { background: #f03; }
+.player :global(.player-timeline)::-webkit-slider-thumb { background: #f03; }
+.player :global(.player-timeline)::-moz-range-thumb { background: #f03; }
+.preview { position: absolute; bottom: 28px; transform: translateX(-50%); padding: 7px 9px; background: #161616ed; border-radius: 6px !important; color: white; font: 12px Arial, sans-serif; pointer-events: none; }
+.player :global(.player-loading) { pointer-events: none; }
+.player :global(.player-osd) { pointer-events: none; }
+.player :global(.player-osd span) { max-width: 80%; font-size: 12px; }
+.settings { position: absolute; bottom: 84px; right: 16px; z-index: 50; width: min(330px, calc(100% - 32px)); max-height: calc(100% - 104px); overflow: auto; padding: 16px; display: grid; gap: 16px; border: 1px solid #ffffff18; border-radius: 12px !important; background: #202020f5; box-shadow: 0 8px 28px #0008; }
+.settings header { display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+.settings label { display: grid; gap: 8px; font-size: 13px; }
+.settings select { width: 100%; max-width: 100%; min-height: 44px; padding: 8px; background: #303030; color: white; border: 1px solid #ffffff20; border-radius: 8px !important; font-size: 13px; }
+.settings button { display: flex; gap: 8px; align-items: center; justify-content: center; min-height: 44px; padding: 8px; background: #ffffff0c; border: 0; border-radius: 8px !important; color: white; font: inherit; cursor: pointer; }
+.extra { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; }
+.player :focus-visible, .settings :focus-visible { outline: 2px solid white; outline-offset: -2px; }
+.player:focus-within :global(.player-bar):has(:focus-visible) { opacity: 1; pointer-events: auto; transform: none; }
+.player:fullscreen { border-radius: 0 !important; width: 100%; height: 100dvh; aspect-ratio: auto; }
+@media (max-width: 760px), (pointer: coarse) and (max-height: 600px) {
+  .player:global(.pro-player) { border-radius: 0 !important; }
+  .player :global(.player-top-glass) { padding: 12px 16px 32px; }
+  .player :global(.player-top-glass strong) { font-size: 13px; }
+  .player :global(.player-top-glass span) { display: none; }
+  .player :global(.player-bar) { padding: 28px 8px 0; }
+  .player:global(.is-playing.is-controls-visible) :global(.player-center) { opacity: 1; pointer-events: auto; }
+  .player :global(.player-time) { padding-inline: 2px; font-size: 10px; }
+  .player :global(.player-actions), .player :global(.player-actions-start), .player :global(.player-actions-end) { gap: 0; }
+  .player :global(.player-actions-end > button) { display: inline-flex; }
+  .player :global(.player-volume), .player :global(.player-actions-start > button:nth-child(2)) { display: none; }
+  .settings { position: static; width: 100%; max-height: none; padding: 0; background: none; box-shadow: none; border: 0; }
+  .settings header { display: none; }
+  .settings select { font-size: 16px; min-height: 48px; }
+}
+@media (prefers-reduced-motion: reduce) { .player *, .player *::before { transition: none !important; } }
+@media (max-width: 360px) { .duration { display: none; } }

@@ -1,0 +1,8 @@
+.feedback { display: grid; gap: 12px; padding: 20px; margin-block: 24px; border: 1px solid #ffffff18; border-radius: 14px !important; background: #ffffff04; }
+.feedback strong { font-size: 16px; }
+.feedback p, .feedback label, .feedback span { color: #bbb; font-size: 13px; line-height: 1.8; }
+.votes { display: flex; gap: 8px; }
+.feedback button { display: flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; padding: 8px 18px; width: fit-content; background: #ffffff0a; color: #eee; border: 1px solid #ffffff25; border-radius: 10px !important; font: inherit; cursor: pointer; }
+.feedback button[aria-pressed="true"] { color: #e8ce88; border-color: #e8ce88; }
+.feedback textarea { display: block; width: 100%; max-width: 650px; margin-top: 8px; padding: 10px; background: #151515; color: white; border: 1px solid #ffffff30; border-radius: 8px !important; font: inherit; font-size: 16px; resize: vertical; }
+.feedback :focus-visible { outline: 2px solid #e8ce88; outline-offset: 2px; }

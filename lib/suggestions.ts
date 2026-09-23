@@ -1,15 +1,17 @@
 import { normalizeVodType } from "@/lib/catalog";
 import type { VodCard, VodItem } from "@/lib/types";
+import { discoveryScores, withTrendRatings, type DiscoverySignals } from "./discovery-ranking";
 
-export function similarTitles(item: VodItem, items: VodCard[]) {
+export function similarTitles(item: VodItem, items: VodCard[], signals: DiscoverySignals = {}) {
+  const discoveryScore = discoveryScores(signals);
   const genres = new Set((item.genres ?? []).map((genre) => genre.toLowerCase()));
   const countries = new Set((item.countries ?? []).map((country) => country.toLowerCase()));
   const type = normalizeVodType(item.type);
   const sourceTitle = `${item.title} ${item.originalTitle ?? ""}`.toLowerCase();
   const franchiseTokens = franchiseFamily(sourceTitle);
 
-  return items
-    .filter((candidate) => candidate.imdbCode !== item.imdbCode)
+  return withTrendRatings(items, signals)
+    .filter((candidate) => candidate.imdbCode !== item.imdbCode && candidate.linksCount > 0)
     .map((candidate) => {
       const sharedGenres = candidate.genres.filter((genre) => genres.has(genre.toLowerCase())).length;
       const sharedCountries = candidate.countries.filter((country) => countries.has(country.toLowerCase())).length;
@@ -19,10 +21,10 @@ export function similarTitles(item: VodItem, items: VodCard[]) {
       const sequelBoost = sequelRelation(sourceTitle, candidateTitle) ? 54 : 0;
       const typeBoost = candidate.type === type ? 10 : 0;
       const score = franchiseBoost + sequelBoost + sharedTitleTokens * 28 + sharedGenres * 24 + sharedCountries * 6 + typeBoost +
-        (candidate.imdbRating ?? 0) * 2 + Math.min(8, Math.log10((candidate.imdbVotes ?? 0) + 1));
-      return { candidate, score };
+        discoveryScore(candidate);
+      return { candidate, score, relevant: sharedGenres > 0 || sharedTitleTokens > 0 || franchiseBoost > 0 };
     })
-    .filter(({ score }) => score > 18)
+    .filter(({ relevant }) => relevant)
     .sort((a, b) => b.score - a.score)
     .slice(0, 18)
     .map(({ candidate }) => candidate);

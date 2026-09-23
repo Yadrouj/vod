@@ -8,6 +8,13 @@ test('JSON-LD chart extracts IDs, explicit ranks, years, and media kind', () => 
   assert.equal(result.length, 5);
   assert.deepEqual(result[0], { imdbCode: 'tt1234560', title: 'Title 0', year: 2026, rank: 1, kind: 'movie' });
 });
+test('chart ratings and vote counts refresh matched cards when present', () => {
+  const rated = entries.map(entry => ({ ...entry, item: { ...entry.item, aggregateRating: { ratingValue: '8.7', ratingCount: '54321' } } }));
+  const result = parseImdbChart(`<title>Most popular movies</title><script type="application/ld+json">${JSON.stringify({ '@type': 'ItemList', itemListElement: rated })}</script>`, 'movie');
+  const matched = matchChartToCatalog(result, [{ imdbCode: 'tt1234560', title: 'Title 0', type: 'movie', posterUrl: '/poster.jpg', imdbRating: 7 }]);
+  assert.equal(matched[0].card.imdbRating, 8.7);
+  assert.equal(matched[0].card.imdbVotes, 54321);
+});
 test('Next data reads only chart titles and their meter ranks, not related recommendations', () => {
   const chartTitles = { edges: entries.map((entry, i) => ({ node: { id: `tt123456${i}`, titleText: { text: `Title ${i}` }, meterRanking: { currentRank: 5 - i }, releaseYear: { year: 2026 } } })) };
   const result = parseImdbChart(`<title>Most popular TV shows</title><script id="__NEXT_DATA__">${JSON.stringify({ props: { pageProps: { pageData: { chartTitles, unrelated: { id: 'tt9999999' } } } } })}</script>`, 'series');

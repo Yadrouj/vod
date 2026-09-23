@@ -39,7 +39,7 @@ async function main() {
         const cached = seed?.charts?.[kind];
         if (bootstrap && charts[kind]) { outcomes[kind] = { state: 'retained', reason: 'Existing chart never overwritten by bootstrap' }; continue; }
         const entries = bootstrap ? cached.entries.map((entry) => ({ ...entry, kind })) : await fetchImdbChart(kind);
-        const items = matchChartToCatalog(entries, catalog.items).slice(0, 20);
+        const items = matchChartToCatalog(entries, catalog.items).slice(0, 100);
         if (!items.length) throw new Error('No unambiguous catalog matches; previous chart retained');
         charts[kind] = { sourceUrl: cached?.sourceUrl ?? CHART_URLS[kind], observedAt: cached?.observedAt ?? new Date().toISOString(),
           capture: bootstrap ? 'search-cache' : 'direct', items };

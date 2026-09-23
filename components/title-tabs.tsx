@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { DownloadBrowser } from "@/components/download-browser";
+import { TitleFeedback } from "@/components/title-feedback";
 import { InteractiveMediaGallery, type GalleryMedia } from "@/components/ui/interactive-media-gallery";
 import { PosterCard, type PosterCardData } from "@/components/poster-card";
 import { DEFAULT_LOCALE, getDictionary, interpolate, type Locale, typeLabel } from "@/lib/i18n";
@@ -161,6 +162,8 @@ export function TitleTabs({
       )}
       {active === "suggestions" && (
         <section className="title-tab-panel">
+          <TitleFeedback key={item.imdbCode} itemId={item.imdbCode} locale={locale} />
+          <p className="muted">{locale === "fa" ? "پیشنهادها بر پایهٔ شباهت عنوان، امتیاز و تعداد رأی IMDb، روندهای تازه و بازخورد مخاطبان سرونما به‌روز می‌شوند." : "Updated using title similarity, IMDb ratings and vote counts, recent trends, and SarvNema audience feedback."}</p>
           {suggestionsState === "loading" && <p className="muted">{t.common.loading}</p>}
           <div className="suggestion-grid">
             {suggestions.map((suggestion) => (

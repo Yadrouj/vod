@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AiSearchPanel } from "@/components/ai-search-panel";
 import { CountryDiscovery } from "@/components/country-discovery";
-import { FilmLandingHero } from "@/components/film-landing-hero";
+import { FilmLandingHero } from "@/components/cinema-landing-hero";
 import { FocusRail } from "@/components/focus-rail";
 import { GradientMenu, type MegaMenuItem } from "@/components/gradient-menu";
 import { LandingSeoContent } from "@/components/landing-seo-content";
@@ -28,6 +28,8 @@ import { FILM_LANDING_SEO, landingJsonLd } from "@/lib/landing-seo";
 import { titleMetadata } from "@/lib/seo";
 import { loadVodHomeIndex } from "@/lib/vod-index";
 import { loadImdbTrending } from "@/lib/imdb-trending";
+import { rankDiscovery } from "@/lib/discovery-ranking";
+import { loadAudienceSignals } from "@/lib/discovery-feedback";
 import type { VodCard, VodHomeSection } from "@/lib/types";
 
 type HomeRailSection = VodHomeSection & {
@@ -71,7 +73,7 @@ export default async function HomePage() {
   // The first rails are intentional anchors, not part of the daily rotation:
   // a visitor sees releases, their own activity, then the core film and
   // series shelves. Everything after that can keep a fresh daily rhythm.
-  const freshRailIds = ["recent-films", "latest-series"];
+  const freshRailIds = ["audience-picks", "recent-films", "latest-series"];
   const freshLandingRails = freshRailIds.map((id) => landingRails.find((section) => section.id === id)).filter((section): section is HomeRailSection => Boolean(section));
   const anchorRailIds = ["films-2026", "best-movies", "best-series", "latest-animation", "recent-trailers"];
   const primaryLandingRails = anchorRailIds
@@ -90,8 +92,8 @@ export default async function HomePage() {
           menuSections={megaSections}
           featuredItems={megaFeaturedItems}
         />
+        <FilmLandingHero items={heroBanners} locale={locale} />
         <div className="wrap">
-          <FilmLandingHero items={heroBanners} locale={locale} />
           <LandingPulse initial={pulse} locale={locale} />
         </div>
       </section>
@@ -136,13 +138,14 @@ async function buildHomePageData(locale: Locale) {
 }
 
 async function computeHomePageData(locale: Locale) {
-  const [index, rawNews, topPeople, rawUpdates, music, trending] = await Promise.all([
+  const [index, rawNews, topPeople, rawUpdates, music, trending, audience] = await Promise.all([
     loadVodHomeIndex(),
     loadVodNews(),
     loadTopPeople(),
     loadReleaseUpdates(),
     loadMusicHomeIndex(),
-    loadImdbTrending(),
+    loadImdbTrending(100),
+    loadAudienceSignals(),
   ]);
   const news = { ...rawNews, items: prioritizeNews(rawNews.items) };
   const verifiedUpdates = selectFreshReleaseUpdates(rawUpdates.items);
@@ -151,11 +154,12 @@ async function computeHomePageData(locale: Locale) {
   const updates = { ...rawUpdates, items: prioritizeReleaseUpdates(verifiedUpdates.filter((item) => !episodeIds.has(item.imdbCode))), asOf: Date.now() };
   const t = getDictionary(locale);
   const seen = new Set<string>();
-  const heroBanners = trending.length ? trending : takeFreshVisual([
-    ...(index.sections.find((section) => section.id === "recent-films")?.items ?? []).slice(0, 5),
-    ...(index.sections.find((section) => section.id === "best-movies")?.items ?? []).slice(0, 5),
-    ...(index.sections.find((section) => section.id === "top-imdb")?.items ?? []).slice(0, 5),
-  ], seen, 10);
+  const signals = { trends: trending, audience };
+  const discovery = rankDiscovery([...index.items, ...trending.filter(item => item.popularity.current)].filter(isLandingReady), signals, 80);
+  const trendMap = new Map(trending.map(item => [item.imdbCode, item.popularity]));
+  const heroPool = [...discovery.filter(item => item.type === "movie").slice(0, 4), ...discovery.filter(item => item.type === "series").slice(0, 4)];
+  const heroBanners = takeFreshVisual(heroPool.length ? heroPool : discovery, seen, 8)
+    .map(item => ({ ...item, popularity: trendMap.get(item.imdbCode) }));
   heroBanners.forEach((item) => seen.add(item.imdbCode));
   const midBanners = takeFreshVisual([
     ...(index.sections.find((section) => section.id === "latest-animation")?.items ?? []).slice(0, 5),
@@ -191,6 +195,9 @@ async function computeHomePageData(locale: Locale) {
   const wideItems = takeFreshCards(wideCandidates, seen, 10);
   const currentYear = new Date().getUTCFullYear();
   const generatedSections: HomeRailSection[] = [
+    makeSection("audience-picks", locale === "fa" ? "پیشنهادهای امروز برای شما" : "What to watch next",
+      locale === "fa" ? "بر پایهٔ امتیاز و رأی IMDb، محبوبیت تازه و نظر مخاطبان سرونما" : "IMDb ratings, recent popularity and SarvNema audience feedback.",
+      discovery.slice(0, 18), "/browse"),
     makeSection(
       "films-2026",
       locale === "fa" ? `فیلم‌های ${currentYear}` : `${currentYear} Movies`,
@@ -235,7 +242,7 @@ async function computeHomePageData(locale: Locale) {
     ),
   ];
 
-  const railPriority = ["recent-films", "latest-series", "films-2026", "best-movies", "best-series", "latest-animation", "recent-trailers"];
+  const railPriority = ["audience-picks", "recent-films", "latest-series", "films-2026", "best-movies", "best-series", "latest-animation", "recent-trailers"];
   const candidateRails = [...index.sections, ...generatedSections]
     .filter((section) => section.id !== "old-iranian-films");
   const priorityRails = railPriority

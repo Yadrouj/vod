@@ -43,5 +43,6 @@ data/maintenance-scheduler-last-run.json
 data/refresh-checkpoints/
 data/telegram-deliveries/
 .media-cache/
+data/discovery/
 public/data/vod-sync-status.json
 public/data/episode-metadata/index.json

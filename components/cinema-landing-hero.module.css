@@ -1,0 +1,49 @@
+.hero { position: relative; isolation: isolate; width: 100%; min-height: min(850px, calc(100svh - 80px)); background: #101113; color: white; overflow: hidden; }
+.art, .slide, .slide picture, .slide img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.slide { opacity: 0; transition: opacity 700ms ease; }
+.slide.active { opacity: 1; }
+.slide img { object-fit: cover; object-position: center 30%; }
+.hero::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(0deg, #090909 0%, #09090925 65%, #09090938), linear-gradient(90deg, #090909e6, #09090962 48%, transparent 82%); }
+.hero[dir="rtl"]::after { background: linear-gradient(0deg, #090909 0%, #09090925 65%, #09090938), linear-gradient(270deg, #090909e6, #09090962 48%, transparent 82%); }
+.content { position: relative; z-index: 2; min-height: inherit; display: flex; flex-direction: column; justify-content: flex-end; gap: 48px; max-width: 1600px; margin: auto; padding: clamp(28px, 5vw, 80px) clamp(20px, 5vw, 80px) 32px; }
+.copy { width: min(650px, 65%); }
+.eyebrow { display: flex; gap: 8px; align-items: center; font-size: 13px; color: #e8ce88; }
+.copy h1 { font-size: clamp(32px, 4.3vw, 66px); line-height: 1.18; text-wrap: balance; margin: 22px 0; letter-spacing: -.03em; }
+.meta { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: 13px; color: #eee; }
+.meta b { color: #f1d274; }
+.overview { font-size: 15px; line-height: 1.9; max-width: 570px; color: #ddd; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 22px 0; }
+.actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.actions a, .actions :global(.watch-together-launcher) { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; width: auto; padding: 12px 20px; text-decoration: none; border-radius: 10px !important; font-size: 14px; font-weight: 700; border: 1px solid #ffffff30; }
+.play { background: white; color: #101113; }
+.play:hover { background: #ead080; }
+.details { background: #ffffff15; color: white; backdrop-filter: blur(10px); }
+.source { display: inline-block; color: #c9c6bd; font-size: 11px; margin-top: 22px; text-decoration: none; }
+.bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 22px; }
+.search { display: flex; gap: 12px; align-items: center; width: min(480px, 100%); padding: 6px 12px; border: 1px solid #ffffff28; border-radius: 12px !important; background: #101113b3; backdrop-filter: blur(12px); }
+.search :global(.search-suggest) { flex: 1; min-width: 0; }
+.search input { width: 100%; background: transparent; border: 0; min-width: 0; color: white; }
+.search > button { padding: 10px 14px; min-height: 44px; border: 0; border-radius: 8px !important; background: #e8ce88; color: #15130d; cursor: pointer; font: inherit; }
+.navigation { display: flex; align-items: center; gap: 4px; }
+.navigation > button { display: grid; place-items: center; background: #ffffff0d; border: 1px solid #ffffff20; border-radius: 50% !important; color: white; width: 44px; height: 44px; cursor: pointer; }
+.dots { display: flex; }
+.dots button { display: grid; place-items: center; width: 22px; min-height: 44px; padding: 0; background: none; border: 0; cursor: pointer; }
+.dots span { width: 5px; height: 5px; border-radius: 10px !important; background: #ffffff60; transition: width .2s; }
+.dots [aria-current] span { width: 18px; background: #e8ce88; }
+.hero :focus-visible { outline: 2px solid #e8ce88; outline-offset: 4px; }
+@media (max-width: 760px) {
+  .hero { min-height: min(790px, calc(100svh - 65px)); }
+  .hero::after, .hero[dir="rtl"]::after { background: linear-gradient(0deg, #090909 0%, #090909e8 25%, #09090965 60%, #09090908 100%); }
+  .content { gap: 20px; padding: 160px 20px 96px; }
+  .copy { width: 100%; }
+  .copy h1 { font-size: clamp(28px, 7vw, 44px); margin: 14px 0; }
+  .meta { gap: 12px; font-size: 12px; }
+  .overview { font-size: 13px; margin: 14px 0; }
+  .actions { gap: 8px; }
+  .actions a, .actions :global(.watch-together-launcher) { padding: 10px 14px; font-size: 12px; }
+  .source { margin-top: 12px; }
+  .bottom { gap: 10px; }
+  .search { width: 100%; }
+  .navigation { margin-inline: auto; }
+  .dots button { width: 17px; }
+}
+@media (prefers-reduced-motion: reduce) { .slide, .dots span { transition: none; } }

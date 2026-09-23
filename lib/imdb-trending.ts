@@ -27,7 +27,7 @@ export function selectTrendingTitles(charts: Partial<Record<"movie" | "series", 
   }
   return result;
 }
-export async function loadImdbTrending(): Promise<TrendingTitle[]> {
+export async function loadImdbTrending(limit = 10): Promise<TrendingTitle[]> {
   try {
     const info = await stat(file);
     if (!cache || cache.modifiedAt !== info.mtimeMs) {
@@ -35,6 +35,6 @@ export async function loadImdbTrending(): Promise<TrendingTitle[]> {
       if (payload.version !== 1 || !payload.charts) return [];
       cache = { modifiedAt: info.mtimeMs, charts: payload.charts };
     }
-    return selectTrendingTitles(cache.charts);
+    return selectTrendingTitles(cache.charts, Date.now(), limit);
   } catch { return []; }
 }
