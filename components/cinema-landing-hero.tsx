@@ -51,7 +51,7 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
     </div>
     <div className={styles.content}>
       <div className={styles.copy} aria-live={rotating ? "off" : "polite"} aria-atomic="true">
-        <span className={styles.eyebrow}><TrendingUp size={16} />{trend?.current ? (fa ? "محبوب در IMDb" : "Trending on IMDb") : (fa ? "برای تماشای بعدی شما" : "Your next great watch")}</span>
+        <span className={styles.eyebrow}><TrendingUp size={16} />{trend ? (trend.current ? (fa ? "ترند روز IMDb" : "Trending today on IMDb") : (fa ? "آخرین ترند ثبت‌شدهٔ IMDb" : "Latest recorded IMDb trend")) : (fa ? "برای تماشای بعدی شما" : "Your next great watch")}</span>
         <h1 dir="auto">{displayTitle}</h1>
         <div className={styles.meta}><b dir="ltr">IMDb {item.imdbRating?.toFixed(1) ?? "—"}</b><span>{item.year}</span><span>{typeLabel(item.type, locale)}</span><span>{item.genres.slice(0, 2).join(" · ")}</span></div>
         <p className={styles.overview} dir="auto">{(fa ? item.persianOverview || item.overview : item.overview) || item.genres.join(" · ")}</p>
@@ -60,7 +60,7 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
           <Link className={styles.details} href={`/${item.imdbCode}`}><Info size={20} />{t.common.details}</Link>
           {item.linksCount > 0 && <WatchTogetherLauncher locale={locale} placement="inline" preset={{ itemId: item.imdbCode, title: displayTitle, posterUrl: item.posterUrl }} />}
         </div>
-        {trend && <a className={styles.source} href={trend.sourceUrl} target="_blank" rel="noreferrer">{fa ? "محبوبیت IMDb" : "IMDb popularity"} #{trend.rank} · {new Intl.DateTimeFormat(fa ? "fa-IR" : "en-US", { month: "short", day: "numeric", timeZone: "Asia/Tehran" }).format(new Date(trend.observedAt))}</a>}
+        {trend && <a className={styles.source} href={trend.sourceUrl} target="_blank" rel="noreferrer">{fa ? "رتبهٔ ترند IMDb" : "IMDb trend rank"} #{trend.rank} · {new Intl.DateTimeFormat(fa ? "fa-IR" : "en-US", { month: "short", day: "numeric", timeZone: "Asia/Tehran" }).format(new Date(trend.observedAt))}</a>}
       </div>
       <div className={styles.bottom}>
         <form className={styles.search} action="/browse" role="search"><SearchSuggest placeholder={t.home.searchPlaceholder} locale={locale} portal maxItems={14} /><button type="submit">{t.common.search}</button></form>

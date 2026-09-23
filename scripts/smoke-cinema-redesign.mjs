@@ -57,8 +57,31 @@ try {
   // Next streaming may briefly retain a hidden copy before hydration reveals it.
   const hero = page.locator('[data-cinema-hero]:visible');
   await hero.waitFor();
-  const geometry = await hero.evaluate(element => ({ width: element.getBoundingClientRect().width, viewport: document.documentElement.clientWidth }));
+  const geometry = await hero.evaluate(element => {
+    const heroRect = element.getBoundingClientRect();
+    const header = document.querySelector('.film-landing-shell > .gradient-menu');
+    const headerRect = header?.getBoundingClientRect();
+    const headerStyle = header ? getComputedStyle(header) : null;
+    return {
+      width: heroRect.width,
+      top: heroRect.top,
+      height: heroRect.height,
+      viewport: document.documentElement.clientWidth,
+      viewportHeight: document.documentElement.clientHeight,
+      headerTop: headerRect?.top,
+      headerBottom: headerRect?.bottom,
+      headerPosition: headerStyle?.position,
+      headerShadow: headerStyle?.boxShadow,
+    };
+  });
   assert.equal(geometry.width, geometry.viewport, 'Hero fills the viewport excluding the browser scrollbar');
+  assert.ok(Math.abs(geometry.top) <= 1, 'Hero starts behind the landing header');
+  assert.ok(geometry.height >= geometry.viewportHeight - 1, 'Hero occupies the full first viewport');
+  assert.equal(geometry.headerPosition, 'absolute', 'Landing header overlays the hero artwork');
+  assert.ok(geometry.headerTop >= geometry.top && geometry.headerBottom <= geometry.top + geometry.height, 'Landing header stays within the hero');
+  assert.notEqual(geometry.headerShadow, 'none', 'Landing header has contrast shadow over artwork');
+  await hero.getByText('Latest recorded IMDb trend', { exact: true }).waitFor();
+  assert.equal(await hero.locator('a[href*="imdb.com/chart/"]').count(), 1, 'Hero exposes the IMDb trend source and rank');
   const before = await hero.locator('h1').innerText();
   await hero.getByRole('button', { name: 'Next title', exact: true }).click();
   assert.notEqual(await hero.locator('h1').innerText(), before);

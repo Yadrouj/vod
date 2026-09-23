@@ -157,7 +157,10 @@ async function computeHomePageData(locale: Locale) {
   const signals = { trends: trending, audience };
   const discovery = rankDiscovery([...index.items, ...trending.filter(item => item.popularity.current)].filter(isLandingReady), signals, 80);
   const trendMap = new Map(trending.map(item => [item.imdbCode, item.popularity]));
-  const heroPool = [...discovery.filter(item => item.type === "movie").slice(0, 4), ...discovery.filter(item => item.type === "series").slice(0, 4)];
+  // The lead frame is deliberately separate from personalised discovery: it
+  // follows the rank order in IMDb's MOVIEmeter and TVmeter charts. This keeps
+  // an all-time high rating from displacing what people are actually watching.
+  const heroPool = trending.filter(isLandingReady);
   const heroBanners = takeFreshVisual(heroPool.length ? heroPool : discovery, seen, 8)
     .map(item => ({ ...item, popularity: trendMap.get(item.imdbCode) }));
   heroBanners.forEach((item) => seen.add(item.imdbCode));
