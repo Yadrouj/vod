@@ -7,6 +7,7 @@ import { SearchSuggest } from "@/components/search-suggest";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import { getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
+import { heroImageSrc } from "@/lib/hero-art";
 import type { VodCard } from "@/lib/types";
 import type { TrendingTitle } from "@/lib/imdb-trending";
 import styles from "./cinema-landing-hero.module.css";
@@ -45,7 +46,7 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
       {items.map((entry, position) => <div key={entry.imdbCode} className={`${styles.slide} ${position === active ? styles.active : ""}`}>
         {(position === active || position === (active + 1) % total) && <picture>
           {entry.posterUrl && <source media="(max-width: 600px)" srcSet={sizedImageUrl(entry.posterUrl, 780) ?? entry.posterUrl} />}
-          <img src={sizedImageUrl(entry.backdropUrl ?? entry.posterUrl, 1920) ?? undefined} alt="" loading={position === active ? "eager" : "lazy"} fetchPriority={position === active ? "high" : "low"} decoding="async" />
+          <img src={entry.backdropUrl ? heroImageSrc(entry.backdropUrl, 1920) : undefined} alt="" loading={position === active ? "eager" : "lazy"} fetchPriority={position === active ? "high" : "low"} decoding="async" />
         </picture>}
       </div>)}
     </div>

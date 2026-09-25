@@ -30,6 +30,7 @@ import { loadVodHomeIndex } from "@/lib/vod-index";
 import { loadImdbTrending } from "@/lib/imdb-trending";
 import { rankDiscovery } from "@/lib/discovery-ranking";
 import { loadAudienceSignals } from "@/lib/discovery-feedback";
+import { heroBackdropUrl, isHeroReady } from "@/lib/hero-art";
 import type { VodCard, VodHomeSection } from "@/lib/types";
 
 type HomeRailSection = VodHomeSection & {
@@ -160,8 +161,8 @@ async function computeHomePageData(locale: Locale) {
   // The lead frame is deliberately separate from personalised discovery: it
   // follows the rank order in IMDb's MOVIEmeter and TVmeter charts. This keeps
   // an all-time high rating from displacing what people are actually watching.
-  const heroPool = trending.filter(isLandingReady);
-  const heroBanners = takeFreshVisual(heroPool.length ? heroPool : discovery, seen, 8)
+  const heroPool = trending.filter(item => isLandingReady(item) && isHeroReady(item));
+  const heroBanners = takeFreshHeroVisual(heroPool.length ? heroPool : discovery, seen, 8)
     .map(item => ({ ...item, popularity: trendMap.get(item.imdbCode) }));
   heroBanners.forEach((item) => seen.add(item.imdbCode));
   const midBanners = takeFreshVisual([
@@ -300,6 +301,20 @@ function takeFreshVisual(items: VodCard[], seen: Set<string>, limit: number) {
     seen.add(item.imdbCode);
     images.add(image);
     fresh.push(item);
+    if (fresh.length >= limit) break;
+  }
+  return fresh;
+}
+
+function takeFreshHeroVisual(items: VodCard[], seen: Set<string>, limit: number) {
+  const images = new Set<string>();
+  const fresh: VodCard[] = [];
+  for (const item of uniqueCards(items)) {
+    const image = heroBackdropUrl(item);
+    if (!isLandingReady(item) || !image || seen.has(item.imdbCode) || images.has(image)) continue;
+    seen.add(item.imdbCode);
+    images.add(image);
+    fresh.push({ ...item, backdropUrl: image });
     if (fresh.length >= limit) break;
   }
   return fresh;
