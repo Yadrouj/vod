@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
+import { localizedTitle } from "@/lib/title-display";
 import type { VodCard } from "@/lib/types";
 
 export function FocusRail({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]; locale?: Locale }) {
   const [active, setActive] = useState(0);
   const current = items[active] ?? items[0];
   const t = getDictionary(locale);
+  const displayTitle = current ? localizedTitle(current, locale) : "";
 
   useEffect(() => {
     if (items.length < 2) return;
@@ -26,7 +28,7 @@ export function FocusRail({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]
       <div className="focus-panel">
         <div>
           <p className="label">{t.home.spotlight}</p>
-          <h2>{current.title}</h2>
+          <h2>{displayTitle}</h2>
           <p className="muted">{current.overview ?? current.genres.slice(0, 3).join(" / ")}</p>
         </div>
         <div className="chips">
@@ -46,7 +48,7 @@ export function FocusRail({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]
           backgroundImage: `linear-gradient(90deg, rgba(5,5,7,0.04), rgba(5,5,7,0.32)), url(${sizedImageUrl(current.backdropUrl ?? current.posterUrl, 1280)})`,
         } : undefined}
       >
-        <div className="focus-gallery-copy">{current.title}</div>
+        <div className="focus-gallery-copy">{displayTitle}</div>
         <div className="focus-gallery-thumbs">
         {items.map((item, index) => {
           const depth = (index - active + items.length) % items.length;
@@ -66,7 +68,7 @@ export function FocusRail({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]
                 zIndex: items.length - visibleDepth,
               }}
               onClick={() => setActive(index)}
-              aria-label={`Focus ${item.title}`}
+              aria-label={`Focus ${localizedTitle(item, locale)}`}
             >
               <img
                 className="focus-card-art"
@@ -75,7 +77,7 @@ export function FocusRail({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]
                 loading="lazy"
                 decoding="async"
               />
-              <span className="focus-card-title">{item.title}</span>
+              <span className="focus-card-title">{localizedTitle(item, locale)}</span>
               <span className="rating">{item.imdbRating ? `IMDb ${item.imdbRating.toFixed(1)}` : item.year ?? t.common.movie}</span>
             </button>
           );

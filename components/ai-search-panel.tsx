@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
+import { localizedTitle } from "@/lib/title-display";
 import type { VodCard } from "@/lib/types";
 
 type AiResult = {
-  item: Pick<VodCard, "title" | "imdbCode" | "backdropUrl" | "posterUrl">;
+  item: Pick<VodCard, "title" | "persianTitle" | "imdbCode" | "backdropUrl" | "posterUrl">;
   score: number;
   reasons: string[];
 };
@@ -100,7 +101,7 @@ export function AiSearchPanel({
                   : undefined
               }
             >
-              <strong>{result.item.title}</strong>
+              <strong>{localizedTitle(result.item, locale)}</strong>
             </Link>
           ))}
         </div>

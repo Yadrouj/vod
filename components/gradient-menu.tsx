@@ -10,6 +10,7 @@ import { formatNumber, getDictionary, type Locale } from "@/lib/i18n";
 export type MegaMenuItem = {
   imdbCode: string;
   title: string;
+  persianTitle?: string | null;
   year: number | null;
   posterUrl: string | null;
   backdropUrl: string | null;

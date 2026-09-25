@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { sizedImageUrl } from "@/lib/image-url";
 import { DEFAULT_LOCALE, getDictionary, type Locale, typeLabel } from "@/lib/i18n";
+import { localizedTitle } from "@/lib/title-display";
 import type { VodCard } from "@/lib/types";
 
 export type PosterCardData = Pick<VodCard,
@@ -15,6 +16,7 @@ export type PosterCardData = Pick<VodCard,
   | "backdropUrl"
   | "linksCount"
   | "source"
+  | "persianTitle"
 >;
 
 export function PosterCard({ item, locale = DEFAULT_LOCALE, priority = false }: { item: PosterCardData; locale?: Locale; priority?: boolean }) {
@@ -22,6 +24,7 @@ export function PosterCard({ item, locale = DEFAULT_LOCALE, priority = false }: 
   const imageUrl = item.posterUrl ?? item.backdropUrl;
   const hasPoster = Boolean(imageUrl);
   const isFresh = (item.year ?? 0) >= new Date().getUTCFullYear();
+  const displayTitle = localizedTitle(item, locale);
 
   return (
     <Link prefetch={false} href={`/${item.imdbCode || item.id}`} className={["poster", item.type === "series" ? "series-poster" : "", hasPoster ? "poster-has-image" : "poster-no-image", isFresh ? "poster-is-fresh" : ""].filter(Boolean).join(" ")}>
@@ -40,7 +43,7 @@ export function PosterCard({ item, locale = DEFAULT_LOCALE, priority = false }: 
         <span className="rating">{item.imdbRating ? `IMDb ${item.imdbRating.toFixed(1)}` : item.source === "mihandownload" ? t.common.persianMovies : item.year ?? typeLabel(item.type, locale)}</span>
         {isFresh && <span className="poster-fresh">{locale === "fa" ? `تازه ${item.year}` : `NEW ${item.year}`}</span>}
         <span className="poster-copy">
-          <strong className="poster-title">{item.title}</strong>
+          <strong className="poster-title">{displayTitle}</strong>
           <span>{item.year ?? "-"} / {typeLabel(item.type, locale)}</span>
           <span>{item.genres.slice(0, 3).join(" / ") || `${item.linksCount} ${t.common.files}`}</span>
         </span>

@@ -457,6 +457,7 @@ function toMegaMenuItem(item: VodCard): MegaMenuItem {
   return {
     imdbCode: item.imdbCode,
     title: item.title,
+    persianTitle: item.persianTitle,
     year: item.year,
     posterUrl: item.posterUrl,
     backdropUrl: item.backdropUrl,

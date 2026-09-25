@@ -5,6 +5,7 @@ import { ArrowUpLeft, LayoutGrid, Search, X } from "lucide-react";
 import { useRef, useState, useSyncExternalStore } from "react";
 import type { MegaMenuSection } from "./gradient-menu";
 import type { Locale } from "@/lib/i18n";
+import { localizedTitle } from "@/lib/title-display";
 import { CategoryArt, warmCategoryImages } from "./category-art";
 import styles from "./category-explorer.module.css";
 const subscribeReady = () => () => {};
@@ -44,7 +45,7 @@ export function CategoryExplorer({ sections, locale }: { sections: MegaMenuSecti
             <div className={styles.cards}>
               {active.items.slice(0, 6).map(item => <Link key={item.imdbCode} href={`/${item.imdbCode}`} onClick={close} prefetch={false}>
                 <div className={styles.art}>{open && <CategoryArt key={`${item.imdbCode}-${item.backdropUrl}-${item.posterUrl}`} backdropUrl={item.backdropUrl} posterUrl={item.posterUrl} />}<span><ArrowUpLeft size={17} /></span></div>
-                <strong dir="auto">{item.title}</strong><small>{item.year?.toLocaleString(fa ? "fa-IR" : "en-US", { useGrouping: false }) ?? "—"}</small>
+                <strong dir="auto">{localizedTitle(item, locale)}</strong><small>{item.year?.toLocaleString(fa ? "fa-IR" : "en-US", { useGrouping: false }) ?? "—"}</small>
               </Link>)}
             </div>
             {!active.items.length && <p>{fa ? "آثار این دسته را در آرشیو ببینید." : "Explore this category in the archive."}</p>}

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import { DEFAULT_LOCALE, getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
+import { localizedTitle } from "@/lib/title-display";
 import type { VodCard } from "@/lib/types";
 
 export function BannerCarousel({ items, locale = DEFAULT_LOCALE }: { items: VodCard[]; locale?: Locale }) {
@@ -15,6 +16,7 @@ export function BannerCarousel({ items, locale = DEFAULT_LOCALE }: { items: VodC
   });
   const current = items[active] ?? items[0];
   const t = getDictionary(locale);
+  const displayTitle = current ? localizedTitle(current, locale) : "";
 
   useEffect(() => {
     if (items.length < 2) return;
@@ -57,7 +59,7 @@ export function BannerCarousel({ items, locale = DEFAULT_LOCALE }: { items: VodC
             </>
           )}
         </div>
-        <h1>{current.title}</h1>
+        <h1>{displayTitle}</h1>
         {current.overview && <p>{current.overview}</p>}
         <div className="chips">
           <Link className="play-glow" href={`/watch/${current.imdbCode}`}>
@@ -69,7 +71,7 @@ export function BannerCarousel({ items, locale = DEFAULT_LOCALE }: { items: VodC
           <WatchTogetherLauncher
             locale={locale}
             placement="inline"
-            preset={{ itemId: current.imdbCode, title: current.title, posterUrl: current.backdropUrl ?? current.posterUrl }}
+            preset={{ itemId: current.imdbCode, title: displayTitle, posterUrl: current.backdropUrl ?? current.posterUrl }}
           />
         </div>
       </div>
@@ -87,7 +89,7 @@ export function BannerCarousel({ items, locale = DEFAULT_LOCALE }: { items: VodC
             key={item.imdbCode}
             type="button"
             className={index === active ? "active" : ""}
-            aria-label={`Show ${item.title}`}
+            aria-label={`Show ${localizedTitle(item, locale)}`}
             onClick={() => setActive(index)}
           />
         ))}
@@ -115,7 +117,7 @@ export function BannerStrip({ items }: { items: VodCard[] }) {
           }
         >
           <span className="rating">{item.imdbRating ? `IMDb ${item.imdbRating.toFixed(1)}` : item.year ?? "Movie"}</span>
-          <strong>{item.title}</strong>
+          <strong>{localizedTitle(item, "fa")}</strong>
         </Link>
       ))}
     </section>
