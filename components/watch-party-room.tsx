@@ -1,9 +1,11 @@
 "use client";
 
+import { MediaPlayerControls } from "./media-player-controls";
+import roomStyles from "./watch-party-room.module.css";
 import { enterPlayerFullscreen } from "@/lib/player-fullscreen";
 
 import Link from "next/link";
-import { Captions, Check, Clock3, Copy, Disc3, ExternalLink, FileUp, Film, Globe2, Link2, LoaderCircle, Maximize2, MessageCircle, Minimize2, Pause, Play, Send, Settings, Share2, SmilePlus, Star, Upload, Users, Video, Volume2, X } from "lucide-react";
+import { Check, Clock3, Copy, Disc3, ExternalLink, FileUp, Film, Globe2, Link2, LoaderCircle, MessageCircle, Play, Send, Share2, SmilePlus, Star, Upload, Users, Video, Volume2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import type { PartyCapability, PartyChatMessage, PartyMedia, PartyParticipant, PartyPermissions, PartyProfile, PartyQueueItem, PartyReaction, PartySnapshot } from "@/lib/watch-party-types";
@@ -53,9 +55,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const serverClockOffset = useRef(0);
   const hasServerClockOffset = useRef(false);
   const rateCorrectionTimer = useRef<number | null>(null);
-  const scrubTimeRef = useRef<number | null>(null);
   const hudTimerRef = useRef<number | null>(null);
-  const hudSuppressedUntilRef = useRef(0);
   const stageChatLogRef = useRef<HTMLDivElement>(null);
   const failedSourceUrlsRef = useRef<Set<string>>(new Set());
   const [profile, setProfile] = useState<PartyProfile | null>(null);
@@ -72,7 +72,6 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const [inviteLoaded, setInviteLoaded] = useState(false);
   const [playerTime, setPlayerTime] = useState(0);
   const [playerDuration, setPlayerDuration] = useState(0);
-  const [scrubTime, setScrubTime] = useState<number | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [roomSocket, setRoomSocket] = useState<Socket | null>(null);
   const [hudVisible, setHudVisible] = useState(true);
@@ -192,7 +191,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
         const correction = Math.max(.95, Math.min(1.05, 1 - drift * .04));
         video.playbackRate = state.playbackRate * correction;
         rateCorrectionTimer.current = window.setTimeout(() => {
-          if (videoRef.current && latestPlayback.current?.revision === state.revision) videoRef.current.playbackRate = state.playbackRate;
+          if (latestPlayback.current?.revision === state.revision) video.playbackRate = state.playbackRate;
           rateCorrectionTimer.current = null;
         }, 1200);
       } else {
@@ -203,7 +202,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
       else video.play().catch(() => undefined);
     };
     socket.on("connect", () => { setRoomSocket(socket); socket.emit("room:join", { roomId, inviteToken, profile }, (result: { ok: boolean; snapshot?: PartySnapshot; error?: string }) => { if (!result.ok || !result.snapshot) { setError(result.error ?? "Could not join room"); return; } setSnapshot(result.snapshot); setChat(result.snapshot.chat); setConnected(true); applyPlayback({ ...result.snapshot.playback, serverNow: result.snapshot.serverNow }); }); });
-    socket.on("disconnect", () => setRoomSocket((current) => current === socket ? null : current));
+    socket.on("disconnect", () => { setConnected(false); setRoomSocket((current) => current === socket ? null : current); });
     socket.on("room:snapshot", (value: PartySnapshot) => { setSnapshot(value); setChat(value.chat); applyPlayback({ ...value.playback, serverNow: value.serverNow }); });
     socket.on("playback:state", applyPlayback);
     socket.on("subtitle:state", (subtitle: SubtitleSelection) => setSnapshot((current) => current ? { ...current, subtitle } : current));
@@ -301,45 +300,14 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     remoteSeekInFlight.current = false;
     resumeWhenReady(event);
   }
-  function previewSeek(next: number) { scrubTimeRef.current = next; setScrubTime(next); }
-  function commitSeek() {
-    const next = scrubTimeRef.current;
-    if (next === null || !can("seek")) return;
-    scrubTimeRef.current = null;
-    setScrubTime(null);
-    command("seek", { time: next });
-  }
   function clearHudTimer() {
     if (hudTimerRef.current === null) return;
     window.clearTimeout(hudTimerRef.current);
     hudTimerRef.current = null;
   }
-  function revealHud(delay = 3_600) {
+  function revealHud() {
     clearHudTimer();
     setHudVisible(true);
-    if (stagePanel || settingsOpen || subtitlesOpen) return;
-    hudTimerRef.current = window.setTimeout(() => {
-      if (document.querySelector("dialog[data-responsive-dialog][open]")) { hudTimerRef.current = null; return; }
-      setHudVisible(false);
-      hudTimerRef.current = null;
-    }, delay);
-  }
-  function hideHud() {
-    clearHudTimer();
-    hudSuppressedUntilRef.current = Date.now() + 650;
-    setHudVisible(false);
-    setStagePanel(null);
-    setSettingsOpen(false);
-    setSubtitlesOpen(false);
-  }
-  function handleStageClick(event: React.MouseEvent<HTMLDivElement>) {
-    if (isStageUiTarget(event.target)) return;
-    if (hudVisible) hideHud();
-    else revealHud(4_200);
-  }
-  function handleStagePointerMove(event: React.PointerEvent<HTMLDivElement>) {
-    if (event.pointerType !== "mouse" || Date.now() < hudSuppressedUntilRef.current) return;
-    revealHud();
   }
   function toggleStagePanel(panel: "chat" | "reactions") {
     clearHudTimer();
@@ -529,7 +497,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const latestChat = roomChat.at(-1);
   const queueTitle = isListeningRoom ? "Listen queue" : "Watch queue";
   const queueDescription = isListeningRoom ? "Add tracks, personal audio, or a direct media link for everyone." : "Search, add, or switch movies, episodes, and personal media for everyone.";
-  return <div className={`party-layout ${isListeningRoom ? "party-theme-music" : "party-theme-cinema"}`} data-media-theme={isListeningRoom ? "music" : "cinema"} data-room-mode={isListeningRoom ? "listen" : "watch"}>
+  return <div className={`${roomStyles.room} party-layout ${isListeningRoom ? "party-theme-music" : "party-theme-cinema"}`} data-media-theme={isListeningRoom ? "music" : "cinema"} data-room-mode={isListeningRoom ? "listen" : "watch"}>
     <Link className="party-sarvnema-corner" href="/" aria-label="Back to SarvNema" title="SarvNema">
       <img src={BRAND_MARK} alt="" />
     </Link>
@@ -546,20 +514,19 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
         </div>
       </header>
       <div
-        className={`party-player-stage ${isListeningRoom ? "party-listening-stage" : ""} ${hudVisible ? "is-hud-visible" : "is-hud-hidden"} ${cinemaFullscreen ? "is-cinema-fullscreen" : ""} ${pseudoFullscreen ? "is-pseudo-fullscreen" : ""} ${stagePanel ? `has-${stagePanel}-panel` : ""}`}
+        className={`${roomStyles.stage} party-player-stage ${isListeningRoom ? "party-listening-stage" : ""} ${hudVisible ? "is-hud-visible" : "is-hud-hidden"} ${cinemaFullscreen ? "is-cinema-fullscreen" : ""} ${pseudoFullscreen ? "is-pseudo-fullscreen" : ""} ${stagePanel ? `has-${stagePanel}-panel` : ""}`}
         ref={stageRef}
-        onClick={handleStageClick}
-        onPointerMove={handleStagePointerMove}
-        onPointerDownCapture={(event) => { if (isStageUiTarget(event.target)) revealHud(); }}
+        tabIndex={0}
+        aria-label="Synchronized player"
       >
         {isListeningRoom ? (
           <>
-            <audio ref={audioRef} key={playback.media.source.url} src={playback.media.source.url} preload="auto" onLoadedMetadata={handleLoadedMetadata} onError={handleMediaError} onTimeUpdate={(event) => { if (scrubTimeRef.current === null) setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={resumeWhenReady} />
+            <audio ref={audioRef} key={playback.media.source.url} src={playback.media.source.url} preload="auto" onLoadedMetadata={handleLoadedMetadata} onError={handleMediaError} onTimeUpdate={(event) => { setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={resumeWhenReady} />
             <div className="party-listening-art" style={playback.media.posterUrl ? { backgroundImage: `url(${playback.media.posterUrl})` } : undefined} aria-hidden="true"><div>{playback.media.posterUrl ? <img src={playback.media.posterUrl} alt="" /> : <Disc3 size={84} />}</div></div>
             <div className="party-listening-copy" data-player-ui="true"><span>LISTEN TOGETHER · LIVE SYNC</span><h2>{playback.media.title}</h2><p>{playback.media.artistName || playback.media.details?.credits?.map((credit) => credit.name).join(" · ") || "Shared music room"}</p><small>{snapshot.participants.filter((item) => item.connected).length} people in the room · {playback.paused ? "paused" : "playing together"}</small></div>
             <div className="party-listening-wave" aria-hidden="true">{Array.from({ length: 32 }, (_, index) => <i key={index} style={{ "--wave": `${28 + (index * 19) % 72}%`, "--delay": `${index * -0.07}s` } as React.CSSProperties} />)}</div>
           </>
-        ) : <video ref={videoRef} key={playback.media.source.url} src={playback.media.source.url} poster={playback.media.posterUrl ?? undefined} playsInline preload="auto" onLoadedMetadata={handleLoadedMetadata} onError={handleMediaError} onTimeUpdate={(event) => { if (scrubTimeRef.current === null) setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={resumeWhenReady} />}
+        ) : <video ref={videoRef} key={playback.media.source.url} src={playback.media.source.url} poster={playback.media.posterUrl ?? undefined} playsInline preload="auto" onLoadedMetadata={handleLoadedMetadata} onError={handleMediaError} onTimeUpdate={(event) => { setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={resumeWhenReady} />}
         {mediaIssue && <div className="party-media-issue" data-player-ui="true"><LoaderCircle size={18} /><span>{mediaIssue}</span></div>}
         <div className="party-cinema-shade" aria-hidden="true" />
         <div className="party-reaction-layer">{reactions.map((reaction, index) => <div className="party-floating-reaction" key={reaction.id} style={{ left: `${12 + (index * 17) % 72}%` }}>{reaction.avatarUrl ? <img src={reaction.avatarUrl} alt="" /> : <span>{reaction.name.slice(0, 1)}</span>}<b>{reaction.emoji}</b><small>{reaction.name}</small></div>)}</div>
@@ -601,16 +568,22 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
           </div>
         )}
 
-        <div className="party-controls" dir="ltr" data-player-ui="true">
-          <button type="button" disabled={!can("playback")} onClick={() => command(playback.paused ? "play" : "pause", { time: (isListeningRoom ? audioRef.current : videoRef.current)?.currentTime })} aria-label={playback.paused ? "Play" : "Pause"}>{playback.paused ? <Play /> : <Pause />}</button>
-          <input className="party-seek-control" dir="ltr" type="range" min="0" max={playerDuration || 0} value={Math.min(scrubTime ?? playerTime, playerDuration || 0)} disabled={!can("seek")} aria-label="Playback position" onChange={(event) => previewSeek(Number(event.target.value))} onPointerUp={commitSeek} onPointerCancel={() => { scrubTimeRef.current = null; setScrubTime(null); }} onKeyUp={commitSeek} onBlur={commitSeek} />
-          {!isListeningRoom && <button className={subtitlesOpen ? "is-active" : ""} type="button" onClick={() => { clearHudTimer(); setHudVisible(true); setStagePanel(null); setSubtitlesOpen((value) => !value); setSettingsOpen(false); }} aria-label="Subtitles" title="Subtitles"><Captions /></button>}
-          <button className={stagePanel === "reactions" ? "is-active" : ""} type="button" onClick={() => toggleStagePanel("reactions")} aria-label="Reactions" title="Reactions" aria-expanded={stagePanel === "reactions"}><SmilePlus /></button>
-          <button className={stagePanel === "chat" ? "is-active" : ""} type="button" onClick={() => toggleStagePanel("chat")} aria-label="Room chat" title="Room chat" aria-expanded={stagePanel === "chat"}><MessageCircle />{roomChat.length > 0 && <small>{Math.min(roomChat.length, 99)}</small>}</button>
-          <button className={settingsOpen ? "is-active" : ""} type="button" onClick={() => { clearHudTimer(); setHudVisible(true); setStagePanel(null); setSettingsOpen((value) => !value); setSubtitlesOpen(false); }} aria-label="Playback settings" title="Playback settings"><Settings /></button>
-          <button type="button" onClick={() => void toggleStageFullscreen()} aria-label={cinemaFullscreen ? "Exit fullscreen" : "Enter fullscreen"} title={cinemaFullscreen ? "Exit fullscreen" : "Fullscreen"}>{cinemaFullscreen ? <Minimize2 /> : <Maximize2 />}</button>
-        </div>
-        {settingsOpen && <ResponsiveDialog open mobileOnly onClose={() => setSettingsOpen(false)} title="تنظیمات پخش اتاق" closeLabel="بستن تنظیمات پخش"><div className="party-player-settings" data-player-ui="true"><label>{isListeningRoom ? "Audio source" : "Source"}<select className="select" value={playback.media.source.url} disabled={!can("changeSource")} onChange={(event) => { const source = playback.media.sources.find((item) => item.url === event.target.value); if (source) command("source", { source, time: (isListeningRoom ? audioRef.current : videoRef.current)?.currentTime }); }}>{playback.media.sources.map((source) => <option value={source.url} key={source.url}>{source.label}</option>)}</select></label><label>Speed<select className="select" value={playback.playbackRate} disabled={!can("playback")} onChange={(event) => command("rate", { rate: Number(event.target.value) })}>{[.5,.75,1,1.25,1.5,2].map((rate) => <option key={rate} value={rate}>{rate}x</option>)}</select></label></div></ResponsiveDialog>}
+        <MediaPlayerControls frameRef={stageRef} mediaRef={isListeningRoom ? audioRef : videoRef}
+          paused={playback.paused} time={playerTime} duration={playerDuration} rate={playback.playbackRate} audio={isListeningRoom}
+          onPlay={() => command(playback.paused ? "play" : "pause", { time: (isListeningRoom ? audioRef.current : videoRef.current)?.currentTime })}
+          onSeek={time => command("seek", { time })} onRate={rate => command("rate", { rate })}
+          canPlay={connected && can("playback")} canSeek={connected && can("seek")} canRate={connected && can("playback")} canSource={connected && can("changeSource")}
+          onFullscreen={() => void toggleStageFullscreen()} fullscreen={cinemaFullscreen}
+          sources={[...new Map([playback.media.source, ...playback.media.sources].map(source => [source.url, source])).values()].map(source => ({ value: source.url, label: source.label }))}
+          source={playback.media.source.url} onSource={url => { const source = playback.media.sources.find(item => item.url === url); if (source) command("source", { source, time: (isListeningRoom ? audioRef.current : videoRef.current)?.currentTime }); }}
+          settingsOpen={settingsOpen} onSettings={open => { clearHudTimer(); setSettingsOpen(open); if (open) { setStagePanel(null); setSubtitlesOpen(false); } }}
+          onSubtitles={!isListeningRoom ? () => { clearHudTimer(); setStagePanel(null); setSettingsOpen(false); setSubtitlesOpen(value => !value); } : undefined}
+          onVisibility={setHudVisible} panelOpen={Boolean(stagePanel || subtitlesOpen)}
+          extras={<>
+            <button type="button" onClick={() => toggleStagePanel("reactions")} aria-expanded={stagePanel === "reactions"} aria-label="Reactions"><SmilePlus /> Reactions</button>
+            <button type="button" onClick={() => toggleStagePanel("chat")} aria-expanded={stagePanel === "chat"} aria-label="Room chat"><MessageCircle /> Chat{roomChat.length > 0 && <small>{Math.min(roomChat.length, 99)}</small>}</button>
+          </>}
+        />
         {!isListeningRoom && <PlayerSubtitles videoRef={videoRef} itemId={playback.media.itemId} title={playback.media.title} sourceKey={playback.media.source.url} sourceLabel={playback.media.source.label} sourceSubtitleUrl={playback.media.source.subtitleUrl ?? null} open={subtitlesOpen} onClose={() => setSubtitlesOpen(false)} selection={snapshot.subtitle} onSelectionChange={changeSubtitle} canChange={can("subtitles")} shared />}
       </div>
       <section className="party-queue">
@@ -758,10 +731,6 @@ function PartyTitleDetails({ media }: { media: PartyMedia }) {
       )}
     </section>
   );
-}
-
-function isStageUiTarget(target: EventTarget | null) {
-  return target instanceof Element && Boolean(target.closest("button, input, select, textarea, form, a, [role='button'], [data-player-ui='true'], .party-accessibility, .party-voice, .party-camera-dock, .subtitle-panel, .party-player-settings"));
 }
 
 function formatCompact(value: number) {

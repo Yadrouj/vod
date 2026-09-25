@@ -2,8 +2,9 @@
 
 import { enterPlayerFullscreen } from "@/lib/player-fullscreen";
 
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
-import { Captions, Cast, ListVideo, Maximize, Minimize, Pause, PictureInPicture2, Play, Settings, SkipForward, Volume2, VolumeX, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Play } from "lucide-react";
+import { MediaPlayerControls } from "./media-player-controls";
 import { BrandLoader } from "@/components/brand-loader";
 import { PlayerSubtitles } from "@/components/player-subtitles";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
@@ -15,13 +16,6 @@ import Link from "next/link";
 import { PlaybackHelp } from "@/components/playback-help";
 import { isDonyayeSerial, regionalPlaybackHint } from "@/lib/playback-help";
 import styles from "./vod-player.module.css";
-
-type CastableVideo = HTMLVideoElement & {
-  webkitShowPlaybackTargetPicker?: () => void;
-  remote?: {
-    prompt?: () => Promise<void>;
-  };
-};
 
 export function VodPlayer({
   title,
@@ -42,12 +36,9 @@ export function VodPlayer({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerFrameRef = useRef<HTMLDivElement>(null);
-  const controlsTimerRef = useRef<number | null>(null);
-  const previewTimeRef = useRef(Number.NaN);
   const bufferedRef = useRef(0);
   const playAfterSourceReadyRef = useRef(false);
   const pendingSeekRef = useRef<number | null>(null);
-  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [choiceIndex, setChoiceIndex] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [speed, setSpeed] = useState("1");
@@ -56,7 +47,6 @@ export function VodPlayer({
   const [duration, setDuration] = useState(0);
   const [time, setTime] = useState(0);
   const [buffered, setBuffered] = useState(0);
-  const [preview, setPreview] = useState<{ x: number; time: number } | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [subtitlesOpen, setSubtitlesOpen] = useState(false);
   const [selectionOpen, setSelectionOpen] = useState(false);
@@ -109,31 +99,11 @@ export function VodPlayer({
     return () => { current = false; };
   }, [initialSource, playableSources]);
 
-  useEffect(() => () => { if (clickTimerRef.current) clearTimeout(clickTimerRef.current); }, []);
-
-  useEffect(() => {
-    if (!settingsOpen) return;
-    const dismiss = (event: PointerEvent) => {
-      if (!(event.target as HTMLElement).closest('[data-player-settings], [data-settings-trigger], dialog')) setSettingsOpen(false);
-    };
-    document.addEventListener('pointerdown', dismiss);
-    return () => document.removeEventListener('pointerdown', dismiss);
-  }, [settingsOpen]);
-
   useEffect(() => {
     const syncFullscreen = () => setFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", syncFullscreen);
     return () => document.removeEventListener("fullscreenchange", syncFullscreen);
   }, []);
-
-  useEffect(() => {
-    if (controlsTimerRef.current) window.clearTimeout(controlsTimerRef.current);
-    if (paused || settingsOpen || subtitlesOpen || selectionOpen) return;
-    controlsTimerRef.current = window.setTimeout(() => setControlsVisible(false), 2600);
-    return () => {
-      if (controlsTimerRef.current) window.clearTimeout(controlsTimerRef.current);
-    };
-  }, [active?.url, paused, selectionOpen, settingsOpen, subtitlesOpen]);
 
   function saveProgress(value: number) {
     if (!active?.url || !Number.isFinite(value) || value < 3) return;
@@ -178,7 +148,7 @@ export function VodPlayer({
   function togglePlay() {
     const video = videoRef.current;
     if (!video || !sourceReady || !active?.url) return;
-    revealControls();
+    setControlsVisible(true);
     if (video.paused) {
       setBuffering(true);
       video.play().catch(() => {
@@ -199,30 +169,9 @@ export function VodPlayer({
     setTime(next);
   }
 
-  function skip(seconds: number) {
-    const video = videoRef.current;
-    if (!video) return;
-    seek(String(video.currentTime + seconds));
-    revealControls();
-  }
-
   function updateSpeed(value: string) {
     setSpeed(value);
     if (videoRef.current) videoRef.current.playbackRate = Number(value);
-  }
-
-  function updateVolume(value: string) {
-    const next = Math.max(0, Math.min(1, Number(value)));
-    setVolume(String(next));
-    if (videoRef.current) { videoRef.current.volume = next; videoRef.current.muted = next === 0; }
-  }
-
-  function toggleMuted() {
-    const video = videoRef.current;
-    if (!video) return;
-    video.muted = !video.muted;
-    setMuted(video.muted);
-    revealControls();
   }
 
   function changeSource(value: string) {
@@ -257,67 +206,6 @@ export function VodPlayer({
     } catch { setMessage(locale === "fa" ? "تمام‌صفحه در این مرورگر در دسترس نیست." : "Fullscreen is unavailable in this browser."); }
   }
 
-  async function openPictureInPicture() {
-    const video = videoRef.current;
-    if (!video || !document.pictureInPictureEnabled) {
-      setMessage(t.player.pipUnavailable);
-      return;
-    }
-    try {
-      await video.requestPictureInPicture();
-    } catch {
-      setMessage(t.player.pipFailed);
-    }
-  }
-
-  async function castVideo() {
-    const video = videoRef.current as CastableVideo | null;
-    if (!video) return;
-    try {
-      if (video.remote?.prompt) {
-        await video.remote.prompt();
-        return;
-      }
-      if (video.webkitShowPlaybackTargetPicker) {
-        video.webkitShowPlaybackTargetPicker();
-        return;
-      }
-      setMessage(t.player.castUnavailable);
-    } catch {
-      setMessage(t.player.castFailed);
-    }
-  }
-
-  function revealControls() {
-    setControlsVisible(true);
-    if (controlsTimerRef.current) window.clearTimeout(controlsTimerRef.current);
-    if (!paused && !settingsOpen && !subtitlesOpen && !selectionOpen) {
-      controlsTimerRef.current = window.setTimeout(() => setControlsVisible(false), 2600);
-    }
-  }
-
-  function handlePointerLeave() {
-    if (!paused && !settingsOpen && !subtitlesOpen && !selectionOpen) {
-      if (controlsTimerRef.current) window.clearTimeout(controlsTimerRef.current);
-      controlsTimerRef.current = window.setTimeout(() => setControlsVisible(false), 850);
-    }
-  }
-
-  function showTimelinePreview(event: MouseEvent<HTMLDivElement>) {
-    if (duration <= 0) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
-    const next = ratio * duration;
-    if (Math.abs(previewTimeRef.current - next) < 0.45) return;
-    previewTimeRef.current = next;
-    setPreview({ x: ratio * 100, time: next });
-  }
-
-  function clearTimelinePreview() {
-    previewTimeRef.current = Number.NaN;
-    setPreview(null);
-  }
-
   function confirmSource() {
     changeSource(String(choiceIndex));
     playAfterSourceReadyRef.current = true;
@@ -346,24 +234,6 @@ export function VodPlayer({
         dir="ltr"
         tabIndex={0}
         aria-label={locale === "fa" ? "پلیر ویدئو؛ فاصله برای پخش، جهت‌ها برای جابه‌جایی" : "Video player: Space to play, arrows to seek"}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") { setSettingsOpen(false); setSubtitlesOpen(false); return; }
-          if ((event.target as HTMLElement).closest("button, input, select, textarea, a") || selectionOpen) return;
-          if (event.ctrlKey || event.metaKey || event.altKey) return;
-          const key = event.key.toLowerCase();
-          if ([" ", "k", "j", "l", "arrowleft", "arrowright", "arrowup", "arrowdown", "f", "m"].includes(key) || /^\d$/.test(key)) { event.preventDefault(); revealControls(); }
-          if (key === " " || key === "k") togglePlay();
-          if (key === "arrowleft" || key === "j") skip(key === "j" ? -10 : -5);
-          if (key === "arrowright" || key === "l") skip(key === "l" ? 10 : 5);
-          if (key === "arrowup" || key === "arrowdown") updateVolume(String(Number(volume) + (key === "arrowup" ? .05 : -.05)));
-          if (/^\d$/.test(key)) seek(String(duration * Number(key) / 10));
-          if (key === "f") void toggleFullscreen();
-          if (key === "m") toggleMuted();
-        }}
-        onMouseMove={revealControls}
-        onMouseLeave={handlePointerLeave}
-        onFocusCapture={revealControls}
-        onTouchStart={revealControls}
       >
         <video
           ref={videoRef}
@@ -423,21 +293,7 @@ export function VodPlayer({
           onPlaying={() => setBuffering(false)}
           onPlay={() => { setPaused(false); setControlsVisible(true); }}
           onPause={() => { setPaused(true); setControlsVisible(true); }}
-          onVolumeChange={(event) => setMuted(event.currentTarget.muted)}
-          onClick={event => {
-            if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
-            if (event.detail > 1) return;
-            const touchMode = matchMedia('(pointer: coarse)').matches;
-            if (touchMode && !controlsShowing) { revealControls(); return; }
-            clickTimerRef.current = setTimeout(() => { if (touchMode) revealControls(); else togglePlay(); }, 230);
-          }}
-          onDoubleClick={event => {
-            if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
-            if (matchMedia('(pointer: coarse)').matches) {
-              const rect = event.currentTarget.getBoundingClientRect();
-              skip(event.clientX < rect.left + rect.width / 2 ? -10 : 10);
-            } else void toggleFullscreen();
-          }}
+          onVolumeChange={(event) => { setMuted(event.currentTarget.muted); setVolume(String(event.currentTarget.volume)); }}
           onError={(event) => {
             setBuffering(false);
             setMediaError(event.currentTarget.error?.code ?? 2);
@@ -450,10 +306,6 @@ export function VodPlayer({
             <BrandLoader label={t.common.loading} compact />
           </div>
         )}
-
-        <button className="player-center" type="button" onClick={togglePlay} disabled={!active?.url || !sourceReady} aria-label={paused ? t.common.play : t.player.pause}>
-          {paused ? <Play size={30} fill="currentColor" /> : <Pause size={30} fill="currentColor" />}
-        </button>
 
         {!active?.url && (
           <div className="player-no-full-source" role="status" dir={locale === "fa" ? "rtl" : "ltr"}>
@@ -471,87 +323,16 @@ export function VodPlayer({
           {message && <span>{message}</span>}
         </div>
 
-        <div className="player-bar">
-          <div className="player-timeline-wrap" onMouseMove={showTimelinePreview} onMouseLeave={clearTimelinePreview}>
-            {preview && duration > 0 && <div className={styles.preview} style={{ left: `clamp(36px, ${preview.x}%, calc(100% - 36px))` }}>{formatTime(preview.time)}</div>}
-            <span className="player-timeline-track" aria-hidden="true">
-              <span className="player-buffer-progress" style={{ width: `${buffered}%` }} />
-              <span className="player-played-progress" style={{ width: `${duration > 0 ? Math.min(100, (time / duration) * 100) : 0}%` }} />
-            </span>
-            <input
-              className="player-timeline"
-              type="range"
-              min="0"
-              max={duration || 0}
-              step="0.1"
-              value={Math.min(time, duration || 0)}
-              onChange={(event) => seek(event.target.value)}
-              disabled={!duration}
-              aria-label={locale === "fa" ? "جابه‌جایی زمان پخش" : "Seek"}
-              aria-valuetext={`${formatTime(time)} / ${formatTime(duration)}`}
-            />
-          </div>
-
-          <div className="player-actions">
-            <div className="player-actions-start">
-              <button type="button" className="player-btn player-btn-primary player-btn-icon" onClick={togglePlay} aria-label={paused ? t.common.play : t.player.pause} title={paused ? t.common.play : t.player.pause}>{paused ? <Play size={18} fill="currentColor" /> : <Pause size={18} fill="currentColor" />}</button>
-              {nextEpisodeIndex >= 0 && <button type="button" className="player-btn player-btn-icon" onClick={() => changeSource(String(nextEpisodeIndex))} aria-label={locale === "fa" ? "قسمت بعدی" : "Next episode"} title={locale === "fa" ? "قسمت بعدی" : "Next episode"}><SkipForward size={20} fill="currentColor" /></button>}
-              <span className="player-time">{formatTime(time)} <span className={styles.duration}><i>/</i> {formatTime(duration)}</span></span>
-              <label className="player-volume" title={t.player.volume}>
-                <button type="button" onClick={toggleMuted} aria-label={muted ? "Unmute" : "Mute"}>{muted || Number(volume) === 0 ? <VolumeX size={17} /> : <Volume2 size={17} />}</button>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={volume}
-                  onChange={(event) => updateVolume(event.target.value)}
-                  aria-label={t.player.volume}
-                />
-              </label>
-            </div>
-            <div className="player-actions-end">
-              {hasStructuredEpisodes && <button type="button" className="player-icon-btn" onClick={openEpisodes} aria-label={locale === "fa" ? "قسمت‌ها" : "Episodes"} title={locale === "fa" ? "قسمت‌ها" : "Episodes"}><ListVideo size={20} /></button>}
-              <button type="button" className={`player-icon-btn ${subtitlesOpen ? "is-active" : ""}`} onClick={() => { setSubtitlesOpen((value) => !value); setSettingsOpen(false); }} aria-label="Subtitles" title="Subtitles">
-                <Captions size={17} />
-              </button>
-              <button type="button" data-settings-trigger aria-expanded={settingsOpen} className={`player-icon-btn ${settingsOpen ? "is-active" : ""}`} onClick={() => { setSettingsOpen((value) => !value); setSubtitlesOpen(false); }} aria-label={t.player.settings} title={t.player.settings}>
-                <Settings size={17} />
-              </button>
-              <button type="button" className="player-btn player-btn-icon" onClick={toggleFullscreen} aria-label={fullscreen ? "Exit fullscreen" : t.player.full} title={fullscreen ? "Exit fullscreen" : t.player.full}>{fullscreen ? <Minimize size={17} /> : <Maximize size={17} />}</button>
-            </div>
-          </div>
-        </div>
-
-        {settingsOpen && (
-          <ResponsiveDialog mobileOnly open={settingsOpen} onClose={() => setSettingsOpen(false)} title={t.player.settings} description={title} closeLabel={locale === "fa" ? "بستن" : "Close"} dir={locale === "fa" ? "rtl" : "ltr"}>
-          <div className={styles.settings} data-player-settings role="group" aria-label={t.player.settings} dir={locale === "fa" ? "rtl" : "ltr"}>
-            <header><strong>{t.player.settings}</strong><button type="button" onClick={() => setSettingsOpen(false)} aria-label={locale === "fa" ? "بستن" : "Close"}><X size={18} /></button></header>
-            <label>
-              <span className="label">{t.player.quality}</span>
-              <select className="select" aria-label={t.player.quality} value={activeIndex} onChange={(event) => changeSource(event.target.value)}>
-                {(hasStructuredEpisodes ? episodeVariants : sources.map((source, index) => ({source, index}))).map(({source, index}) => (
-                  <option key={`${source.url}-${index}`} value={index}>
-                    {playbackSourceLabel(source, index, false, t.player.source)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className={styles.extra}><button type="button" onClick={openPictureInPicture}><PictureInPicture2 size={18} />{locale === "fa" ? "تصویر در تصویر" : "Picture in picture"}</button><button type="button" onClick={castVideo}><Cast size={18} />{t.player.cast}</button></div>
-            {hasStructuredEpisodes && <button type="button" onClick={openEpisodes}><ListVideo size={18} />{locale === "fa" ? "انتخاب قسمت" : "Choose episode"}</button>}
-            <label>
-              <span className="label">{t.player.speed}</span>
-              <select className="select" aria-label={t.player.speed} value={speed} onChange={(event) => updateSpeed(event.target.value)}>
-                {["0.5", "0.75", "1", "1.25", "1.5", "2"].map((value) => (
-                  <option key={value} value={value}>
-                    {value}x
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          </ResponsiveDialog>
-        )}
+        <MediaPlayerControls
+          frameRef={playerFrameRef} mediaRef={videoRef} paused={paused} time={time} duration={duration} buffered={buffered}
+          rate={Number(speed)} onRate={value => updateSpeed(String(value))} onPlay={togglePlay} onSeek={value => seek(String(value))}
+          onFullscreen={() => void toggleFullscreen()} fullscreen={fullscreen} locale={locale} canPlay={Boolean(active?.url && sourceReady)}
+          sources={(hasStructuredEpisodes ? episodeVariants : sources.map((source, index) => ({ source, index }))).map(({ source, index }) => ({ value: String(index), label: playbackSourceLabel(source, index, false, t.player.source) }))}
+          source={String(activeIndex)} onSource={changeSource} settingsOpen={settingsOpen} onSettings={open => { setSettingsOpen(open); if (open) setSubtitlesOpen(false); }}
+          onSubtitles={itemId ? () => { setSubtitlesOpen(value => !value); setSettingsOpen(false); } : undefined}
+          onEpisodes={hasStructuredEpisodes ? openEpisodes : undefined} onNext={nextEpisodeIndex >= 0 ? () => changeSource(String(nextEpisodeIndex)) : undefined}
+          onVisibility={setControlsVisible} panelOpen={subtitlesOpen || selectionOpen}
+        />
         {itemId && (
           <PlayerSubtitles
             locale={locale}
@@ -615,7 +396,7 @@ export function VodPlayer({
       </div>
       {mediaError > 0 && active && <PlaybackHelp key={active.url} link={active} code={mediaError} fa={locale === "fa"} itemId={itemId}
         onRetry={() => { setMediaError(0); setMessage(""); playAfterSourceReadyRef.current = true; videoRef.current?.load(); }}
-        onChoose={() => { setSettingsOpen(true); revealControls(); playerFrameRef.current?.scrollIntoView({ block: "center", behavior: "auto" }); }} />}
+        onChoose={() => { setSettingsOpen(true); setControlsVisible(true); playerFrameRef.current?.scrollIntoView({ block: "center", behavior: "auto" }); }} />}
     </div>
   );
 }

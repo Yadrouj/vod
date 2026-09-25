@@ -268,6 +268,15 @@ export function PlayerSubtitles({
     onSelectionChange?.(next);
   }
 
+  const lastEnabledSelection = useRef<SubtitleSelection>(AUTO_SUBTITLE_SELECTION);
+  useEffect(() => {
+    if (activeSelection.mode !== "off") lastEnabledSelection.current = activeSelection;
+    const video = videoRef.current;
+    const toggle = () => choose(activeSelection.mode === "off" ? lastEnabledSelection.current : OFF_SUBTITLE_SELECTION);
+    video?.addEventListener("sarvnema:toggle-captions", toggle);
+    return () => video?.removeEventListener("sarvnema:toggle-captions", toggle);
+  });
+
   async function addLocalFile(file: File | undefined) {
     if (!file || !canChange) return;
     if (file.size > (shared ? LOCAL_SUBTITLE_LIMIT : 2 * 1024 * 1024)) {

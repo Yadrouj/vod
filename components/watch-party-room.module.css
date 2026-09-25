@@ -1,0 +1,32 @@
+.room .stage { position: relative; overflow: hidden; background: #000; }
+.room .stage > video { object-fit: contain; }
+.room .stage :global(.party-cinema-shade) { pointer-events: none; z-index: 1; }
+.room .stage :global(.party-camera-dock) { top: 82px; bottom: auto; left: 12px; right: auto; width: auto; max-width: calc(100% - 24px); max-height: 34%; display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; padding: 3px; transform: none; z-index: 35; opacity: 1; pointer-events: auto; }
+.room .stage :global(.party-camera-item) { width: 80px; flex: 0 0 80px; }
+.room .stage :global(.party-camera-tile) { width: 76px; height: 76px; min-height: 0; animation: none !important; background: #171717; border: 2px solid #ffffff50; box-shadow: none; }
+.room .stage :global(.party-camera-tile.is-speaking) { border-color: #9aeab9; box-shadow: 0 0 0 2px #9aeab933; }
+.room .stage :global(.party-camera-tile.is-interpreter) { border-color: #eed17b; }
+.room .stage :global(.party-camera-caption) { opacity: 1; }
+.room .stage :global(.party-camera-move) { display: none; }
+.room .stage :global(.party-camera-stop) { width: 32px; height: 32px; top: 0; right: 0; }
+.room .stage :global(.party-chat-peek) { bottom: 135px; }
+.room .stage :global(.party-stage-reaction-tray) { bottom: 135px; max-width: calc(100% - 24px); }
+.room .stage :global(.party-accessibility) { inset: 12px auto auto 10px; height: auto; width: auto; }
+.room .stage :global(.party-accessibility-toggle) { width: 44px; height: 44px; min-height: 44px; padding: 8px; display: grid; grid-template-columns: 1fr; border-radius: 50% !important; }
+.room .stage :global(.party-accessibility-toggle span) { display: none; }
+.room .stage :global(.party-listening-copy) { bottom: 140px; }
+.room .stage :global(.party-listening-wave) { display: none; }
+.room .stage :global(.party-listening-wave i) { animation: none; }
+.room .stage[data-theater="true"] { max-height: 90dvh; width: 100%; }
+.room:has([data-theater="true"]) { grid-template-columns: 1fr; }
+@media (max-width: 760px) {
+  .room .stage:not(:global(.is-cinema-fullscreen)) { aspect-ratio: 4/3; min-height: 270px; }
+  .room .stage:global(.party-listening-stage):not(:global(.is-cinema-fullscreen)) { aspect-ratio: auto; min-height: 460px; }
+  .room .stage :global(.party-camera-dock) { top: 76px; max-height: 70px; gap: 4px; max-width: calc(50% - 24px); }
+  .room .stage :global(.party-camera-item) { width: 52px; flex-basis: 52px; }
+  .room .stage :global(.party-camera-tile) { width: 48px; height: 48px; }
+  .room .stage :global(.party-camera-caption) { display: none; }
+  .room .stage :global(.party-camera-network) { top: 30px; }
+  .room .stage :global(.party-listening-copy h2) { font-size: 20px; }
+}
+@media (max-height: 500px) and (orientation: landscape) { .room .stage :global(.party-camera-dock) { top: 78px; max-height: 30%; } }

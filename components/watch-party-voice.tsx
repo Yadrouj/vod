@@ -1,11 +1,12 @@
 "use client";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 
-import { Accessibility, Camera, CameraOff, FileAudio, Headphones, Mic, MicOff, Move, PhoneOff, Radio, RefreshCw, ShieldAlert, ShieldCheck, Square, Upload, Users, Volume2, Wifi, WifiOff } from "lucide-react";
+import { Accessibility, Camera, CameraOff, FileAudio, Headphones, LoaderCircle, Mic, MicOff, MoreHorizontal, Move, PhoneOff, RefreshCw, ShieldAlert, ShieldCheck, Square, Upload, Users, Volume2, Wifi, WifiOff } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import type { Socket } from "socket.io-client";
 import { showAppMessage } from "@/lib/app-messages";
 import type { PartyParticipant, PartyProfile, PartySharedAudio } from "@/lib/watch-party-types";
+import styles from "./watch-party-voice.module.css";
 
 type VoiceSignal = {
   fromUserId: string;
@@ -87,6 +88,9 @@ export function WatchPartyVoice({
   const audioContainerRef = useRef<HTMLDivElement>(null);
   const cameraDragRef = useRef<CameraDrag | null>(null);
   const joinedRef = useRef(false);
+  const talkingRef = useRef(false);
+  const captureEpochRef = useRef(0);
+  const startingRef = useRef(false);
   const cameraEnabledRef = useRef(false);
   const iceServersRef = useRef<RTCIceServer[]>(fallbackIceServers);
   const participantsRef = useRef(participants);
@@ -117,7 +121,7 @@ export function WatchPartyVoice({
   const me = participants.find((participant) => participant.id === profile.id);
   const mutedByHost = Boolean(me?.mutedByHost);
   const interpreterActive = interpreterUserId === profile.id;
-  const panelVisible = controlsVisible && panelOpen;
+  const panelVisible = panelOpen;
   const talkers = participants.filter((participant) => activeTalkers.has(participant.id));
   const visibleCameras = participants
     .filter((participant) => cameraUsers.has(participant.id) && !mutedLocally.has(participant.id))
@@ -176,6 +180,8 @@ export function WatchPartyVoice({
       socket.off("voice:music-share-force-off", onForceMusicOff);
       if (joinedRef.current) socket.emit("voice:leave", { roomId });
       joinedRef.current = false;
+      captureEpochRef.current += 1;
+      talkingRef.current = false;
       for (const peer of peersRef.current.values()) peer.close();
       peersRef.current.clear();
       for (const audio of remoteAudioRef.current.values()) audio.remove();
@@ -208,8 +214,28 @@ export function WatchPartyVoice({
   }, []);
 
   useEffect(() => {
-    for (const [userId, audio] of remoteAudioRef.current) audio.muted = shouldMute(userId);
+    for (const audio of remoteAudioRef.current.values()) audio.muted = shouldMute(audio.dataset.voiceUser ?? "");
   }, [mutedLocally, participants]);
+
+  useEffect(() => {
+    // Releasing outside the button, changing tabs or losing the socket must
+    // never leave the microphone broadcasting.
+    const release = () => stopTalking();
+    const hidden = () => { if (document.hidden) release(); };
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", release);
+    window.addEventListener("blur", release);
+    document.addEventListener("visibilitychange", hidden);
+    socket.on("disconnect", release);
+    return () => {
+      release();
+      window.removeEventListener("pointerup", release);
+      window.removeEventListener("pointercancel", release);
+      window.removeEventListener("blur", release);
+      document.removeEventListener("visibilitychange", hidden);
+      socket.off("disconnect", release);
+    };
+  }, [socket, roomId]);
 
   useEffect(() => {
     if (!mutedByHost || !talking) return;
@@ -244,13 +270,18 @@ export function WatchPartyVoice({
   }, [joined]);
 
   async function joinVoice() {
-    if (joining || microphoneReady) return;
+    if (startingRef.current || microphoneReady) return;
     const preflightIssue = mediaPreflightIssue("microphone");
     if (preflightIssue) return reportIssue(preflightIssue);
     setJoining(true);
+    startingRef.current = true;
+    const epoch = captureEpochRef.current;
+    let captured: MediaStream | null = null;
     setVoiceIssue(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
+      captured = stream;
+      if (epoch !== captureEpochRef.current) { stream.getTracks().forEach(track => track.stop()); return; }
       const audioTrack = stream.getAudioTracks()[0];
       if (!audioTrack) throw new DOMException("No microphone track was created.", "NotFoundError");
       audioTrack.enabled = false;
@@ -263,24 +294,29 @@ export function WatchPartyVoice({
         await replaceTrackForAll("audio", audioTrack);
       }
       setMicrophoneReady(true);
-      setPanelOpen(true);
-      showAppMessage({ title: "Voice Lounge is ready 🎙️", message: "Hold the button to talk. Your mic stays muted when you let go.", tone: "success" });
     } catch (reason) {
+      captured?.getTracks().forEach(track => { track.stop(); localStreamRef.current?.removeTrack(track); });
+      microphoneTrackRef.current = null;
+      if (epoch !== captureEpochRef.current) return;
       const issue = describeMediaIssue(reason, "microphone");
       if (issue.kind === "denied") setPermissionState("denied");
       reportIssue(issue);
     } finally {
+      startingRef.current = false;
       setJoining(false);
     }
   }
 
   async function joinMediaSession(initialStream: MediaStream) {
     if (joinedRef.current) return;
+    const epoch = captureEpochRef.current;
     const iceServers = await loadIceServers();
+    if (epoch !== captureEpochRef.current) { initialStream.getTracks().forEach(track => track.stop()); throw new Error("Media session closed"); }
     iceServersRef.current = iceServers;
     localStreamRef.current = initialStream;
     joinedRef.current = true;
     const result = await emitJoinVoice(socket, roomId);
+    if (epoch !== captureEpochRef.current) { initialStream.getTracks().forEach(track => track.stop()); socket.emit("voice:leave", { roomId }); throw new Error("Media session closed"); }
     if (!result.ok) {
       joinedRef.current = false;
       throw new Error(result.error ?? "The media room is unavailable.");
@@ -290,7 +326,6 @@ export function WatchPartyVoice({
     setActiveTalkers(new Set(result.talking ?? []));
     setCameraUsers(new Set(result.cameras ?? []));
     setJoined(true);
-    setPanelOpen(true);
     for (const userId of peers) await makeOffer(userId);
   }
 
@@ -320,7 +355,7 @@ export function WatchPartyVoice({
   }
 
   function startTalking() {
-    if (!joinedRef.current || talking || !microphoneReady) return;
+    if (!joinedRef.current || talkingRef.current || !microphoneTrackRef.current || !socket.connected) return;
     if (mutedByHost) {
       showAppMessage({ title: "Push-to-talk is muted", message: "The host currently has your room microphone muted.", tone: "warning" });
       return;
@@ -328,6 +363,7 @@ export function WatchPartyVoice({
     const track = microphoneTrackRef.current;
     if (!track) return;
     track.enabled = true;
+    talkingRef.current = true;
     setTalking(true);
     setActiveTalkers((current) => new Set(current).add(profile.id));
     socket.emit("voice:talking", { roomId, active: true });
@@ -336,7 +372,8 @@ export function WatchPartyVoice({
   function stopTalking() {
     const track = microphoneTrackRef.current;
     if (track) track.enabled = false;
-    if (!talking) return;
+    if (!talkingRef.current) return;
+    talkingRef.current = false;
     setTalking(false);
     setActiveTalkers((current) => without(current, profile.id));
     socket.emit("voice:talking", { roomId, active: false });
@@ -426,7 +463,7 @@ export function WatchPartyVoice({
   }
 
   async function startCamera() {
-    if (cameraStarting || cameraEnabledRef.current) return;
+    if (startingRef.current || cameraEnabledRef.current) return;
     if (!cameraAllowed) {
       showAppMessage({ title: "Camera needs host permission", message: "Ask the room creator to enable Stream camera for you.", tone: "warning" });
       return;
@@ -434,11 +471,16 @@ export function WatchPartyVoice({
     const preflightIssue = mediaPreflightIssue("camera");
     if (preflightIssue) return reportIssue(preflightIssue);
     setCameraStarting(true);
+    startingRef.current = true;
+    const epoch = captureEpochRef.current;
+    let capturedStream: MediaStream | null = null;
     try {
       const captured = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: { width: { ideal: 640, max: 960 }, height: { ideal: 360, max: 540 }, frameRate: { ideal: 15, max: 24 }, facingMode: "user" },
       });
+      capturedStream = captured;
+      if (epoch !== captureEpochRef.current) { captured.getTracks().forEach(track => track.stop()); return; }
       const videoTrack = captured.getVideoTracks()[0];
       if (!videoTrack) throw new DOMException("No camera track was created.", "NotFoundError");
       videoTrack.contentHint = "motion";
@@ -454,9 +496,9 @@ export function WatchPartyVoice({
       cameraEnabledRef.current = true;
       setCameraEnabled(true);
       setCameraUsers(new Set(result.cameras ?? [profile.id]));
-      setPanelOpen(true);
-      showAppMessage({ title: "You are on camera 📹", message: "Your preview is live in the room. Tap Camera off whenever you want.", tone: "success" });
     } catch (reason) {
+      capturedStream?.getTracks().forEach(track => track.stop());
+      if (epoch !== captureEpochRef.current) return;
       const track = localStreamRef.current?.getVideoTracks()[0];
       track?.stop();
       if (track) localStreamRef.current?.removeTrack(track);
@@ -464,6 +506,7 @@ export function WatchPartyVoice({
       if (joinedRef.current) socket.emit("voice:camera", { roomId, active: false });
       reportIssue(describeMediaIssue(reason, "camera"));
     } finally {
+      startingRef.current = false;
       setCameraStarting(false);
     }
   }
@@ -642,6 +685,10 @@ export function WatchPartyVoice({
     for (const kind of ["audio", "video"] as const) {
       const track = kind === "audio" ? microphoneTrackRef.current : localStreamRef.current?.getVideoTracks()[0];
       const sender = mediaSender(peer, kind);
+      // Transceivers created by a remote offer default to receive-only. Merely
+      // replacing their sender track does not include it in the answer.
+      const transceiver = peer.getTransceivers().find(item => item.sender === sender);
+      if (transceiver && transceiver.direction !== "stopped") transceiver.direction = "sendrecv";
       if (sender && sender.track !== (track ?? null)) await sender.replaceTrack(track ?? null);
     }
   }
@@ -744,19 +791,29 @@ export function WatchPartyVoice({
         </div>
       )}
 
-      <div className={`party-voice ${panelVisible ? "is-open" : ""} ${talking ? "is-talking" : ""} ${controlsVisible ? "is-hud-visible" : "is-hud-hidden"}`} data-player-ui="true">
+      <div className={`${styles.voice} party-voice ${panelVisible ? "is-open" : ""} ${talking ? "is-talking" : ""}`} data-player-ui="true" data-voice-active={talking || cameraEnabled} data-controls-visible={controlsVisible}>
         {talkers.length > 0 && (
           <div className="party-voice-speakers">
             {talkers.slice(0, 3).map((participant) => <span key={participant.id} title={`${participant.name} is talking`}>{participant.avatarUrl ? <img src={participant.avatarUrl} alt="" /> : participant.name.slice(0, 1)}<i /></span>)}
           </div>
         )}
-        <button className="party-voice-toggle" type="button" onClick={() => setPanelOpen((value) => !value)} aria-expanded={panelVisible}>
-          <Radio size={17} />
-          <span><strong>Media Lounge</strong><small>{joined ? `${Math.max(peerIds.size, 1)} online` : "Voice + camera"}</small></span>
-        </button>
+        <div className={styles.toolbar} role="group" aria-label="Room microphone and camera">
+          <button type="button" className={`${styles.talk} ${talking ? styles.live : ""}`} disabled={mutedByHost || joining || cameraStarting} aria-label={!microphoneReady ? "Enable microphone" : mutedByHost ? "Microphone muted by host" : "Hold to talk"} aria-pressed={talking}
+            onClick={() => { if (!microphoneReady) void joinVoice(); }}
+            onContextMenu={event => event.preventDefault()}
+            onPointerDown={event => { if (!microphoneReady || event.button !== 0) return; event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); startTalking(); }}
+            onPointerUp={stopTalking} onPointerCancel={stopTalking} onLostPointerCapture={stopTalking} onBlur={stopTalking}
+            onKeyDown={event => { if (microphoneReady && (event.key === " " || event.key === "Enter")) { event.preventDefault(); if (!event.repeat) startTalking(); } }}
+            onKeyUp={event => { if (microphoneReady && (event.key === " " || event.key === "Enter")) { event.preventDefault(); stopTalking(); } }}>
+            {joining ? <LoaderCircle className="is-spinning" /> : mutedByHost ? <MicOff /> : <Mic />}<span>{joining ? "Connecting…" : talking ? "Release to mute" : microphoneReady ? "Hold to talk" : "Microphone"}</span>
+          </button>
+          <button type="button" disabled={cameraStarting || joining || !cameraAllowed} aria-label={cameraEnabled ? "Turn camera off" : "Turn camera on"} title={cameraControlLabel} aria-pressed={cameraEnabled} className={cameraEnabled ? styles.live : ""} onClick={() => cameraEnabled ? stopCamera(false) : void startCamera()}>{cameraStarting ? <LoaderCircle className="is-spinning" /> : cameraEnabled ? <CameraOff /> : <Camera />}</button>
+          <button type="button" aria-label="Voice and camera options" aria-expanded={panelVisible} onClick={() => { stopTalking(); setPanelOpen(value => !value); }}><MoreHorizontal /></button>
+        </div>
+        <span className={styles.status} role="status">{mutedByHost ? "Muted by host" : talking ? "Microphone live" : cameraEnabled ? "Camera on" : microphoneReady ? "Mic muted · hold to speak" : ""}</span>
         {panelVisible && (
-          <ResponsiveDialog open mobileOnly onClose={() => setPanelOpen(false)} title="صدا و دوربین" description="میکروفون و دوربین فقط با انتخاب شما روشن می‌شوند." closeLabel="بستن صدا و دوربین">
-          <div className="party-voice-panel">
+          <ResponsiveDialog open onClose={() => { stopTalking(); setPanelOpen(false); }} title="Voice & camera" description="Hold to talk. Release to mute." closeLabel="Close voice and camera" dir="ltr" theme={isListeningRoom ? "music" : "cinema"}>
+          <div className={`${styles.panel} party-voice-panel`}>
             <div className="party-voice-copy"><Headphones size={19} /><span><strong>Voice & camera</strong><small>Private until you turn them on.</small></span></div>
             {joined && <div className={`party-network-quality is-${network.quality}`}>{network.quality === "weak" ? <WifiOff size={15} /> : <Wifi size={15} />}<span><strong>{networkLabel}</strong><small>{network.rttMs !== null ? `${network.rttMs} ms` : "Direct WebRTC"}{network.loss !== null ? ` · ${network.loss.toFixed(1)}% loss` : ""}</small></span></div>}
             {voiceIssue && <div className={`party-voice-permission is-${voiceIssue.kind}`} role="alert"><ShieldAlert size={18} /><div><strong>{voiceIssue.title}</strong><p>{voiceIssue.message}</p><small>{voiceIssue.hint}</small></div></div>}
@@ -892,7 +949,7 @@ const fallbackIceServers: RTCIceServer[] = [
 
 async function loadIceServers() {
   try {
-    const response = await fetch("/api/watch-party/ice-config");
+    const response = await fetch("/api/watch-party/ice-config", { signal: AbortSignal.timeout(4000) });
     if (!response.ok) return fallbackIceServers;
     const data = await response.json() as { iceServers?: RTCIceServer[] };
     return Array.isArray(data.iceServers) && data.iceServers.length ? data.iceServers : fallbackIceServers;

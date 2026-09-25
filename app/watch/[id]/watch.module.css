@@ -4,6 +4,8 @@
 .header nav { display: flex; align-items: center; gap: 18px; font-size: 12px; }
 .header nav > a { min-height: 44px; display: flex; align-items: center; color: #c6c1b2; }
 .layout { max-width: 1500px; margin: 10px auto 0; display: grid; grid-template-columns: minmax(0,1fr) 260px; gap: 26px; direction: ltr; align-items: start; }
+.layout:has([data-theater="true"]) { max-width: none; grid-template-columns: minmax(0,1fr); }
+.layout:has([data-theater="true"]) .sidebar { display: none; }
 .main, .sidebar { min-width: 0; direction: ltr; }
 .page[dir=rtl] :is(.main,.sidebar) { direction: rtl; }
 .titleRow { display: flex; justify-content: space-between; gap: 20px; align-items: center; margin: 18px 0; }
