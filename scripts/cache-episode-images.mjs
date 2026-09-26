@@ -21,6 +21,7 @@ const concurrency = Math.min(8, Math.max(1, numberArg("--concurrency", 4)));
 const delayMs = Math.max(0, numberArg("--delay-ms", 150));
 const deadline = Number(process.env.MAINTENANCE_DEADLINE || Number.POSITIVE_INFINITY);
 const storeDir = episodeImageDir(ROOT);
+const statTimeoutMs = 2_000;
 
 function numberArg(name, fallback) {
   const raw = process.argv.find((value) => value.startsWith(`${name}=`))?.slice(name.length + 1);
@@ -29,7 +30,19 @@ function numberArg(name, fallback) {
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const exists = (file) => stat(file).then((info) => info.size > 0, () => false);
+async function exists(file) {
+  let watchdog;
+  try {
+    return await Promise.race([
+      stat(file).then((info) => info.size > 0, () => false),
+      new Promise((resolve) => {
+        watchdog = setTimeout(() => resolve(false), statTimeoutMs);
+      }),
+    ]);
+  } finally {
+    if (watchdog) clearTimeout(watchdog);
+  }
+}
 
 async function seriesIds() {
   if (only) return /^tt\d+$/.test(only) ? [only] : [];
