@@ -95,7 +95,16 @@ const imageDownloads = new Map<string, Promise<Uint8Array | null>>();
 export function storeEpisodeImage(url: string, file: string, request: typeof fetch = fetch) {
   let job = imageDownloads.get(file);
   if (!job) {
-    job = downloadEpisodeImage(url, file, request).catch(() => null).finally(() => imageDownloads.delete(file));
+    let watchdog: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<null>((resolve) => {
+      watchdog = setTimeout(() => resolve(null), EPISODE_IMAGE_TIMEOUT_MS + 1_000);
+    });
+    job = Promise.race([downloadEpisodeImage(url, file, request), timeout])
+      .catch(() => null)
+      .finally(() => {
+        if (watchdog) clearTimeout(watchdog);
+        imageDownloads.delete(file);
+      });
     imageDownloads.set(file, job);
   }
   return job;
