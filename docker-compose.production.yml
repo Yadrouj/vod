@@ -98,6 +98,36 @@ services:
       - vod_imdb_cache:/app/.media-cache
       - vod_episode_images:/app/.media-cache/episode-images
 
+  telegram-channel:
+    image: sarvnema-app
+    profiles: ["channel"]
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      BOT_API_TOKEN: ${BOT_API_TOKEN:-}
+      BOT_SITE_URL: http://app:3004
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://sarvnema.ir}
+      TELEGRAM_CHANNEL_ID: ${TELEGRAM_CHANNEL_ID:-@sarvnema}
+      TELEGRAM_CHANNEL_ENABLED: ${TELEGRAM_CHANNEL_ENABLED:-1}
+      TELEGRAM_CHANNEL_BATCH_SIZE: ${TELEGRAM_CHANNEL_BATCH_SIZE:-5}
+      TELEGRAM_CHANNEL_STATE_DIR: /app/.media-cache/telegram-channel
+    command: ["node", "scripts/telegram-channel.mjs", "--daemon"]
+    init: true
+    stop_grace_period: 60s
+    mem_limit: 512m
+    cpus: 0.5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - ./public/data:/app/public/data:ro
+      - vod_telegram_channel:/app/.media-cache/telegram-channel
+
   nginx:
     image: nginx:1.28-alpine
     depends_on:
@@ -116,3 +146,4 @@ volumes:
   nginx_cache:
   vod_imdb_cache:
   vod_episode_images:
+  vod_telegram_channel:

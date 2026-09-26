@@ -139,6 +139,11 @@ curl -fsS -H "x-bot-token: $BOT_API_TOKEN" "https://sarvnema.ir/api/bot/title/tt
 
 ## اجرای workerهای بات
 
+برای انتشار خودکار در کانال `@sarvnema`، سرویس جداگانهٔ `telegram-channel`
+و دستورهای فعال‌سازی در [راهنمای کانال تلگرام](./telegram-channel.md) آمده است.
+این سرویس هر پنج دقیقه داده‌های تازه را بررسی می‌کند؛ برای جلوگیری از ارسال
+تکراری، فقط یک نمونه اجرا کنید و volume وضعیت آن را حفظ کنید.
+
 در `docker-compose.production.yml` بات‌ها process جدا هستند. در `docker-compose.prod.yml` سرویس `telegram-bot` وجود دارد؛ آن را دوباره روی host اجرا نکنید. برای workerهای جدا، روی host با Node 22:
 
 ```bash

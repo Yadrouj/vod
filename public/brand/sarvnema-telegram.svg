@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">SarvNema Telegram avatar</title>
+  <desc id="desc">The SarvNema cypress and play mark in warm gold on deep evergreen, centred for a circular avatar.</desc>
+  <defs>
+    <radialGradient id="background" cx="38%" cy="25%" r="85%">
+      <stop stop-color="#24392f"/>
+      <stop offset=".6" stop-color="#101c17"/>
+      <stop offset="1" stop-color="#080e0b"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2=".8" y2="1">
+      <stop stop-color="#fff1bd"/>
+      <stop offset=".55" stop-color="#ebcf76"/>
+      <stop offset="1" stop-color="#bda05a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#background)"/>
+  <g transform="translate(128 128) scale(12)">
+    <path fill="url(#gold)" d="M32 4c11.6 10.6 18 22.2 18 34.1 0 12.1-7.6 20.2-18 21.9-10.4-1.7-18-9.8-18-21.9C14 26.2 20.4 14.6 32 4Z"/>
+    <path fill="#101c17" d="M30 25.2 43.4 32 30 38.8V25.2Z"/>
+    <path fill="#101c17" fill-opacity=".2" d="M31.8 10.8c4.9 8.3 7.5 17.1 7.5 26.4 0 7.6-2.4 13.8-7.3 18.5 8.6-2 13.6-8.5 13.6-17.5 0-9.6-4.8-18.8-13.8-27.4Z"/>
+  </g>
+</svg>

@@ -16,7 +16,10 @@ export function musicFingerprint(track) {
 }
 
 export function discoverPosts(updates, music, previous, now = Date.now()) {
-  const events = (updates.items ?? []).filter(e => e.status === 'available' && e.imdbCode && e.linksCount > 0)
+  const initializedAt = previous?.initializedAt || new Date(now).toISOString();
+  const earliest = Date.parse(initializedAt) - 7 * 86400000;
+  const events = (updates.items ?? []).filter(e => e.status === 'available' && e.imdbCode && e.linksCount > 0
+    && Date.parse(e.eventAt) >= earliest && Date.parse(e.eventAt) <= now)
     .map(e => ({ ...e, key: `vod:${e.id}`, type: 'vod' }));
   const fingerprints = {};
   for (const track of music.tracks ?? []) {
@@ -33,7 +36,15 @@ export function discoverPosts(updates, music, previous, now = Date.now()) {
       eventAt: previous?.music?.[track.id] ? new Date(now).toISOString() : track.publishedAt || new Date(now).toISOString(),
       imageUrl: track.coverUrl, sources });
   }
-  return { music: fingerprints, events: events.filter(e => previous || (Date.parse(e.eventAt) <= now && now - Date.parse(e.eventAt) <= 7 * 86400000)) };
+  return { initializedAt, music: fingerprints, events: events.filter(e => previous || (Date.parse(e.eventAt) <= now && now - Date.parse(e.eventAt) <= 7 * 86400000)) };
+}
+
+export function postHashtags(event, item = {}) {
+  const category = event.type === 'music' ? 'موسیقی' : event.kind === 'episode' || event.kind === 'series' ? 'سریال' : 'فیلم';
+  const tag = value => String(value || '').normalize('NFKC').replace(/[\u200c\u200d]/g, '')
+    .replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_+|_+$/g, '').slice(0, 48).replace(/_+$/g, '');
+  const names = [item.persianTitle || item.title || event.baseTitle || event.title, item.originalTitle || event.baseTitle];
+  return [...new Set(['سرونما', category, ...names.map(tag).filter(Boolean)])].map(value => `#${value}`).join(' ');
 }
 
 export function composePost(event, detail, site) {
@@ -71,7 +82,7 @@ export function composePost(event, detail, site) {
     [episode, music ? event.artist : item.year || event.year, item.imdbRating ? `IMDb ${item.imdbRating}` : ''].filter(Boolean).map(html).join(' · '),
     '', 'کیفیتی که دوست داری رو از دکمه‌های پایین انتخاب کن 👇',
     'صفحهٔ دانلود باز می‌شه و بعد از ۵ ثانیه می‌ری سراغ فایل.', '',
-    'دیدیش یا شنیدیش؟ با یه ری‌اکشن نظرت رو بگو ❤️', '@sarvnema'].filter(x => x !== undefined).join('\n');
+    'دیدیش یا شنیدیش؟ با یه ری‌اکشن نظرت رو بگو ❤️', '', postHashtags(event, item), '@sarvnema'].filter(x => x !== undefined).join('\n');
   const buttons = [...variants].slice(0, 8).map(([text, url]) => ({ text: `⬇️ ${text}`, url }));
   const rows = [];
   for (let i = 0; i < buttons.length; i += 2) rows.push(buttons.slice(i, i + 2));
@@ -120,6 +131,7 @@ export async function runChannel({ publish = false, preview = false } = {}) {
     const [updates, music] = await Promise.all([read('public/data/vod-updates.json', {items:[]}),read('public/data/music-index.json', {tracks:[]})]);
     const discovered = discoverPosts(updates, music, preview && !publish ? { music:{} } : previous);
     const state = previous || { channel, posts:{}, music:{} };
+    state.initializedAt = discovered.initializedAt;
     for (const event of discovered.events) if (!state.posts[event.key]) state.posts[event.key] = { status:'pending', event };
     state.music = discovered.music;
     const save = () => writeJsonAtomic(stateFile, state);

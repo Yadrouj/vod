@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {composePost, discoverPosts, musicFingerprint} from '../telegram-channel.mjs';
+import {composePost, discoverPosts, musicFingerprint, postHashtags} from '../telegram-channel.mjs';
 const track={id:'song',title:'آهنگ',publishedAt:'2026-09-25',sources:[{url:'https://media.example/song.mp3',quality:'320kbps',kind:'stream'}]};
 test('music direct stream files are offered through the five-second website gate',()=>{
  const post=composePost({type:'music',musicId:'song',title:track.title,sources:track.sources},null,'https://sarvnema.ir');
@@ -24,4 +24,28 @@ test('the first run excludes historical music and subsequent changes are fingerp
  const updated={...track,sources:[...track.sources,{url:'https://media.example/song.flac',quality:'FLAC'}]};
  assert.notEqual(musicFingerprint(updated),musicFingerprint(track));
  assert.equal(discoverPosts({items:[]},{tracks:[updated,old]},first,now).events.length,1);
+});
+
+test('later publisher cycles do not enqueue old or future archive events',()=>{
+ const now=Date.parse('2026-09-26T12:00:00Z');
+ const event={status:'available',imdbCode:'tt1',linksCount:1};
+ const updates={items:[
+  {...event,id:'old',eventAt:'2026-09-17T12:00:00Z'},
+  {...event,id:'recent',eventAt:'2026-09-26T10:00:00Z'},
+  {...event,id:'future',eventAt:'2026-10-01T12:00:00Z'},
+  {...event,id:'invalid',eventAt:'unknown'},
+ ]};
+ const first=discoverPosts(updates,{tracks:[]},null,now);
+ assert.deepEqual(first.events.map(e=>e.id),['recent']);
+ const second=discoverPosts(updates,{tracks:[]},first,now+300000);
+ assert.deepEqual(second.events.map(e=>e.id),['recent']);
+ assert.equal(second.initializedAt,first.initializedAt);
+});
+
+test('caption hashtags use readable categories and distinct Persian and original titles',()=>{
+ const tags=postHashtags({type:'vod',kind:'episode',baseTitle:'Breaking Bad'},
+  {persianTitle:'بریکینگ بد',originalTitle:'Breaking Bad'});
+ assert.equal(tags,'#سرونما #سریال #بریکینگ_بد #Breaking_Bad');
+ const hostile=postHashtags({type:'music',title:'Song <b> & https://example.test'});
+ assert.doesNotMatch(hostile,/[<>:/.&]/);
 });
