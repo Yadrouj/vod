@@ -115,8 +115,25 @@ async function downloadEpisodeImage(url: string, file: string, request: typeof f
     const chunks: Uint8Array[] = [];
     let size = 0;
     const reader = response.body.getReader();
+    const readChunk = async () => {
+      let readTimeout: ReturnType<typeof setTimeout> | undefined;
+      try {
+        return await Promise.race([
+          reader.read(),
+          new Promise<never>((_, reject) => {
+            readTimeout = setTimeout(() => {
+              controller.abort();
+              void reader.cancel().catch(() => undefined);
+              reject(new Error("Episode image stream timeout"));
+            }, EPISODE_IMAGE_TIMEOUT_MS);
+          }),
+        ]);
+      } finally {
+        if (readTimeout) clearTimeout(readTimeout);
+      }
+    };
     for (;;) {
-      const {done, value} = await reader.read();
+      const {done, value} = await readChunk();
       if (done) break;
       size += value.byteLength;
       if (size > EPISODE_IMAGE_MAX_BYTES) {
