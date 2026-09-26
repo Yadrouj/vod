@@ -29,15 +29,15 @@ const GHADAGHAN_VIDEO_ID = "rtjGa3VGK-k";
 const FRATRICIDE_ID = "old-iranian-1359010";
 const FRATRICIDE_VIDEO_ID = "thO9Em-8ihQ";
 
-function publicYouTubeVideo(videoId: string, title: string, channel: string, durationSeconds?: number): YouTubeSource {
+function publicYouTubeVideo(videoId: string, title: string, channel: string, durationSeconds?: number, checkedAt = "2026-09-10", playbackStatus: YouTubeSource["playbackStatus"] = "not-tested"): YouTubeSource {
   return {
     videoId,
     title,
     channel,
     sourceUrl: `https://www.youtube.com/watch?v=${videoId}`,
     thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-    checkedAt: "2026-09-10",
-    playbackStatus: "not-tested",
+    checkedAt,
+    playbackStatus,
     durationSeconds,
   };
 }
@@ -315,6 +315,40 @@ const BATCH_TEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1344004": [publicYouTubeVideo("qoPcbAcOL5o", "فیلم قدیمی یکپارچه آقا | ۱۳۴۴ | نسخه کامل", "Pars Films", 5394)],
 };
 
+// Eleventh review batch: these candidates were rechecked against the public
+// YouTube watch page on 2026-09-26. Each page reported an embedded-playback
+// allowance and a runtime above one hour; the site still links to YouTube's
+// own player and never copies or proxies the upload.
+const BATCH_ELEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1357014": [{
+    ...publicYouTubeVideo(
+      "_x4CgAHVsZk",
+      "لیلا فروهر در فیلم عاشقانه پرستوهای عاشق - نسخه بدون سانسور و رنگی شده HD",
+      "Shouka Film",
+      5234,
+    ),
+    checkedAt: "2026-09-26",
+    playbackStatus: "available",
+  }],
+  "old-iranian-1356023": [{
+    ...publicYouTubeVideo(
+      "ro0NkU2XBtU",
+      "فیلم قدیمی؛ خاکستری | ۱۳۵۶ | رنگی اچ دی",
+      "Pars Film Official",
+      6573,
+    ),
+    checkedAt: "2026-09-26",
+    playbackStatus: "available",
+  }],
+  "old-iranian-1358006": [publicYouTubeVideo("bhZsZnnuRu4", "فیلم زیبای نفس گیر - با بازی پروین سلیمانی - رنگی", "Shouka Film", 5047, "2026-09-26", "available")],
+  "old-iranian-1358004": [publicYouTubeVideo("oZK7hhtv9og", "Film Sorkhpoost - Full Movie | فیلم سینمایی سرخپوست - کامل", "Honar Aval", 5091, "2026-09-26", "available")],
+  "old-iranian-1358020": [publicYouTubeVideo("E5Q7BPQkGiI", "فیلم ایرانی کامل و بدون سانسور | زر خرید", "Cine Persia", 5650, "2026-09-26", "available")],
+  "old-iranian-1357007": [publicYouTubeVideo("ox7A2F_ePJ4", "نسخه کامل فیلم فارسی این گروه محکومین", "FilmFarsi - فیلمفارسی", 6157, "2026-09-26", "available")],
+  "old-iranian-1355063": [publicYouTubeVideo("trao4fVZCVQ", "فیلم قدیمی؛ سینه چاک | ۱۳۵۵ | رنگی شده", "Filmrangi - فیلمرنگی", 5649, "2026-09-26", "available")],
+  "old-iranian-1356009": [publicYouTubeVideo("8iBhaOwj43A", "فیلم قدیمی - فیلم زن 1356", "FilmFarsi - فیلمفارسی", 5141, "2026-09-26", "available")],
+  "old-iranian-1356030": [publicYouTubeVideo("sEK7ay05Y7s", "فیلم قدیمی؛ ماهی ها در خاک می میرند | ۱۳۵۶ | نسخه کامل و با کیفیت", "Filmrangi - فیلمرنگی", 6680, "2026-09-26", "available")],
+};
+
 const GHADAGHAN: OldIranianFilmMedia = {
   id: GHADAGHAN_ID,
   originalTitle: "Ghadaghan",
@@ -415,7 +449,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FIVE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SIX_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SEVEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_EIGHT_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_NINE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FIVE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SIX_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SEVEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_EIGHT_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_NINE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_ELEVEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
 }
 
 /**

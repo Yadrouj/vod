@@ -14,7 +14,7 @@ import type { VodLink } from "@/lib/types";
 import { readProgress, saveHistoryValue, PROGRESS_KEY } from "@/lib/media-history";
 import Link from "next/link";
 import { PlaybackHelp } from "@/components/playback-help";
-import { isDonyayeSerial, regionalPlaybackHint } from "@/lib/playback-help";
+import { isDonyayeSerial, regionalPlaybackHint, recoverySources, sourceHost } from "@/lib/playback-help";
 import styles from "./vod-player.module.css";
 
 export function VodPlayer({
@@ -65,6 +65,16 @@ export function VodPlayer({
   const active = playableSources[activeIndex] ?? playableSources[0];
   const t = getDictionary(locale);
   const controlsShowing = paused || settingsOpen || subtitlesOpen || selectionOpen || controlsVisible;
+
+  useEffect(() => {
+    if (!buffering || !sourceReady || !active?.url) return;
+    const timer = setTimeout(() => {
+      setBuffering(false);
+      setMediaError(2);
+      setMessage(isDonyayeSerial(active) ? regionalPlaybackHint(locale === "fa") : t.player.sourceError);
+    }, 20000);
+    return () => clearTimeout(timer);
+  }, [buffering, sourceReady, active, locale, t.player.sourceError]);
 
   useEffect(() => {
     let current = true;
@@ -180,7 +190,7 @@ export function VodPlayer({
     const next = playableSources[nextIndex];
     if (!next) return;
     const sameEpisode = !isSeries || (next.season === active?.season && next.episode === active?.episode);
-    pendingSeekRef.current = sameEpisode ? videoRef.current?.currentTime ?? 0 : null;
+    pendingSeekRef.current = sameEpisode ? pendingSeekRef.current ?? videoRef.current?.currentTime ?? 0 : null;
     saveProgress(videoRef.current?.currentTime ?? 0);
     setMediaError(0);
     setMessage("");
@@ -290,14 +300,14 @@ export function VodPlayer({
             }
           }}
           onEnded={() => { setPaused(true); if (active?.url) { const progress = readProgress(); delete progress[active.url]; saveHistoryValue(PROGRESS_KEY, progress, "sarvnema-progress"); } }}
-          onPlaying={() => setBuffering(false)}
+          onPlaying={() => { setBuffering(false); setMediaError(0); setMessage(""); }}
           onPlay={() => { setPaused(false); setControlsVisible(true); }}
           onPause={() => { setPaused(true); setControlsVisible(true); }}
           onVolumeChange={(event) => { setMuted(event.currentTarget.muted); setVolume(String(event.currentTarget.volume)); }}
           onError={(event) => {
             setBuffering(false);
             setMediaError(event.currentTarget.error?.code ?? 2);
-            setMessage(t.player.sourceError);
+            setMessage(isDonyayeSerial(active) ? (locale === "fa" ? "این منبع ممکن است با VPN باز نشود؛ VPN را خاموش کنید یا نسخهٔ دوبله / سرور دیگری را انتخاب کنید." : "This source may not work with a VPN. Turn it off in Iran, or try a dubbed version / another server.") : t.player.sourceError);
           }}
         />
 
@@ -327,7 +337,7 @@ export function VodPlayer({
           frameRef={playerFrameRef} mediaRef={videoRef} paused={paused} time={time} duration={duration} buffered={buffered}
           rate={Number(speed)} onRate={value => updateSpeed(String(value))} onPlay={togglePlay} onSeek={value => seek(String(value))}
           onFullscreen={() => void toggleFullscreen()} fullscreen={fullscreen} locale={locale} canPlay={Boolean(active?.url && sourceReady)}
-          sources={(hasStructuredEpisodes ? episodeVariants : sources.map((source, index) => ({ source, index }))).map(({ source, index }) => ({ value: String(index), label: playbackSourceLabel(source, index, false, t.player.source) }))}
+          sources={(hasStructuredEpisodes ? episodeVariants : sources.map((source, index) => ({ source, index }))).map(({ source, index }) => ({ value: String(index), label: `${playbackSourceLabel(source, index, false, t.player.source)} · ${sourceHost(source)}${isDonyayeSerial(source) ? (locale === "fa" ? " · ممکن است به IP ایران نیاز داشته باشد" : " · May require Iranian IP") : ""}` }))}
           source={String(activeIndex)} onSource={changeSource} settingsOpen={settingsOpen} onSettings={open => { setSettingsOpen(open); if (open) setSubtitlesOpen(false); }}
           onSubtitles={itemId ? () => { setSubtitlesOpen(value => !value); setSettingsOpen(false); } : undefined}
           onEpisodes={hasStructuredEpisodes ? openEpisodes : undefined} onNext={nextEpisodeIndex >= 0 ? () => changeSource(String(nextEpisodeIndex)) : undefined}
@@ -395,6 +405,7 @@ export function VodPlayer({
         )}
       </div>
       {mediaError > 0 && active && <PlaybackHelp key={active.url} link={active} code={mediaError} fa={locale === "fa"} itemId={itemId}
+        alternatives={recoverySources(active, playableSources)} onAlternative={index => { changeSource(String(index)); playAfterSourceReadyRef.current = true; }}
         onRetry={() => { setMediaError(0); setMessage(""); playAfterSourceReadyRef.current = true; videoRef.current?.load(); }}
         onChoose={() => { setSettingsOpen(true); setControlsVisible(true); playerFrameRef.current?.scrollIntoView({ block: "center", behavior: "auto" }); }} />}
     </div>

@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { isDonyayeSerial, playbackFailureText, regionalPlaybackHint } from "@/lib/playback-help";
+import { isDonyayeSerial, playbackFailureText, regionalPlaybackHint, sourceHost } from "@/lib/playback-help";
 import type { VodLink } from "@/lib/types";
 import { downloadGateUrl } from "@/lib/download-gate";
 
-export function PlaybackHelp({ link, code, fa, itemId, onRetry, onChoose }: { link: VodLink; code: number; fa: boolean; itemId?: string; onRetry: () => void; onChoose: () => void }) {
+export function PlaybackHelp({ link, code, fa, itemId, onRetry, onChoose, alternatives = [], onAlternative }: { link: VodLink; code: number; fa: boolean; itemId?: string; onRetry: () => void; onChoose: () => void; alternatives?: { link: VodLink; index: number }[]; onAlternative?: (index: number) => void }) {
   const [connection, setConnection] = useState<{ ip: string | null; country: string | null } | null>(null);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -24,7 +24,9 @@ export function PlaybackHelp({ link, code, fa, itemId, onRetry, onChoose }: { li
     <strong>{fa ? "این نسخه پخش نشد" : "This version could not play"}</strong>
     <p role="status">{playbackFailureText(code, fa)}</p>
     {isDonyayeSerial(link) && <p className="playback-region-hint">{regionalPlaybackHint(fa)}</p>}
+    {isDonyayeSerial(link) && <p>{fa ? "اگر SoftSub یا HardSub باز نمی‌شود، نسخهٔ دوبله یا سرور دیگری را امتحان کنید. تغییر کیفیت روی همان سرور ممکن است مشکل اتصال را حل نکند." : "If SoftSub or HardSub fails, try a dubbed version or another server. Changing quality on the same server may not fix the connection."}</p>}
     <div className="playback-help-actions">
+      {onAlternative && alternatives.slice(0, 3).map(({ link: other, index }) => <button key={other.url} type="button" onClick={() => onAlternative(index)}>{other.quality} · {other.group} · {sourceHost(other)}</button>)}
       <button type="button" onClick={onRetry}>{fa ? "تلاش دوباره" : "Retry"}</button>
       <button type="button" onClick={onChoose}>{fa ? "تغییر کیفیت / منبع" : "Change quality / source"}</button>
       {itemId && <Link href={`/${itemId}#downloads`}>{fa ? "همه لینک‌های دانلود" : "All download links"}</Link>}

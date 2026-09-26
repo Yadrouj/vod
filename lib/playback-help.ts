@@ -10,6 +10,19 @@ export function regionalPlaybackHint(fa: boolean) {
     : "Donyaye Serial source: if you are in Iran, turn off your VPN and retry. This source may require an Iranian IP. If you are abroad, choose another source. This message does not detect whether a VPN is enabled.";
 }
 
+export function recoverySources(active: VodLink, sources: VodLink[]) {
+  return sources.map((link, index) => ({ link, index }))
+    .filter(({ link }) => link.url !== active.url && link.season === active.season && link.episode === active.episode)
+    .sort((a, b) => {
+      const score = (link: VodLink) => (isDonyayeSerial(link) ? 0 : 10) + (/dubbed|دوبله/i.test(link.group ?? "") ? 2 : 0);
+      return score(b.link) - score(a.link);
+    });
+}
+
+export function sourceHost(link: Pick<VodLink, "url">) {
+  try { return new URL(link.url).hostname; } catch { return ""; }
+}
+
 export function playbackFailureText(code: number, fa: boolean) {
   if (code === 3 || code === 4) return fa
     ? "مرورگر نتوانست این نسخه را باز کند. ممکن است کُدک فایل پشتیبانی نشود یا منبع در دسترس نباشد؛ کیفیت یا منبع دیگری را امتحان کنید."

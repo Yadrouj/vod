@@ -1,7 +1,7 @@
 import {readFile, mkdir, writeFile, rename} from "node:fs/promises";
 import path from "node:path";
 
-export type EpisodeImageSource = "tvmaze" | "custom" | "fallback" | null;
+export type EpisodeImageSource = "tvmaze" | "tmdb" | "custom" | "fallback" | null;
 export type EpisodeImageFit = "cover" | "contain";
 export type EpisodeMetadata = {
   season: number;
@@ -40,22 +40,22 @@ function imageFit(value: unknown): EpisodeImageFit | undefined {
   return value === "contain" || value === "cover" ? value : undefined;
 }
 
-const EPISODE_IMAGE_HOST = "static.tvmaze.com";
+const EPISODE_IMAGE_HOSTS = new Set(["static.tvmaze.com", "media.themoviedb.org", "image.tmdb.org"]);
 const EPISODE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 const EPISODE_IMAGE_TIMEOUT_MS = 10_000;
 
-/** Only TVMaze stills are mirrored locally; custom artwork keeps its own URL. */
+/** Only trusted public still hosts are mirrored locally; custom artwork keeps its own URL. */
 export function isStorableEpisodeImage(value: string | null | undefined): value is string {
   if (!value) return false;
   try {
     const url = new URL(value);
-    return url.protocol === "https:" && url.hostname === EPISODE_IMAGE_HOST && !url.port && !url.username && !url.password;
+    return url.protocol === "https:" && EPISODE_IMAGE_HOSTS.has(url.hostname) && !url.port && !url.username && !url.password;
   } catch {
     return false;
   }
 }
 
-/** Same-origin URL for a mirrored still, so visitors never have to reach TVMaze. */
+/** Same-origin URL for a mirrored still, so visitors never have to reach an upstream provider. */
 export function episodeImageUrl(id: string, season: number, episode: number) {
   return `/api/episode-image/${encodeURIComponent(id)}/${season}/${episode}`;
 }
@@ -103,8 +103,11 @@ export function storeEpisodeImage(url: string, file: string, request: typeof fet
 
 async function downloadEpisodeImage(url: string, file: string, request: typeof fetch) {
   if (!isStorableEpisodeImage(url)) return null;
-  const response = await request(url, {redirect: "error", signal: AbortSignal.timeout(EPISODE_IMAGE_TIMEOUT_MS)});
+  const response = await request(url, {redirect: "follow", signal: AbortSignal.timeout(EPISODE_IMAGE_TIMEOUT_MS)});
   if (!response.ok || !response.body) return null;
+  // Trusted CDN URLs may redirect; never accept a redirect that leaves the
+  // explicitly allow-listed image hosts.
+  if (!isStorableEpisodeImage(response.url || url)) return null;
   if (Number(response.headers.get("content-length") || 0) > EPISODE_IMAGE_MAX_BYTES) return null;
   const chunks: Uint8Array[] = [];
   let size = 0;
@@ -146,7 +149,7 @@ export async function readSavedEpisodeSnapshot(id: string, root = process.cwd())
   return saved;
 }
 
-/** The TVMaze still behind an episode's mirrored image URL. */
+/** The upstream still behind an episode's mirrored image URL. */
 export async function findEpisodeImageSource(id: string, season: number, episode: number, root = process.cwd()) {
   if (!/^tt\d+$/.test(id)) return null;
   const saved = await readSavedEpisodeSnapshot(id, root);

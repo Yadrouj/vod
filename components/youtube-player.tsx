@@ -6,7 +6,7 @@ import type { YouTubeSource } from "@/lib/old-iranian-media";
 
 export function YouTubePlayer({ source, title }: { source: YouTubeSource; title: string }) {
   const [started, setStarted] = useState(false);
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(source.videoId)}?rel=0&modestbranding=1&playsinline=1&autoplay=1`;
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(source.videoId)}?rel=0&playsinline=1&autoplay=1`;
 
   return (
     <section id="youtube-player" className="youtube-player-card" aria-label={`${title} YouTube player`}>
@@ -26,6 +26,7 @@ export function YouTubePlayer({ source, title }: { source: YouTubeSource; title:
           <iframe
             title={`${title} — ${source.title}`}
             src={embedUrl}
+            referrerPolicy="strict-origin-when-cross-origin"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
           />
@@ -45,7 +46,7 @@ export function YouTubePlayer({ source, title }: { source: YouTubeSource; title:
 
       <footer className="youtube-player-footer">
         <span><Radio size={14} /> {source.channel}</span>
-        <small>اگر پخش داخل صفحه محدود شد، از دکمهٔ YouTube استفاده کنید. دسترسی به ویدیو به کشور و تنظیمات ناشر وابسته است.{source.evidenceUrl && <> · <a href={source.evidenceUrl} target="_blank" rel="noopener noreferrer">منبع شناسایی فیلم</a></>}</small>
+        <small>اگر YouTube ورود به حساب می‌خواهد، ویدیو را با دکمهٔ YouTube باز کنید. محدودیت سنی، منطقه‌ای یا تأیید حساب را خود YouTube تعیین می‌کند و سرونما نمی‌تواند آن را حذف کند.{source.evidenceUrl && <> · <a href={source.evidenceUrl} target="_blank" rel="noopener noreferrer">منبع شناسایی فیلم</a></>}</small>
       </footer>
     </section>
   );

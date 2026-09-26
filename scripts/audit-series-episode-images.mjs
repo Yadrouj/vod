@@ -70,8 +70,8 @@ function validSnapshot(snapshot) {
   return Boolean(snapshot && Array.isArray(snapshot.episodes) && snapshot.episodes.length);
 }
 
-function imageStats(episodes) {
-  const images = episodes.filter((episode) => typeof episode.imageUrl === "string" && episode.imageUrl.length > 0);
+export function imageStats(episodes) {
+  const images = episodes.filter((episode) => typeof episode.imageUrl === "string" && episode.imageUrl.length > 0 && episode.imageSource !== "fallback" && !episode.imageUrl.startsWith("/api/episode-art/"));
   const distinctImages = new Set(images.map((episode) => episode.imageUrl)).size;
   return {
     episodes: episodes.length,
@@ -96,6 +96,7 @@ async function powershellJson(url) {
   if (process.platform !== "win32") throw new Error("PowerShell fallback is only available on Windows");
   const command = [
     "$ProgressPreference='SilentlyContinue';",
+    "$ErrorActionPreference='Stop';",
     "$OutputEncoding=[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false);",
     `$response=Invoke-WebRequest -UseBasicParsing -TimeoutSec ${Math.ceil(timeoutMs / 1000)} -Uri '${url.replace(/'/g, "''")}';`,
     "[Console]::Out.Write($response.Content);",
@@ -109,6 +110,7 @@ async function powershellJson(url) {
 }
 
 async function requestJson(url) {
+  if (args.has("--powershell-network") && process.platform === "win32") return powershellJson(url);
   try {
     const response = await fetch(url, {
       headers: { accept: "application/json", "user-agent": "SarvNema episode-artwork-auditor/1.0" },
@@ -160,7 +162,7 @@ async function main() {
   const selected = results.slice(0, limit);
   const work = selected
     .map((item, index) => ({ item, index }))
-    .filter(({ item }) => !retryIncomplete || item.status === "partial" || item.status === "unavailable");
+    .filter(({ item }) => !retryIncomplete || item.status === "partial" || item.status === "unavailable" || item.status === "pending" || item.fallbackImages > 0);
   const reportState = () => ({
     version: 1,
     checkedAt: now(),
@@ -207,7 +209,7 @@ async function main() {
       const saved = await readJson(file, null);
       const age = saved?.checkedAt ? Date.now() - Date.parse(saved.checkedAt) : Number.POSITIVE_INFINITY;
       const priorStatus = previous.get(item.imdbCode)?.status;
-      const shouldRetry = retryIncomplete && (priorStatus === "partial" || priorStatus === "unavailable");
+      const shouldRetry = retryIncomplete && (priorStatus === "partial" || priorStatus === "unavailable" || imageStats(saved?.episodes ?? []).missingImages > 0);
       if (skipNetwork && !validSnapshot(saved)) {
         results[index] = { ...item, status: "unavailable", episodes: 0, images: 0, missingImages: 0, distinctImages: 0, duplicateImages: 0, fallbackImages: 0, checkedAt: now(), sourceUrl: null, error: "Network lookup skipped; episode artwork fallback is generated from catalog links" };
         completed += 1;
@@ -226,12 +228,19 @@ async function main() {
       }
       try {
         const fetched = await fetchEpisodes(item);
-        const snapshot = { checkedAt: now(), sourceUrl: fetched.sourceUrl, imdbCode: item.imdbCode, seriesTitle: item.title, imdbRating: item.imdbRating, imdbVotes: item.imdbVotes, episodes: materializeEpisodeArtwork(item.imdbCode, fetched.episodes) };
+        const priorEpisodes = new Map((saved?.episodes ?? []).map(row => [`${row.season}:${row.episode}`, row]));
+        const merged = fetched.episodes.map(row => {
+          const previous = priorEpisodes.get(`${row.season}:${row.episode}`);
+          priorEpisodes.delete(`${row.season}:${row.episode}`);
+          return !row.imageUrl && previous?.imageSource !== "fallback" && previous?.imageUrl ? { ...row, imageUrl: previous.imageUrl, imageSource: previous.imageSource } : row;
+        });
+        merged.push(...priorEpisodes.values());
+        const snapshot = { checkedAt: now(), sourceUrl: fetched.sourceUrl, imdbCode: item.imdbCode, seriesTitle: item.title, imdbRating: item.imdbRating, imdbVotes: item.imdbVotes, episodes: materializeEpisodeArtwork(item.imdbCode, merged) };
         await writeJsonAtomic(file, snapshot);
         results[index] = resultFromSnapshot(item, snapshot);
         logProgress({ progress: `${completed + 1}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: results[index].status, ...imageStats(snapshot.episodes) });
       } catch (error) {
-        results[index] = { ...item, status: "unavailable", episodes: 0, images: 0, missingImages: 0, distinctImages: 0, duplicateImages: 0, fallbackImages: 0, checkedAt: now(), sourceUrl: null, error: error instanceof Error ? error.message : String(error) };
+        results[index] = { ...(validSnapshot(saved) ? resultFromSnapshot(item, saved) : { ...item, status: "unavailable" }), error: error instanceof Error ? error.message : String(error), refreshFailedAt: now() };
         logProgress({ progress: `${completed + 1}/${work.length}`, rank: item.rank, id: item.imdbCode, title: item.title, state: "unavailable", error: results[index].error }, true);
       }
       completed += 1;

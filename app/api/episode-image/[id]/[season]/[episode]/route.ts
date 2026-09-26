@@ -15,9 +15,9 @@ type Props = {
 export const runtime = "nodejs";
 
 /**
- * Serves TVMaze episode stills from the local image store, filling it on first
- * request. Visitors never load TVMaze directly, so a blocked or slow provider no
- * longer collapses every episode onto the series poster.
+ * Serves trusted TVMaze/TMDB episode stills from the local image store, filling
+ * it on first request. Visitors never load an upstream provider directly, so a
+ * blocked or slow provider no longer collapses every episode onto the poster.
  */
 export async function GET(_request: Request, { params }: Props) {
   const { id, season, episode } = await params;

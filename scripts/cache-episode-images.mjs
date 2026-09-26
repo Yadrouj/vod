@@ -1,5 +1,5 @@
-// Mirrors every TVMaze episode still into the local image store, so
-// /api/episode-image serves them without visitors reaching TVMaze.
+// Mirrors every trusted TVMaze/TMDB episode still into the local image store,
+// so /api/episode-image serves them without visitors reaching an upstream CDN.
 // Resumable: stills already in the store are skipped.
 //
 //   node scripts/cache-episode-images.mjs [--only=tt0903747] [--limit=50] [--concurrency=4] [--delay-ms=150]

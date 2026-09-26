@@ -38,8 +38,10 @@ test("custom artwork overrides and series fallback are applied without changing 
   assert.equal(episodes[1].imageUrl,episodeImageUrl("tt1234567",1,2));
  } finally {await rm(root,{recursive:true,force:true});}
 });
-test("only https TVMaze stills are mirrored into the image store",()=>{
+test("only trusted TVMaze and TMDB stills are mirrored into the image store",()=>{
  assert.equal(isStorableEpisodeImage("https://static.tvmaze.com/uploads/images/medium_landscape/1/2.jpg"),true);
+ assert.equal(isStorableEpisodeImage("https://media.themoviedb.org/t/p/w454_and_h254_face/a.jpg"),true);
+ assert.equal(isStorableEpisodeImage("https://image.tmdb.org/t/p/w500/a.jpg"),true);
  for (const url of ["http://static.tvmaze.com/a.jpg","https://example.com/a.jpg","https://user:pw@static.tvmaze.com/a.jpg","https://static.tvmaze.com:8443/a.jpg","https://static.tvmaze.com.evil.test/a.jpg","/api/episode-art/tt1/1/1","not a url",null]) assert.equal(isStorableEpisodeImage(url),false,String(url));
 });
 test("image store paths cannot escape the store or exceed episode ranges",()=>{
@@ -66,7 +68,7 @@ test("stills are stored once, validated by signature, and never fetched from oth
   assert.equal(calls,0);
  } finally {await rm(root,{recursive:true,force:true});}
 });
-test("the image route resolves only saved TVMaze stills",async()=>{
+test("the image route resolves only saved trusted-provider stills",async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),"sarvnema-episode-source-"));
  try {
   await mkdir(path.join(root,"public/data/episode-metadata"),{recursive:true});

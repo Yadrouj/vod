@@ -1,7 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { isDonyayeSerial, playbackFailureText } from "../../lib/playback-help";
+import { isDonyayeSerial, playbackFailureText, recoverySources } from "../../lib/playback-help";
+import type { VodLink } from "../../lib/types";
 import { GET } from "../../app/api/viewer-connection/route";
+
+test("recovery prefers another server and never moves to another episode", () => {
+  const source = { url: "https://example.com/DonyayeSerial/a.mkv", season: 1, episode: 2, group: "SoftSub" } as VodLink;
+  const dub = { ...source, url: "https://other.example/a.mkv", group: "Dubbed" };
+  const sameServer = { ...source, url: "https://example.com/DonyayeSerial/b.mkv" };
+  const nextEpisode = { ...dub, episode: 3 };
+  assert.deepEqual(recoverySources(source, [source, sameServer, nextEpisode, dub]).map(r => r.index), [3, 1]);
+});
 
 test("regional hints target DonyayeSerial, not every failing source", () => {
   assert.equal(isDonyayeSerial({ url: "https://dls3.aparatchi-dlcenter.top/DonyayeSerial/a.mkv" }), true);

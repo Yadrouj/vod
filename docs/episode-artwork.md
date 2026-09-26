@@ -3,6 +3,8 @@
 Series artwork is audited in IMDb order using the catalog's `imdbRating` and
 `imdbVotes` fields. The audit uses the IMDb ID to resolve a show in TVMaze and
 stores one image URL per season/episode in `public/data/episode-metadata`.
+TVMaze is the first provider; the TMDB public season pages are a second
+provider for episodes where TVMaze has no still.
 
 Run a bounded local check with:
 
@@ -15,6 +17,27 @@ Run or resume the complete queue with:
 ```bash
 npm run audit-series-episode-images:all -- --resume
 ```
+
+Fill gaps from TMDB's public episode pages after the TVMaze pass:
+
+```bash
+npm run scrape-tmdb-episode-images -- --limit=50
+npm run scrape-tmdb-episode-images -- --id=tt44094505
+```
+
+Use `--offset=50 --limit=50` for the next deterministic page of the current
+incomplete queue. The report is updated after each page, and the command can
+be rerun safely.
+For an advancing queue that skips items already checked by TMDB, use:
+
+```bash
+npm run scrape-tmdb-episode-images -- --unprocessed --limit=50
+```
+
+The TMDB job requires an exact title match and prefers the matching release
+year. It writes the real CDN still URL with `imageSource: "tmdb"`; it never
+turns a generated placeholder into a passing image count. Run it again to
+resume the remaining partial and unavailable items.
 
 The generated `public/data/episode-metadata/index.json` report is ignored by
 Git and is safe to regenerate. Titles without an IMDb ID are reported as
@@ -55,12 +78,13 @@ poster repeated on every episode; now each episode keeps its own still, and a
 download that genuinely fails falls back to that episode's generated artwork
 rather than the shared poster.
 
-Only `https://static.tvmaze.com` is mirrored, the stored bytes must carry an
-image signature, and each file is capped at 2 MB. Saved snapshots in
-`public/data/episode-metadata` keep the original TVMaze URL: the rewrite happens
-only when a page is served, because the image route needs that URL to fill the
-store. Custom artwork from `episode-artwork-overrides.json` is served from its
-own URL and is never mirrored.
+Only `https://static.tvmaze.com`, `https://media.themoviedb.org`, and
+`https://image.tmdb.org` are mirrored, the stored bytes must carry an image
+signature, and each file is capped at 2 MB. Saved snapshots keep the original
+provider URL: the rewrite happens only when a page is served, because the image
+route needs that URL to fill the store. Custom artwork from
+`episode-artwork-overrides.json` is served from its own URL and is never
+mirrored.
 
 Fill the store for the whole catalog (resumable, skips stills already stored):
 

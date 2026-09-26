@@ -123,6 +123,28 @@ test("tenth review batch exposes fourteen one-hour-plus direct players", () => {
   }
 });
 
+test("eleventh review batch keeps live, exact long-form matches", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1357014", "_x4CgAHVsZk", 5234],
+    ["old-iranian-1356023", "ro0NkU2XBtU", 6573],
+    ["old-iranian-1358006", "bhZsZnnuRu4", 5047],
+    ["old-iranian-1358004", "oZK7hhtv9og", 5091],
+    ["old-iranian-1358020", "E5Q7BPQkGiI", 5650],
+    ["old-iranian-1357007", "ox7A2F_ePJ4", 6157],
+    ["old-iranian-1355063", "trao4fVZCVQ", 5649],
+    ["old-iranian-1356009", "8iBhaOwj43A", 5141],
+    ["old-iranian-1356030", "sEK7ay05Y7s", 6680],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].checkedAt, "2026-09-26");
+    assert.equal(item[0].playbackStatus, "available");
+    assert.equal(item[0].durationSeconds, duration);
+    assert.ok(item[0].sourceUrl.includes("youtube.com/watch?v="));
+  }
+});
+
 test("community playlists and review channels are retained as direct YouTube sources", () => {
   assert.ok(OLD_IRANIAN_YOUTUBE_COLLECTIONS.some(collection => collection.playlistId === "PLeHzOz4FtTB40XDHDUtatCriTciww6cfQ"));
   assert.deepEqual(OLD_IRANIAN_YOUTUBE_REVIEW_CHANNELS, ["https://www.youtube.com/@Filmrangi/videos", "https://www.youtube.com/@ShoukaFilm", "https://www.youtube.com/@beikiha/videos"]);
