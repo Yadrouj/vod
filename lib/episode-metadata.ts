@@ -103,34 +103,40 @@ export function storeEpisodeImage(url: string, file: string, request: typeof fet
 
 async function downloadEpisodeImage(url: string, file: string, request: typeof fetch) {
   if (!isStorableEpisodeImage(url)) return null;
-  const response = await request(url, {redirect: "follow", signal: AbortSignal.timeout(EPISODE_IMAGE_TIMEOUT_MS)});
-  if (!response.ok || !response.body) return null;
-  // Trusted CDN URLs may redirect; never accept a redirect that leaves the
-  // explicitly allow-listed image hosts.
-  if (!isStorableEpisodeImage(response.url || url)) return null;
-  if (Number(response.headers.get("content-length") || 0) > EPISODE_IMAGE_MAX_BYTES) return null;
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  const reader = response.body.getReader();
-  for (;;) {
-    const {done, value} = await reader.read();
-    if (done) break;
-    size += value.byteLength;
-    if (size > EPISODE_IMAGE_MAX_BYTES) {
-      await reader.cancel();
-      return null;
-    }
-    chunks.push(value);
-  }
-  const bytes = Buffer.concat(chunks);
-  if (!episodeImageType(bytes)) return null;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), EPISODE_IMAGE_TIMEOUT_MS);
   try {
-    await mkdir(path.dirname(file), {recursive: true});
-    const temp = `${file}.${process.pid}.${Date.now()}.tmp`;
-    await writeFile(temp, bytes);
-    await rename(temp, file);
-  } catch { /* A full or read-only store can still serve this response. */ }
-  return bytes;
+    const response = await request(url, {redirect: "follow", signal: controller.signal});
+    if (!response.ok || !response.body) return null;
+    // Trusted CDN URLs may redirect; never accept a redirect that leaves the
+    // explicitly allow-listed image hosts.
+    if (!isStorableEpisodeImage(response.url || url)) return null;
+    if (Number(response.headers.get("content-length") || 0) > EPISODE_IMAGE_MAX_BYTES) return null;
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    const reader = response.body.getReader();
+    for (;;) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > EPISODE_IMAGE_MAX_BYTES) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+    const bytes = Buffer.concat(chunks);
+    if (!episodeImageType(bytes)) return null;
+    try {
+      await mkdir(path.dirname(file), {recursive: true});
+      const temp = `${file}.${process.pid}.${Date.now()}.tmp`;
+      await writeFile(temp, bytes);
+      await rename(temp, file);
+    } catch { /* A full or read-only store can still serve this response. */ }
+    return bytes;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function snapshotFiles(root: string, id: string) {
