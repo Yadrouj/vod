@@ -98,10 +98,14 @@ async function fetchText(url) {
     });
     if (response.status === 429 && attempt < 3) {
       const retryAfter = Number(response.headers.get("retry-after") || 0);
-      await sleep(Math.max(2_000, Math.min(30_000, retryAfter * 1_000 || 3_000 * (attempt + 1))));
+      await sleep(Math.max(10_000, Math.min(120_000, retryAfter * 1_000 || 15_000 * (attempt + 1))));
       continue;
     }
-    if (!response.ok) throw new Error("HTTP " + response.status);
+    if (!response.ok) {
+      const error = new Error("HTTP " + response.status);
+      error.status = response.status;
+      throw error;
+    }
     return response.text();
   }
   throw new Error("HTTP 429");
@@ -200,8 +204,16 @@ async function main() {
         results.set(item.imdbCode, result);
         console.log(JSON.stringify({ progress: (++completed) + "/" + items.length, id: item.imdbCode, title: item.title, state: result.status, tmdbId: result.tmdbId, images: result.images, missingImages: result.missingImages }));
       } catch (error) {
-        results.set(item.imdbCode, { ...item, tmdbCheckedAt: new Date().toISOString(), refreshFailedAt: new Date().toISOString(), error: error instanceof Error ? error.message : String(error) });
-        console.error(JSON.stringify({ progress: (++completed) + "/" + items.length, id: item.imdbCode, title: item.title, state: "unavailable", error: results.get(item.imdbCode).error }));
+        const retryable = error?.status === 429 || /HTTP 429/.test(error instanceof Error ? error.message : String(error));
+        const result = {
+          ...item,
+          ...(retryable ? {} : { tmdbCheckedAt: new Date().toISOString() }),
+          refreshFailedAt: new Date().toISOString(),
+          ...(retryable ? { tmdbRetryable: true } : {}),
+          error: error instanceof Error ? error.message : String(error),
+        };
+        results.set(item.imdbCode, result);
+        console.error(JSON.stringify({ progress: (++completed) + "/" + items.length, id: item.imdbCode, title: item.title, state: retryable ? "retryable" : "unavailable", error: result.error }));
       }
     }
   };
