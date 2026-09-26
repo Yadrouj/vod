@@ -1,11 +1,11 @@
-# Automatic posts for @sarvnem
+# Automatic posts for @sarvnema
 
 The publisher watches `public/data/vod-updates.json` and music catalog changes.
 It posts a 1280×720 artwork banner, informal Persian caption, and separate
 quality/dub/sub download buttons. Buttons use the website's five-second download
 page. Episode posts only include files for the announced season/episode.
 
-Add the existing Telegram bot as an administrator of **@sarvnem** with permission
+Add the existing Telegram bot as an administrator of **@sarvnema** with permission
 to post. Enable native reactions in the channel's Telegram settings; these are
 Telegram's real reaction counts, not invented like counters in the caption.
 
@@ -15,7 +15,7 @@ Configure the server's environment:
 BOT_API_TOKEN=<existing bot token>
 BOT_SITE_URL=http://127.0.0.1:3004
 NEXT_PUBLIC_SITE_URL=https://sarvnema.ir
-TELEGRAM_CHANNEL_ID=@sarvnem
+TELEGRAM_CHANNEL_ID=@sarvnema
 TELEGRAM_CHANNEL_ENABLED=1
 TELEGRAM_CHANNEL_BATCH_SIZE=5
 TELEGRAM_CHANNEL_STATE_DIR=/var/lib/sarvnema/telegram-channel

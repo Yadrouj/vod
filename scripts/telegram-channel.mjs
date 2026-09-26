@@ -71,7 +71,7 @@ export function composePost(event, detail, site) {
     [episode, music ? event.artist : item.year || event.year, item.imdbRating ? `IMDb ${item.imdbRating}` : ''].filter(Boolean).map(html).join(' · '),
     '', 'کیفیتی که دوست داری رو از دکمه‌های پایین انتخاب کن 👇',
     'صفحهٔ دانلود باز می‌شه و بعد از ۵ ثانیه می‌ری سراغ فایل.', '',
-    'دیدیش یا شنیدیش؟ با یه ری‌اکشن نظرت رو بگو ❤️', '@sarvnem'].filter(x => x !== undefined).join('\n');
+    'دیدیش یا شنیدیش؟ با یه ری‌اکشن نظرت رو بگو ❤️', '@sarvnema'].filter(x => x !== undefined).join('\n');
   const buttons = [...variants].slice(0, 8).map(([text, url]) => ({ text: `⬇️ ${text}`, url }));
   const rows = [];
   for (let i = 0; i < buttons.length; i += 2) rows.push(buttons.slice(i, i + 2));
@@ -107,7 +107,7 @@ async function telegram(token, method, body) {
 export async function runChannel({ publish = false, preview = false } = {}) {
   const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://sarvnema.ir';
   const api = process.env.BOT_SITE_URL || site;
-  const channel = process.env.TELEGRAM_CHANNEL_ID || '@sarvnem';
+  const channel = process.env.TELEGRAM_CHANNEL_ID || '@sarvnema';
   const token = process.env.BOT_API_TOKEN;
   const dir = path.resolve(process.env.TELEGRAM_CHANNEL_STATE_DIR || '.media-cache/telegram-channel');
   await mkdir(dir, { recursive:true });

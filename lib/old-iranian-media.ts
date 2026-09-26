@@ -42,6 +42,14 @@ function publicYouTubeVideo(videoId: string, title: string, channel: string, dur
   };
 }
 
+const OITN_SOURCE_URL = "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7";
+function publicOitnVideo(videoId: string, title: string, durationSeconds: number): YouTubeSource {
+  return {
+    ...publicYouTubeVideo(videoId, title, "OITN · Television Omid Iran", durationSeconds, "2026-09-26", "available"),
+    evidenceUrl: OITN_SOURCE_URL,
+  };
+}
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -349,6 +357,41 @@ const BATCH_ELEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1356030": [publicYouTubeVideo("sEK7ay05Y7s", "فیلم قدیمی؛ ماهی ها در خاک می میرند | ۱۳۵۶ | نسخه کامل و با کیفیت", "Filmrangi - فیلمرنگی", 6680, "2026-09-26", "available")],
 };
 
+// OITN's public VideoObject collection was checked against the YouTube watch
+// pages on 2026-09-26. Every entry is a long-form upload with
+// playableInEmbed=true; the site keeps YouTube as the player and source link.
+const BATCH_TWELVE_OITN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1355020": [publicOitnVideo("YGycqs-Rf90", "The Chandelier · full film", 5277)],
+  "old-iranian-1349035": [publicOitnVideo("BtrCB0vgv48", "Dancer of the City · full film", 7379)],
+  "old-iranian-1355051": [
+    publicOitnVideo("Cwh_9tx6IA0", "Mehman · full film", 6026),
+    publicOitnVideo("3o0JENft3tM", "Mehman · alternate full upload", 5992),
+  ],
+  "old-iranian-1352042": [publicOitnVideo("6FHHpReizNI", "The Enemy · full film", 5865)],
+  "old-iranian-1352035": [publicOitnVideo("YrSkUe-0BSk", "Mirage · full film", 5622)],
+  "old-iranian-1351041": [publicOitnVideo("FvUCojIcrKk", "Hakim-bashi · full film", 6096)],
+  "old-iranian-1355024": [publicOitnVideo("VFpGOSF3NY4", "The Foolish and the Dancer · full film", 5456)],
+  "old-iranian-1350035": [publicOitnVideo("cJSPCTsAbeE", "Retaliation · full film", 5825)],
+  "old-iranian-1350025": [publicOitnVideo("O2bOYxZdMoQ", "A Man with Thousand Smiles · full film", 5412)],
+  "old-iranian-1349018": [publicOitnVideo("eG8xEgV3oKc", "Ali Bi Gham · full film", 6252)],
+  "old-iranian-1348027": [publicOitnVideo("nCJBDy9rsJM", "Qeseh Delha · full film", 5800)],
+  "old-iranian-1351047": [publicOitnVideo("R2T4VQMu-6s", "Mard · full film", 6917)],
+  "old-iranian-1352076": [publicOitnVideo("XLes3YGJEiM", "Men and Unmen · full film", 4504)],
+  "old-iranian-1352024": [publicOitnVideo("CEVIo7M8f7E", "Bajenagh · full film", 6835)],
+  "old-iranian-1352030": [publicOitnVideo("poQQ9IavSMA", "Na-mahram · full film", 4359)],
+  "old-iranian-1345040": [publicOitnVideo("B30nbWIoNbI", "Beggars of Tehran · full film", 4802)],
+  "old-iranian-1354015": [publicOitnVideo("T-aP87IbvFg", "Leopard at Night · full film", 4954)],
+  "old-iranian-1353009": [publicOitnVideo("BqngQcafk2U", "Baby Dandy · full film", 5966)],
+  "old-iranian-1353036": [publicOitnVideo("0FctRSM6JOc", "Accusation · full film", 5183)],
+  "old-iranian-1353006": [publicOitnVideo("AiucNJZruYU", "Mr. Handsome Reza · full film", 5596)],
+  "old-iranian-1352059": [publicOitnVideo("E2iKXm_BlDE", "Akbar Dilmaj · full film", 6331)],
+  "old-iranian-1353034": [publicOitnVideo("T6NrBlfQ5aI", "Najoorha · full film", 5388)],
+  "old-iranian-1353032": [publicOitnVideo("pIItu5d-SmU", "Indomitable Defeat · full film", 6425)],
+  "old-iranian-1351044": [publicOitnVideo("3JFebuubn1c", "Laj-o-Lajbazi · full film", 5583)],
+  "old-iranian-1356036": [publicOitnVideo("avUSC0crdTk", "The Euphonious One and the Nice One · full film", 5302)],
+  "old-iranian-1353027": [publicOitnVideo("tBLkdKZdR00", "Noon Prayer · full film", 5628)],
+};
+
 const GHADAGHAN: OldIranianFilmMedia = {
   id: GHADAGHAN_ID,
   originalTitle: "Ghadaghan",
@@ -449,7 +492,8 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_ONE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TWO_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_THREE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FOUR_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_FIVE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SIX_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_SEVEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_EIGHT_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_NINE_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_TEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? BATCH_ELEVEN_YOUTUBE_BY_ID[id.toLowerCase()] ?? null;
+  const key = id.toLowerCase();
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_TWELVE_OITN_YOUTUBE_BY_ID[key] ?? BATCH_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THREE_YOUTUBE_BY_ID[key] ?? BATCH_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_SIX_YOUTUBE_BY_ID[key] ?? BATCH_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TEN_YOUTUBE_BY_ID[key] ?? BATCH_ELEVEN_YOUTUBE_BY_ID[key] ?? null;
 }
 
 /**

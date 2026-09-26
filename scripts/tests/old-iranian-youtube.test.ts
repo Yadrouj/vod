@@ -29,7 +29,7 @@ test("second playlist batch exposes only feature-length direct players", () => {
     assert.ok((item[0].durationSeconds ?? 0) >= minimum);
     assert.ok((item[0].durationSeconds ?? 0) >= 3600);
   }
-  assert.equal(getOldIranianYouTubeVideos("old-iranian-1345040"), null);
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1345040")?.[0].videoId, "B30nbWIoNbI");
 });
 
 test("third 50-title search batch exposes only one-hour-plus matches", () => {
@@ -143,6 +143,32 @@ test("eleventh review batch keeps live, exact long-form matches", () => {
     assert.equal(item[0].durationSeconds, duration);
     assert.ok(item[0].sourceUrl.includes("youtube.com/watch?v="));
   }
+});
+
+test("OITN batch exposes only independently checked full-film embeds", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1355020", "YGycqs-Rf90", 5277], ["old-iranian-1349035", "BtrCB0vgv48", 7379],
+    ["old-iranian-1355051", "Cwh_9tx6IA0", 6026], ["old-iranian-1352042", "6FHHpReizNI", 5865],
+    ["old-iranian-1352035", "YrSkUe-0BSk", 5622], ["old-iranian-1351041", "FvUCojIcrKk", 6096],
+    ["old-iranian-1355024", "VFpGOSF3NY4", 5456], ["old-iranian-1350035", "cJSPCTsAbeE", 5825],
+    ["old-iranian-1350025", "O2bOYxZdMoQ", 5412], ["old-iranian-1349018", "eG8xEgV3oKc", 6252],
+    ["old-iranian-1348027", "nCJBDy9rsJM", 5800], ["old-iranian-1351047", "R2T4VQMu-6s", 6917],
+    ["old-iranian-1352076", "XLes3YGJEiM", 4504], ["old-iranian-1352024", "CEVIo7M8f7E", 6835],
+    ["old-iranian-1352030", "poQQ9IavSMA", 4359], ["old-iranian-1345040", "B30nbWIoNbI", 4802],
+    ["old-iranian-1354015", "T-aP87IbvFg", 4954], ["old-iranian-1353009", "BqngQcafk2U", 5966],
+    ["old-iranian-1353036", "0FctRSM6JOc", 5183], ["old-iranian-1353006", "AiucNJZruYU", 5596],
+    ["old-iranian-1352059", "E2iKXm_BlDE", 6331], ["old-iranian-1353034", "T6NrBlfQ5aI", 5388],
+    ["old-iranian-1353032", "pIItu5d-SmU", 6425], ["old-iranian-1351044", "3JFebuubn1c", 5583],
+    ["old-iranian-1356036", "avUSC0crdTk", 5302], ["old-iranian-1353027", "tBLkdKZdR00", 5628],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.equal(item[0].playbackStatus, "available");
+    assert.equal(item[0].evidenceUrl, "https://www.oitn.com/copy-of-%D9%85%D8%B3%D8%AA%D9%86%D8%AF-%D9%87%D8%A7");
+  }
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1355051")?.length, 2);
 });
 
 test("community playlists and review channels are retained as direct YouTube sources", () => {

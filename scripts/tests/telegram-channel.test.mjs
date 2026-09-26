@@ -7,7 +7,7 @@ test('music direct stream files are offered through the five-second website gate
  const link=new URL(post.reply_markup.inline_keyboard[0][0].url);
  assert.equal(link.origin,'https://sarvnema.ir');assert.equal(link.pathname,'/download/continue');
  assert.equal(Buffer.from(link.searchParams.get('u'),'base64url').toString(),track.sources[0].url);
- assert.match(post.caption,/۵ ثانیه/);assert.match(post.caption,/@sarvnem/);
+ assert.match(post.caption,/۵ ثانیه/);assert.match(post.caption,/@sarvnema/);
 });
 test('episode updates use only the requested episode and keep dub/sub distinctions',()=>{
  const file=group=>({quality:'720p',group,url:'https://sarvnema.ir/download/continue?u=abc'});
