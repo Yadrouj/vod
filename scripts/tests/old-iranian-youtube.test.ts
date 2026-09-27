@@ -463,6 +463,15 @@ test("seventieth review batch exposes two duration-checked classic uploads", () 
   }
 });
 
+test("seventy-first review batch exposes the duration-checked Bi Eshq Hargez upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1345017");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "j9RjyhvzALw");
+  assert.equal(item[0].durationSeconds, 5820);
+  assert.match(item[0].title, /full film/i);
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=j9RjyhvzALw");
+});
+
 test("sixteenth review batch exposes exact full-film matches", () => {
   for (const [id, videoId] of [["old-iranian-1332022", "ZmMfj85P8Y8"], ["old-iranian-1340010", "MpyOTqOKqdM"]] as const) {
     const item = getOldIranianYouTubeVideos(id);
