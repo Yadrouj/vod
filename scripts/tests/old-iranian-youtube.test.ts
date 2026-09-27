@@ -909,3 +909,11 @@ test("seventy-sixth review batch exposes two exact-title complete uploads", () =
     assert.equal(item[0].durationSeconds, undefined);
   }
 });
+
+test("seventy-seventh review batch exposes the duration-checked Arshin Malalan upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1339017");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "fpY2f5uCdhw");
+  assert.equal(item[0].durationSeconds, 7200);
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=fpY2f5uCdhw");
+});
