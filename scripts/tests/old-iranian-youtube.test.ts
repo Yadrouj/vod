@@ -359,6 +359,15 @@ test("sixty-first review batch exposes the complete Var Parideh upload", () => {
   assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=BVUFe_Pf6y0$/);
 });
 
+test("sixty-second review batch exposes the duration-checked Ghorboon-e Khodam upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1341026");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "neKcPzzhzYw");
+  assert.equal(item[0].durationSeconds, 7260);
+  assert.match(item[0].title, /full film/i);
+  assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=neKcPzzhzYw$/);
+});
+
 test("sixteenth review batch exposes exact full-film matches", () => {
   for (const [id, videoId] of [["old-iranian-1332022", "ZmMfj85P8Y8"], ["old-iranian-1340010", "MpyOTqOKqdM"]] as const) {
     const item = getOldIranianYouTubeVideos(id);
