@@ -917,3 +917,16 @@ test("seventy-seventh review batch exposes the duration-checked Arshin Malalan u
   assert.equal(item[0].durationSeconds, 7200);
   assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=fpY2f5uCdhw");
 });
+
+test("seventy-eighth review batch exposes two duration-checked classic uploads", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1341012", "tG57N3h8pa8", 5880],
+    ["old-iranian-1341015", "RM1oEu1Xnk4", 5400],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+  }
+});
