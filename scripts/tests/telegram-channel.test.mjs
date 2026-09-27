@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {composePost, discoverPosts, musicFingerprint, postHashtags} from '../telegram-channel.mjs';
+import {composePost, discoverPosts, musicFingerprint, postHashtags, selectScheduledEntries} from '../telegram-channel.mjs';
+import {publishingSlot, publishingWindow, tehranClock} from '../lib/telegram-publishing-schedule.mjs';
 const track={id:'song',title:'آهنگ',publishedAt:'2026-09-25',sources:[{url:'https://media.example/song.mp3',quality:'320kbps',kind:'stream'}]};
 test('music direct stream files are offered through the five-second website gate',()=>{
  const post=composePost({type:'music',musicId:'song',title:track.title,sources:track.sources},null,'https://sarvnema.ir');
@@ -48,4 +49,33 @@ test('caption hashtags use readable categories and distinct Persian and original
  assert.equal(tags,'#سرونما #سریال #بریکینگ_بد #Breaking_Bad');
  const hostile=postHashtags({type:'music',title:'Song <b> & https://example.test'});
  assert.doesNotMatch(hostile,/[<>:/.&]/);
+});
+
+test('channel cadence is evaluated in Tehran time and stops after the 22:00 slot',()=>{
+ const before=Date.parse('2026-09-27T06:29:00Z');
+ const ten=Date.parse('2026-09-27T06:30:00Z');
+ const half=Date.parse('2026-09-27T07:00:00Z');
+ const last=Date.parse('2026-09-27T18:59:00Z');
+ const after=Date.parse('2026-09-27T19:00:00Z');
+ assert.equal(tehranClock(ten).isoLocal,'2026-09-27T10:00');
+ assert.equal(publishingSlot('vod',before),null);
+ assert.equal(publishingSlot('vod',ten),'2026-09-27:10');
+ assert.equal(publishingSlot('music',half),'2026-09-27:10:30');
+ assert.equal(publishingSlot('vod',last),'2026-09-27:22');
+ assert.equal(publishingSlot('music',last),'2026-09-27:22:00');
+ assert.equal(publishingWindow(after).vod,null);
+ assert.equal(publishingWindow(after).music,null);
+});
+
+test('one VOD and one music entry are selected per current slot',()=>{
+ const now=Date.parse('2026-09-27T06:30:00Z');
+ const state={publishedSlots:{vod:{},music:{}}};
+ const pending=[
+  {event:{key:'vod:rank-two',type:'vod',imdbCode:'tt2',eventAt:'2026-09-27T06:29:00Z'}},
+  {event:{key:'vod:rank-one',type:'vod',imdbCode:'tt1',eventAt:'2026-09-27T06:20:00Z'}},
+  {event:{key:'music:new',type:'music',eventAt:'2026-09-27T06:29:00Z'}},
+ ];
+ const result=selectScheduledEntries(state,pending,now,new Map([['tt1',1],['tt2',2]]));
+ assert.deepEqual(result.selected.map(item=>[item.type,item.entry.event.key]),[['vod','vod:rank-one'],['music','music:new']]);
+ assert.equal(selectScheduledEntries({...state,publishedSlots:{vod:{'2026-09-27:10':{}} ,music:{}}},pending,now,new Map()).selected.length,1);
 });

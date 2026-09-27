@@ -17,7 +17,9 @@ BOT_SITE_URL=http://127.0.0.1:3004
 NEXT_PUBLIC_SITE_URL=https://sarvnema.ir
 TELEGRAM_CHANNEL_ID=@sarvnema
 TELEGRAM_CHANNEL_ENABLED=1
-TELEGRAM_CHANNEL_BATCH_SIZE=5
+TELEGRAM_CHANNEL_TIME_ZONE=Asia/Tehran
+TELEGRAM_CHANNEL_START_HOUR=10
+TELEGRAM_CHANNEL_END_HOUR=22
 TELEGRAM_CHANNEL_STATE_DIR=/var/lib/sarvnema/telegram-channel
 ```
 
@@ -26,6 +28,22 @@ publisher instance. Run `npm run telegram-channel` under the same process manage
 used for the existing bot; it checks updates every five minutes. It is separate
 from the bot's update polling and does not change its webhook or consume updates.
 Keep the existing daily scraper schedule running to supply fresh catalog data.
+
+## Publishing cadence
+
+The publisher uses Tehran time and persistent delivery slots. During the daily
+window it sends at most one film/series post per hour and at most one music post
+per half-hour. Film/series slots are `10:00` through `22:00`; music slots are
+`10:00`, `10:30`, …, `21:30`, with `22:00` as the final catch-up slot. The
+publisher does not send after `22:29`, and a missed slot can still be delivered
+when the five-minute worker wakes up during that slot.
+
+Film and series candidates are ordered by the latest cached IMDb Movie Meter and
+TV Meter rank, then by IMDb rating and update time. Keep the daily IMDb refresh
+enabled so the cached trend data stays current. A successful slot is saved under
+`publishedSlots` in the persistent state directory; restarting the worker cannot
+spend that slot twice. Preview mode keeps the old multi-item preview behavior and
+never advances delivery slots.
 
 ## Docker service
 

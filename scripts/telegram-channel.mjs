@@ -4,11 +4,47 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { writeJsonAtomic } from './atomic-json.mjs';
+import {
+  hasPublishedSlot,
+  publishingWindow,
+  recordPublishedSlot,
+  scheduleConfig,
+  sortVodEventsByTrend,
+} from './lib/telegram-publishing-schedule.mjs';
 
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const html = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const read = async (file, fallback) => { try { return JSON.parse(await readFile(file, 'utf8')); } catch (error) { if (error.code === 'ENOENT') return fallback; throw error; } };
 const directFile = url => { try { return /^https?:$/.test(new URL(url).protocol) && /\.(mp3|m4a|flac|ogg|wav|mp4|mkv|webm|m4v)(?:[?#]|$)/i.test(url); } catch { return false; } };
+
+async function loadTrendRanks(now = Date.now()) {
+  const payload = await read('public/data/imdb-trending.json', null);
+  const ranks = new Map();
+  for (const chart of Object.values(payload?.charts ?? {})) {
+    const age = now - Date.parse(chart?.observedAt ?? '');
+    if (!Number.isFinite(age) || age < 0 || age > 30 * 86400000) continue;
+    for (const item of chart.items ?? []) {
+      const code = item?.card?.imdbCode;
+      const rank = Number(item?.rank);
+      if (!code || !Number.isInteger(rank) || rank < 1 || rank > 100) continue;
+      if (!ranks.has(code) || rank < ranks.get(code)) ranks.set(code, rank);
+    }
+  }
+  return ranks;
+}
+
+export function selectScheduledEntries(state, pending, now = Date.now(), trendRanks = new Map(), env = process.env) {
+  const window = publishingWindow(new Date(now), scheduleConfig(env));
+  const selected = [];
+  const choose = (type, slot, candidates) => {
+    if (!slot || hasPublishedSlot(state, type, slot) || !candidates.length) return;
+    selected.push({ entry: candidates[0], type, slot });
+  };
+  choose('vod', window.vod, sortVodEventsByTrend(pending.filter(({ event }) => event.type === 'vod'), trendRanks));
+  choose('music', window.music, pending.filter(({ event }) => event.type === 'music')
+    .sort((a, b) => String(b.event.eventAt ?? '').localeCompare(String(a.event.eventAt ?? ''))));
+  return { window, selected };
+}
 
 export function musicFingerprint(track) {
   return hash((track.sources ?? []).filter(s => s.available !== false && directFile(s.url))
@@ -116,6 +152,7 @@ async function telegram(token, method, body) {
 }
 
 export async function runChannel({ publish = false, preview = false } = {}) {
+  const now = Date.now();
   const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://sarvnema.ir';
   const api = process.env.BOT_SITE_URL || site;
   const channel = process.env.TELEGRAM_CHANNEL_ID || '@sarvnema';
@@ -129,8 +166,11 @@ export async function runChannel({ publish = false, preview = false } = {}) {
     const stateFile = path.join(dir, `${hash(channel).slice(0,12)}.json`);
     const previous = await read(stateFile, null);
     const [updates, music] = await Promise.all([read('public/data/vod-updates.json', {items:[]}),read('public/data/music-index.json', {tracks:[]})]);
-    const discovered = discoverPosts(updates, music, preview && !publish ? { music:{} } : previous);
+    const discovered = discoverPosts(updates, music, preview && !publish ? { music:{} } : previous, now);
     const state = previous || { channel, posts:{}, music:{} };
+    state.publishedSlots ??= { vod: {}, music: {} };
+    state.publishedSlots.vod ??= {};
+    state.publishedSlots.music ??= {};
     state.initializedAt = discovered.initializedAt;
     for (const event of discovered.events) if (!state.posts[event.key]) state.posts[event.key] = { status:'pending', event };
     state.music = discovered.music;
@@ -144,9 +184,15 @@ export async function runChannel({ publish = false, preview = false } = {}) {
       if (!(member.status === 'creator' || member.status === 'administrator' && member.can_post_messages)) throw new Error('Bot needs channel administrator permission to post');
       await save();
     }
-    const pending = Object.values(state.posts).filter(p => p.status === 'pending' && (!p.retryAt || p.retryAt <= Date.now()))
-      .sort((a,b) => String(b.event.eventAt).localeCompare(String(a.event.eventAt))).slice(0, Number(process.env.TELEGRAM_CHANNEL_BATCH_SIZE || 5));
-    for (const entry of pending) {
+    const pending = Object.values(state.posts).filter(p => p.status === 'pending' && (!p.retryAt || p.retryAt <= now));
+    const trendRanks = await loadTrendRanks(now);
+    const scheduled = publish
+      ? selectScheduledEntries(state, pending, now, trendRanks)
+      : { window: publishingWindow(new Date(now), scheduleConfig()), selected: pending
+        .sort((a,b) => String(b.event.eventAt).localeCompare(String(a.event.eventAt)))
+        .slice(0, Number(process.env.TELEGRAM_CHANNEL_BATCH_SIZE || 5))
+        .map(entry => ({ entry, type: entry.event.type === 'music' ? 'music' : 'vod', slot: null })) };
+    for (const { entry, type, slot } of scheduled.selected) {
       try {
         const event = entry.event;
         let detail;
@@ -170,7 +216,9 @@ export async function runChannel({ publish = false, preview = false } = {}) {
         body.set('chat_id',channel);body.set('caption',post.caption);body.set('parse_mode','HTML');body.set('reply_markup',JSON.stringify(post.reply_markup));
         body.set('photo',new Blob([new Uint8Array(artwork)],{type:'image/jpeg'}),'sarvnema.jpg');
         const sent = await telegram(token,'sendPhoto',body);
-        entry.status='sent';entry.messageId=sent.message_id;entry.sentAt=new Date().toISOString();await save();
+        entry.status='sent';entry.messageId=sent.message_id;entry.sentAt=new Date().toISOString();
+        recordPublishedSlot(state, type, slot, { eventKey: event.key, messageId: sent.message_id, sentAt: entry.sentAt });
+        await save();
         console.log(JSON.stringify({sent:entry.messageId,title:post.title,channel}));
         await new Promise(resolve => setTimeout(resolve,1100));
       } catch(error) {
@@ -182,7 +230,13 @@ export async function runChannel({ publish = false, preview = false } = {}) {
         if (error.uncertain || error.retryAfter) break;
       }
     }
-    return { pending:pending.length, channel };
+    return {
+      pending: pending.length,
+      scheduled: scheduled.selected.length,
+      window: scheduled.window,
+      trendCandidates: trendRanks.size,
+      channel,
+    };
   } finally { await lock.close(); await unlink(lockPath); }
 }
 
