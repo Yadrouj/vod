@@ -1,6 +1,8 @@
 import { mkdir, readFile, readdir } from "node:fs/promises";
+import { execFile } from "node:child_process";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { promisify } from "node:util";
 import { materializeEpisodeArtwork } from "../lib/episode-metadata.ts";
 import { writeJsonAtomic } from "./atomic-json.mjs";
 
@@ -17,6 +19,7 @@ const offsetArg = Number(process.argv.find(value => value.startsWith("--offset="
 const offset = Number.isFinite(offsetArg) && offsetArg > 0 ? Math.floor(offsetArg) : 0;
 const limitArg = Number(process.argv.find(value => value.startsWith("--limit="))?.slice(8));
 const limit = Number.isFinite(limitArg) && limitArg > 0 ? Math.floor(limitArg) : Number.POSITIVE_INFINITY;
+const execFileAsync = promisify(execFile);
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -91,24 +94,41 @@ function episodeImages(html, season) {
 }
 
 async function fetchText(url) {
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    const response = await fetch(url, {
-      headers: { accept: "text/html", "accept-language": "en-US,en;q=0.8", "user-agent": "Mozilla/5.0 SarvNema artwork refresh" },
-      signal: AbortSignal.timeout(timeoutMs),
+  try {
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const response = await fetch(url, {
+        headers: { accept: "text/html", "accept-language": "en-US,en;q=0.8", "user-agent": "Mozilla/5.0 SarvNema artwork refresh" },
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (response.status === 429 && attempt < 3) {
+        const retryAfter = Number(response.headers.get("retry-after") || 0);
+        await sleep(Math.max(10_000, Math.min(120_000, retryAfter * 1_000 || 15_000 * (attempt + 1))));
+        continue;
+      }
+      if (!response.ok) {
+        const error = new Error("HTTP " + response.status);
+        error.status = response.status;
+        throw error;
+      }
+      return response.text();
+    }
+    throw new Error("HTTP 429");
+  } catch (error) {
+    if (process.platform !== "win32") throw error;
+    const command = [
+      "$ProgressPreference='SilentlyContinue';",
+      "$ErrorActionPreference='Stop';",
+      "$OutputEncoding=[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false);",
+      "$response=Invoke-WebRequest -UseBasicParsing -TimeoutSec " + Math.ceil(timeoutMs / 1000) + " -Uri '" + url.replace(/'/g, "''") + "';",
+      "[Console]::Out.Write($response.Content);",
+    ].join("");
+    const { stdout } = await execFileAsync("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", command], {
+      timeout: timeoutMs + 2_000,
+      maxBuffer: 16 * 1024 * 1024,
+      windowsHide: true,
     });
-    if (response.status === 429 && attempt < 3) {
-      const retryAfter = Number(response.headers.get("retry-after") || 0);
-      await sleep(Math.max(10_000, Math.min(120_000, retryAfter * 1_000 || 15_000 * (attempt + 1))));
-      continue;
-    }
-    if (!response.ok) {
-      const error = new Error("HTTP " + response.status);
-      error.status = response.status;
-      throw error;
-    }
-    return response.text();
+    return stdout.replace(/^\uFEFF/, "");
   }
-  throw new Error("HTTP 429");
 }
 
 async function resolveShow(title, year, originalTitle) {

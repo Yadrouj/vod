@@ -399,6 +399,24 @@ const BATCH_THIRTEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1357008": [publicYouTubeVideo("BRXXnMY2MUk", "فیلم کامل طغیانگر (۱۳۵۶)", "Pars Films", 5640, "2026-09-27", "available")],
 };
 
+// Fourteenth review batch: exact full-film uploads found on the reviewed
+// Persian archive channels. Search-result pages and short excerpts stay out.
+const BATCH_FOURTEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1336003": [publicYouTubeVideo("Qlz29F6Qx4Y", "فیلم کامل مردی که رنج می‌برد (۱۳۳۶)", "Pars Films", 5400, "2026-09-27")],
+  "old-iranian-1336007": [publicYouTubeVideo("5RHzKWo8YJE", "فیلم کامل مادموازل خاله", "Persian Comedy Channel", 6600, "2026-09-27")],
+  "old-iranian-1336009": [publicYouTubeVideo("v16Qqb8pqE8", "فیلم کامل شب‌نشینی در جهنم (۱۳۳۵)", "Pars Films", 7200, "2026-09-27")],
+  "old-iranian-1337016": [publicYouTubeVideo("JIiuVtgrqp0", "فیلم کامل دشمن زن", "Film Ghadimi Rangi", 6600, "2026-09-27")],
+  "old-iranian-1338001": [publicYouTubeVideo("taC3X06o-Gs", "فیلم کامل یکی بود یکی نبود (۱۳۳۸)", "Film Ghadimi", undefined, "2026-09-27")],
+  "old-iranian-1339006": [publicYouTubeVideo("FFRHpqx4xe4", "فیلم کامل حاجی جبار در پاریس", "FilmFarsi", undefined, "2026-09-27")],
+};
+
+// Fifteenth review batch: two more exact full-film archive uploads. The
+// Amir-Arsalan search result was a trailer and is intentionally not included.
+const BATCH_FIFTEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1332001": [publicYouTubeVideo("_ViRefxnc0c", "فیلم کامل افسونگر", "FilmFarsi", undefined, "2026-09-27")],
+  "old-iranian-1339013": [publicYouTubeVideo("yXUPH_NJjJs", "فیلم کامل آینه تاکسی (۱۳۳۹)", "Pars Films", 6600, "2026-09-27")],
+};
+
 const GHADAGHAN: OldIranianFilmMedia = {
   id: GHADAGHAN_ID,
   originalTitle: "Ghadaghan",
@@ -500,7 +518,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_THIRTEEN_YOUTUBE_BY_ID[key] ?? BATCH_TWELVE_OITN_YOUTUBE_BY_ID[key] ?? BATCH_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THREE_YOUTUBE_BY_ID[key] ?? BATCH_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_SIX_YOUTUBE_BY_ID[key] ?? BATCH_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TEN_YOUTUBE_BY_ID[key] ?? BATCH_ELEVEN_YOUTUBE_BY_ID[key] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_FIFTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FOURTEEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTEEN_YOUTUBE_BY_ID[key] ?? BATCH_TWELVE_OITN_YOUTUBE_BY_ID[key] ?? BATCH_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THREE_YOUTUBE_BY_ID[key] ?? BATCH_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_SIX_YOUTUBE_BY_ID[key] ?? BATCH_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TEN_YOUTUBE_BY_ID[key] ?? BATCH_ELEVEN_YOUTUBE_BY_ID[key] ?? null;
 }
 
 /**

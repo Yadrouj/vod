@@ -154,6 +154,30 @@ test("thirteenth review batch exposes the verified full-length Rebellious upload
   assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=BRXXnMY2MUk");
 });
 
+test("fourteenth review batch exposes exact full-film links for the next archive titles", () => {
+  for (const [id, videoId] of [
+    ["old-iranian-1336003", "Qlz29F6Qx4Y"], ["old-iranian-1336007", "5RHzKWo8YJE"],
+    ["old-iranian-1336009", "v16Qqb8pqE8"], ["old-iranian-1337016", "JIiuVtgrqp0"],
+    ["old-iranian-1338001", "taC3X06o-Gs"], ["old-iranian-1339006", "FFRHpqx4xe4"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].playbackStatus, "not-tested");
+    assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=/);
+  }
+});
+
+test("fifteenth review batch adds only exact full-film archive matches", () => {
+  for (const [id, videoId] of [["old-iranian-1332001", "_ViRefxnc0c"], ["old-iranian-1339013", "yXUPH_NJjJs"]] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].playbackStatus, "not-tested");
+  }
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1334004"), null);
+});
+
 test("OITN batch exposes only independently checked full-film embeds", () => {
   for (const [id, videoId, duration] of [
     ["old-iranian-1355020", "YGycqs-Rf90", 5277], ["old-iranian-1349035", "BtrCB0vgv48", 7379],
