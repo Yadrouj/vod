@@ -340,8 +340,15 @@ export function mergeTheTvdbEpisodeArtwork(episodes: EpisodeMetadata[], artwork:
 }
 
 function slugifyTheTvdbName(value: string) {
-  return value.normalize("NFKD").toLowerCase().replace(/[\u0027\u2019]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return value.normalize("NFKD").toLowerCase().replace(/[\u0300-\u036f]/g, "").replace(/[\u0027\u2019]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
+
+const THE_TVDB_SLUG_ALIASES: Record<string, string[]> = {
+  // TheTVDB keeps the release year in this title while IMDb/TVMaze do not.
+  "the-tom-and-jerry-show": ["the-tom-and-jerry-show-2014"],
+  // The German title is indexed under its shorter English slug.
+  "alarm-fur-cobra-11-die-autobahnpolizei": ["alarm-for-cobra-11"],
+};
 
 function theTvdbSlugs(show: {url?: unknown; name?: unknown; originalName?: unknown}) {
   const slugs: string[] = [];
@@ -359,7 +366,10 @@ function theTvdbSlugs(show: {url?: unknown; name?: unknown; originalName?: unkno
     if (!name) continue;
     for (const candidate of [name, name.replace(/\s*\([^)]*\)\s*/g, " "), name.split(/\s*[:|–—-]\s*/, 1)[0]]) {
       const slug = slugifyTheTvdbName(candidate);
-      if (slug) slugs.push(slug);
+      if (slug) {
+        slugs.push(slug);
+        slugs.push(...(THE_TVDB_SLUG_ALIASES[slug] || []));
+      }
     }
   }
   return [...new Set(slugs)];

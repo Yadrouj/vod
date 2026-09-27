@@ -74,6 +74,20 @@ test("TheTVDB artwork joins by title when providers use different season numberi
  assert.equal(merged[1].imageUrl,"https://artworks.thetvdb.com/banners/v4/episode/2/screencap/two.jpg");
  assert.equal(merged[0].imageSource,"thetvdb");
 });
+test("TheTVDB resolver tries known title slugs when IMDb and TheTVDB names differ",async()=>{
+ const html=`<span class="text-muted episode-label">S01E01</span><img data-src="https://artworks.thetvdb.com/banners/episodes/280446/1.jpg">`;
+ const requested:string[]=[];
+ const request=(async(url:string)=>{requested.push(url);return url.includes("the-tom-and-jerry-show-2014")?new Response(html,{status:200}):new Response("",{status:404});}) as typeof fetch;
+ const artwork=await fetchTheTvdbEpisodeImages({name:"The Tom and Jerry Show"},request);
+ assert.equal(artwork.get("1:1"),"https://artworks.thetvdb.com/banners/episodes/280446/1.jpg");
+ assert.ok(requested.some(url=>url.includes("the-tom-and-jerry-show-2014")));
+});
+test("TheTVDB slugifier removes combining accents before applying aliases",async()=>{
+ const requested:string[]=[];
+ const request=(async(url:string)=>{requested.push(url);return new Response("",{status:404});}) as typeof fetch;
+ await fetchTheTvdbEpisodeImages({name:"Alarm für Cobra 11 - Die Autobahnpolizei"},request);
+ assert.ok(requested.some(url=>url.includes("alarm-for-cobra-11")));
+});
 test("image store paths cannot escape the store or exceed episode ranges",()=>{
  assert.equal(episodeImageFile("/store","tt0903747",2,5),path.join("/store","tt0903747","2-5"));
  for (const [id,season,episode] of [["../etc",1,1],["tt1/../x",1,1],["tt1",1000,1],["tt1",1,-1],["tt1",1.5,1]] as const) assert.equal(episodeImageFile("/store",id,season,episode),null);
