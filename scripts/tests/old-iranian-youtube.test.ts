@@ -218,6 +218,14 @@ test("forty-eighth review batch exposes direct year-matched players", () => {
   }
 });
 
+test("forty-ninth review batch exposes the duration-checked Millionaires upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1346004");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "I-EURFySeXg");
+  assert.equal(item[0].durationSeconds, 5400);
+  assert.ok((item[0].durationSeconds ?? 0) >= 3600);
+});
+
 test("sixteenth review batch exposes exact full-film matches", () => {
   for (const [id, videoId] of [["old-iranian-1332022", "ZmMfj85P8Y8"], ["old-iranian-1340010", "MpyOTqOKqdM"]] as const) {
     const item = getOldIranianYouTubeVideos(id);
