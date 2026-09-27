@@ -178,6 +178,20 @@ test("fifteenth review batch adds only exact full-film archive matches", () => {
   assert.equal(getOldIranianYouTubeVideos("old-iranian-1334004")?.[0].videoId, "ZmVsspF_IMw");
 });
 
+test("forty-sixth review batch exposes exact full-film links", () => {
+  for (const [id, videoId] of [
+    ["old-iranian-1345004", "w8GESUX8Mz8"],
+    ["old-iranian-1345008", "AdvaJYeiuwI"],
+    ["old-iranian-1345035", "NWlvuEkUEHs"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].playbackStatus, "not-tested");
+    assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=/);
+  }
+});
+
 test("sixteenth review batch exposes exact full-film matches", () => {
   for (const [id, videoId] of [["old-iranian-1332022", "ZmMfj85P8Y8"], ["old-iranian-1340010", "MpyOTqOKqdM"]] as const) {
     const item = getOldIranianYouTubeVideos(id);
