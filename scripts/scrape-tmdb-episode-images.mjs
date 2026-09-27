@@ -1,4 +1,4 @@
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { materializeEpisodeArtwork } from "../lib/episode-metadata.ts";
@@ -185,13 +185,41 @@ async function refreshItem(item) {
   return { ...item, status: stats.missingImages || stats.duplicateImages ? "partial" : "complete", ...stats, tmdbId: Number(show.id), tmdbCheckedAt: snapshot.checkedAt, checkedAt: snapshot.checkedAt, sourceUrl: snapshot.sourceUrl };
 }
 
+async function snapshotCandidates() {
+  const files = (await readdir(OUTPUT_DIR)).filter(file => /^tt\d+\.json$/.test(file));
+  const items = [];
+  for (const file of files) {
+    const imdbCode = file.slice(0, -5);
+    if (onlyId && imdbCode !== onlyId) continue;
+    let snapshot;
+    try { snapshot = JSON.parse(await readFile(path.join(OUTPUT_DIR, file), "utf8")); } catch { continue; }
+    if (!snapshot?.episodes?.some(row => row.imageSource === "fallback" || !row.imageUrl)) continue;
+    items.push({
+      imdbCode,
+      title: typeof snapshot.seriesTitle === "string" ? snapshot.seriesTitle : imdbCode,
+      year: Number.isFinite(Number(snapshot.year)) ? Number(snapshot.year) : null,
+      imdbRating: Number.isFinite(Number(snapshot.imdbRating)) ? Number(snapshot.imdbRating) : null,
+      imdbVotes: Number.isFinite(Number(snapshot.imdbVotes)) ? Number(snapshot.imdbVotes) : null,
+    });
+  }
+  return items;
+}
+
 async function main() {
   await mkdir(OUTPUT_DIR, { recursive: true });
-  const report = JSON.parse(await readFile(REPORT_FILE, "utf8"));
-  const candidates = (report.items || []).filter(item => /^tt\d+$/.test(item.imdbCode))
-    .filter(item => !onlyId || item.imdbCode === onlyId)
-    .filter(item => !unprocessed || (!item.tmdbId && !item.tmdbCheckedAt && item.status !== "complete"))
-    .filter(item => args.has("--all") || item.status !== "complete");
+  const fromSnapshots = args.has("--from-snapshots");
+  let report = null;
+  let candidates;
+  if (fromSnapshots) {
+    candidates = await snapshotCandidates();
+    try { report = JSON.parse(await readFile(REPORT_FILE, "utf8")); } catch { /* Snapshot mode does not require a report. */ }
+  } else {
+    report = JSON.parse(await readFile(REPORT_FILE, "utf8"));
+    candidates = (report.items || []).filter(item => /^tt\d+$/.test(item.imdbCode))
+      .filter(item => !onlyId || item.imdbCode === onlyId)
+      .filter(item => !unprocessed || (!item.tmdbId && !item.tmdbCheckedAt && item.status !== "complete"))
+      .filter(item => args.has("--all") || item.status !== "complete");
+  }
   const items = candidates.slice(offset, offset + limit);
   let cursor = 0;
   let completed = 0;
@@ -218,21 +246,23 @@ async function main() {
     }
   };
   await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
-  report.checkedAt = new Date().toISOString();
-  report.source = "TVMaze + TMDB public episode stills keyed by IMDb ID";
-  report.items = report.items.map(item => results.get(item.imdbCode) || item);
-  report.totals = {
-    ...report.totals,
-    checked: report.items.filter(item => ["complete", "partial", "unavailable"].includes(item.status)).length,
-    complete: report.items.filter(item => item.status === "complete").length,
-    partial: report.items.filter(item => item.status === "partial").length,
-    unavailable: report.items.filter(item => item.status === "unavailable").length,
-    pending: report.items.filter(item => item.status === "pending").length,
-    missingImages: report.items.reduce((sum, item) => sum + (item.missingImages || 0), 0),
-    duplicateImages: report.items.reduce((sum, item) => sum + (item.duplicateImages || 0), 0),
-  };
-  await writeJsonAtomic(REPORT_FILE, report);
-  console.log(JSON.stringify({ processed: items.length, totals: report.totals }, null, 2));
+  if (report?.items && Array.isArray(report.items)) {
+    report.checkedAt = new Date().toISOString();
+    report.source = "TVMaze + TMDB public episode stills keyed by IMDb ID";
+    report.items = report.items.map(item => results.get(item.imdbCode) || item);
+    report.totals = {
+      ...report.totals,
+      checked: report.items.filter(item => ["complete", "partial", "unavailable"].includes(item.status)).length,
+      complete: report.items.filter(item => item.status === "complete").length,
+      partial: report.items.filter(item => item.status === "partial").length,
+      unavailable: report.items.filter(item => item.status === "unavailable").length,
+      pending: report.items.filter(item => item.status === "pending").length,
+      missingImages: report.items.reduce((sum, item) => sum + (item.missingImages || 0), 0),
+      duplicateImages: report.items.reduce((sum, item) => sum + (item.duplicateImages || 0), 0),
+    };
+    await writeJsonAtomic(REPORT_FILE, report);
+  }
+  console.log(JSON.stringify({ processed: items.length, updated: [...results.values()].filter(item => item.status === "complete").length }, null, 2));
 }
 
 export { episodeImages, pageTitle, seasonNumbers, tvCandidates };

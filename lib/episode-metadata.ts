@@ -257,28 +257,59 @@ export function parseTheTvdbEpisodeImages(value: unknown) {
   return images;
 }
 
-function theTvdbSlug(show: {url?: unknown; name?: unknown}) {
+function slugifyTheTvdbName(value: string) {
+  return value.normalize("NFKD").toLowerCase().replace(/[\u0027\u2019]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function theTvdbSlugs(show: {url?: unknown; name?: unknown; originalName?: unknown}) {
+  const slugs: string[] = [];
   if (typeof show.url === "string") {
     try {
-      const slug = new URL(show.url).pathname.split("/").filter(Boolean).pop();
-      if (slug) return slug;
+      const segments = new URL(show.url).pathname.split("/").filter(Boolean);
+      const marker = segments.findIndex(segment => segment === "shows" || segment === "series");
+      const slug = marker >= 0 ? segments[marker + 2] : null;
+      if (slug && !/^\d+$/.test(slug)) slugs.push(slug);
     } catch { /* Fall through to the show name. */ }
   }
-  return typeof show.name === "string"
-    ? show.name.normalize("NFKD").toLowerCase().replace(/[\u0027\u2019]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
-    : "";
+  for (const rawName of [show.name, show.originalName]) {
+    if (typeof rawName !== "string") continue;
+    const name = rawName.trim();
+    if (!name) continue;
+    for (const candidate of [name, name.replace(/\s*\([^)]*\)\s*/g, " "), name.split(/\s*[:|–—-]\s*/, 1)[0]]) {
+      const slug = slugifyTheTvdbName(candidate);
+      if (slug) slugs.push(slug);
+    }
+  }
+  return [...new Set(slugs)];
 }
 
 /** Fetches public TheTVDB episode screenshots without requiring an API key. */
-export async function fetchTheTvdbEpisodeImages(show: {url?: unknown; name?: unknown}, request: typeof fetch = fetch) {
-  const slug = theTvdbSlug(show);
-  if (!slug) return new Map<string, string>();
-  const response = await request(`https://www.thetvdb.com/series/${encodeURIComponent(slug)}/allseasons/official`, {
-    headers: {accept: "text/html", "user-agent": "SarvNema episode-artwork/1.0"},
-    signal: AbortSignal.timeout(8_000),
-  });
-  if (!response.ok) return new Map<string, string>();
-  return parseTheTvdbEpisodeImages(await response.text());
+export async function fetchTheTvdbEpisodeImages(show: {url?: unknown; name?: unknown; originalName?: unknown}, request: typeof fetch = fetch) {
+  for (const slug of theTvdbSlugs(show)) {
+    const url = `https://www.thetvdb.com/series/${encodeURIComponent(slug)}/allseasons/official`;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const response = await request(url, {
+          headers: {accept: "text/html", "user-agent": "SarvNema episode-artwork/1.0"},
+          signal: AbortSignal.timeout(8_000),
+        });
+        if (response.status === 404) break;
+        if (!response.ok) {
+          if (attempt < 2 && (response.status === 429 || response.status >= 500)) {
+            await new Promise(resolve => setTimeout(resolve, 400 * (attempt + 1)));
+            continue;
+          }
+          break;
+        }
+        const images = parseTheTvdbEpisodeImages(await response.text());
+        if (images.size) return images;
+        break;
+      } catch {
+        if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 400 * (attempt + 1)));
+      }
+    }
+  }
+  return new Map<string, string>();
 }
 
 export function createEpisodeMetadataLoader(root = process.cwd(), request: typeof fetch = fetch) {

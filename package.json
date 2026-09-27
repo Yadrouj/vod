@@ -61,6 +61,7 @@
     "maintenance-full-now": "node scripts/maintenance-scheduler.mjs --force --full",
     "audit-series-episode-images": "node scripts/audit-series-episode-images.mjs",
     "audit-series-episode-images:all": "node scripts/audit-series-episode-images.mjs --all --concurrency=4",
+    "backfill-episode-artwork": "node scripts/backfill-episode-artwork.mjs",
     "scrape-tmdb-episode-images": "node --import tsx scripts/scrape-tmdb-episode-images.mjs",
     "research-old-iranian-youtube": "node scripts/research-old-iranian-youtube.mjs",
     "cache-episode-images": "node scripts/cache-episode-images.mjs",

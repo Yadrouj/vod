@@ -145,6 +145,15 @@ test("eleventh review batch keeps live, exact long-form matches", () => {
   }
 });
 
+test("thirteenth review batch exposes the verified full-length Rebellious upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1357008");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "BRXXnMY2MUk");
+  assert.equal(item[0].durationSeconds, 5640);
+  assert.equal(item[0].playbackStatus, "available");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=BRXXnMY2MUk");
+});
+
 test("OITN batch exposes only independently checked full-film embeds", () => {
   for (const [id, videoId, duration] of [
     ["old-iranian-1355020", "YGycqs-Rf90", 5277], ["old-iranian-1349035", "BtrCB0vgv48", 7379],

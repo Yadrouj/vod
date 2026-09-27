@@ -26,6 +26,21 @@ node scripts/audit-series-episode-images.mjs --all --retry-incomplete --fallback
 node scripts/audit-series-episode-images.mjs --imdb=tt44094505 --retry-incomplete
 ```
 
+For the resumable direct screenshot backfill, which reads existing snapshots
+without rescanning the full catalogue:
+
+```bash
+npm run backfill-episode-artwork -- --concurrency=6 --limit=100
+npm run backfill-episode-artwork -- --id=tt44094505
+```
+
+Rerun the command for the next batch. Already repaired snapshots are skipped;
+`MAINTENANCE_DEADLINE` can stop a run safely inside a scheduled maintenance
+window. Titles with no public TheTVDB match are remembered in the ignored
+`.media-cache/episode-artwork-no-match.json` file so daily maintenance does not
+repeat the same requests. Use `--retry-no-match` when a provider has added new
+artwork.
+
 Fill gaps from TMDB's public episode pages after the TVMaze pass:
 
 ```bash
