@@ -187,6 +187,13 @@ test("sixteenth review batch exposes exact full-film matches", () => {
   }
 });
 
+test("seventeenth review batch exposes the exact Daughters of Eve upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1340009");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "11kADOKa07U");
+  assert.equal(item[0].playbackStatus, "not-tested");
+});
+
 test("OITN batch exposes only independently checked full-film embeds", () => {
   for (const [id, videoId, duration] of [
     ["old-iranian-1355020", "YGycqs-Rf90", 5277], ["old-iranian-1349035", "BtrCB0vgv48", 7379],
