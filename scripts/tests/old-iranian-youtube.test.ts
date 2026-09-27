@@ -440,6 +440,15 @@ test("sixty-eighth review batch exposes four duration-checked classic uploads", 
   }
 });
 
+test("sixty-ninth review batch exposes the duration-checked Dar Entehaye Zolmat upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1341023");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "RGV9A2P4rOg");
+  assert.equal(item[0].durationSeconds, 4800);
+  assert.match(item[0].title, /full film/i);
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=RGV9A2P4rOg");
+});
+
 test("sixteenth review batch exposes exact full-film matches", () => {
   for (const [id, videoId] of [["old-iranian-1332022", "ZmMfj85P8Y8"], ["old-iranian-1340010", "MpyOTqOKqdM"]] as const) {
     const item = getOldIranianYouTubeVideos(id);
