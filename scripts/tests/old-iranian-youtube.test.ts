@@ -930,3 +930,17 @@ test("seventy-eighth review batch exposes two duration-checked classic uploads",
     assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
   }
 });
+
+test("seventy-ninth review batch exposes two exact-title feature uploads", () => {
+  const parastooha = getOldIranianYouTubeVideos("old-iranian-1342024");
+  assert.ok(parastooha);
+  assert.equal(parastooha[0].videoId, "EAc1kiM5ntQ");
+  assert.equal(parastooha[0].durationSeconds, 5160);
+  assert.equal(parastooha[0].sourceUrl, "https://www.youtube.com/watch?v=EAc1kiM5ntQ");
+
+  const abram = getOldIranianYouTubeVideos("old-iranian-1343021");
+  assert.ok(abram);
+  assert.equal(abram[0].videoId, "_eM8ud5W2Yo");
+  assert.equal(abram[0].durationSeconds, undefined);
+  assert.equal(abram[0].sourceUrl, "https://www.youtube.com/watch?v=_eM8ud5W2Yo");
+});
