@@ -851,3 +851,18 @@ test("community playlists and review channels are retained as direct YouTube sou
   assert.ok(OLD_IRANIAN_YOUTUBE_COLLECTIONS.some(collection => collection.playlistId === "PLeHzOz4FtTB40XDHDUtatCriTciww6cfQ"));
   assert.deepEqual(OLD_IRANIAN_YOUTUBE_REVIEW_CHANNELS, ["https://www.youtube.com/@Filmrangi/videos", "https://www.youtube.com/@ShoukaFilm", "https://www.youtube.com/@beikiha/videos"]);
 });
+
+test("seventy-second review batch exposes exact classic-film uploads", () => {
+  for (const [id, videoId] of [
+    ["old-iranian-1345024", "Jn0EfUyQyic"],
+    ["old-iranian-1345014", "AO-5CWC0LOU"],
+    ["old-iranian-1345027", "pAah2EIq-Rc"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.match(item[0].title, /full film/i);
+  }
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1345024")?.[0].durationSeconds, 5400);
+});
