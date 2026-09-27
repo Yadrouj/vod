@@ -386,6 +386,15 @@ test("sixty-fourth review batch exposes the duration-checked Babr-e Ring upload"
   assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=vizcCS5XIb4$/);
 });
 
+test("sixty-fifth review batch exposes the duration-checked Jahel-ha va Zhigool-ha upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1343028");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "TbDLcP3iHvc");
+  assert.equal(item[0].durationSeconds, 6060);
+  assert.match(item[0].title, /full film/i);
+  assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=TbDLcP3iHvc$/);
+});
+
 test("sixteenth review batch exposes exact full-film matches", () => {
   for (const [id, videoId] of [["old-iranian-1332022", "ZmMfj85P8Y8"], ["old-iranian-1340010", "MpyOTqOKqdM"]] as const) {
     const item = getOldIranianYouTubeVideos(id);
