@@ -23,6 +23,7 @@ export type EpisodeArtworkOverride = {
 export type EpisodeMetadataOptions = {fallbackImage?: string | null};
 type Snapshot = {checkedAt: string; episodes: EpisodeMetadata[]; seriesTitle?: string | null};
 type ArtworkOverrides = Record<string, Record<string, EpisodeArtworkOverride>>;
+export type TheTvdbEpisodeArtwork = {season: number; episode: number; title: string; imageUrl: string};
 
 function safeImageUrl(value: unknown) {
   if (typeof value !== "string" || !value.trim()) return null;
@@ -236,25 +237,106 @@ export function parseEpisodeMetadata(value: unknown): EpisodeMetadata[] {
   });
 }
 
+function decodeHtmlText(value: string) {
+  const namedEntities: Record<string, string> = {
+    amp: "&", apos: "'", copy: "©", eacute: "é", egrave: "è", euml: "ë", iacute: "í", igrave: "ì",
+    laquo: "«", ldquo: "“", lsquo: "‘", nbsp: " ", ndash: "–", ntilde: "ñ", oacute: "ó", oslash: "ø",
+    ouml: "ö", quot: '"', rdquo: "”", reg: "®", rsquo: "’", uacute: "ú", ugrave: "ù", uuml: "ü",
+    lt: "<", gt: ">",
+  };
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&(#x[\da-f]+|#\d+|[A-Za-z][A-Za-z0-9]+);/gi, (entity, value) => {
+      const lower = value.toLowerCase();
+      if (!lower.startsWith("#")) return namedEntities[lower] || entity;
+      const code = lower.startsWith("#x") ? Number.parseInt(lower.slice(2), 16) : Number.parseInt(lower.slice(1), 10);
+      try { return Number.isFinite(code) ? String.fromCodePoint(code) : entity; } catch { return entity; }
+    })
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeEpisodeTitle(value: string) {
+  return decodeHtmlText(value)
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+const EPISODE_TITLE_STOP_WORDS = new Set(["a", "an", "and", "at", "by", "featuring", "feature", "for", "from", "ft", "in", "of", "on", "plus", "presents", "the", "to", "with"]);
+
+function episodeTitleTokens(value: string) {
+  return new Set(normalizeEpisodeTitle(value).split(" ").filter(token => token.length > 1 && !EPISODE_TITLE_STOP_WORDS.has(token)));
+}
+
+function episodeTitleSimilarity(left: string, right: string) {
+  const leftTokens = episodeTitleTokens(left);
+  const rightTokens = episodeTitleTokens(right);
+  if (!leftTokens.size || !rightTokens.size) return 0;
+  let overlap = 0;
+  for (const token of leftTokens) if (rightTokens.has(token)) overlap += 1;
+  return (2 * overlap) / (leftTokens.size + rightTokens.size);
+}
+
 /**
  * TheTVDB's public all-seasons page exposes episode screenshots as lazy-loaded
- * `data-src` attributes. Keep this parser deliberately narrow: only the
- * official SxxExx label immediately followed by an allow-listed artwork URL
- * can become episode artwork.
+ * `data-src` attributes. The official season/episode numbers are not always
+ * compatible with TVMaze (some TVMaze shows use broadcast years as seasons),
+ * so retain the episode title as a safe secondary join key.
  */
-export function parseTheTvdbEpisodeImages(value: unknown) {
-  const images = new Map<string, string>();
-  if (typeof value !== "string") return images;
-  const pattern = /<span[^>]*class=["'][^"']*\bepisode-label\b[^"']*["'][^>]*>\s*S(\d{1,3})E(\d{1,3})\s*<\/span>[\s\S]{0,6000}?<img[^>]+data-src=["'](https:\/\/artworks\.thetvdb\.com\/[^"']+)["']/gi;
-  for (const match of value.matchAll(pattern)) {
+export function parseTheTvdbEpisodeArtwork(value: unknown) {
+  const artwork: TheTvdbEpisodeArtwork[] = [];
+  if (typeof value !== "string") return artwork;
+  const rowPattern = /<span[^>]*class=["'][^"']*\bepisode-label\b[^"']*["'][^>]*>\s*S(\d{1,3})E(\d{1,3})\s*<\/span>([\s\S]*?)(?=<span[^>]*class=["'][^"']*\bepisode-label\b[^"']*["'][^>]*>|$)/gi;
+  for (const match of value.matchAll(rowPattern)) {
     const season = Number(match[1]);
     const episode = Number(match[2]);
-    const imageUrl = safeImageUrl(match[3]?.replace(/&amp;/g, "&"));
-    if (Number.isInteger(season) && season >= 0 && Number.isInteger(episode) && episode > 0 && imageUrl && isStorableEpisodeImage(imageUrl)) {
-      images.set(`${season}:${episode}`, imageUrl);
-    }
+    const row = match[3] || "";
+    const imageMatch = row.match(/<img[^>]+data-src=["'](https:\/\/artworks\.thetvdb\.com\/[^"']+)["']/i);
+    const imageUrl = safeImageUrl(imageMatch?.[1]?.replace(/&amp;/g, "&"));
+    if (!Number.isInteger(season) || season < 0 || !Number.isInteger(episode) || episode < 1 || !imageUrl || !isStorableEpisodeImage(imageUrl)) continue;
+    const titleMatch = row.match(/<a[^>]+\/episodes\/[^>]*>[\s\S]*?<\/a>/i);
+    const title = titleMatch ? decodeHtmlText(titleMatch[0]) : "";
+    artwork.push({season, episode, title, imageUrl});
   }
-  return images;
+  return artwork;
+}
+
+export function parseTheTvdbEpisodeImages(value: unknown) {
+  return new Map(parseTheTvdbEpisodeArtwork(value).map(row => [`${row.season}:${row.episode}`, row.imageUrl]));
+}
+
+/** Joins TheTVDB stills to provider episodes, including providers with different season numbering. */
+export function mergeTheTvdbEpisodeArtwork(episodes: EpisodeMetadata[], artwork: TheTvdbEpisodeArtwork[]) {
+  const byNumber = new Map(artwork.map(row => [`${row.season}:${row.episode}`, row.imageUrl]));
+  const byTitle = new Map<string, string[]>();
+  for (const row of artwork) {
+    const key = normalizeEpisodeTitle(row.title);
+    if (!key) continue;
+    const values = byTitle.get(key) || [];
+    values.push(row.imageUrl);
+    byTitle.set(key, values);
+  }
+  const usedImages = new Set<string>();
+  return episodes.map(episode => {
+    if (episode.imageSource !== "fallback" && episode.imageUrl) return episode;
+    const numbered = byNumber.get(`${episode.season}:${episode.episode}`);
+    const titleMatches = (byTitle.get(normalizeEpisodeTitle(episode.title)) || []).filter(imageUrl => !usedImages.has(imageUrl));
+    let imageUrl = numbered && !usedImages.has(numbered) ? numbered : titleMatches.length === 1 ? titleMatches[0] : null;
+    if (!imageUrl) {
+      const ranked = artwork
+        .filter(row => !usedImages.has(row.imageUrl))
+        .map(row => ({row, score: episodeTitleSimilarity(episode.title, row.title)}))
+        .sort((left, right) => right.score - left.score);
+      const best = ranked[0];
+      const second = ranked[1];
+      if (best && best.score >= 0.7 && best.score - (second?.score || 0) >= 0.08) imageUrl = best.row.imageUrl;
+    }
+    if (imageUrl) usedImages.add(imageUrl);
+    return imageUrl ? {...episode, imageUrl, imageSource: "thetvdb" as const} : episode;
+  });
 }
 
 function slugifyTheTvdbName(value: string) {
@@ -284,7 +366,7 @@ function theTvdbSlugs(show: {url?: unknown; name?: unknown; originalName?: unkno
 }
 
 /** Fetches public TheTVDB episode screenshots without requiring an API key. */
-export async function fetchTheTvdbEpisodeImages(show: {url?: unknown; name?: unknown; originalName?: unknown}, request: typeof fetch = fetch) {
+export async function fetchTheTvdbEpisodeArtwork(show: {url?: unknown; name?: unknown; originalName?: unknown}, request: typeof fetch = fetch) {
   for (const slug of theTvdbSlugs(show)) {
     const url = `https://www.thetvdb.com/series/${encodeURIComponent(slug)}/allseasons/official`;
     for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -301,15 +383,20 @@ export async function fetchTheTvdbEpisodeImages(show: {url?: unknown; name?: unk
           }
           break;
         }
-        const images = parseTheTvdbEpisodeImages(await response.text());
-        if (images.size) return images;
+        const images = parseTheTvdbEpisodeArtwork(await response.text());
+        if (images.length) return images;
         break;
       } catch {
         if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 400 * (attempt + 1)));
       }
     }
   }
-  return new Map<string, string>();
+  return [] as TheTvdbEpisodeArtwork[];
+}
+
+export async function fetchTheTvdbEpisodeImages(show: {url?: unknown; name?: unknown; originalName?: unknown}, request: typeof fetch = fetch) {
+  const artwork = await fetchTheTvdbEpisodeArtwork(show, request);
+  return new Map(artwork.map(row => [`${row.season}:${row.episode}`, row.imageUrl]));
 }
 
 export function createEpisodeMetadataLoader(root = process.cwd(), request: typeof fetch = fetch) {
@@ -338,21 +425,21 @@ export function createEpisodeMetadataLoader(root = process.cwd(), request: typeo
       if (!response.ok) throw new Error("Episode metadata failed");
       const episodes = parseEpisodeMetadata(await response.json());
       if (!episodes.length) throw new Error("Empty episode metadata");
-      let theTvdbImages = new Map<string, string>();
+      let theTvdbArtwork: TheTvdbEpisodeArtwork[] = [];
       if (episodes.some(row => !row.imageUrl)) {
-        try { theTvdbImages = await fetchTheTvdbEpisodeImages(show, request); } catch { /* TVDB is an enrichment source, not a hard dependency. */ }
+        try { theTvdbArtwork = await fetchTheTvdbEpisodeArtwork(show, request); } catch { /* TVDB is an enrichment source, not a hard dependency. */ }
       }
       // Retain known stills if the upstream temporarily omits an episode image.
       const prior = new Map(saved?.episodes.map(row => [`${row.season}:${row.episode}`, row]) ?? []);
-      const merged = episodes.map(row => {
+      const withTvdb = mergeTheTvdbEpisodeArtwork(episodes, theTvdbArtwork);
+      const merged = withTvdb.map(row => {
         const previous = prior.get(`${row.season}:${row.episode}`);
-        const tvdbImage = theTvdbImages.get(`${row.season}:${row.episode}`) || null;
         const previousImage = previous?.imageSource !== "fallback" ? previous?.imageUrl || null : null;
-        const imageUrl = row.imageUrl || tvdbImage || previousImage;
+        const imageUrl = row.imageUrl || previousImage;
         return {
           ...row,
           imageUrl,
-          imageSource: row.imageUrl ? row.imageSource || "tvmaze" : tvdbImage ? "thetvdb" : imageUrl ? previous?.imageSource || "tvmaze" : null,
+          imageSource: row.imageUrl ? row.imageSource || "tvmaze" : imageUrl ? previous?.imageSource || "tvmaze" : null,
         };
       });
       try {
@@ -368,12 +455,8 @@ export function createEpisodeMetadataLoader(root = process.cwd(), request: typeo
       // when the snapshot contains the series title.
       if (saved?.seriesTitle) {
         try {
-          const theTvdbImages = await fetchTheTvdbEpisodeImages({name: saved.seriesTitle}, request);
-          const repaired = saved.episodes.map(row => {
-            if (row.imageSource !== "fallback" && row.imageUrl) return row;
-            const imageUrl = theTvdbImages.get(`${row.season}:${row.episode}`);
-            return imageUrl ? {...row, imageUrl, imageSource: "thetvdb" as const} : row;
-          });
+          const theTvdbArtwork = await fetchTheTvdbEpisodeArtwork({name: saved.seriesTitle}, request);
+          const repaired = mergeTheTvdbEpisodeArtwork(saved.episodes, theTvdbArtwork);
           if (repaired.some((row, index) => row.imageUrl !== saved.episodes[index]?.imageUrl)) {
             try {
               await mkdir(path.dirname(files[0]), {recursive: true});

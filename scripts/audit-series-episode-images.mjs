@@ -3,7 +3,7 @@ import { execFile } from "node:child_process";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
-import { fetchTheTvdbEpisodeImages, materializeEpisodeArtwork, parseEpisodeMetadata } from "../lib/episode-metadata.ts";
+import { fetchTheTvdbEpisodeArtwork, materializeEpisodeArtwork, mergeTheTvdbEpisodeArtwork, parseEpisodeMetadata } from "../lib/episode-metadata.ts";
 import { writeJsonAtomic } from "./atomic-json.mjs";
 import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 
@@ -174,13 +174,9 @@ async function json(url) {
 async function fetchEpisodes(series, saved) {
   if (saved?.seriesTitle && saved.episodes?.some((episode) => episode.imageSource === "fallback" || !episode.imageUrl)) {
     try {
-      const images = await fetchTheTvdbEpisodeImages({name: saved.seriesTitle}, requestText);
-      if (images.size) {
-        const repaired = saved.episodes.map((episode) => {
-          if (episode.imageSource !== "fallback" && episode.imageUrl) return episode;
-          const imageUrl = images.get(`${episode.season}:${episode.episode}`);
-          return imageUrl ? {...episode, imageUrl, imageSource: "thetvdb"} : episode;
-        });
+      const artwork = await fetchTheTvdbEpisodeArtwork({name: saved.seriesTitle}, requestText);
+      if (artwork.length) {
+        const repaired = mergeTheTvdbEpisodeArtwork(saved.episodes, artwork);
         if (repaired.some((episode, index) => episode.imageUrl !== saved.episodes[index]?.imageUrl)) {
           return {episodes: repaired, sourceUrl: "https://www.thetvdb.com/"};
         }
@@ -194,27 +190,19 @@ async function fetchEpisodes(series, saved) {
     // A saved snapshot plus a public TheTVDB page is enough to repair missing
     // stills when TVMaze is unreachable from the maintenance host.
     if (!saved?.seriesTitle) throw error;
-    const images = await fetchTheTvdbEpisodeImages({name: saved.seriesTitle}, requestText);
-    if (!images.size) throw error;
-    const episodes = (saved.episodes || []).map((episode) => {
-      if (episode.imageSource !== "fallback" && episode.imageUrl) return episode;
-      const imageUrl = images.get(`${episode.season}:${episode.episode}`);
-      return imageUrl ? {...episode, imageUrl, imageSource: "thetvdb"} : episode;
-    });
+    const artwork = await fetchTheTvdbEpisodeArtwork({name: saved.seriesTitle}, requestText);
+    if (!artwork.length) throw error;
+    const episodes = mergeTheTvdbEpisodeArtwork(saved.episodes || [], artwork);
     return {episodes, sourceUrl: "https://www.thetvdb.com/"};
   }
   if (!Number.isInteger(show?.id)) throw new Error("TVMaze show not found");
   const tvMazeEpisodes = parseEpisodeMetadata(await json(`https://api.tvmaze.com/shows/${show.id}/episodes`));
   if (!tvMazeEpisodes.length) throw new Error("No episodes returned");
-  let theTvdbImages = new Map();
+  let theTvdbArtwork = [];
   if (tvMazeEpisodes.some((episode) => !episode.imageUrl)) {
-    try { theTvdbImages = await fetchTheTvdbEpisodeImages(show, requestText); } catch { /* Keep the deterministic fallback when the public page is unavailable. */ }
+    try { theTvdbArtwork = await fetchTheTvdbEpisodeArtwork(show, requestText); } catch { /* Keep the deterministic fallback when the public page is unavailable. */ }
   }
-  const episodes = tvMazeEpisodes.map((episode) => {
-    if (episode.imageUrl) return episode;
-    const imageUrl = theTvdbImages.get(`${episode.season}:${episode.episode}`);
-    return imageUrl ? { ...episode, imageUrl, imageSource: "thetvdb" } : episode;
-  });
+  const episodes = mergeTheTvdbEpisodeArtwork(tvMazeEpisodes, theTvdbArtwork);
   return { episodes, sourceUrl: `https://www.tvmaze.com/shows/${show.id}` };
 }
 

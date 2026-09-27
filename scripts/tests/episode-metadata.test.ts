@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {mkdtemp,mkdir,writeFile,readFile,rm} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import {createEpisodeMetadataLoader,episodeArtworkFallbackUrl,episodeImageFile,episodeImageType,episodeImageUrl,fetchTheTvdbEpisodeImages,findEpisodeImageSource,isStorableEpisodeImage,parseEpisodeMetadata,parseTheTvdbEpisodeImages,readStoredEpisodeImage,storeEpisodeImage} from "../../lib/episode-metadata";
+import {createEpisodeMetadataLoader,episodeArtworkFallbackUrl,episodeImageFile,episodeImageType,episodeImageUrl,fetchTheTvdbEpisodeImages,findEpisodeImageSource,isStorableEpisodeImage,mergeTheTvdbEpisodeArtwork,parseEpisodeMetadata,parseTheTvdbEpisodeImages,parseTheTvdbEpisodeArtwork,readStoredEpisodeImage,storeEpisodeImage} from "../../lib/episode-metadata";
 test("episode image identity remains tied to season and episode",()=>{
  const result=parseEpisodeMetadata([{season:1,number:2,name:"Episode two",image:{medium:"https://static.tvmaze.com/uploads/images/a.jpg"}},{season:2,number:2,name:"Another season",image:null},{season:1,number:null}]);
  assert.equal(result.length,2);assert.equal(result[0].episode,2);assert.equal(result[1].season,2);assert.equal(result[1].imageUrl,null);
@@ -65,6 +65,14 @@ test("TheTVDB episode rows map each official episode label to its own screenshot
  const request = (async (url: string) => new Response(html, {status: 200})) as typeof fetch;
  const enriched = await fetchTheTvdbEpisodeImages({url: "https://www.tvmaze.com/shows/93427/ok-lets-get-divorced"}, request);
  assert.equal(enriched.get("1:2"), "https://artworks.thetvdb.com/banners/v4/episode/2/screencap/two.jpg");
+});
+test("TheTVDB artwork joins by title when providers use different season numbering",()=>{
+ const html=`<span class="text-muted episode-label">S01E01</span><a href="/series/demo/episodes/1">Pilot &amp; Premiere</a><img data-src="https://artworks.thetvdb.com/banners/v4/episode/1/screencap/one.jpg"><span class="text-muted episode-label">S01E02</span><a href="/series/demo/episodes/2">Second Night</a><img data-src="https://artworks.thetvdb.com/banners/v4/episode/2/screencap/two.jpg">`;
+ const artwork=parseTheTvdbEpisodeArtwork(html);
+ const merged=mergeTheTvdbEpisodeArtwork([{season:2014,episode:1,title:"Pilot & Premiere",summary:null,imageUrl:null,imageSource:"fallback"},{season:2014,episode:2,title:"Second Night",summary:null,imageUrl:null,imageSource:"fallback"}],artwork);
+ assert.equal(merged[0].imageUrl,"https://artworks.thetvdb.com/banners/v4/episode/1/screencap/one.jpg");
+ assert.equal(merged[1].imageUrl,"https://artworks.thetvdb.com/banners/v4/episode/2/screencap/two.jpg");
+ assert.equal(merged[0].imageSource,"thetvdb");
 });
 test("image store paths cannot escape the store or exceed episode ranges",()=>{
  assert.equal(episodeImageFile("/store","tt0903747",2,5),path.join("/store","tt0903747","2-5"));

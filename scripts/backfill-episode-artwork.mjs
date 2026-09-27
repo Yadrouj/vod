@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { fetchTheTvdbEpisodeImages } from "../lib/episode-metadata.ts";
+import { fetchTheTvdbEpisodeArtwork, mergeTheTvdbEpisodeArtwork } from "../lib/episode-metadata.ts";
 import { writeJsonAtomic } from "./atomic-json.mjs";
 
 const ROOT = process.cwd();
@@ -64,12 +64,8 @@ async function main() {
     while (cursor < selected.length && Date.now() < deadline) {
       const target = selected[cursor++];
       try {
-        const images = await fetchTheTvdbEpisodeImages({url: target.snapshot.sourceUrl, name: target.snapshot.seriesTitle, originalName: target.originalName});
-        const repaired = target.snapshot.episodes.map(row => {
-          if (row.imageSource !== "fallback" && row.imageUrl) return row;
-          const imageUrl = images.get(`${row.season}:${row.episode}`);
-          return imageUrl ? {...row, imageUrl, imageSource: "thetvdb"} : row;
-        });
+        const artwork = await fetchTheTvdbEpisodeArtwork({url: target.snapshot.sourceUrl, name: target.snapshot.seriesTitle, originalName: target.originalName});
+        const repaired = mergeTheTvdbEpisodeArtwork(target.snapshot.episodes, artwork);
         const replaced = repaired.filter((row, index) => row.imageUrl !== target.snapshot.episodes[index]?.imageUrl).length;
         if (replaced) {
           noMatches.delete(target.id);

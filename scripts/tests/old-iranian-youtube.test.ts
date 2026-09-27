@@ -409,6 +409,28 @@ test("thirty-seventh review batch exposes exact full-film uploads", () => {
   }
 });
 
+test("thirty-eighth review batch exposes exact full-film uploads", () => {
+  for (const [id, videoId] of [
+    ["old-iranian-1346001", "VGn9g1UmpwI"], ["old-iranian-1346005", "03zI4XCQnV4"],
+    ["old-iranian-1346011", "8T20_og-W84"], ["old-iranian-1346012", "W72CGsOK2-4"],
+    ["old-iranian-1346025", "M85Izf72Tx0"], ["old-iranian-1346035", "N70aWC4SEEM"],
+    ["old-iranian-1347003", "-ggUuAErhLw"], ["old-iranian-1347025", "Wm1GSyAfj4k"],
+    ["old-iranian-1347028", "NUmF37NMtwQ"], ["old-iranian-1347042", "WX2EjkpsbtE"],
+    ["old-iranian-1347043", "qfTA94Rvfdo"], ["old-iranian-1347045", "qQMI7N5RgMw"],
+    ["old-iranian-1348001", "AHHZnJIscic"], ["old-iranian-1348002", "ItS1aWMSqQ8"],
+    ["old-iranian-1348008", "uc2YlLuwEYc"], ["old-iranian-1348012", "OFkcpZpVtV4"],
+    ["old-iranian-1348015", "2i3HRLSNKPo"], ["old-iranian-1348016", "ZG9tkguaU54"],
+    ["old-iranian-1348018", "uF-RVVBYo74"], ["old-iranian-1348020", "aXztPdN-yHk"],
+    ["old-iranian-1348022", "RK-kCSgGnz8"], ["old-iranian-1348023", "yPZxw28pZD8"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+  }
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1347028")?.[0].durationSeconds, 5640);
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1348022")?.[0].playbackStatus, "available");
+});
+
 test("OITN batch exposes only independently checked full-film embeds", () => {
   for (const [id, videoId, duration] of [
     ["old-iranian-1355020", "YGycqs-Rf90", 5277], ["old-iranian-1349035", "BtrCB0vgv48", 7379],

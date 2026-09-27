@@ -527,6 +527,35 @@ const BATCH_THIRTY_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1346010": [publicYouTubeVideo("bUYHp6AbLH0", "Khoshgel o Gahreman (1967) - full film", "Shouka Film", undefined, "2026-09-27")],
 };
 
+// Thirty-eighth review batch: direct YouTube uploads whose displayed title,
+// archive year, and feature-film context were checked against the catalogue.
+// Results that only exposed a trailer, clip, or search page are intentionally
+// not included.
+const BATCH_THIRTY_EIGHT_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1346001": [publicYouTubeVideo("VGn9g1UmpwI", "Gohare Shab Cheragh (1967) - full film", "Film O Honar", undefined, "2026-09-27")],
+  "old-iranian-1346005": [publicYouTubeVideo("03zI4XCQnV4", "Mardi Az Esfahan (1967) - full film", "Pars Film Official", 5400, "2026-09-27", "available")],
+  "old-iranian-1346011": [publicYouTubeVideo("8T20_og-W84", "Haqeh Bazan (1967) - full film", "Pars Films", undefined, "2026-09-27")],
+  "old-iranian-1346012": [publicYouTubeVideo("W72CGsOK2-4", "Ali Baba va Chehel Dozd-e Baghdad (1967) - full film", "Beykiha", undefined, "2026-09-27")],
+  "old-iranian-1346025": [publicYouTubeVideo("M85Izf72Tx0", "Kuhzad (1967) - full film", "Pars Films", undefined, "2026-09-27")],
+  "old-iranian-1346035": [publicYouTubeVideo("N70aWC4SEEM", "Gozasht-e Bozorg (1967) - full film", "Pars Films", undefined, "2026-09-27")],
+  "old-iranian-1347003": [publicYouTubeVideo("-ggUuAErhLw", "Toofan Bar Fraz-e Patra (1968) - full film", "Pars Films", undefined, "2026-09-27")],
+  "old-iranian-1347025": [publicYouTubeVideo("Wm1GSyAfj4k", "Charkh-e Bazigar (1968) - full film", "Film Ghadimi Rangi", undefined, "2026-09-27")],
+  "old-iranian-1347028": [publicYouTubeVideo("NUmF37NMtwQ", "Luti-ye Qarn-e Bistom (1968) - full film - 94 minutes", "Pars Film Official", 5640, "2026-09-27", "available")],
+  "old-iranian-1347042": [publicYouTubeVideo("WX2EjkpsbtE", "Mard-e Hanjareh-ye Talaei (1968) - full film", "1001 Shab", undefined, "2026-09-27")],
+  "old-iranian-1347043": [publicYouTubeVideo("qfTA94Rvfdo", "Hangameh (1968) - full film", "Pars Films", undefined, "2026-09-27")],
+  "old-iranian-1347045": [publicYouTubeVideo("qQMI7N5RgMw", "Setareh-ye Haft Asemoon (1968) - full film", "Pars Films", undefined, "2026-09-27")],
+  "old-iranian-1348001": [publicYouTubeVideo("AHHZnJIscic", "Se Ferari (1969) - full film - 94 minutes", "Pars Film Official", 5640, "2026-09-27", "available")],
+  "old-iranian-1348002": [publicYouTubeVideo("ItS1aWMSqQ8", "Pesarane Qaroon (1969) - full film - 90 minutes", "Pars Film Official", 5400, "2026-09-27", "available")],
+  "old-iranian-1348008": [publicYouTubeVideo("uc2YlLuwEYc", "Qahveh Khaneh-ye Qanbar (1969) - full film", "Cinema Rex", undefined, "2026-09-27")],
+  "old-iranian-1348012": [publicYouTubeVideo("OFkcpZpVtV4", "Sogand-e Sokoot (1969) - full film - 94 minutes", "Pars Film Official", 5640, "2026-09-27", "available")],
+  "old-iranian-1348015": [publicYouTubeVideo("2i3HRLSNKPo", "Nasl-e Shoja'an (1969) - full film - 90 minutes", "Pars Film Official", 5400, "2026-09-27", "available")],
+  "old-iranian-1348016": [publicYouTubeVideo("ZG9tkguaU54", "Akharin Mobarezeh (1969) - full film", "Pars Films", undefined, "2026-09-27")],
+  "old-iranian-1348018": [publicYouTubeVideo("uF-RVVBYo74", "Pahlevan Pahlevanan (1969) - full film", "Persian Films Archive", undefined, "2026-09-27")],
+  "old-iranian-1348020": [publicYouTubeVideo("aXztPdN-yHk", "Eshgh-e Kooli (1969) - full film - 90 minutes", "Pars Film Official", 5400, "2026-09-27", "available")],
+  "old-iranian-1348022": [publicYouTubeVideo("RK-kCSgGnz8", "Rouspi (1969) - full film - 110 minutes", "Pars Film Official", 6600, "2026-09-27", "available")],
+  "old-iranian-1348023": [publicYouTubeVideo("yPZxw28pZD8", "Gonah-e Zibaei (1969) - full film", "Film Ghadimi Rangi", undefined, "2026-09-27")],
+};
+
 // Twenty-third review batch: exact full-film uploads whose catalogue titles
 // match the archive entries. Trailers and short excerpts stay excluded.
 const BATCH_TWENTY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -684,7 +713,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_THIRTY_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_SIX_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_THREE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_ONE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_SIX_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_THREE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_TWO_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_YOUTUBE_BY_ID[key] ?? BATCH_NINETEEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHTEEN_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTEEN_YOUTUBE_BY_ID[key] ?? BATCH_SIXTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FIFTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FOURTEEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTEEN_YOUTUBE_BY_ID[key] ?? BATCH_TWELVE_OITN_YOUTUBE_BY_ID[key] ?? BATCH_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THREE_YOUTUBE_BY_ID[key] ?? BATCH_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_SIX_YOUTUBE_BY_ID[key] ?? BATCH_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TEN_YOUTUBE_BY_ID[key] ?? BATCH_ELEVEN_YOUTUBE_BY_ID[key] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_THIRTY_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_SIX_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_THREE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_ONE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_SIX_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_THREE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_TWO_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_YOUTUBE_BY_ID[key] ?? BATCH_NINETEEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHTEEN_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTEEN_YOUTUBE_BY_ID[key] ?? BATCH_SIXTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FIFTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FOURTEEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTEEN_YOUTUBE_BY_ID[key] ?? BATCH_TWELVE_OITN_YOUTUBE_BY_ID[key] ?? BATCH_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THREE_YOUTUBE_BY_ID[key] ?? BATCH_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_SIX_YOUTUBE_BY_ID[key] ?? BATCH_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TEN_YOUTUBE_BY_ID[key] ?? BATCH_ELEVEN_YOUTUBE_BY_ID[key] ?? null;
 }
 
 /**
