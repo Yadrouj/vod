@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {mkdtemp,mkdir,writeFile,readFile,rm} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import {createEpisodeMetadataLoader,episodeArtworkFallbackUrl,episodeImageFile,episodeImageType,episodeImageUrl,fetchTheTvdbEpisodeImages,findEpisodeImageSource,isStorableEpisodeImage,mergeTheTvdbEpisodeArtwork,parseEpisodeMetadata,parseTheTvdbEpisodeImages,parseTheTvdbEpisodeArtwork,readStoredEpisodeImage,storeEpisodeImage} from "../../lib/episode-metadata";
+import {createEpisodeMetadataLoader,episodeArtworkFallbackUrl,episodeImageFile,episodeImageType,episodeImageUrl,fetchTheTvdbEpisodeImages,findEpisodeImageSource,isStorableEpisodeImage,materializeEpisodeArtwork,mergeTheTvdbEpisodeArtwork,parseEpisodeMetadata,parseTheTvdbEpisodeImages,parseTheTvdbEpisodeArtwork,readStoredEpisodeImage,storeEpisodeImage} from "../../lib/episode-metadata";
 test("episode image identity remains tied to season and episode",()=>{
  const result=parseEpisodeMetadata([{season:1,number:2,name:"Episode two",image:{medium:"https://static.tvmaze.com/uploads/images/a.jpg"}},{season:2,number:2,name:"Another season",image:null},{season:1,number:null}]);
  assert.equal(result.length,2);assert.equal(result[0].episode,2);assert.equal(result[1].season,2);assert.equal(result[1].imageUrl,null);
@@ -134,6 +134,19 @@ test("episodes without upstream stills receive distinct generated artwork",async
   assert.deepEqual(episodes.map(episode=>episode.imageUrl),[episodeArtworkFallbackUrl("tt7654321",1,1),episodeArtworkFallbackUrl("tt7654321",1,2)]);
   assert.equal(new Set(episodes.map(episode=>episode.imageUrl)).size,2);
  } finally {await rm(root,{recursive:true,force:true});}
+});
+test("repeated upstream artwork is replaced with distinct episode fallback artwork",()=>{
+ const episodes=[
+  {season:1,episode:1,title:"One",summary:null,imageUrl:"https://example.com/same.jpg",imageSource:"tvmaze" as const},
+  {season:1,episode:2,title:"Two",summary:null,imageUrl:"https://example.com/same.jpg",imageSource:"tvmaze" as const},
+  {season:1,episode:3,title:"Three",summary:null,imageUrl:"https://example.com/three.jpg",imageSource:"tvmaze" as const},
+ ];
+ const materialized=materializeEpisodeArtwork("tt7654321",episodes);
+ assert.equal(materialized[0].imageUrl,"https://example.com/same.jpg");
+ assert.equal(materialized[1].imageUrl,episodeArtworkFallbackUrl("tt7654321",1,2));
+ assert.equal(materialized[1].imageSource,"fallback");
+ assert.equal(materialized[2].imageUrl,"https://example.com/three.jpg");
+ assert.equal(new Set(materialized.map(episode=>episode.imageUrl)).size,3);
 });
 test("repeated upstream rows are reduced to one entry per episode",async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),"sarvnema-episode-dedupe-"));
