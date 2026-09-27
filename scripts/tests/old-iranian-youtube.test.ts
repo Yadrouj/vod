@@ -327,6 +327,21 @@ test("fifty-eighth review batch exposes the complete Eshq-e Qarun upload", () =>
   assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=/);
 });
 
+test("fifty-ninth review batch exposes the next two complete uploads", () => {
+  for (const [id, videoId] of [
+    ["old-iranian-1347021", "krNNA6bOvRc"],
+    ["old-iranian-1347030", "4a1gt72bbLs"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].playbackStatus, "not-tested");
+    assert.match(item[0].title, /full film/i);
+    assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=/);
+  }
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1347021")?.[0].durationSeconds, 5400);
+});
+
 test("sixteenth review batch exposes exact full-film matches", () => {
   for (const [id, videoId] of [["old-iranian-1332022", "ZmMfj85P8Y8"], ["old-iranian-1340010", "MpyOTqOKqdM"]] as const) {
     const item = getOldIranianYouTubeVideos(id);
