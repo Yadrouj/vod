@@ -309,6 +309,15 @@ test("fifty-sixth review batch exposes the complete Golden Road to Samarkand upl
   assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=/);
 });
 
+test("fifty-seventh review batch exposes the duration-checked Babre Mazandaran upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1347007");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "JroZcB7XYyc");
+  assert.equal(item[0].durationSeconds, 7320);
+  assert.equal(item[0].playbackStatus, "not-tested");
+  assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=/);
+});
+
 test("sixteenth review batch exposes exact full-film matches", () => {
   for (const [id, videoId] of [["old-iranian-1332022", "ZmMfj85P8Y8"], ["old-iranian-1340010", "MpyOTqOKqdM"]] as const) {
     const item = getOldIranianYouTubeVideos(id);
