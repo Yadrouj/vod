@@ -19,6 +19,7 @@ import { matchingMusicArtists } from "@/lib/music-search-ranking";
 import styles from "@/components/music-refresh.module.css";
 import { MoodCollections } from "@/components/mood-collections";
 import { loadMoodPlaylists } from "@/lib/mood-playlists";
+import { MusicCategoryNav } from "@/components/music-category-nav";
 
 const REMIX_CATEGORY = "\u0631\u06cc\u0645\u06cc\u06a9\u0633";
 const REMIX_DESCRIPTION = "\u0631\u06cc\u0645\u06cc\u06a9\u0633\u200c\u0647\u0627\u06cc \u0634\u0627\u062f\u060c \u067e\u0627\u062f\u06a9\u0633\u062a \u0648 \u0627\u0646\u062a\u062e\u0627\u0628\u200c\u0647\u0627\u06cc \u062a\u0627\u0632\u0647";
@@ -119,6 +120,7 @@ export default async function MusicPage({ searchParams }: Props) {
             </div>
           </header>
           <MusicLandingHero tracks={heroTracks} archiveStats={archiveStats} initialQuery={q} initialKind={kind} />
+          <MusicCategoryNav categories={index.categories} activeCategory={category} />
           <LandingPulse initial={{ version: index.updatedAt, updatedAt: Date.parse(index.updatedAt) > 0 ? index.updatedAt : null, recentCount: 0 }} locale={locale} endpoint="/api/music/pulse" updatesHref="/music?fresh=week" />
         </div>
       </section>
