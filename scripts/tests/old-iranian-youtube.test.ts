@@ -874,3 +874,11 @@ test("seventy-third review batch exposes the duration-checked Lat-e Javanmard up
   assert.equal(item[0].durationSeconds, 5640);
   assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=_XCu-wpD4Mo");
 });
+
+test("seventy-fourth review batch exposes the duration-checked Peyman Doosti upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1339023");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "caApmR_pGq4");
+  assert.equal(item[0].durationSeconds, 5160);
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=caApmR_pGq4");
+});
