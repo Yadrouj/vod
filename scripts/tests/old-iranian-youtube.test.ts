@@ -175,7 +175,7 @@ test("fifteenth review batch adds only exact full-film archive matches", () => {
     assert.equal(item[0].videoId, videoId);
     assert.equal(item[0].playbackStatus, "not-tested");
   }
-  assert.equal(getOldIranianYouTubeVideos("old-iranian-1334004"), null);
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1334004")?.[0].videoId, "ZmVsspF_IMw");
 });
 
 test("sixteenth review batch exposes exact full-film matches", () => {
@@ -315,6 +315,13 @@ test("twenty-eighth review batch exposes year-matched full films", () => {
   assert.equal(rooster[0].videoId, "vHmueOCd00w");
   assert.equal(rooster[0].durationSeconds, 5400);
   assert.equal(rooster[0].playbackStatus, "available");
+});
+
+test("twenty-ninth review batch exposes the full Amir Arsalan upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1334004");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "ZmVsspF_IMw");
+  assert.equal(item[0].playbackStatus, "not-tested");
 });
 
 test("OITN batch exposes only independently checked full-film embeds", () => {
