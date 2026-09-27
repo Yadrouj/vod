@@ -324,6 +324,18 @@ test("twenty-ninth review batch exposes the full Amir Arsalan upload", () => {
   assert.equal(item[0].playbackStatus, "not-tested");
 });
 
+test("thirtieth review batch exposes exact full-film uploads", () => {
+  for (const [id, videoId] of [
+    ["old-iranian-1342007", "SGodcXW61yA"],
+    ["old-iranian-1342023", "WxDERxf5ySw"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].playbackStatus, "not-tested");
+  }
+});
+
 test("OITN batch exposes only independently checked full-film embeds", () => {
   for (const [id, videoId, duration] of [
     ["old-iranian-1355020", "YGycqs-Rf90", 5277], ["old-iranian-1349035", "BtrCB0vgv48", 7379],
