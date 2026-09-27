@@ -32,10 +32,11 @@ Keep the existing daily scraper schedule running to supply fresh catalog data.
 ## Publishing cadence
 
 The publisher uses Tehran time and persistent delivery slots. During the daily
-window it sends at most one film/series post per hour and at most one music post
-per half-hour. Film/series slots are `10:00` through `22:00`; music slots are
-`10:00`, `10:30`, …, `21:30`, with `22:00` as the final catch-up slot. The
-publisher does not send after `22:29`, and a missed slot can still be delivered
+window it sends exactly one channel message per half-hour when content is
+available: film/series posts own `10:00`, `11:00`, …, `22:00`, while music owns
+the in-between slots `10:30`, `11:30`, …, `21:30`. This keeps the channel from
+receiving two messages at the same hour. The publisher does not send after
+`22:29`, and a missed slot can still be delivered
 when the five-minute worker wakes up during that slot.
 
 Film and series candidates are ordered by the latest cached IMDb Movie Meter and

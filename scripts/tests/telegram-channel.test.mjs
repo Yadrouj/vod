@@ -60,15 +60,17 @@ test('channel cadence is evaluated in Tehran time and stops after the 22:00 slot
  assert.equal(tehranClock(ten).isoLocal,'2026-09-27T10:00');
  assert.equal(publishingSlot('vod',before),null);
  assert.equal(publishingSlot('vod',ten),'2026-09-27:10');
+ assert.equal(publishingSlot('music',ten),null);
  assert.equal(publishingSlot('music',half),'2026-09-27:10:30');
+ assert.equal(publishingSlot('vod',half),null);
+ assert.equal(publishingSlot('music',Date.parse('2026-09-27T18:30:00Z')),null);
  assert.equal(publishingSlot('vod',last),'2026-09-27:22');
- assert.equal(publishingSlot('music',last),'2026-09-27:22:00');
  assert.equal(publishingWindow(after).vod,null);
  assert.equal(publishingWindow(after).music,null);
 });
 
-test('one VOD and one music entry are selected per current slot',()=>{
- const now=Date.parse('2026-09-27T06:30:00Z');
+test('exactly one channel message is selected per half-hour slot',()=>{
+ const now=Date.parse('2026-09-27T07:00:00Z');
  const state={publishedSlots:{vod:{},music:{}}};
  const pending=[
   {event:{key:'vod:rank-two',type:'vod',imdbCode:'tt2',eventAt:'2026-09-27T06:29:00Z'}},
@@ -76,6 +78,8 @@ test('one VOD and one music entry are selected per current slot',()=>{
   {event:{key:'music:new',type:'music',eventAt:'2026-09-27T06:29:00Z'}},
  ];
  const result=selectScheduledEntries(state,pending,now,new Map([['tt1',1],['tt2',2]]));
- assert.deepEqual(result.selected.map(item=>[item.type,item.entry.event.key]),[['vod','vod:rank-one'],['music','music:new']]);
+ assert.deepEqual(result.selected.map(item=>[item.type,item.entry.event.key]),[['music','music:new']]);
+ const hour=selectScheduledEntries(state,pending,Date.parse('2026-09-27T06:30:00Z'),new Map([['tt1',1],['tt2',2]]));
+ assert.deepEqual(hour.selected.map(item=>[item.type,item.entry.event.key]),[['vod','vod:rank-one']]);
  assert.equal(selectScheduledEntries({...state,publishedSlots:{vod:{'2026-09-27:10':{}} ,music:{}}},pending,now,new Map()).selected.length,1);
 });

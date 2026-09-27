@@ -50,12 +50,14 @@ export function publishingSlot(type, value = new Date(), config = scheduleConfig
   // slot is therefore 22:00, with a small catch-up period until 22:29.
   const inFinalHour = clock.hour === config.endHour && clock.minute >= 30;
   if (!inHourRange || inFinalHour) return null;
-  if (isMusic && clock.minute >= 30) {
-    return `${clock.dateKey}:${String(clock.hour).padStart(2, "0")}:30`;
-  }
-  return isMusic
-    ? `${clock.dateKey}:${String(clock.hour).padStart(2, "0")}:00`
-    : `${clock.dateKey}:${String(clock.hour).padStart(2, "0")}`;
+  // The hour mark belongs to film/series and the midpoint belongs to music,
+  // so the channel never receives two posts at the same time.
+  if (isMusic) return clock.minute >= 30
+    ? `${clock.dateKey}:${String(clock.hour).padStart(2, "0")}:30`
+    : null;
+  return clock.minute < 30
+    ? `${clock.dateKey}:${String(clock.hour).padStart(2, "0")}`
+    : null;
 }
 
 export function publishingWindow(value = new Date(), config = scheduleConfig()) {
