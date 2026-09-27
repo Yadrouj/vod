@@ -318,6 +318,15 @@ test("fifty-seventh review batch exposes the duration-checked Babre Mazandaran u
   assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=/);
 });
 
+test("fifty-eighth review batch exposes the complete Eshq-e Qarun upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1347018");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "hfvwkTkHtbw");
+  assert.equal(item[0].playbackStatus, "not-tested");
+  assert.match(item[0].title, /full film/i);
+  assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=/);
+});
+
 test("sixteenth review batch exposes exact full-film matches", () => {
   for (const [id, videoId] of [["old-iranian-1332022", "ZmMfj85P8Y8"], ["old-iranian-1340010", "MpyOTqOKqdM"]] as const) {
     const item = getOldIranianYouTubeVideos(id);
