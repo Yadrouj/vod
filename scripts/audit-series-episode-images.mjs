@@ -3,7 +3,7 @@ import { execFile } from "node:child_process";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
-import { materializeEpisodeArtwork, parseEpisodeMetadata } from "../lib/episode-metadata.ts";
+import { fetchTheTvdbEpisodeImages, materializeEpisodeArtwork, parseEpisodeMetadata } from "../lib/episode-metadata.ts";
 import { writeJsonAtomic } from "./atomic-json.mjs";
 import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 
@@ -17,6 +17,8 @@ const force = args.has("--force");
 const resume = args.has("--resume");
 const retryIncomplete = args.has("--retry-incomplete");
 const skipNetwork = args.has("--skip-network");
+const fallbackFirst = args.has("--fallback-first");
+const requestedImdb = new Set(process.argv.filter((value) => value.startsWith("--imdb=")).map((value) => value.slice("--imdb=".length)).filter((value) => /^tt\d+$/.test(value)));
 const limit = all ? Number.POSITIVE_INFINITY : Math.max(1, numberArg("--limit", 50));
 const concurrency = Math.min(12, Math.max(1, numberArg("--concurrency", 4)));
 const timeoutMs = Math.min(30_000, Math.max(3_000, numberArg("--timeout-ms", 12_000)));
@@ -109,6 +111,23 @@ async function powershellJson(url) {
   return JSON.parse(stdout.replace(/^\uFEFF/, ""));
 }
 
+async function powershellText(url) {
+  if (process.platform !== "win32") throw new Error("PowerShell fallback is only available on Windows");
+  const command = [
+    "$ProgressPreference='SilentlyContinue';",
+    "$ErrorActionPreference='Stop';",
+    "$OutputEncoding=[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false);",
+    `$response=Invoke-WebRequest -UseBasicParsing -TimeoutSec ${Math.ceil(timeoutMs / 1000)} -Uri '${url.replace(/'/g, "''")}';`,
+    "[Console]::Out.Write($response.Content);",
+  ].join("");
+  const { stdout } = await execFileAsync("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", command], {
+    timeout: timeoutMs + 2_000,
+    maxBuffer: 16 * 1024 * 1024,
+    windowsHide: true,
+  });
+  return stdout.replace(/^\uFEFF/, "");
+}
+
 async function requestJson(url) {
   if (args.has("--powershell-network") && process.platform === "win32") return powershellJson(url);
   try {
@@ -121,6 +140,21 @@ async function requestJson(url) {
   } catch (error) {
     if (process.platform === "win32") return powershellJson(url);
     throw error;
+  }
+}
+
+async function requestText(url, init) {
+  try {
+    const response = await fetch(url, {
+      ...init,
+      headers: {accept: "text/html", "user-agent": "SarvNema episode-artwork-auditor/1.0", ...(init?.headers || {})},
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return new Response(await response.text(), {status: response.status, headers: {"content-type": "text/html"}});
+  } catch (error) {
+    if (process.platform !== "win32") throw error;
+    return new Response(await powershellText(url), {status: 200, headers: {"content-type": "text/html"}});
   }
 }
 
@@ -137,19 +171,71 @@ async function json(url) {
   throw lastError;
 }
 
-async function fetchEpisodes(series) {
-  const show = await json(`https://api.tvmaze.com/lookup/shows?imdb=${encodeURIComponent(series.imdbCode)}`);
+async function fetchEpisodes(series, saved) {
+  if (saved?.seriesTitle && saved.episodes?.some((episode) => episode.imageSource === "fallback" || !episode.imageUrl)) {
+    try {
+      const images = await fetchTheTvdbEpisodeImages({name: saved.seriesTitle}, requestText);
+      if (images.size) {
+        const repaired = saved.episodes.map((episode) => {
+          if (episode.imageSource !== "fallback" && episode.imageUrl) return episode;
+          const imageUrl = images.get(`${episode.season}:${episode.episode}`);
+          return imageUrl ? {...episode, imageUrl, imageSource: "thetvdb"} : episode;
+        });
+        if (repaired.some((episode, index) => episode.imageUrl !== saved.episodes[index]?.imageUrl)) {
+          return {episodes: repaired, sourceUrl: "https://www.thetvdb.com/"};
+        }
+      }
+    } catch { /* Continue with TVMaze when TheTVDB is temporarily unavailable. */ }
+  }
+  let show;
+  try {
+    show = await json(`https://api.tvmaze.com/lookup/shows?imdb=${encodeURIComponent(series.imdbCode)}`);
+  } catch (error) {
+    // A saved snapshot plus a public TheTVDB page is enough to repair missing
+    // stills when TVMaze is unreachable from the maintenance host.
+    if (!saved?.seriesTitle) throw error;
+    const images = await fetchTheTvdbEpisodeImages({name: saved.seriesTitle}, requestText);
+    if (!images.size) throw error;
+    const episodes = (saved.episodes || []).map((episode) => {
+      if (episode.imageSource !== "fallback" && episode.imageUrl) return episode;
+      const imageUrl = images.get(`${episode.season}:${episode.episode}`);
+      return imageUrl ? {...episode, imageUrl, imageSource: "thetvdb"} : episode;
+    });
+    return {episodes, sourceUrl: "https://www.thetvdb.com/"};
+  }
   if (!Number.isInteger(show?.id)) throw new Error("TVMaze show not found");
-  const episodes = parseEpisodeMetadata(await json(`https://api.tvmaze.com/shows/${show.id}/episodes`));
-  if (!episodes.length) throw new Error("No episodes returned");
+  const tvMazeEpisodes = parseEpisodeMetadata(await json(`https://api.tvmaze.com/shows/${show.id}/episodes`));
+  if (!tvMazeEpisodes.length) throw new Error("No episodes returned");
+  let theTvdbImages = new Map();
+  if (tvMazeEpisodes.some((episode) => !episode.imageUrl)) {
+    try { theTvdbImages = await fetchTheTvdbEpisodeImages(show, requestText); } catch { /* Keep the deterministic fallback when the public page is unavailable. */ }
+  }
+  const episodes = tvMazeEpisodes.map((episode) => {
+    if (episode.imageUrl) return episode;
+    const imageUrl = theTvdbImages.get(`${episode.season}:${episode.episode}`);
+    return imageUrl ? { ...episode, imageUrl, imageSource: "thetvdb" } : episode;
+  });
   return { episodes, sourceUrl: `https://www.tvmaze.com/shows/${show.id}` };
 }
 
 async function main() {
   const series = [];
-  await streamVodArchiveItems(path.resolve(ROOT, CATALOG), (item) => {
-    if (normalizeType(item.type) === "series" && typeof item.imdbCode === "string") series.push(item);
-  });
+  if (requestedImdb.size) {
+    for (const imdbCode of requestedImdb) {
+      const saved = await readJson(path.join(OUTPUT_DIR, `${imdbCode}.json`), {});
+      series.push({
+        imdbCode,
+        title: typeof saved.seriesTitle === "string" ? saved.seriesTitle : imdbCode,
+        imdbRating: Number.isFinite(Number(saved.imdbRating)) ? Number(saved.imdbRating) : null,
+        imdbVotes: Number.isFinite(Number(saved.imdbVotes)) ? Number(saved.imdbVotes) : null,
+        year: null,
+      });
+    }
+  } else {
+    await streamVodArchiveItems(path.resolve(ROOT, CATALOG), (item) => {
+      if (normalizeType(item.type) === "series" && typeof item.imdbCode === "string") series.push(item);
+    });
+  }
   series.sort(compareSeries);
 
   const report = await readJson(REPORT_FILE, { version: 1, items: [] });
@@ -159,14 +245,17 @@ async function main() {
     const prior = previous.get(base.imdbCode);
     return prior ? { ...prior, ...base } : { ...base, status: "pending", episodes: 0, images: 0, missingImages: 0, distinctImages: 0, duplicateImages: 0, fallbackImages: 0, checkedAt: null, sourceUrl: null };
   });
-  const selected = results.slice(0, limit);
+  const ordered = fallbackFirst
+    ? [...results.filter((item) => item.fallbackImages > 0), ...results.filter((item) => item.fallbackImages === 0)]
+    : results;
+  const selected = requestedImdb.size ? results.filter((item) => requestedImdb.has(item.imdbCode)) : ordered.slice(0, limit);
   const work = selected
     .map((item, index) => ({ item, index }))
     .filter(({ item }) => !retryIncomplete || item.status === "partial" || item.status === "unavailable" || item.status === "pending" || item.fallbackImages > 0);
   const reportState = () => ({
     version: 1,
     checkedAt: now(),
-    source: "TVMaze episode stills keyed by IMDb ID",
+    source: "TVMaze/TMDB episode stills with TheTVDB public screenshot enrichment keyed by IMDb ID",
     sort: "IMDb rating descending, votes descending",
     catalog: path.relative(ROOT, path.resolve(ROOT, CATALOG)),
     totals: {
@@ -227,7 +316,7 @@ async function main() {
         continue;
       }
       try {
-        const fetched = await fetchEpisodes(item);
+        const fetched = await fetchEpisodes(item, saved);
         const priorEpisodes = new Map((saved?.episodes ?? []).map(row => [`${row.season}:${row.episode}`, row]));
         const merged = fetched.episodes.map(row => {
           const previous = priorEpisodes.get(`${row.season}:${row.episode}`);

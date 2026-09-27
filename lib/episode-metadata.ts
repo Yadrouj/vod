@@ -1,7 +1,7 @@
 import {readFile, mkdir, writeFile, rename} from "node:fs/promises";
 import path from "node:path";
 
-export type EpisodeImageSource = "tvmaze" | "tmdb" | "custom" | "fallback" | null;
+export type EpisodeImageSource = "tvmaze" | "tmdb" | "thetvdb" | "custom" | "fallback" | null;
 export type EpisodeImageFit = "cover" | "contain";
 export type EpisodeMetadata = {
   season: number;
@@ -21,7 +21,7 @@ export type EpisodeArtworkOverride = {
   imageFit?: EpisodeImageFit;
 };
 export type EpisodeMetadataOptions = {fallbackImage?: string | null};
-type Snapshot = {checkedAt: string; episodes: EpisodeMetadata[]};
+type Snapshot = {checkedAt: string; episodes: EpisodeMetadata[]; seriesTitle?: string | null};
 type ArtworkOverrides = Record<string, Record<string, EpisodeArtworkOverride>>;
 
 function safeImageUrl(value: unknown) {
@@ -40,7 +40,7 @@ function imageFit(value: unknown): EpisodeImageFit | undefined {
   return value === "contain" || value === "cover" ? value : undefined;
 }
 
-const EPISODE_IMAGE_HOSTS = new Set(["static.tvmaze.com", "media.themoviedb.org", "image.tmdb.org"]);
+const EPISODE_IMAGE_HOSTS = new Set(["static.tvmaze.com", "media.themoviedb.org", "image.tmdb.org", "artworks.thetvdb.com"]);
 const EPISODE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 const EPISODE_IMAGE_TIMEOUT_MS = 10_000;
 
@@ -236,6 +236,51 @@ export function parseEpisodeMetadata(value: unknown): EpisodeMetadata[] {
   });
 }
 
+/**
+ * TheTVDB's public all-seasons page exposes episode screenshots as lazy-loaded
+ * `data-src` attributes. Keep this parser deliberately narrow: only the
+ * official SxxExx label immediately followed by an allow-listed artwork URL
+ * can become episode artwork.
+ */
+export function parseTheTvdbEpisodeImages(value: unknown) {
+  const images = new Map<string, string>();
+  if (typeof value !== "string") return images;
+  const pattern = /<span[^>]*class=["'][^"']*\bepisode-label\b[^"']*["'][^>]*>\s*S(\d{1,3})E(\d{1,3})\s*<\/span>[\s\S]{0,6000}?<img[^>]+data-src=["'](https:\/\/artworks\.thetvdb\.com\/[^"']+)["']/gi;
+  for (const match of value.matchAll(pattern)) {
+    const season = Number(match[1]);
+    const episode = Number(match[2]);
+    const imageUrl = safeImageUrl(match[3]?.replace(/&amp;/g, "&"));
+    if (Number.isInteger(season) && season >= 0 && Number.isInteger(episode) && episode > 0 && imageUrl && isStorableEpisodeImage(imageUrl)) {
+      images.set(`${season}:${episode}`, imageUrl);
+    }
+  }
+  return images;
+}
+
+function theTvdbSlug(show: {url?: unknown; name?: unknown}) {
+  if (typeof show.url === "string") {
+    try {
+      const slug = new URL(show.url).pathname.split("/").filter(Boolean).pop();
+      if (slug) return slug;
+    } catch { /* Fall through to the show name. */ }
+  }
+  return typeof show.name === "string"
+    ? show.name.normalize("NFKD").toLowerCase().replace(/[\u0027\u2019]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+    : "";
+}
+
+/** Fetches public TheTVDB episode screenshots without requiring an API key. */
+export async function fetchTheTvdbEpisodeImages(show: {url?: unknown; name?: unknown}, request: typeof fetch = fetch) {
+  const slug = theTvdbSlug(show);
+  if (!slug) return new Map<string, string>();
+  const response = await request(`https://www.thetvdb.com/series/${encodeURIComponent(slug)}/allseasons/official`, {
+    headers: {accept: "text/html", "user-agent": "SarvNema episode-artwork/1.0"},
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!response.ok) return new Map<string, string>();
+  return parseTheTvdbEpisodeImages(await response.text());
+}
+
 export function createEpisodeMetadataLoader(root = process.cwd(), request: typeof fetch = fetch) {
   const memory = new Map<string, {expires: number; episodes: EpisodeMetadata[]}>();
   const pending = new Map<string, Promise<EpisodeMetadata[]>>();
@@ -251,22 +296,33 @@ export function createEpisodeMetadataLoader(root = process.cwd(), request: typeo
   async function load(id: string): Promise<EpisodeMetadata[]> {
     const files = snapshotFiles(root, id);
     const saved = await readSavedEpisodeSnapshot(id, root);
-    if (saved && Date.now() - Date.parse(saved.checkedAt) < 7 * 86400_000) return saved.episodes;
+    const needsArtworkRefresh = Boolean(saved?.episodes.some(row => row.imageSource === "fallback" || !row.imageUrl));
+    if (saved && !needsArtworkRefresh && Date.now() - Date.parse(saved.checkedAt) < 7 * 86400_000) return saved.episodes;
     try {
       const lookup = await request(`https://api.tvmaze.com/lookup/shows?imdb=${id}`, {signal: AbortSignal.timeout(3500)});
       if (!lookup.ok) throw new Error("Episode lookup failed");
-      const show = await lookup.json() as {id?: number};
+      const show = await lookup.json() as {id?: number; url?: string; name?: string};
       if (!Number.isInteger(show.id)) throw new Error("Invalid show");
       const response = await request(`https://api.tvmaze.com/shows/${show.id}/episodes`, {signal: AbortSignal.timeout(5000)});
       if (!response.ok) throw new Error("Episode metadata failed");
       const episodes = parseEpisodeMetadata(await response.json());
       if (!episodes.length) throw new Error("Empty episode metadata");
+      let theTvdbImages = new Map<string, string>();
+      if (episodes.some(row => !row.imageUrl)) {
+        try { theTvdbImages = await fetchTheTvdbEpisodeImages(show, request); } catch { /* TVDB is an enrichment source, not a hard dependency. */ }
+      }
       // Retain known stills if the upstream temporarily omits an episode image.
       const prior = new Map(saved?.episodes.map(row => [`${row.season}:${row.episode}`, row]) ?? []);
       const merged = episodes.map(row => {
         const previous = prior.get(`${row.season}:${row.episode}`);
-        const imageUrl = row.imageUrl || previous?.imageUrl || null;
-        return {...row, imageUrl, imageSource: imageUrl ? row.imageSource || previous?.imageSource || "tvmaze" : null};
+        const tvdbImage = theTvdbImages.get(`${row.season}:${row.episode}`) || null;
+        const previousImage = previous?.imageSource !== "fallback" ? previous?.imageUrl || null : null;
+        const imageUrl = row.imageUrl || tvdbImage || previousImage;
+        return {
+          ...row,
+          imageUrl,
+          imageSource: row.imageUrl ? row.imageSource || "tvmaze" : tvdbImage ? "thetvdb" : imageUrl ? previous?.imageSource || "tvmaze" : null,
+        };
       });
       try {
         await mkdir(path.dirname(files[0]), {recursive: true});
@@ -275,7 +331,31 @@ export function createEpisodeMetadataLoader(root = process.cwd(), request: typeo
         await rename(temp, files[0]);
       } catch { /* A read-only deployment can still serve the fetched metadata. */ }
       return merged;
-    } catch { return saved?.episodes ?? []; }
+    } catch {
+      // TVMaze can be unavailable from a particular server or network route.
+      // The public TheTVDB page is enough to repair already-saved episode rows
+      // when the snapshot contains the series title.
+      if (saved?.seriesTitle) {
+        try {
+          const theTvdbImages = await fetchTheTvdbEpisodeImages({name: saved.seriesTitle}, request);
+          const repaired = saved.episodes.map(row => {
+            if (row.imageSource !== "fallback" && row.imageUrl) return row;
+            const imageUrl = theTvdbImages.get(`${row.season}:${row.episode}`);
+            return imageUrl ? {...row, imageUrl, imageSource: "thetvdb" as const} : row;
+          });
+          if (repaired.some((row, index) => row.imageUrl !== saved.episodes[index]?.imageUrl)) {
+            try {
+              await mkdir(path.dirname(files[0]), {recursive: true});
+              const temp = `${files[0]}.${process.pid}.tmp`;
+              await writeFile(temp, JSON.stringify({...saved, checkedAt: new Date().toISOString(), episodes: repaired}));
+              await rename(temp, files[0]);
+            } catch { /* A read-only deployment can still serve repaired metadata. */ }
+            return repaired;
+          }
+        } catch { /* Keep the saved snapshot when both providers are unavailable. */ }
+      }
+      return saved?.episodes ?? [];
+    }
   }
   return async (id: string, season: number, options: EpisodeMetadataOptions = {}) => {
     if (!/^tt\d+$/.test(id)) return [];
@@ -297,7 +377,7 @@ export function createEpisodeMetadataLoader(root = process.cwd(), request: typeo
       // Rewritten only when presented: saved snapshots keep the original TVMaze URL,
       // which the image route needs to fill its store.
       return materializeEpisodeArtwork(id, customized).map(row => (
-        row.imageSource === "tvmaze" && isStorableEpisodeImage(row.imageUrl)
+        (row.imageSource === "tvmaze" || row.imageSource === "thetvdb") && isStorableEpisodeImage(row.imageUrl)
           ? {...row, imageUrl: episodeImageUrl(id, row.season, row.episode)}
           : row
       ));
