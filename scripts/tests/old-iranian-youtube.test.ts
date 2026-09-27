@@ -351,6 +351,14 @@ test("sixtieth review batch exposes the complete January Night upload", () => {
   assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=/);
 });
 
+test("sixty-first review batch exposes the complete Var Parideh upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1341006");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "BVUFe_Pf6y0");
+  assert.match(item[0].title, /Var Parideh/i);
+  assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=BVUFe_Pf6y0$/);
+});
+
 test("sixteenth review batch exposes exact full-film matches", () => {
   for (const [id, videoId] of [["old-iranian-1332022", "ZmMfj85P8Y8"], ["old-iranian-1340010", "MpyOTqOKqdM"]] as const) {
     const item = getOldIranianYouTubeVideos(id);
