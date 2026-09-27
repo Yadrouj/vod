@@ -417,6 +417,13 @@ const BATCH_FIFTEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1339013": [publicYouTubeVideo("yXUPH_NJjJs", "فیلم کامل آینه تاکسی (۱۳۳۹)", "Pars Films", 6600, "2026-09-27")],
 };
 
+// Sixteenth review batch: exact full-film results with matching catalogue
+// titles; unrelated trailers and snippets remain excluded.
+const BATCH_SIXTEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1332022": [publicYouTubeVideo("ZmMfj85P8Y8", "فیلم کامل غفلت (۱۳۳۲)", "Shouka Film", undefined, "2026-09-27")],
+  "old-iranian-1340010": [publicYouTubeVideo("MpyOTqOKqdM", "فیلم کامل آتش و خاکستر (۱۳۳۹)", "Pars Films", undefined, "2026-09-27")],
+};
+
 const GHADAGHAN: OldIranianFilmMedia = {
   id: GHADAGHAN_ID,
   originalTitle: "Ghadaghan",
@@ -518,7 +525,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_FIFTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FOURTEEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTEEN_YOUTUBE_BY_ID[key] ?? BATCH_TWELVE_OITN_YOUTUBE_BY_ID[key] ?? BATCH_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THREE_YOUTUBE_BY_ID[key] ?? BATCH_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_SIX_YOUTUBE_BY_ID[key] ?? BATCH_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TEN_YOUTUBE_BY_ID[key] ?? BATCH_ELEVEN_YOUTUBE_BY_ID[key] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_SIXTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FIFTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FOURTEEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTEEN_YOUTUBE_BY_ID[key] ?? BATCH_TWELVE_OITN_YOUTUBE_BY_ID[key] ?? BATCH_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THREE_YOUTUBE_BY_ID[key] ?? BATCH_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_SIX_YOUTUBE_BY_ID[key] ?? BATCH_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TEN_YOUTUBE_BY_ID[key] ?? BATCH_ELEVEN_YOUTUBE_BY_ID[key] ?? null;
 }
 
 /**
