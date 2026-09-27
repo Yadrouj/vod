@@ -291,6 +291,15 @@ test("fifty-fourth review batch exposes the exact full-length Noah's Ark upload"
   assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=/);
 });
 
+test("fifty-fifth review batch exposes the complete Tehran Bride upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1346052");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "zVRm53dTHak");
+  assert.equal(item[0].playbackStatus, "not-tested");
+  assert.match(item[0].title, /full film/i);
+  assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=/);
+});
+
 test("sixteenth review batch exposes exact full-film matches", () => {
   for (const [id, videoId] of [["old-iranian-1332022", "ZmMfj85P8Y8"], ["old-iranian-1340010", "MpyOTqOKqdM"]] as const) {
     const item = getOldIranianYouTubeVideos(id);
