@@ -1,3 +1,5 @@
+import { readSavedEpisodeSnapshot } from "@/lib/episode-metadata";
+
 type Props = {
   params: Promise<{ id: string; season: string; episode: string }>;
 };
@@ -21,9 +23,13 @@ export async function GET(_request: Request, { params }: Props) {
   const episodeNumber = Number(episode);
   const palette = palettes[(seasonNumber * 97 + episodeNumber * 31 + id.length) % palettes.length];
   const code = `S${String(seasonNumber).padStart(2, "0")}E${String(episodeNumber).padStart(2, "0")}`;
+  const snapshot = await readSavedEpisodeSnapshot(id);
+  const episodeRow = snapshot?.episodes.find((row) => row.season === seasonNumber && row.episode === episodeNumber);
+  const seriesTitle = truncateLabel(snapshot?.seriesTitle || id.toUpperCase(), 44);
+  const episodeTitle = truncateLabel(episodeRow?.title || `Episode ${episodeNumber}`, 52);
   const label = escapeXml(id.toUpperCase());
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="title">
-  <title id="title">${code} episode artwork</title>
+  <title id="title">${escapeXml(seriesTitle)} · ${escapeXml(code)} · ${escapeXml(episodeTitle)}</title>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${palette[0]}"/><stop offset="0.55" stop-color="${palette[1]}"/><stop offset="1" stop-color="#090b12"/></linearGradient>
     <radialGradient id="glow" cx="78%" cy="18%" r="70%"><stop stop-color="${palette[2]}" stop-opacity=".72"/><stop offset="1" stop-color="${palette[2]}" stop-opacity="0"/></radialGradient>
@@ -34,8 +40,10 @@ export async function GET(_request: Request, { params }: Props) {
   <circle cx="522" cy="90" r="76" fill="none" stroke="${palette[2]}" stroke-opacity=".22" stroke-width="16"/>
   <path d="M0 298 C130 236 205 342 330 278 S514 237 640 292 V360 H0Z" fill="#05070c" fill-opacity=".55"/>
   <text x="42" y="58" fill="${palette[2]}" font-family="Arial,sans-serif" font-size="16" font-weight="700" letter-spacing="4">SARVNEMA · EPISODE ART</text>
-  <text x="42" y="220" fill="#fff" font-family="Arial,sans-serif" font-size="82" font-weight="800">${code}</text>
-  <text x="46" y="258" fill="#fff" fill-opacity=".68" font-family="Arial,sans-serif" font-size="14" letter-spacing="3">${label}</text>
+  <text x="42" y="112" fill="#fff" fill-opacity=".86" font-family="Arial,sans-serif" font-size="22" font-weight="700">${escapeXml(seriesTitle)}</text>
+  <text x="42" y="170" fill="#fff" fill-opacity=".82" font-family="Arial,sans-serif" font-size="22">${escapeXml(episodeTitle)}</text>
+  <text x="42" y="252" fill="#fff" font-family="Arial,sans-serif" font-size="82" font-weight="800">${code}</text>
+  <text x="46" y="290" fill="#fff" fill-opacity=".68" font-family="Arial,sans-serif" font-size="14" letter-spacing="3">${label}</text>
   <text x="42" y="320" fill="#fff" fill-opacity=".72" font-family="Arial,sans-serif" font-size="15">Unique artwork generated for this episode</text>
 </svg>`;
   return new Response(svg, {
@@ -48,4 +56,9 @@ export async function GET(_request: Request, { params }: Props) {
 
 function escapeXml(value: string) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+}
+
+function truncateLabel(value: string, max: number) {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  return normalized.length > max ? `${normalized.slice(0, max - 1).trimEnd()}…` : normalized;
 }
