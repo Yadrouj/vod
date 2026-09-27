@@ -424,6 +424,21 @@ const BATCH_SIXTEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1340010": [publicYouTubeVideo("MpyOTqOKqdM", "فیلم کامل آتش و خاکستر (۱۳۳۹)", "Pars Films", undefined, "2026-09-27")],
 };
 
+// Nineteenth review batch: exact full-film uploads whose catalogue titles
+// match the archive entries. Trailers and short excerpts stay excluded.
+const BATCH_NINETEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1339015": [publicYouTubeVideo("iucm8f-L-3M", "In Search of the Groom (1959) · full film", "Pars Films", undefined, "2026-09-27")],
+  "old-iranian-1344003": [publicYouTubeVideo("p-ijPlZWDZQ", "The Champion of Champions (1965) · full film", "FilmFarsi", undefined, "2026-09-27")],
+  "old-iranian-1344005": [publicYouTubeVideo("LovNfMJr2cU", "Sarsam (1965) · full film", "FilmFarsi", undefined, "2026-09-27")],
+};
+
+// Eighteenth review batch: exact full-film uploads whose catalogue titles
+// match the archive entries. Trailers and short excerpts stay excluded.
+const BATCH_EIGHTEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1340020": [publicYouTubeVideo("SWn2xqOtpNs", "One Step to Death (1961) · full film", "Iranian Movies", undefined, "2026-09-27")],
+  "old-iranian-1341019": [publicYouTubeVideo("QSiI8VvJ2zA", "Gorghaye Gorosneh (1962) · full film", "FilmFarsi", undefined, "2026-09-27")],
+};
+
 // Seventeenth review batch: an exact full-film upload whose catalogue title
 // and year match the archive entry. Trailers and short excerpts stay excluded.
 const BATCH_SEVENTEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -531,7 +546,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_SEVENTEEN_YOUTUBE_BY_ID[key] ?? BATCH_SIXTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FIFTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FOURTEEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTEEN_YOUTUBE_BY_ID[key] ?? BATCH_TWELVE_OITN_YOUTUBE_BY_ID[key] ?? BATCH_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THREE_YOUTUBE_BY_ID[key] ?? BATCH_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_SIX_YOUTUBE_BY_ID[key] ?? BATCH_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TEN_YOUTUBE_BY_ID[key] ?? BATCH_ELEVEN_YOUTUBE_BY_ID[key] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_NINETEEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHTEEN_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTEEN_YOUTUBE_BY_ID[key] ?? BATCH_SIXTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FIFTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FOURTEEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTEEN_YOUTUBE_BY_ID[key] ?? BATCH_TWELVE_OITN_YOUTUBE_BY_ID[key] ?? BATCH_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THREE_YOUTUBE_BY_ID[key] ?? BATCH_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_SIX_YOUTUBE_BY_ID[key] ?? BATCH_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TEN_YOUTUBE_BY_ID[key] ?? BATCH_ELEVEN_YOUTUBE_BY_ID[key] ?? null;
 }
 
 /**
