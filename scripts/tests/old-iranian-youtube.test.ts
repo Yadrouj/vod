@@ -882,3 +882,16 @@ test("seventy-fourth review batch exposes the duration-checked Peyman Doosti upl
   assert.equal(item[0].durationSeconds, 5160);
   assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=caApmR_pGq4");
 });
+
+test("seventy-fifth review batch exposes two duration-checked classic uploads", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1345031", "IMYIqsstJAk", 6060],
+    ["old-iranian-1345037", "EFWfj-K69Fw", 5400],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+  }
+});
