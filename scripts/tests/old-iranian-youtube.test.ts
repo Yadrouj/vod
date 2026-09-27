@@ -866,3 +866,11 @@ test("seventy-second review batch exposes exact classic-film uploads", () => {
   }
   assert.equal(getOldIranianYouTubeVideos("old-iranian-1345024")?.[0].durationSeconds, 5400);
 });
+
+test("seventy-third review batch exposes the duration-checked Lat-e Javanmard upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1337012");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "_XCu-wpD4Mo");
+  assert.equal(item[0].durationSeconds, 5640);
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=_XCu-wpD4Mo");
+});
