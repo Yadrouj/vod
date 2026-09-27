@@ -556,6 +556,24 @@ const BATCH_THIRTY_EIGHT_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1348023": [publicYouTubeVideo("yPZxw28pZD8", "Gonah-e Zibaei (1969) - full film", "Film Ghadimi Rangi", undefined, "2026-09-27")],
 };
 
+// Thirty-ninth review batch: direct feature-film uploads with exact catalogue
+// year/title matches. Trailer-only results remain excluded.
+const BATCH_THIRTY_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1349003": [publicYouTubeVideo("qCEGK2f9KgU", "Shahr-e Hert (1970) - full film - 90 minutes", "Pars Film Official", 5400, "2026-09-27", "available")],
+  "old-iranian-1349004": [publicYouTubeVideo("XqmNosjnfNU", "Sekkeh-ye Shans (1970) - full film", "Pars Films", undefined, "2026-09-27")],
+  "old-iranian-1349006": [publicYouTubeVideo("xB6bT0mjP3k", "Baba Karam (1970) - full film - 90 minutes", "Pars Film Official", 5400, "2026-09-27", "available")],
+  "old-iranian-1349012": [publicYouTubeVideo("U1nIFnb7RP8", "Qesseh-ye Shab-e Yalda (1970) - full film", "Pars Films", undefined, "2026-09-27")],
+  "old-iranian-1349014": [publicYouTubeVideo("SfBX4Q0tUyE", "Namadari (1970) - full film", "Cinema Rex", undefined, "2026-09-27")],
+  "old-iranian-1349021": [publicYouTubeVideo("ELXAFxEwwL0", "Adam o Hava (1970) - full film", "Pars Films", undefined, "2026-09-27")],
+  "old-iranian-1349023": [publicYouTubeVideo("URsl28lfVds", "Jomeh-ye Shirin (1970) - full film", "Pars Films", undefined, "2026-09-27")],
+  "old-iranian-1349024": [publicYouTubeVideo("pX9iYmX1DmQ", "Az Yad Rafteh (1970) - full film - 90 minutes", "Pars Film Official", 5400, "2026-09-27", "available")],
+  "old-iranian-1349030": [publicYouTubeVideo("d7sLxJRwmXY", "Javani Ham Alemi Darad (1970) - full film", "1001 Shab", undefined, "2026-09-27")],
+  "old-iranian-1349033": [publicYouTubeVideo("nBuqH-6rrj8", "Aghaye Hallou (1970) - feature film", "Persian Films Archive", undefined, "2026-09-27")],
+  "old-iranian-1349034": [publicYouTubeVideo("48zqoBzhaNQ", "Bargah-e Sheytan (1970) - full film - 90 minutes", "Pars Film Official", 5400, "2026-09-27", "available")],
+  "old-iranian-1349042": [publicYouTubeVideo("sjfGp4ctj9Y", "Ghahreman-ha Nemimirand (1970) - full film - 90 minutes", "Pars Film Official", 5400, "2026-09-27", "available")],
+  "old-iranian-1349048": [publicYouTubeVideo("Fl4K8IkbR_w", "Panjereh (1970) - full film - 109 minutes", "Pars Film Official", 6540, "2026-09-27", "available")],
+};
+
 // Twenty-third review batch: exact full-film uploads whose catalogue titles
 // match the archive entries. Trailers and short excerpts stay excluded.
 const BATCH_TWENTY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -713,7 +731,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
-  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_THIRTY_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_SIX_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_THREE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_ONE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_SIX_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_THREE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_TWO_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_YOUTUBE_BY_ID[key] ?? BATCH_NINETEEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHTEEN_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTEEN_YOUTUBE_BY_ID[key] ?? BATCH_SIXTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FIFTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FOURTEEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTEEN_YOUTUBE_BY_ID[key] ?? BATCH_TWELVE_OITN_YOUTUBE_BY_ID[key] ?? BATCH_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THREE_YOUTUBE_BY_ID[key] ?? BATCH_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_SIX_YOUTUBE_BY_ID[key] ?? BATCH_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TEN_YOUTUBE_BY_ID[key] ?? BATCH_ELEVEN_YOUTUBE_BY_ID[key] ?? null;
+  return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_THIRTY_NINE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_SIX_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_THREE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_ONE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_SIX_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_THREE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_TWO_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_YOUTUBE_BY_ID[key] ?? BATCH_NINETEEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHTEEN_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTEEN_YOUTUBE_BY_ID[key] ?? BATCH_SIXTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FIFTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FOURTEEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTEEN_YOUTUBE_BY_ID[key] ?? BATCH_TWELVE_OITN_YOUTUBE_BY_ID[key] ?? BATCH_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THREE_YOUTUBE_BY_ID[key] ?? BATCH_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_SIX_YOUTUBE_BY_ID[key] ?? BATCH_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TEN_YOUTUBE_BY_ID[key] ?? BATCH_ELEVEN_YOUTUBE_BY_ID[key] ?? null;
 }
 
 /**
