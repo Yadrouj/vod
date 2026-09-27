@@ -38,6 +38,17 @@ test("custom artwork overrides and series fallback are applied without changing 
   assert.equal(episodes[1].imageUrl,episodeImageUrl("tt1234567",1,2));
  } finally {await rm(root,{recursive:true,force:true});}
 });
+test("TMDB stills are served through the same-origin episode image route",async()=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),"sarvnema-episode-tmdb-route-"));
+ try {
+  await mkdir(path.join(root,"public/data/episode-metadata"),{recursive:true});
+  await writeFile(path.join(root,"public/data/episode-metadata/tt1234567.json"),JSON.stringify({checkedAt:new Date().toISOString(),episodes:[{season:1,episode:1,title:"One",summary:null,imageUrl:"https://media.themoviedb.org/t/p/w454_and_h254_face/one.jpg",imageSource:"tmdb"}]}));
+  const load=createEpisodeMetadataLoader(root,((async()=>{throw new Error("offline");}) as typeof fetch));
+  const episodes=await load("tt1234567",1);
+  assert.equal(episodes[0].imageSource,"tmdb");
+  assert.equal(episodes[0].imageUrl,episodeImageUrl("tt1234567",1,1));
+ } finally {await rm(root,{recursive:true,force:true});}
+});
 test("only trusted TVMaze and TMDB stills are mirrored into the image store",()=>{
  assert.equal(isStorableEpisodeImage("https://static.tvmaze.com/uploads/images/medium_landscape/1/2.jpg"),true);
  assert.equal(isStorableEpisodeImage("https://media.themoviedb.org/t/p/w454_and_h254_face/a.jpg"),true);

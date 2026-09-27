@@ -408,7 +408,7 @@ export function createEpisodeMetadataLoader(root = process.cwd(), request: typeo
       // Rewritten only when presented: saved snapshots keep the original TVMaze URL,
       // which the image route needs to fill its store.
       return materializeEpisodeArtwork(id, customized).map(row => (
-        (row.imageSource === "tvmaze" || row.imageSource === "thetvdb") && isStorableEpisodeImage(row.imageUrl)
+        (row.imageSource === "tvmaze" || row.imageSource === "thetvdb" || row.imageSource === "tmdb") && isStorableEpisodeImage(row.imageUrl)
           ? {...row, imageUrl: episodeImageUrl(id, row.season, row.episode)}
           : row
       ));
