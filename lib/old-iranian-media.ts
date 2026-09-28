@@ -1165,7 +1165,10 @@ export function getOldIranianYouTubeVideos(id: string | null | undefined) {
  */
 export function enrichOldIranianFilm(item: VodItem): VodItem {
   const media = getOldIranianFilmMedia(item.id) ?? getOldIranianFilmMedia(item.imdbCode);
-  const youtubeVideos = item.youtubeVideos?.length ? item.youtubeVideos : getOldIranianYouTubeVideos(item.id) ?? getOldIranianYouTubeVideos(item.imdbCode) ?? undefined;
+  // Curated mappings are checked first so a newly verified full-film upload
+  // can replace a stale trailer that was already persisted in a title cache.
+  const curatedYouTubeVideos = getOldIranianYouTubeVideos(item.id) ?? getOldIranianYouTubeVideos(item.imdbCode);
+  const youtubeVideos = curatedYouTubeVideos?.length ? curatedYouTubeVideos : item.youtubeVideos?.length ? item.youtubeVideos : undefined;
   if (!media) return youtubeVideos ? { ...item, youtubeVideos } : item;
 
   return {

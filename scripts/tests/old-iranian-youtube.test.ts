@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getOldIranianFilmMedia, getOldIranianYouTubeVideos } from "../../lib/old-iranian-media";
+import { enrichOldIranianFilm, getOldIranianFilmMedia, getOldIranianYouTubeVideos } from "../../lib/old-iranian-media";
 import { OLD_IRANIAN_YOUTUBE_COLLECTIONS, OLD_IRANIAN_YOUTUBE_REVIEW_CHANNELS } from "../../lib/old-iranian-youtube-collections";
 
 test("exact old-Iranian record exposes an attributed, embeddable YouTube reference", () => {
@@ -1136,5 +1136,18 @@ test("ninety-third review batch exposes two more exact 1969 feature uploads", ()
     assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
     assert.match(item[0].title, /full film/i);
   }
+});
+
+test("curated full-film mappings replace stale persisted trailers", () => {
+  const enriched = enrichOldIranianFilm({
+    id: "old-iranian-1348036",
+    youtubeVideos: [{
+      videoId: "SYXzw_JtuI8",
+      title: "old trailer",
+      channel: "YouTube",
+      sourceUrl: "https://www.youtube.com/watch?v=SYXzw_JtuI8",
+    }],
+  } as Parameters<typeof enrichOldIranianFilm>[0]);
+  assert.equal(enriched.youtubeVideos?.[0].videoId, "dAGNHdzoIE0");
 });
 
