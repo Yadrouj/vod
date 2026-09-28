@@ -859,6 +859,14 @@ const BATCH_SEVENTY_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1343021": [publicYouTubeVideo("_eM8ud5W2Yo", "Abram Dar Paris (1964) - full film", "YouTube old-film archive", undefined, "2026-09-27")],
 };
 
+// Eightieth review batch: two exact-title feature uploads with independent
+// runtime checks. The Haji Agha upload is the surviving public-domain silent
+// feature; the second is the exact 1959 title/year upload from Shouka Film.
+const BATCH_EIGHTY_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1311001": [publicYouTubeVideo("Yp7kNe_riaM", "Haji Agha Aktor-e Cinema (1933) - full film - 69 minutes", "YouTube old-film archive", 4140, "2026-09-27")],
+  "old-iranian-1338024": [publicYouTubeVideo("4BQCl-a9Hx0", "Mimiram Baraye Pool (1959) - full film - 90 minutes", "Shouka Film", 5400, "2026-09-27")],
+};
+
 // Twenty-third review batch: exact full-film uploads whose catalogue titles
 // match the archive entries. Trailers and short excerpts stay excluded.
 const BATCH_TWENTY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1016,6 +1024,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_EIGHTY_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_YOUTUBE_BY_ID[key];
   return getOldIranianFilmMedia(id)?.youtubeVideos ?? BATCH_SEVENTY_NINE_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTY_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTY_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTY_SIX_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTY_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTY_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTY_THREE_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTY_TWO_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTY_ONE_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTY_YOUTUBE_BY_ID[key] ?? BATCH_SIXTY_NINE_YOUTUBE_BY_ID[key] ?? BATCH_SIXTY_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_SIXTY_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_SIXTY_SIX_YOUTUBE_BY_ID[key] ?? BATCH_SIXTY_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_SIXTY_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_SIXTY_THREE_YOUTUBE_BY_ID[key] ?? BATCH_SIXTY_TWO_YOUTUBE_BY_ID[key] ?? BATCH_SIXTY_ONE_YOUTUBE_BY_ID[key] ?? BATCH_SIXTY_YOUTUBE_BY_ID[key] ?? BATCH_FIFTY_NINE_YOUTUBE_BY_ID[key] ?? BATCH_FIFTY_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_FIFTY_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_FIFTY_SIX_YOUTUBE_BY_ID[key] ?? BATCH_FIFTY_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_FIFTY_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_FIFTY_THREE_YOUTUBE_BY_ID[key] ?? BATCH_FIFTY_TWO_YOUTUBE_BY_ID[key] ?? BATCH_FIFTY_ONE_YOUTUBE_BY_ID[key] ?? BATCH_FIFTY_YOUTUBE_BY_ID[key] ?? BATCH_FORTY_NINE_YOUTUBE_BY_ID[key] ?? BATCH_FORTY_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_FORTY_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_FORTY_SIX_YOUTUBE_BY_ID[key] ?? BATCH_FORTY_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_FORTY_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_FORTY_THREE_YOUTUBE_BY_ID[key] ?? BATCH_FORTY_TWO_YOUTUBE_BY_ID[key] ?? BATCH_FORTY_ONE_YOUTUBE_BY_ID[key] ?? BATCH_FORTY_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_NINE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_SIX_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_THREE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_ONE_YOUTUBE_BY_ID[key] ?? BATCH_THIRTY_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_SIX_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_THREE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_TWO_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWENTY_YOUTUBE_BY_ID[key] ?? BATCH_NINETEEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHTEEN_YOUTUBE_BY_ID[key] ?? BATCH_SEVENTEEN_YOUTUBE_BY_ID[key] ?? BATCH_SIXTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FIFTEEN_YOUTUBE_BY_ID[key] ?? BATCH_FOURTEEN_YOUTUBE_BY_ID[key] ?? BATCH_THIRTEEN_YOUTUBE_BY_ID[key] ?? BATCH_TWELVE_OITN_YOUTUBE_BY_ID[key] ?? BATCH_ONE_YOUTUBE_BY_ID[key] ?? BATCH_TWO_YOUTUBE_BY_ID[key] ?? BATCH_THREE_YOUTUBE_BY_ID[key] ?? BATCH_FOUR_YOUTUBE_BY_ID[key] ?? BATCH_FIVE_YOUTUBE_BY_ID[key] ?? BATCH_SIX_YOUTUBE_BY_ID[key] ?? BATCH_SEVEN_YOUTUBE_BY_ID[key] ?? BATCH_EIGHT_YOUTUBE_BY_ID[key] ?? BATCH_NINE_YOUTUBE_BY_ID[key] ?? BATCH_TEN_YOUTUBE_BY_ID[key] ?? BATCH_ELEVEN_YOUTUBE_BY_ID[key] ?? null;
 }
 

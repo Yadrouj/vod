@@ -944,3 +944,16 @@ test("seventy-ninth review batch exposes two exact-title feature uploads", () =>
   assert.equal(abram[0].durationSeconds, undefined);
   assert.equal(abram[0].sourceUrl, "https://www.youtube.com/watch?v=_eM8ud5W2Yo");
 });
+
+test("eightieth review batch exposes two duration-checked feature uploads", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1311001", "Yp7kNe_riaM", 4140],
+    ["old-iranian-1338024", "4BQCl-a9Hx0", 5400],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+  }
+});
