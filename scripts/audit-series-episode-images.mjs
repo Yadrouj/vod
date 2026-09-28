@@ -208,22 +208,12 @@ async function fetchEpisodes(series, saved) {
 
 async function main() {
   const series = [];
-  if (requestedImdb.size) {
-    for (const imdbCode of requestedImdb) {
-      const saved = await readJson(path.join(OUTPUT_DIR, `${imdbCode}.json`), {});
-      series.push({
-        imdbCode,
-        title: typeof saved.seriesTitle === "string" ? saved.seriesTitle : imdbCode,
-        imdbRating: Number.isFinite(Number(saved.imdbRating)) ? Number(saved.imdbRating) : null,
-        imdbVotes: Number.isFinite(Number(saved.imdbVotes)) ? Number(saved.imdbVotes) : null,
-        year: null,
-      });
-    }
-  } else {
-    await streamVodArchiveItems(path.resolve(ROOT, CATALOG), (item) => {
-      if (normalizeType(item.type) === "series" && typeof item.imdbCode === "string") series.push(item);
-    });
-  }
+  // Always build the report from the full catalog. A targeted --imdb run only
+  // changes selected snapshots; it must not replace the global report with a
+  // six-item (or one-item) report and hide every other series from the audit.
+  await streamVodArchiveItems(path.resolve(ROOT, CATALOG), (item) => {
+    if (normalizeType(item.type) === "series" && typeof item.imdbCode === "string") series.push(item);
+  });
   series.sort(compareSeries);
 
   const report = await readJson(REPORT_FILE, { version: 1, items: [] });

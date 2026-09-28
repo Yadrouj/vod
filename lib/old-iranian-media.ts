@@ -910,6 +910,17 @@ const BATCH_EIGHTY_SIX_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1347004": [publicYouTubeVideo("Ri697qFCOEk", "Mard Do Chehre (1968) - full film", "Bikiha", undefined, "2026-09-28")],
 };
 
+// Eighty-ninth review batch: direct, exact-title feature uploads found while
+// continuing through the 1969 archive. Runtime was not published reliably in
+// the search metadata, so these stay unlabelled instead of using a guess.
+const BATCH_EIGHTY_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1348021": [publicYouTubeVideo("luYhgVrzRys", "Donyaye Por Omid (1969) - full film", "FilmFarsi", undefined, "2026-09-28")],
+  "old-iranian-1348042": [publicYouTubeVideo("6Tofmx3mNbE", "Jib-Bar Khoshgeleh (1969) - full film", "Persian Comedy Channel", undefined, "2026-09-28")],
+  "old-iranian-1348043": [publicYouTubeVideo("mW0V7EhyFok", "Gorbeh Kor (1969) - full film", "Cinema Rex", undefined, "2026-09-28")],
+  "old-iranian-1348047": [publicYouTubeVideo("raxoBF7hH7c", "Tatilat-e Dash Esmaeil (1969) - full film", "Pars Films", undefined, "2026-09-28")],
+  "old-iranian-1348054": [publicYouTubeVideo("cjcfLJj8F2c", "Chicho o Franco Vatani (1969) - full film", "Shouka Film", undefined, "2026-09-28")],
+};
+
 // Eighty-seventh review batch: exact 1968 archive titles with direct,
 // feature-film YouTube uploads. Trailer-only results were excluded.
 const BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1098,6 +1109,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_EIGHTY_NINE_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_NINE_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_SIX_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_SIX_YOUTUBE_BY_ID[key];

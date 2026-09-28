@@ -1065,3 +1065,19 @@ test("eighty-eighth review batch exposes ten exact 1969 feature uploads", () => 
   assert.equal(getOldIranianYouTubeVideos("old-iranian-1348011")?.[0].durationSeconds, 6633);
 });
 
+test("eighty-ninth review batch exposes the next exact 1969 feature uploads", () => {
+  for (const [id, videoId] of [
+    ["old-iranian-1348021", "luYhgVrzRys"],
+    ["old-iranian-1348042", "6Tofmx3mNbE"],
+    ["old-iranian-1348043", "mW0V7EhyFok"],
+    ["old-iranian-1348047", "raxoBF7hH7c"],
+    ["old-iranian-1348054", "cjcfLJj8F2c"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.match(item[0].title, /full film/i);
+  }
+});
+
