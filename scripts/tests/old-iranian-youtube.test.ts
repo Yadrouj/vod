@@ -991,3 +991,11 @@ test("eighty-third review batch exposes two duration-checked feature uploads", (
     assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
   }
 });
+
+test("eighty-fourth review batch exposes the duration-checked Mojezeh upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1346042");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "gzvDIj3mDwo");
+  assert.equal(item[0].durationSeconds, 6900);
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=gzvDIj3mDwo");
+});
