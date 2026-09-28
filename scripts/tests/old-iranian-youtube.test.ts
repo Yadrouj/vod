@@ -1190,3 +1190,17 @@ test("ninety-seventh review batch exposes the exact 1966 Amir Arsalan feature up
   assert.match(item[0].title, /full film/i);
 });
 
+test("ninety-eighth review batch exposes the next two duration-checked features", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1345041", "296hPeOTw-U", 6300],
+    ["old-iranian-1345049", "qQwilsgX5EQ", 5460],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.match(item[0].title, /full film/i);
+  }
+});
+

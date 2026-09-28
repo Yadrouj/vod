@@ -967,6 +967,14 @@ const BATCH_NINETY_FIVE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1345053": [publicYouTubeVideo("Hm9pYO6pobw", "Bazoo Talaei (1967) - full film - 90 minutes", "Pars Film Official", 5400, "2026-09-28")],
 };
 
+// Ninety-eighth review batch: exact 1967 feature uploads for the next two
+// archive titles. Their catalog runtimes are above one hour and the indexed
+// YouTube results identify the matching films, so both are safe direct players.
+const BATCH_NINETY_EIGHT_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1345041": [publicYouTubeVideo("296hPeOTw-U", "Se Ghahreman (1967) - full film - 105 minutes", "Classic Iranian Cinema Archive", 6300, "2026-09-28")],
+  "old-iranian-1345049": [publicYouTubeVideo("qQwilsgX5EQ", "Haroon and Gharoon (1967) - full film - 91 minutes", "Classic Iranian Cinema Archive", 5460, "2026-09-28")],
+};
+
 // Ninety-seventh review batch: an exact 1966 feature upload for Amir Arsalan
 // Namdar. The indexed YouTube listing identifies it as the complete film;
 // duration is intentionally left unset until the source exposes reliable
@@ -1169,6 +1177,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_NINETY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_NINETY_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_NINETY_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_SIX_YOUTUBE_BY_ID[key]) return BATCH_NINETY_SIX_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_FIVE_YOUTUBE_BY_ID[key]) return BATCH_NINETY_FIVE_YOUTUBE_BY_ID[key];
