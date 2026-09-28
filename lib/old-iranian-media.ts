@@ -996,6 +996,13 @@ const BATCH_ONE_HUNDRED_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1349029": [publicYouTubeVideo("d0EqauPoGvY", "Janjal-e Aroosi (1970) - full film", "Persian Comedy Channel", undefined, "2026-09-28")],
 };
 
+// One-hundred-fourth review batch: the exact 1974 upload for Majarajoyane
+// Khashen. The catalogue records a 100-minute feature and the indexed listing
+// identifies the matching full-length Iranian film.
+const BATCH_ONE_HUNDRED_FOUR_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1353053": [publicYouTubeVideo("4MW0KFFQke8", "Majarajoyane Khashen (1974) - full film - 100 minutes", "Pars Film Official", 6000, "2026-09-28")],
+};
+
 // One-hundredth review batch: a direct full-film upload for Goodbye Little
 // One (1354). The catalogue runtime is 102 minutes and the indexed YouTube
 // title identifies the upload as a complete film.
@@ -1213,6 +1220,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FOUR_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_THREE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_ONE_YOUTUBE_BY_ID[key];

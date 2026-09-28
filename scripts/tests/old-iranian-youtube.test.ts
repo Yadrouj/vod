@@ -1257,3 +1257,12 @@ test("one-hundred-third review batch exposes the direct Janjal-e Aroosi upload",
   assert.match(item[0].title, /full film/i);
 });
 
+test("one-hundred-fourth review batch exposes the duration-checked Majarajoyane Khashen upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1353053");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "4MW0KFFQke8");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=4MW0KFFQke8");
+  assert.equal(item[0].durationSeconds, 6000);
+  assert.match(item[0].title, /full film/i);
+});
+
