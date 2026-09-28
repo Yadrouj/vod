@@ -960,6 +960,13 @@ const BATCH_NINETY_FOUR_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1343008": [publicYouTubeVideo("5TWlZVRRIdk", "Ashk-ha va Khandeha (1963) - full film", "Shouka Film", undefined, "2026-09-28")],
 };
 
+// Ninety-fifth review batch: two exact 1967 feature uploads whose published
+// metadata includes runtimes above one hour.
+const BATCH_NINETY_FIVE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1346015": [publicYouTubeVideo("NYC1ncX7nrQ", "Iman (1967) - full film - 94 minutes", "Pars Film Official", 5640, "2026-09-28")],
+  "old-iranian-1345053": [publicYouTubeVideo("Hm9pYO6pobw", "Bazoo Talaei (1967) - full film - 90 minutes", "Pars Film Official", 5400, "2026-09-28")],
+};
+
 // Eighty-seventh review batch: exact 1968 archive titles with direct,
 // feature-film YouTube uploads. Trailer-only results were excluded.
 const BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1148,6 +1155,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_NINETY_FIVE_YOUTUBE_BY_ID[key]) return BATCH_NINETY_FIVE_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_NINETY_FOUR_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_THREE_YOUTUBE_BY_ID[key]) return BATCH_NINETY_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_TWO_YOUTUBE_BY_ID[key]) return BATCH_NINETY_TWO_YOUTUBE_BY_ID[key];
