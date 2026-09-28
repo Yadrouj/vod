@@ -937,6 +937,14 @@ const BATCH_NINETY_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1348041": [publicYouTubeVideo("q1vQTzeJGIs", "Emshab Dokhtari Mimirad (1969) - full film", "FilmFarsi", undefined, "2026-09-28")],
 };
 
+// Ninety-second review batch: exact 1348/1969 feature uploads. The Behesht
+// Dour Nist runtime is stated in the publisher's film metadata.
+const BATCH_NINETY_TWO_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1348019": [publicYouTubeVideo("uR-Oz8kujHc", "Jodaei (1969) - full film", "FilmFarsi", undefined, "2026-09-28")],
+  "old-iranian-1348044": [publicYouTubeVideo("SKpVJURC39s", "Behesht Dour Nist (1969) - full film - 90 minutes", "Pars Film Official", 5400, "2026-09-28")],
+  "old-iranian-1348045": [publicYouTubeVideo("Snh3ERFOqGs", "Malek Dozakh (1969) - full film", "Pars Films", undefined, "2026-09-28")],
+};
+
 // Eighty-seventh review batch: exact 1968 archive titles with direct,
 // feature-film YouTube uploads. Trailer-only results were excluded.
 const BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1125,6 +1133,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_NINETY_TWO_YOUTUBE_BY_ID[key]) return BATCH_NINETY_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_ONE_YOUTUBE_BY_ID[key]) return BATCH_NINETY_ONE_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_YOUTUBE_BY_ID[key]) return BATCH_NINETY_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_NINE_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_NINE_YOUTUBE_BY_ID[key];
