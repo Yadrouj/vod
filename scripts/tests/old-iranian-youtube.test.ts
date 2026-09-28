@@ -1173,3 +1173,12 @@ test("ninety-fifth review batch exposes two duration-checked 1967 feature upload
   }
 });
 
+test("ninety-sixth review batch exposes the duration-checked 1968 feature upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1346051");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "PQH_etJ6kg8");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=PQH_etJ6kg8");
+  assert.ok((item[0].durationSeconds ?? 0) >= 3600);
+  assert.match(item[0].title, /full film/i);
+});
+
