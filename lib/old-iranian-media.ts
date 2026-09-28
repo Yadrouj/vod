@@ -974,6 +974,13 @@ const BATCH_NINETY_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1347026": [publicYouTubeVideo("1Swkxd19bhE", "Panjeh Ahaniin (1968) - full film", "Classic Iranian Cinema Archive", undefined, "2026-09-28")],
 };
 
+// One-hundredth review batch: a direct full-film upload for Goodbye Little
+// One (1354). The catalogue runtime is 102 minutes and the indexed YouTube
+// title identifies the upload as a complete film.
+const BATCH_ONE_HUNDRED_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1354049": [publicYouTubeVideo("HRvEXyLSGmo", "Khodahafez Koochooloo (1976) - full film - 102 minutes", "فیلم قدیمی", 6120, "2026-09-28")],
+};
+
 // Ninety-eighth review batch: exact 1967 feature uploads for the next two
 // archive titles. Their catalog runtimes are above one hour and the indexed
 // YouTube results identify the matching films, so both are safe direct players.
@@ -1184,6 +1191,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_NINE_YOUTUBE_BY_ID[key]) return BATCH_NINETY_NINE_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_NINETY_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_NINETY_SEVEN_YOUTUBE_BY_ID[key];

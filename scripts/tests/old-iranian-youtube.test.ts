@@ -1212,3 +1212,12 @@ test("ninety-ninth review batch exposes the exact Iron Claw feature upload", () 
   assert.match(item[0].title, /full film/i);
 });
 
+test("one-hundredth review batch exposes the direct Goodbye Little One feature upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1354049");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "HRvEXyLSGmo");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=HRvEXyLSGmo");
+  assert.equal(item[0].durationSeconds, 6120);
+  assert.match(item[0].title, /full film/i);
+});
+
