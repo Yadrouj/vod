@@ -1013,10 +1013,3 @@ test("eighty-fifth review batch exposes two duration-checked feature uploads", (
   }
 });
 
-test("eighty-sixth review batch exposes the duration-checked Toufan Bar Faraz Petra upload", () => {
-  const item = getOldIranianYouTubeVideos("old-iranian-1347003");
-  assert.ok(item);
-  assert.equal(item[0].videoId, "Rhog5cH9_oQ");
-  assert.equal(item[0].durationSeconds, 6300);
-  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=Rhog5cH9_oQ");
-});
