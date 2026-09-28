@@ -974,6 +974,13 @@ const BATCH_NINETY_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1347026": [publicYouTubeVideo("1Swkxd19bhE", "Panjeh Ahaniin (1968) - full film", "Classic Iranian Cinema Archive", undefined, "2026-09-28")],
 };
 
+// One-hundred-first review batch: two direct full-film uploads for the
+// 1970 archive titles Reza, the Motorcyclist and Jafar and Golnar.
+const BATCH_ONE_HUNDRED_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1349043": [publicYouTubeVideo("ugThrMN-IqI", "Reza Motori (1970) - full film - 87 minutes", "فیلم قدیمی", 5220, "2026-09-28")],
+  "old-iranian-1349047": [publicYouTubeVideo("ATTG9Iyw0NY", "Jafar and Golnar (1970) - full film - 94 minutes", "فیلم قدیمی", 5640, "2026-09-28")],
+};
+
 // One-hundredth review batch: a direct full-film upload for Goodbye Little
 // One (1354). The catalogue runtime is 102 minutes and the indexed YouTube
 // title identifies the upload as a complete film.
@@ -1191,6 +1198,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_ONE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_NINE_YOUTUBE_BY_ID[key]) return BATCH_NINETY_NINE_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_NINETY_EIGHT_YOUTUBE_BY_ID[key];

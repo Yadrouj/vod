@@ -1221,3 +1221,17 @@ test("one-hundredth review batch exposes the direct Goodbye Little One feature u
   assert.match(item[0].title, /full film/i);
 });
 
+test("one-hundred-first review batch exposes two direct 1970 feature uploads", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1349043", "ugThrMN-IqI", 5220],
+    ["old-iranian-1349047", "ATTG9Iyw0NY", 5640],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.match(item[0].title, /full film/i);
+  }
+});
+
