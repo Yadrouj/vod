@@ -1204,3 +1204,11 @@ test("ninety-eighth review batch exposes the next two duration-checked features"
   }
 });
 
+test("ninety-ninth review batch exposes the exact Iron Claw feature upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1347026");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "1Swkxd19bhE");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=1Swkxd19bhE");
+  assert.match(item[0].title, /full film/i);
+});
+

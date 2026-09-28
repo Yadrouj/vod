@@ -967,6 +967,13 @@ const BATCH_NINETY_FIVE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1345053": [publicYouTubeVideo("Hm9pYO6pobw", "Bazoo Talaei (1967) - full film - 90 minutes", "Pars Film Official", 5400, "2026-09-28")],
 };
 
+// Ninety-ninth review batch: the exact feature upload for Iron Claw (1347).
+// The indexed YouTube title identifies the upload as the complete film;
+// runtime is left unset because the source does not expose reliable metadata.
+const BATCH_NINETY_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1347026": [publicYouTubeVideo("1Swkxd19bhE", "Panjeh Ahaniin (1968) - full film", "Classic Iranian Cinema Archive", undefined, "2026-09-28")],
+};
+
 // Ninety-eighth review batch: exact 1967 feature uploads for the next two
 // archive titles. Their catalog runtimes are above one hour and the indexed
 // YouTube results identify the matching films, so both are safe direct players.
@@ -1177,6 +1184,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_NINETY_NINE_YOUTUBE_BY_ID[key]) return BATCH_NINETY_NINE_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_NINETY_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_NINETY_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_SIX_YOUTUBE_BY_ID[key]) return BATCH_NINETY_SIX_YOUTUBE_BY_ID[key];
