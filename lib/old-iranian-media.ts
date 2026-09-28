@@ -981,6 +981,14 @@ const BATCH_ONE_HUNDRED_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1349047": [publicYouTubeVideo("ATTG9Iyw0NY", "Jafar and Golnar (1970) - full film - 94 minutes", "فیلم قدیمی", 5640, "2026-09-28")],
 };
 
+// One-hundred-second review batch: exact full-film uploads for two 1970/71
+// archive records. The YouTube listings identify both uploads as complete
+// films, with the Qahremanan listing exposing a 90-minute runtime.
+const BATCH_ONE_HUNDRED_TWO_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1349054": [publicYouTubeVideo("J7goiOYL3m8", "Aroos-e Bianca (1971) - full film", "Pars Films", undefined, "2026-09-28")],
+  "old-iranian-1349042": [publicYouTubeVideo("sjfGp4ctj9Y", "Qahremanan Nemimirand (1970) - full film - 90 minutes", "Pars Film Official", 5400, "2026-09-28")],
+};
+
 // One-hundredth review batch: a direct full-film upload for Goodbye Little
 // One (1354). The catalogue runtime is 102 minutes and the indexed YouTube
 // title identifies the upload as a complete film.
@@ -1198,6 +1206,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_ONE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_NINE_YOUTUBE_BY_ID[key]) return BATCH_NINETY_NINE_YOUTUBE_BY_ID[key];
