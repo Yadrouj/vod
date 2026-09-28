@@ -925,6 +925,22 @@ const BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1347071": [publicYouTubeVideo("PUW_WmipSc4", "Chaker Shoma Koochooloo (1968) - full film - 90 minutes", "Hezar-o-Yek Shab", 5400, "2026-09-28")],
 };
 
+// Eighty-eighth review batch: exact 1969/1348 archive titles with direct,
+// feature-film uploads. The Do Del o Yek Delbar runtime comes from the
+// indexed YouTube metadata surfaced by the search result.
+const BATCH_EIGHTY_EIGHT_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1348010": [publicYouTubeVideo("w__UGyTOZHA", "Nareh Toofan (1969) - full film", "Pars Films", undefined, "2026-09-28")],
+  "old-iranian-1348011": [publicYouTubeVideo("uy7GGKST1pk", "Do Del o Yek Delbar (1969) - full film - 110 minutes", "Pars Films", 6633, "2026-09-28")],
+  "old-iranian-1348013": [publicYouTubeVideo("eutuv_yasJs", "Ghalb-haye Talaei (1969) - full film", "Pars Films", undefined, "2026-09-28")],
+  "old-iranian-1348017": [publicYouTubeVideo("eFsu4sfOSNQ", "Rabeteh (1969) - full film", "Persian old-film archive", undefined, "2026-09-28")],
+  "old-iranian-1348026": [publicYouTubeVideo("qz77DN7MJqo", "Khaneh Kenar-e Darya (1969) - full film", "Pars Media", undefined, "2026-09-28")],
+  "old-iranian-1348028": [publicYouTubeVideo("ufZcuIa-w4Q", "Setareh Forouzan (1969) - full film", "Pars Films", undefined, "2026-09-28")],
+  "old-iranian-1348037": [publicYouTubeVideo("TQqSpX_HMuQ", "Kasb-haye Mahall (1969) - full film", "Cinema Rex", undefined, "2026-09-28")],
+  "old-iranian-1348038": [publicYouTubeVideo("P0aExsYhT9k", "Mojezeh-ye Ghalb-ha (1969) - full film", "Cinema Rex", undefined, "2026-09-28")],
+  "old-iranian-1348039": [publicYouTubeVideo("SVX3Fus24p8", "Zarb-e Shast (1969) - full film", "Film Farsi", undefined, "2026-09-28")],
+  "old-iranian-1348040": [publicYouTubeVideo("lFpgZJmD7vU", "Zan-e Vahshi Vahshi (1969) - full film", "YouTube old-film archive", undefined, "2026-09-28")],
+};
+
 // Twenty-third review batch: exact full-film uploads whose catalogue titles
 // match the archive entries. Trailers and short excerpts stay excluded.
 const BATCH_TWENTY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1082,6 +1098,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_EIGHTY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_SIX_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_SIX_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_FIVE_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_FIVE_YOUTUBE_BY_ID[key];
