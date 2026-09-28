@@ -965,3 +965,16 @@ test("eighty-first review batch exposes the year-matched Sarkesh feature upload"
   assert.equal(item[0].durationSeconds, 5400);
   assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=U9UiRM6CTu4");
 });
+
+test("eighty-second review batch exposes two exact title/year feature uploads", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1345019", "ISckI09Mk8w", 5400],
+    ["old-iranian-1345032", "V6ZzJCEkPQI", undefined],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+  }
+});
