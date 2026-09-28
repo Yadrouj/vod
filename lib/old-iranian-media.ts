@@ -953,6 +953,13 @@ const BATCH_NINETY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1348036": [publicYouTubeVideo("dAGNHdzoIE0", "Gorbeh Ra Dam-e Hejleh Mikoshad (1969) - full film", "Persian Films Archive", undefined, "2026-09-28")],
 };
 
+// Ninety-fourth review batch: an exact 1963 feature upload for the archive
+// title Ashk-ha va Khandeha. External archive pages and short excerpts stay
+// excluded from the playable catalogue.
+const BATCH_NINETY_FOUR_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1343008": [publicYouTubeVideo("5TWlZVRRIdk", "Ashk-ha va Khandeha (1963) - full film", "Shouka Film", undefined, "2026-09-28")],
+};
+
 // Eighty-seventh review batch: exact 1968 archive titles with direct,
 // feature-film YouTube uploads. Trailer-only results were excluded.
 const BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1141,6 +1148,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_NINETY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_NINETY_FOUR_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_THREE_YOUTUBE_BY_ID[key]) return BATCH_NINETY_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_TWO_YOUTUBE_BY_ID[key]) return BATCH_NINETY_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_NINETY_ONE_YOUTUBE_BY_ID[key]) return BATCH_NINETY_ONE_YOUTUBE_BY_ID[key];

@@ -1151,3 +1151,11 @@ test("curated full-film mappings replace stale persisted trailers", () => {
   assert.equal(enriched.youtubeVideos?.[0].videoId, "dAGNHdzoIE0");
 });
 
+test("ninety-fourth review batch exposes the exact 1963 feature upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1343008");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "5TWlZVRRIdk");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=5TWlZVRRIdk");
+  assert.match(item[0].title, /full film/i);
+});
+
