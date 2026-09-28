@@ -1081,3 +1081,32 @@ test("eighty-ninth review batch exposes the next exact 1969 feature uploads", ()
   }
 });
 
+test("ninetieth review batch exposes four more exact 1969 feature uploads", () => {
+  for (const [id, videoId] of [
+    ["old-iranian-1348004", "1NttYCoLPUY"],
+    ["old-iranian-1348007", "3xzSlFC0LqM"],
+    ["old-iranian-1348024", "TsFfopx5t3Q"],
+    ["old-iranian-1348029", "v0DEk636pPo"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.match(item[0].title, /full film/i);
+  }
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1348004")?.[0].durationSeconds, 5640);
+});
+
+test("ninety-first review batch exposes two more exact 1969 feature uploads", () => {
+  for (const [id, videoId] of [
+    ["old-iranian-1348035", "pY8CxCVQiHs"],
+    ["old-iranian-1348041", "q1vQTzeJGIs"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.match(item[0].title, /full film/i);
+  }
+});
+

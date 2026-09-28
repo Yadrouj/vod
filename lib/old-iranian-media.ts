@@ -921,6 +921,22 @@ const BATCH_EIGHTY_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1348054": [publicYouTubeVideo("cjcfLJj8F2c", "Chicho o Franco Vatani (1969) - full film", "Shouka Film", undefined, "2026-09-28")],
 };
 
+// Ninetieth review batch: exact 1348/1969 feature uploads. Adl Elahi is the
+// only item in this batch whose publisher supplied a reliable runtime.
+const BATCH_NINETY_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1348004": [publicYouTubeVideo("1NttYCoLPUY", "Adl Elahi (1969) - full film - 94 minutes", "Pars Film Official", 5640, "2026-09-28")],
+  "old-iranian-1348007": [publicYouTubeVideo("3xzSlFC0LqM", "Ghatelin Ham Migeryand (1969) - full film", "Shouka Film", undefined, "2026-09-28")],
+  "old-iranian-1348024": [publicYouTubeVideo("TsFfopx5t3Q", "Ghool Biabooni (1969) - full film", "Film Ghadimi", undefined, "2026-09-28")],
+  "old-iranian-1348029": [publicYouTubeVideo("v0DEk636pPo", "Gonah-e Madar (1969) - full film", "FilmFarsi", undefined, "2026-09-28")],
+};
+
+// Ninety-first review batch: two more exact 1348 feature uploads. Both are
+// labelled as complete by the publishing archive; no guessed runtime added.
+const BATCH_NINETY_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1348035": [publicYouTubeVideo("pY8CxCVQiHs", "Donyaye Abi (1969) - full film", "Hezar-o-Yek Shab", undefined, "2026-09-28")],
+  "old-iranian-1348041": [publicYouTubeVideo("q1vQTzeJGIs", "Emshab Dokhtari Mimirad (1969) - full film", "FilmFarsi", undefined, "2026-09-28")],
+};
+
 // Eighty-seventh review batch: exact 1968 archive titles with direct,
 // feature-film YouTube uploads. Trailer-only results were excluded.
 const BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1109,6 +1125,8 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_NINETY_ONE_YOUTUBE_BY_ID[key]) return BATCH_NINETY_ONE_YOUTUBE_BY_ID[key];
+  if (BATCH_NINETY_YOUTUBE_BY_ID[key]) return BATCH_NINETY_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_NINE_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_NINE_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID[key];
