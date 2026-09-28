@@ -1,6 +1,7 @@
 import { loadMusicIndex } from "@/lib/music";
 import { fetchStreamHeaders } from "@/lib/upstream-stream";
 import { musicAttachment } from "@/lib/music-download";
+import { streamMelodifyFile } from "@/lib/melodify-library";
 
 const MAX_ID_LENGTH = 180;
 const MAX_URL_LENGTH = 4096;
@@ -25,9 +26,14 @@ export async function GET(request: Request) {
 
   const track = (await loadMusicIndex()).tracks.find((item) => item.id === id);
   const source = track?.sources.find((item) => item.url === sourceUrl);
-  if (!source?.url || source.available === false || !isHttpUrl(source.url)) {
+  if (!source?.url || source.available === false) {
     return Response.json({ error: "Music source is not available." }, { status: 404 });
   }
+
+  if (source.provider === "melodify") {
+    return (await streamMelodifyFile(request, track!, source, download)) ?? Response.json({ error: "The Melodify library is not mounted." }, { status: 503 });
+  }
+  if (!isHttpUrl(source.url)) return Response.json({ error: "Music source is not available." }, { status: 404 });
 
   const range = request.headers.get("range");
   const upstreamHeaders = new Headers({

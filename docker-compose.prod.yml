@@ -25,11 +25,14 @@ services:
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
       VOD_DATA_DIR: /app/public/data
+      MELODIFY_LIBRARY_DIR: /music-library
     volumes:
       - ./public/data:/app/public/data
       - ./data:/app/data
       # Mirrored TVMaze episode stills served by /api/episode-image.
       - vod_episode_images:/app/.media-cache/episode-images
+      # The music archive stays on the host; the app reads it read-only.
+      - ${MELODIFY_LIBRARY_HOST_PATH:-/home/ubuntu/Documents/projects/vahid/melodify2/library/tracks}:/music-library:ro
     networks:
       - edge
 

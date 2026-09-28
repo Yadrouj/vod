@@ -157,8 +157,8 @@ function absoluteUrl(origin: string, value: string) {
 function countCategories(tracks: MusicTrack[]) {
   const counts = new Map<string, number>();
   for (const track of tracks) {
-    const category = track.category?.trim();
-    if (category) counts.set(category, (counts.get(category) ?? 0) + 1);
+    const categories = new Set([track.category, ...(track.moods ?? [])].map(value => value?.trim()).filter(Boolean));
+    for (const category of categories) counts.set(category, (counts.get(category) ?? 0) + 1);
   }
 
   const featured = ["آهنگ", "ریمیکس", "موزیک ویدیو", "موسیقی قدیمی فارسی", "موسیقی خارجی", "Soundtrack", "Classical", "Lo-Fi", "Jazz"];

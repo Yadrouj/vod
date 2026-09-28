@@ -16,6 +16,7 @@ services:
       WATCH_PARTY_MAX_CONNECTIONS: ${WATCH_PARTY_MAX_CONNECTIONS:-512}
       NODE_OPTIONS: --max-old-space-size=1536
       VOD_DATA_DIR: /app/public/data
+      MELODIFY_LIBRARY_DIR: /music-library
       PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://sarvnema.ir}
       WATCH_PARTY_MAX_ROOMS: ${WATCH_PARTY_MAX_ROOMS:-500}
       WATCH_PARTY_MAX_PARTICIPANTS: ${WATCH_PARTY_MAX_PARTICIPANTS:-50}
@@ -35,6 +36,8 @@ services:
       - ./data:/app/data
       # Mirrored TVMaze episode stills served by /api/episode-image.
       - vod_episode_images:/app/.media-cache/episode-images
+      # The music archive stays on the host; the app reads it read-only.
+      - ${MELODIFY_LIBRARY_HOST_PATH:-/home/ubuntu/Documents/projects/vahid/melodify2/library/tracks}:/music-library:ro
     expose:
       - "3004"
     healthcheck:

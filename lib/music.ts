@@ -8,8 +8,10 @@ const DATA_FILE = path.join(process.cwd(), "public", "data", "music-index.json")
 const LANDING_DATA_FILE = path.join(process.cwd(), "public", "data", "music-landing.json");
 const HOME_DATA_FILE = path.join(process.cwd(), "public", "data", "music-home.json");
 const ARTIST_DATA_FILE = path.join(process.cwd(), "public", "data", "music-artists.json");
+const MELODIFY_DATA_FILE = path.join(process.cwd(), "public", "data", "melodify-library.json");
 const CHECK_INTERVAL = 30_000;
 const cache: { checkedAt?: number; mtimeMs?: number; value?: Promise<MusicIndex>; refreshing?: Promise<MusicIndex> } = {};
+const melodifyCache: FileCache<MusicIndex> = {};
 const landingCache: FileCache<MusicLandingIndex> = {};
 const homeCache: FileCache<MusicLandingIndex> = {};
 const artistCache: FileCache<MusicArtistIndex> = {};
@@ -36,7 +38,10 @@ export async function loadMusicIndex(): Promise<MusicIndex> {
       const info = await stat(DATA_FILE);
       if (!cache.value || cache.mtimeMs !== info.mtimeMs) {
         cache.mtimeMs = info.mtimeMs;
-        cache.value = readFile(DATA_FILE, "utf8").then((data) => JSON.parse(data) as MusicIndex);
+        cache.value = Promise.all([
+          readFile(DATA_FILE, "utf8").then((data) => JSON.parse(data) as MusicIndex),
+          loadMelodifyCatalog(),
+        ]).then(([base, melodify]) => mergeMelodifyCatalog(base, melodify, true));
       }
       return await cache.value;
     } catch {
@@ -86,7 +91,7 @@ export function findMusicArtist(index: MusicIndex, slug: string): MusicArtist | 
     profileImageUrl: matchingTracks.find((track) => track.coverUrl)?.coverUrl ?? null,
     profileSourceUrl: firstMatch.sourceUrl,
     trackIds: matchingTracks.filter((track) => track.artists.some((artist) => artist.slug === normalizedSlug || artist.aliases?.some((alias) => musicSlug(alias) === normalizedSlug))).map((track) => track.id),
-    categories: [...new Set(matchingTracks.map((track) => track.category).filter(Boolean))],
+    categories: [...new Set(matchingTracks.flatMap((track) => [track.category, ...(track.moods ?? [])]).filter(Boolean))],
   };
 }
 
@@ -155,7 +160,7 @@ export function resolveMusicSearch(index: MusicIndex, query: string, kind = "all
   for (const document of cached.documents) {
     const { track } = document;
     if (kind !== "all" && track.kind !== kind) continue;
-    if (category && category !== "all" && track.category !== category) continue;
+    if (category && category !== "all" && ![track.category, ...(track.moods ?? [])].some((value) => value === category)) continue;
     if (!matches.has(track.id)) continue;
     const rank = !needle || document.title === needle ? 0 : document.title.startsWith(needle) ? 1 : document.artists.startsWith(needle) ? 2 : 3;
     buckets[rank].push(track);
@@ -329,6 +334,7 @@ function musicSearchText(track: MusicTrack) {
     track.title,
     track.persianTitle,
     track.category,
+    ...(track.moods ?? []),
     ...track.artists.flatMap((artist) => [artist.name, artist.slug]),
     ...track.artists.flatMap((artist) => artist.aliases ?? []),
   ].join(" "));
@@ -390,7 +396,10 @@ async function loadCompactMusicIndex<T extends MusicLandingIndex | MusicArtistIn
       const info = await stat(file);
       if (!compactCache.value || compactCache.mtimeMs !== info.mtimeMs) {
         compactCache.mtimeMs = info.mtimeMs;
-        compactCache.value = readFile(file, "utf8").then((data) => JSON.parse(data) as T);
+        compactCache.value = Promise.all([
+          readFile(file, "utf8").then((data) => JSON.parse(data) as T),
+          loadMelodifyCatalog(),
+        ]).then(([base, melodify]) => mergeMelodifyCatalog(base, melodify, file === ARTIST_DATA_FILE));
       }
       return await compactCache.value;
     } catch {
@@ -407,4 +416,81 @@ async function loadCompactMusicIndex<T extends MusicLandingIndex | MusicArtistIn
     }
   })();
   return compactCache.refreshing;
+}
+
+async function loadMelodifyCatalog(): Promise<MusicIndex> {
+  const now = Date.now();
+  if (melodifyCache.value && melodifyCache.checkedAt && now - melodifyCache.checkedAt < CHECK_INTERVAL) return melodifyCache.value;
+  if (melodifyCache.refreshing) return melodifyCache.value ?? melodifyCache.refreshing;
+  melodifyCache.refreshing = (async () => {
+    try {
+      const info = await stat(MELODIFY_DATA_FILE);
+      if (!melodifyCache.value || melodifyCache.mtimeMs !== info.mtimeMs) {
+        melodifyCache.mtimeMs = info.mtimeMs;
+        melodifyCache.value = readFile(MELODIFY_DATA_FILE, "utf8").then((data) => JSON.parse(data) as MusicIndex);
+      }
+      return await melodifyCache.value;
+    } catch {
+      return emptyIndex;
+    } finally {
+      melodifyCache.checkedAt = Date.now();
+      melodifyCache.refreshing = undefined;
+    }
+  })();
+  return melodifyCache.refreshing;
+}
+
+function mergeMelodifyCatalog<T extends MusicIndex>(base: T, melodify: MusicIndex, includeTracks: boolean): T {
+  const existingIds = new Set(base.tracks.map((track) => track.id));
+  const additionalTracks = includeTracks ? melodify.tracks.filter((track) => !existingIds.has(track.id)) : [];
+  const categories = [...new Set([...base.categories, ...(melodify.categories ?? []), ...melodify.tracks.flatMap((track) => [track.category, ...(track.moods ?? [])]).filter(Boolean)])];
+  const localTrackCount = melodify.tracks.filter((track) => track.kind === "track" && !existingIds.has(track.id)).length;
+  const localArtists = includeTracks ? buildMelodifyArtists(additionalTracks) : [];
+  const existingArtistSlugs = new Set(base.artists.map((artist) => artist.slug));
+  const artists = includeTracks ? [...base.artists, ...localArtists.filter((artist) => !existingArtistSlugs.has(artist.slug))] : base.artists;
+  const localArtistCount = localArtists.filter((artist) => !existingArtistSlugs.has(artist.slug)).length;
+  const currentArchiveStats = (base as T & { archiveStats?: { tracks: number; artists: number; videos: number } }).archiveStats;
+  const archiveStats = currentArchiveStats
+    ? { ...currentArchiveStats, tracks: currentArchiveStats.tracks + localTrackCount, artists: currentArchiveStats.artists + localArtistCount, videos: currentArchiveStats.videos }
+    : undefined;
+  return {
+    ...base,
+    tracks: includeTracks ? [...base.tracks, ...additionalTracks] : base.tracks,
+    artists,
+    categories,
+    ...(archiveStats ? { archiveStats } : {}),
+    ...(includeTracks && "artistTrackIds" in base ? { artistTrackIds: mergeArtistTrackIds((base as T & { artistTrackIds: Record<string, string[]> }).artistTrackIds, localArtists) } : {}),
+  } as T;
+}
+
+function buildMelodifyArtists(tracks: MusicTrack[]): MusicArtist[] {
+  const artists = new Map<string, MusicArtist>();
+  for (const track of tracks) {
+    for (const ref of track.artists) {
+      const current = artists.get(ref.slug) ?? {
+        ...ref,
+        aliases: ref.aliases ?? [],
+        coverUrl: track.coverUrl,
+        profileImageUrl: track.coverUrl,
+        profileSourceUrl: ref.sourceUrl,
+        trackIds: [],
+        categories: [],
+      };
+      if (!current.trackIds.includes(track.id)) current.trackIds.push(track.id);
+      for (const category of [track.category, ...(track.moods ?? [])]) {
+        if (category && !current.categories.includes(category)) current.categories.push(category);
+      }
+      artists.set(ref.slug, current);
+    }
+  }
+  return [...artists.values()];
+}
+
+function mergeArtistTrackIds(base: Record<string, string[]>, localArtists: MusicArtist[]) {
+  const next = { ...base };
+  for (const artist of localArtists) {
+    const keys = [artist.slug, ...(artist.aliases ?? [])].map(musicSlug).filter(Boolean);
+    for (const key of keys) next[key] = [...new Set([...(next[key] ?? []), ...artist.trackIds])];
+  }
+  return next;
 }
