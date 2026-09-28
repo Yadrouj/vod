@@ -1249,3 +1249,11 @@ test("one-hundred-second review batch exposes two exact full-film uploads", () =
   }
 });
 
+test("one-hundred-third review batch exposes the direct Janjal-e Aroosi upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1349029");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "d0EqauPoGvY");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=d0EqauPoGvY");
+  assert.match(item[0].title, /full film/i);
+});
+
