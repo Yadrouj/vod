@@ -1266,3 +1266,12 @@ test("one-hundred-fourth review batch exposes the duration-checked Majarajoyane 
   assert.match(item[0].title, /full film/i);
 });
 
+test("one-hundred-fifth review batch exposes the duration-checked Pari Khoshgeleh upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1353011");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "6HClUhQZevw");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=6HClUhQZevw");
+  assert.equal(item[0].durationSeconds, 5513);
+  assert.match(item[0].title, /full film/i);
+});
+
