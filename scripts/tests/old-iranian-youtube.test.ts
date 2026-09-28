@@ -1182,3 +1182,11 @@ test("ninety-sixth review batch exposes the duration-checked 1968 feature upload
   assert.match(item[0].title, /full film/i);
 });
 
+test("ninety-seventh review batch exposes the exact 1966 Amir Arsalan feature upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1345021");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "-QzqgokJ0O0");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=-QzqgokJ0O0");
+  assert.match(item[0].title, /full film/i);
+});
+
