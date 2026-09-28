@@ -883,6 +883,13 @@ const BATCH_EIGHTY_TWO_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1345032": [publicYouTubeVideo("V6ZzJCEkPQI", "Kelid-e Behesht (1966) - full film", "Pars Film", undefined, "2026-09-28")],
 };
 
+// Eighty-third review batch: two exact title/year feature uploads with
+// independent runtime checks.
+const BATCH_EIGHTY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1346003": [publicYouTubeVideo("VTKdOHkP1FA", "Yeke Bezan (1967) - full film - 95 minutes", "Bikiha", 5700, "2026-09-28")],
+  "old-iranian-1346033": [publicYouTubeVideo("06_knnFUQEM", "Nim Vajabi (1967) - full film - 106 minutes", "Pars Film", 6360, "2026-09-28")],
+};
+
 // Twenty-third review batch: exact full-film uploads whose catalogue titles
 // match the archive entries. Trailers and short excerpts stay excluded.
 const BATCH_TWENTY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1040,6 +1047,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_EIGHTY_THREE_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_TWO_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_ONE_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_ONE_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_YOUTUBE_BY_ID[key];
