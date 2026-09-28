@@ -1012,3 +1012,12 @@ test("eighty-fifth review batch exposes two duration-checked feature uploads", (
   }
 });
 
+test("eighty-sixth review batch exposes the exact Mard Do Chehre upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1347004");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "Ri697qFCOEk");
+  assert.equal(item[0].durationSeconds, undefined);
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=Ri697qFCOEk");
+  assert.equal(item[0].channel, "Bikiha");
+});
+
