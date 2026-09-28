@@ -999,3 +999,16 @@ test("eighty-fourth review batch exposes the duration-checked Mojezeh upload", (
   assert.equal(item[0].durationSeconds, 6900);
   assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=gzvDIj3mDwo");
 });
+
+test("eighty-fifth review batch exposes two duration-checked feature uploads", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1347009", "wNApyIBZ418", 5580],
+    ["old-iranian-1347015", "_6hsdc5X3SQ", 7140],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+  }
+});
