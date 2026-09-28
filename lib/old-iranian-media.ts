@@ -910,6 +910,21 @@ const BATCH_EIGHTY_SIX_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1347004": [publicYouTubeVideo("Ri697qFCOEk", "Mard Do Chehre (1968) - full film", "Bikiha", undefined, "2026-09-28")],
 };
 
+// Eighty-seventh review batch: exact 1968 archive titles with direct,
+// feature-film YouTube uploads. Trailer-only results were excluded.
+const BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1347020": [publicYouTubeVideo("gh1-HWF0-hk", "Pa Barahneh-ha (1968) - full film", "Bikiha", undefined, "2026-09-28")],
+  "old-iranian-1347036": [publicYouTubeVideo("IDRjRjoa0w4", "Mard-e Sahra (1968) - full film", "Pars Films", undefined, "2026-09-28")],
+  "old-iranian-1347040": [publicYouTubeVideo("DMk2B5pyj0c", "Dozd-e Siahpoosh (1968) - full film", "YouTube old-film archive", undefined, "2026-09-28")],
+  "old-iranian-1347046": [publicYouTubeVideo("cvle93i4Y54", "Avareh-haye Tehran (1968) - full film", "Pars Films", undefined, "2026-09-28")],
+  "old-iranian-1347052": [publicYouTubeVideo("UlqstbVxzWU", "Yousef va Zoleykha (1968) - full film", "YouTube old-film archive", undefined, "2026-09-28")],
+  "old-iranian-1347054": [publicYouTubeVideo("xIm_PZMUTDg", "Biganeh Bia (1968) - full film", "YouTube old-film archive", undefined, "2026-09-28")],
+  "old-iranian-1347061": [publicYouTubeVideo("8cJp_E1WpCg", "Donyaye Pooshali (1968) - full film", "Cinema Rex", undefined, "2026-09-28")],
+  "old-iranian-1347063": [publicYouTubeVideo("bA29ds4JtPc", "Khashm-e Kooli (1968) - full film", "Pars Films", undefined, "2026-09-28")],
+  "old-iranian-1347068": [publicYouTubeVideo("mYqD8WtgK4M", "Poli Be Sooye Behesht (1968) - full film", "Pars Films", undefined, "2026-09-28")],
+  "old-iranian-1347071": [publicYouTubeVideo("PUW_WmipSc4", "Chaker Shoma Koochooloo (1968) - full film - 90 minutes", "Hezar-o-Yek Shab", 5400, "2026-09-28")],
+};
+
 // Twenty-third review batch: exact full-film uploads whose catalogue titles
 // match the archive entries. Trailers and short excerpts stay excluded.
 const BATCH_TWENTY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1067,6 +1082,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_SIX_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_SIX_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_FIVE_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_FIVE_YOUTUBE_BY_ID[key];
   if (BATCH_EIGHTY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_EIGHTY_FOUR_YOUTUBE_BY_ID[key];

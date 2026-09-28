@@ -1021,3 +1021,25 @@ test("eighty-sixth review batch exposes the exact Mard Do Chehre upload", () => 
   assert.equal(item[0].channel, "Bikiha");
 });
 
+test("eighty-seventh review batch exposes ten exact 1968 feature uploads", () => {
+  for (const [id, videoId] of [
+    ["old-iranian-1347020", "gh1-HWF0-hk"],
+    ["old-iranian-1347036", "IDRjRjoa0w4"],
+    ["old-iranian-1347040", "DMk2B5pyj0c"],
+    ["old-iranian-1347046", "cvle93i4Y54"],
+    ["old-iranian-1347052", "UlqstbVxzWU"],
+    ["old-iranian-1347054", "xIm_PZMUTDg"],
+    ["old-iranian-1347061", "8cJp_E1WpCg"],
+    ["old-iranian-1347063", "bA29ds4JtPc"],
+    ["old-iranian-1347068", "mYqD8WtgK4M"],
+    ["old-iranian-1347071", "PUW_WmipSc4"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.match(item[0].title, /full film/i);
+  }
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1347071")?.[0].durationSeconds, 5400);
+});
+
