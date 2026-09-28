@@ -957,3 +957,11 @@ test("eightieth review batch exposes two duration-checked feature uploads", () =
     assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
   }
 });
+
+test("eighty-first review batch exposes the year-matched Sarkesh feature upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1343030");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "U9UiRM6CTu4");
+  assert.equal(item[0].durationSeconds, 5400);
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=U9UiRM6CTu4");
+});
