@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { readSavedEpisodeSnapshot } from "@/lib/episode-metadata";
 
 type Props = {
@@ -15,6 +17,14 @@ const palettes = [
   ["#253237", "#5c6b73", "#e0fbfc"],
 ];
 
+const ARTWORK_HOSTS = new Set([
+  "image.tmdb.org",
+  "media.themoviedb.org",
+  "m.media-amazon.com",
+  "static.tvmaze.com",
+  "upload.wikimedia.org",
+]);
+
 export async function GET(_request: Request, { params }: Props) {
   const { id, season, episode } = await params;
   if (!/^tt\d+$/.test(id) || !/^\d{1,3}$/.test(season) || !/^\d{1,3}$/.test(episode)) return new Response(null, { status: 404 });
@@ -28,13 +38,15 @@ export async function GET(_request: Request, { params }: Props) {
   const seriesTitle = truncateLabel(snapshot?.seriesTitle || id.toUpperCase(), 44);
   const episodeTitle = truncateLabel(episodeRow?.title || `Episode ${episodeNumber}`, 52);
   const label = escapeXml(id.toUpperCase());
+  const artwork = await readSeriesArtwork(id);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="title">
   <title id="title">${escapeXml(seriesTitle)} · ${escapeXml(code)} · ${escapeXml(episodeTitle)}</title>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${palette[0]}"/><stop offset="0.55" stop-color="${palette[1]}"/><stop offset="1" stop-color="#090b12"/></linearGradient>
     <radialGradient id="glow" cx="78%" cy="18%" r="70%"><stop stop-color="${palette[2]}" stop-opacity=".72"/><stop offset="1" stop-color="${palette[2]}" stop-opacity="0"/></radialGradient>
   </defs>
-  <rect width="640" height="360" fill="url(#bg)"/>
+  ${artwork ? `<image href="${escapeXml(artwork)}" x="0" y="0" width="640" height="360" preserveAspectRatio="xMidYMid slice" opacity=".56"/>` : ""}
+  <rect width="640" height="360" fill="url(#bg)" opacity="${artwork ? ".72" : "1"}"/>
   <rect width="640" height="360" fill="url(#glow)"/>
   <circle cx="522" cy="90" r="112" fill="none" stroke="${palette[2]}" stroke-opacity=".3" stroke-width="2"/>
   <circle cx="522" cy="90" r="76" fill="none" stroke="${palette[2]}" stroke-opacity=".22" stroke-width="16"/>
@@ -52,6 +64,21 @@ export async function GET(_request: Request, { params }: Props) {
       "Cache-Control": "public, max-age=86400, immutable",
     },
   });
+}
+
+async function readSeriesArtwork(id: string) {
+  try {
+    const file = path.join(process.cwd(), "public", "data", "titles", `${id}.json`);
+    const value = JSON.parse(await readFile(file, "utf8"));
+    for (const candidate of [value?.backdropUrl, value?.posterUrl]) {
+      if (typeof candidate !== "string") continue;
+      try {
+        const url = new URL(candidate);
+        if (url.protocol === "https:" && !url.username && !url.password && !url.port && ARTWORK_HOSTS.has(url.hostname)) return url.href;
+      } catch { /* Ignore malformed catalog artwork. */ }
+    }
+  } catch { /* A generated gradient remains the safe final fallback. */ }
+  return null;
 }
 
 function escapeXml(value: string) {
