@@ -99,6 +99,18 @@ const BATCH_ONE_HUNDRED_ELEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = 
   "old-iranian-1355067": [publicYouTubeVideo("1nACXIXt31E", "فیلم قدیمی؛ راننده سربلند · ۱۳۵۵", "Filmrangi", 4799, "2026-09-29")],
 };
 
+// 2026-09-29 research batch: exact-title full-film uploads, all longer than
+// one hour and matched to the archive year/title where the source provided it.
+const BATCH_ONE_HUNDRED_TWELVE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1354038": [publicYouTubeVideo("Gdn9oAjK4EI", "فیلم کامل عمو فوتبالی", "Beykiha", 5635, "2026-09-29")],
+  "old-iranian-1354061": [publicYouTubeVideo("s-XzMxB_VS8", "فیلم قدیمی؛ بابا خالدار · ۱۳۵۴", "Filmrangi", 6746, "2026-09-29")],
+  "old-iranian-1354034": [publicYouTubeVideo("MyfPhxMjjnY", "فیلم قدیمی؛ هدف · ۱۳۵۴", "Filmrangi", 6168, "2026-09-29")],
+  "old-iranian-1354028": [publicYouTubeVideo("jkGGl4B4jqY", "فیلم رانده شده · ۱۳۵۴", "Persian Films Archive", 5816, "2026-09-29")],
+  "old-iranian-1353049": [publicYouTubeVideo("D5UQvfRT1o8", "فیلم قدیمی؛ آقا مهدی وارد می شود · ۱۳۵۳", "Filmrangi", 4283, "2026-09-29")],
+  "old-iranian-1354016": [publicYouTubeVideo("71lD0TLjnZA", "نسخه کامل فیلم فارسی قسم", "FilmFarsi", 6002, "2026-09-29")],
+  "old-iranian-1354020": [publicYouTubeVideo("QV6Ni6_UV_w", "فیلم قدیمی؛ مشکی · ۱۳۵۴", "Filmrangi", 5417, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1290,6 +1302,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_TWELVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWELVE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_ELEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_ELEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_NINE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINE_YOUTUBE_BY_ID[key];
