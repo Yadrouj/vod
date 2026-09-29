@@ -1686,3 +1686,18 @@ test("one-hundred-twenty-seventh review batch exposes six exact full-film upload
   }
 });
 
+test("one-hundred-twenty-eighth review batch exposes four exact full-film uploads", () => {
+  for (const [id, videoId] of [
+    ["old-iranian-1355055", "0rt7Mi1Og5I"],
+    ["old-iranian-1355042", "R0gSVF_H0uk"],
+    ["old-iranian-1354017", "AgmujYIZxEE"],
+    ["old-iranian-1354035", "3ErcGMDCGMQ"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.match(item[0].title, /full movie/i);
+  }
+});
+
