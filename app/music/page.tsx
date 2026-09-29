@@ -20,6 +20,7 @@ import styles from "@/components/music-refresh.module.css";
 import { MoodCollections } from "@/components/mood-collections";
 import { loadMoodPlaylists } from "@/lib/mood-playlists";
 import { MusicCategoryNav } from "@/components/music-category-nav";
+import { selectLibraryArrivals } from "@/lib/music-library-merge";
 
 const REMIX_CATEGORY = "\u0631\u06cc\u0645\u06cc\u06a9\u0633";
 const REMIX_DESCRIPTION = "\u0631\u06cc\u0645\u06cc\u06a9\u0633\u200c\u0647\u0627\u06cc \u0634\u0627\u062f\u060c \u067e\u0627\u062f\u06a9\u0633\u062a \u0648 \u0627\u0646\u062a\u062e\u0627\u0628\u200c\u0647\u0627\u06cc \u062a\u0627\u0632\u0647";
@@ -43,9 +44,10 @@ export default async function MusicPage({ searchParams }: Props) {
   const q = asText(params.q);
   const kind = asText(params.kind) || "all";
   const fresh = asText(params.fresh);
+  const libraryOnly = asText(params.added) === "library";
   const year = Number(asText(params.year)) || null;
-  const filterLabel = q || category || (fresh === "week" ? "تازه‌های این هفته" : "") || (year ? String(year) : "") || kind;
-  const hasFilter = Boolean(q || category || kind !== "all" || year || fresh);
+  const filterLabel = q || category || (libraryOnly ? "تازه‌های آرشیو" : "") || (fresh === "week" ? "تازه‌های این هفته" : "") || (year ? String(year) : "") || kind;
+  const hasFilter = Boolean(q || category || kind !== "all" || year || fresh || libraryOnly);
   const [locale, index, moodIndex] = await Promise.all([
     getLocale(),
     hasFilter ? loadMusicIndex() : loadMusicLandingIndex(),
@@ -55,8 +57,20 @@ export default async function MusicPage({ searchParams }: Props) {
     ? searchMusic(index, q, kind, category)
       .filter((track) => !year || trackPublishedYear(track) === year)
       .filter((track) => fresh !== "week" || isMusicReleasedThisWeek(track))
+      .filter((track) => !libraryOnly || track.sources.some(source => source.provider === "melodify"))
     : [];
-  const tracks = allMatches.slice(0, hasFilter ? 80 : 24);
+  if (libraryOnly) allMatches.sort((a, b) => (b.addedAt ?? "").localeCompare(a.addedAt ?? "") || a.id.localeCompare(b.id, "en", { numeric: true }));
+  const pageCount = Math.max(1, Math.ceil(allMatches.length / 80));
+  const requestedPage = Number(asText(params.page));
+  const page = Number.isFinite(requestedPage) ? Math.min(pageCount, Math.max(1, Math.floor(requestedPage) || 1)) : 1;
+  const pageHref = (value: number) => {
+    const search = new URLSearchParams();
+    for (const [key, val] of Object.entries(params)) if (key !== "page" && asText(val)) search.set(key, asText(val));
+    search.set("page", String(value));
+    return `/music?${search}`;
+  };
+  const tracks = allMatches.slice((page - 1) * 80, page * 80);
+  const libraryArrivals = selectLibraryArrivals(index.tracks, MUSIC_SHELF_SIZE);
   const recentTracks = selectMusicShelfTracks(index.tracks.filter((track) => track.kind === "track"), MUSIC_SHELF_SIZE);
   const recentVideos = selectMusicShelfTracks(index.tracks.filter((track) => track.kind === "video"), MUSIC_SHELF_SIZE);
   const classics = selectMusicShelfTracks(index.tracks.filter((track) => track.category === "موسیقی قدیمی فارسی"), MUSIC_SHELF_SIZE);
@@ -120,7 +134,7 @@ export default async function MusicPage({ searchParams }: Props) {
             </div>
           </header>
           <MusicLandingHero tracks={heroTracks} archiveStats={archiveStats} initialQuery={q} initialKind={kind} />
-          <MusicCategoryNav categories={index.categories} activeCategory={category} />
+          <MusicCategoryNav categories={index.categories} activeCategory={category} libraryOnly={libraryOnly} />
           <LandingPulse initial={{ version: index.updatedAt, updatedAt: Date.parse(index.updatedAt) > 0 ? index.updatedAt : null, recentCount: 0 }} locale={locale} endpoint="/api/music/pulse" updatesHref="/music?fresh=week" />
         </div>
       </section>
@@ -135,10 +149,16 @@ export default async function MusicPage({ searchParams }: Props) {
               <span>{index.tracks.length.toLocaleString("fa-IR")} عنوان در آرشیو</span>
             </div>
             <div className="music-grid">{tracks.map((track, trackIndex) => <MusicCard key={track.id} track={track} priority={trackIndex < 8} />)}</div>
+            {pageCount > 1 && <nav className={styles.tools} aria-label="صفحه‌بندی آهنگ‌ها">
+              {page > 1 && <Link href={pageHref(page - 1)}>← قبلی</Link>}
+              <span>صفحهٔ {page.toLocaleString("fa-IR")} از {pageCount.toLocaleString("fa-IR")}</span>
+              {page < pageCount && <Link href={pageHref(page + 1)}>بعدی →</Link>}
+            </nav>}
             {!tracks.length && <div className="music-empty">هنوز چیزی برای این جست‌وجو پیدا نشد؛ نام انگلیسی یا فارسی خواننده را امتحان کن.</div>}
           </>
         ) : (
           <>
+            <MusicShelf eyebrow="اضافه‌شده به سرونما · دسته‌بندی با تگ‌ها" title="تازه‌های آرشیو" tracks={libraryArrivals} viewAll="/music?added=library" preload />
             <PublicPartyRooms mode="listen" locale={locale} />
             <nav className="music-discovery-grid" aria-label="میان‌برهای موسیقی">
               {discovery.map((item, itemIndex) => (

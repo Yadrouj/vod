@@ -32,6 +32,8 @@ export type MusicTrack = {
   sourceUrl: string;
   matchKey?: string;
   publishedAt: string | null;
+  /** First arrival in our archive, not the song's release date. */
+  addedAt?: string;
   detailCheckedAt?: string;
   category: string;
   moods?: string[];
@@ -73,6 +75,8 @@ export type MusicIndex = {
   tracks: MusicTrack[];
   artists: MusicArtist[];
   categories: string[];
+  /** Imported artist identities already represented in the upstream archive. */
+  libraryExistingArtistSlugs?: string[];
 };
 
 export type MusicArchiveStats = {

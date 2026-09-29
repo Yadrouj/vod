@@ -9,7 +9,9 @@ export function MusicCard({ track, priority = false }: { track: MusicTrack; prio
   const releasedAt = Date.parse(track.publishedAt || folderDate);
   const today = Date.parse(new Date().toISOString().slice(0, 10));
   const releasedThisWeek = Number.isFinite(releasedAt) && today - releasedAt >= 0 && today - releasedAt <= 7 * 24 * 60 * 60 * 1_000;
-  const freshLabel = releasedThisWeek ? "تازه این هفته" : isFresh ? `NEW ${year}` : null;
+  const arrivalAge = track.addedAt ? today - Date.parse(track.addedAt.slice(0, 10)) : NaN;
+  const recentlyAdded = Number.isFinite(arrivalAge) && arrivalAge >= 0 && arrivalAge <= 7 * 86400_000;
+  const freshLabel = recentlyAdded ? "تازه در آرشیو" : releasedThisWeek ? "تازه این هفته" : isFresh ? `NEW ${year}` : null;
   return (
     <Link prefetch={false} href={`/music/${track.id}`} className={`music-card${freshLabel ? " music-card-is-fresh" : ""}`} dir="auto">
       <div className="music-card-cover">
