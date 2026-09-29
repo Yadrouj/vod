@@ -61,6 +61,17 @@ const BATCH_ONE_HUNDRED_EIGHT_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1355014": [publicYouTubeVideo("NEEIag8N10A", "Herfei · full film", "Shahre Farang", 6176, "2026-09-29")],
 };
 
+// 2026-09-29 research batch: another set of exact-title, feature-length
+// uploads. The search results were checked for title identity and duration.
+const BATCH_ONE_HUNDRED_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1355015": [publicYouTubeVideo("iN-5s2TVLKQ", "جایزه خوشبختی · نسخه کامل", "Shouka Film", 4920, "2026-09-29")],
+  "old-iranian-1355016": [publicYouTubeVideo("28lrisXkm-A", "سیاه بخت · نسخه کامل", "FilmFarsi", 5228, "2026-09-29")],
+  "old-iranian-1355019": [publicYouTubeVideo("S6znukmZ9qY", "فیلم قدیمی؛ پسرک · نسخه کامل", "Filmrangi", 6259, "2026-09-29")],
+  "old-iranian-1355033": [publicYouTubeVideo("zjQZzFmIhuU", "نسخه کامل فیلم فارسی پیشکسوت", "FilmFarsi", 5967, "2026-09-29")],
+  "old-iranian-1355039": [publicYouTubeVideo("9StPHRfLy6E", "فیلم ایرانی قدیمی ستیز · نسخه کامل", "سینما رنگارنگ", 5393, "2026-09-29")],
+  "old-iranian-1355045": [publicYouTubeVideo("k2o8NpdPxt8", "پسر ایران از مادرش بی‌خبر است · نسخه کامل", "Shouka Film", 4100, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1252,6 +1263,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_NINE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIX_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIX_YOUTUBE_BY_ID[key];
