@@ -245,6 +245,20 @@ const BATCH_ONE_HUNDRED_TWENTY_TWO_YOUTUBE_BY_ID: Record<string, YouTubeSource[]
   "old-iranian-1352058": [publicYouTubeVideo("MmXID92UYeQ", "Nefrin | 1352 | Full Movie", "Filmrangi", 5041, "2026-09-29")],
 };
 
+// 2026-09-29 research batch: direct full-film uploads matched to archive
+// title/year and checked for feature-length runtime.
+const BATCH_ONE_HUNDRED_TWENTY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1351088": [publicYouTubeVideo("QOPvUTDxas4", "Sattar Khan | 1351 | Full Movie", "Persian Films Archive", 5143, "2026-09-29")],
+  "old-iranian-1352027": [publicYouTubeVideo("t2oEJShNEH8", "Biqarar | 1352 | Full Movie", "Filmrangi", 5223, "2026-09-29")],
+  "old-iranian-1352054": [publicYouTubeVideo("1M0E1MPD7TA", "Morvarid | 1352 | Full Movie", "Filmrangi", 6380, "2026-09-29")],
+  "old-iranian-1351079": [publicYouTubeVideo("FvJ9XlcfG34", "Tavalodet Mobarak | 1351 | Full Movie", "Persian Films Archive", 6352, "2026-09-29")],
+  "old-iranian-1352001": [publicYouTubeVideo("fPZbsdCi_Ac", "Jabbar Sarjookhe-ye Farari | 1352 | Full Movie", "Filmrangi", 6147, "2026-09-29")],
+  "old-iranian-1352052": [publicYouTubeVideo("s1AOz4--xPA", "Kaj Kola Khan | 1352 | Full Movie", "Donyaye Tamasha", 7182, "2026-09-29")],
+  "old-iranian-1352049": [publicYouTubeVideo("eAw9va1qdA4", "Hashtomin Rooz-e Hafte | 1352 | Full Movie", "Filmrangi", 5791, "2026-09-29")],
+  "old-iranian-1352029": [publicYouTubeVideo("wgAQnSKdqx4", "Khoshgozaran | 1352 | Full Movie", "FARSI TOP", 5817, "2026-09-29")],
+  "old-iranian-1352073": [publicYouTubeVideo("r0z2Y79HCyk", "Ghool | 1352 | Full Movie", "TimeTravel TV", 6047, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1436,6 +1450,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_TWENTY_THREE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_ONE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_YOUTUBE_BY_ID[key];
