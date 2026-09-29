@@ -72,6 +72,19 @@ const BATCH_ONE_HUNDRED_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1355045": [publicYouTubeVideo("k2o8NpdPxt8", "پسر ایران از مادرش بی‌خبر است · نسخه کامل", "Shouka Film", 4100, "2026-09-29")],
 };
 
+// 2026-09-29 research batch: exact Persian-title matches with a reported
+// runtime of at least one hour. Similar titles, trailers and clips are omitted.
+const BATCH_ONE_HUNDRED_TEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1355048": [publicYouTubeVideo("TORcy5Gosn0", "اگر برگی نریزد · نسخه کامل", "FilmFarsi", 4578, "2026-09-29")],
+  "old-iranian-1355052": [publicYouTubeVideo("dHnF7wPuGUY", "قاصدک · فیلم کامل · ۱۳۵۵", "FilmFarsi", 4896, "2026-09-29")],
+  "old-iranian-1355053": [publicYouTubeVideo("wO-w44g-t9c", "فیلم قدیمی؛ راز · ۱۳۵۵ · نسخه کامل", "Filmrangi", 5629, "2026-09-29")],
+  "old-iranian-1355059": [publicYouTubeVideo("Yt-O4YPWtIM", "فیلم کامل پشمالو", "Beykiha", 5776, "2026-09-29")],
+  "old-iranian-1355060": [publicYouTubeVideo("GNTLvFRu6qI", "فیلم قدیمی ایرانی رامشگر · نسخه کامل", "FilmFarsi", 5978, "2026-09-29")],
+  "old-iranian-1355062": [publicYouTubeVideo("T3OqygZrv68", "فیلم زیبای جنگی میراث · نسخه کامل", "Shouka Film", 5798, "2026-09-29")],
+  "old-iranian-1355065": [publicYouTubeVideo("mR0rWlGmxFE", "فیلم کامل ولی نعمت", "FilmFarsi", 5732, "2026-09-29")],
+  "old-iranian-1354052": [publicYouTubeVideo("RvydlA2HljQ", "فیلم در غربت · ۱۳۵۴ · نسخه کامل", "Persian Films Archive", 5177, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1263,6 +1276,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_TEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_NINE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVEN_YOUTUBE_BY_ID[key];
