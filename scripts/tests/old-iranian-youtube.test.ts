@@ -1758,3 +1758,16 @@ test("one-hundred-thirty-third review batch exposes the exact Agha Mehdi Kalle-P
   assert.match(item[0].title, /full movie/i);
 });
 
+test("one-hundred-thirty-fourth review batch exposes two exact full-film uploads", () => {
+  for (const [id, videoId] of [
+    ["old-iranian-1352005", "nmoROQVynjo"],
+    ["old-iranian-1352036", "et-ByqTHctA"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.match(item[0].title, /full movie/i);
+  }
+});
+
