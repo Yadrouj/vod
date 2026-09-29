@@ -1784,3 +1784,11 @@ test("one-hundred-thirty-fifth review batch exposes two exact full-film uploads"
   }
 });
 
+test("one-hundred-thirty-sixth review batch exposes the exact Holoo-ye Poost-Kandeh upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1352015");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "haf_wbLUPbU");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=haf_wbLUPbU");
+  assert.match(item[0].title, /full movie/i);
+});
+
