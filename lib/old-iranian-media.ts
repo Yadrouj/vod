@@ -293,6 +293,15 @@ const BATCH_ONE_HUNDRED_TWENTY_SIX_YOUTUBE_BY_ID: Record<string, YouTubeSource[]
   "old-iranian-1351045": [publicYouTubeVideo("f-mTO9__koE", "Zafar | 1351 | Full Movie", "BabakFilm", 7200, "2026-09-29")],
 };
 
+const BATCH_ONE_HUNDRED_TWENTY_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1352074": [publicYouTubeVideo("9ZahYQIip80", "Nakhoda Bakhoda | 1352 | Full Movie", "Old Iranian Films", undefined, "2026-09-29")],
+  "old-iranian-1352032": [publicYouTubeVideo("sR-0dG9EIa8", "Gharib | 1352 | Full Movie", "Pars Films", undefined, "2026-09-29")],
+  "old-iranian-1352056": [publicYouTubeVideo("4mx-80_6mnw", "Mahboob Bacheha | 1352 | Full Movie", "Filmrangi", 5880, "2026-09-29")],
+  "old-iranian-1352060": [publicYouTubeVideo("XPKxZ9iVXKU", "Mekafat | 1352 | Full Movie", "Beykiha", undefined, "2026-09-29")],
+  "old-iranian-1355047": [publicYouTubeVideo("JoZUQ6moOAU", "Bi Gonah | 1355 | Full Movie", "Persian Films Archive", undefined, "2026-09-29")],
+  "old-iranian-1352034": [publicYouTubeVideo("et2cgkwZz5c", "Hariss | 1352 | Full Movie", "FilmFarsi", 5780, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1484,6 +1493,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_TWENTY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_SIX_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_SIX_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_FIVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_FIVE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_FOUR_YOUTUBE_BY_ID[key];
