@@ -126,6 +126,19 @@ const BATCH_ONE_HUNDRED_THIRTEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> 
   "old-iranian-1354005": [publicYouTubeVideo("GZWhqvbuiPI", "فیلم قدیمی؛ شبگرد · ۱۳۵۴", "Filmrangi", 5761, "2026-09-29")],
 };
 
+// 2026-09-29 research batch: exact archive-title uploads with feature-length
+// runtimes. Short versions and same-name modern titles are excluded.
+const BATCH_ONE_HUNDRED_FOURTEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1354006": [publicYouTubeVideo("wa9vaMmvGr4", "فیلم قدیمی چشمان بسته · ۱۳۵۴", "FARSI TOP", 5437, "2026-09-29")],
+  "old-iranian-1354009": [publicYouTubeVideo("YV7PKXbHBQo", "فیلم ایرانی قدیمی جنجال · ۱۳۵۴", "TimeTravel TV", 4566, "2026-09-29")],
+  "old-iranian-1354011": [publicYouTubeVideo("5ewGztrA6Cs", "فیلم دزد سوم · ۱۳۵۴", "Persian Films Archive", 6262, "2026-09-29")],
+  "old-iranian-1354013": [publicYouTubeVideo("FwzseVvDPxE", "فیلم قدیمی دفاع از ناموس · ۱۳۵۴", "Cinema Rex", 6360, "2026-09-29")],
+  "old-iranian-1354022": [publicYouTubeVideo("O9vYMfDCr04", "نسخه کامل فیلم فارسی انگشت نما", "FilmFarsi", 5887, "2026-09-29")],
+  "old-iranian-1354027": [publicYouTubeVideo("A6wK65mAB38", "فیلم شرف · ۱۳۵۴", "Persian Films Archive", 5720, "2026-09-29")],
+  "old-iranian-1354030": [publicYouTubeVideo("T3FF0MsHgIk", "فیلم ایران قدیم فاصله · ۱۳۵۴", "سینما رنگارنگ", 5923, "2026-09-29")],
+  "old-iranian-1354031": [publicYouTubeVideo("V096_3TCkMk", "فیلم فارسی بدون سانسور راننده اجباری", "FilmFarsi", 5814, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1317,6 +1330,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_FOURTEEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FOURTEEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_THIRTEEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_THIRTEEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWELVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWELVE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_ELEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_ELEVEN_YOUTUBE_BY_ID[key];

@@ -261,6 +261,26 @@ test("one-hundred-thirteenth review batch exposes exact full-length archive film
   }
 });
 
+test("one-hundred-fourteenth review batch exposes exact classic archive uploads", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1354006", "wa9vaMmvGr4", 5437],
+    ["old-iranian-1354009", "YV7PKXbHBQo", 4566],
+    ["old-iranian-1354011", "5ewGztrA6Cs", 6262],
+    ["old-iranian-1354013", "FwzseVvDPxE", 6360],
+    ["old-iranian-1354022", "O9vYMfDCr04", 5887],
+    ["old-iranian-1354027", "A6wK65mAB38", 5720],
+    ["old-iranian-1354030", "T3FF0MsHgIk", 5923],
+    ["old-iranian-1354031", "V096_3TCkMk", 5814],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.equal(item[0].checkedAt, "2026-09-29");
+    assert.ok((item[0].durationSeconds ?? 0) >= 3600);
+  }
+});
+
 test("thirteenth review batch exposes the verified full-length Rebellious upload", () => {
   const item = getOldIranianYouTubeVideos("old-iranian-1357008");
   assert.ok(item);
