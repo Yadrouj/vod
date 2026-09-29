@@ -16,6 +16,7 @@ type Props = {
   settingsOpen: boolean; onSettings: (open: boolean) => void;
   onSubtitles?: () => void; onEpisodes?: () => void; onNext?: () => void;
   onVisibility?: (visible: boolean) => void; panelOpen?: boolean; extras?: ReactNode;
+  mediaKey?: string;
 };
 const rates = [.25, .5, .75, 1, 1.25, 1.5, 1.75, 2];
 export function mediaTime(value: number) {
@@ -127,14 +128,14 @@ export function MediaPlayerControls(props: Props) {
     media.addEventListener("volumechange", sound); media.addEventListener("progress", buffer);
     media.addEventListener("enterpictureinpicture", pipChange); media.addEventListener("leavepictureinpicture", pipChange);
     return () => { media.removeEventListener("volumechange", sound); media.removeEventListener("progress", buffer); media.removeEventListener("enterpictureinpicture", pipChange); media.removeEventListener("leavepictureinpicture", pipChange); };
-  }, [mediaRef, source, audio]);
+  }, [mediaRef, source, audio, props.mediaKey]);
   useEffect(() => {
     const frame = frameRef.current;
     if (!frame) return;
     const move = (event: PointerEvent) => { if (event.pointerType === "mouse") reveal(); };
     const key = (event: KeyboardEvent) => {
       if (event.key === "Escape") { onSettings(false); setTheater(false); return; }
-      if ((event.target as HTMLElement).closest("button, input, select, textarea, a, dialog, [contenteditable=true]") || event.ctrlKey || event.metaKey || event.altKey || panelOpen) return;
+      if ((event.target as HTMLElement).closest("button, input, select, textarea, a, dialog, [data-camera-user], [contenteditable=true]") || event.ctrlKey || event.metaKey || event.altKey || panelOpen) return;
       const k = event.key.toLowerCase();
       if (![" ", "k", "j", "l", "arrowleft", "arrowright", "arrowup", "arrowdown", "f", "m", "c", "i", "t", "home", "end", ".", ",", ">", "<", "?", "n"].includes(k) && !/^\d$/.test(k)) return;
       event.preventDefault(); reveal();

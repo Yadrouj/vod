@@ -22,8 +22,7 @@ export function PlaybackHelp({ link, code, fa, itemId, onRetry, onChoose, altern
   try { if (country) country = new Intl.DisplayNames([fa ? "fa" : "en"], { type: "region" }).of(country) ?? country; } catch { /* Keep ISO code. */ }
   return <aside className="playback-help" dir={fa ? "rtl" : "ltr"} aria-label={fa ? "راهنمای مشکل پخش" : "Playback troubleshooting"}>
     <strong>{fa ? "این نسخه پخش نشد" : "This version could not play"}</strong>
-    <p role="status">{playbackFailureText(code, fa)}</p>
-    {isDonyayeSerial(link) && <p className="playback-region-hint">{regionalPlaybackHint(fa)}</p>}
+    <p role="status" className={isDonyayeSerial(link) ? "playback-region-hint" : undefined}>{isDonyayeSerial(link) ? regionalPlaybackHint(fa) : playbackFailureText(code, fa)}</p>
     {isDonyayeSerial(link) && <p>{fa ? "اگر SoftSub یا HardSub باز نمی‌شود، نسخهٔ دوبله یا سرور دیگری را امتحان کنید. تغییر کیفیت روی همان سرور ممکن است مشکل اتصال را حل نکند." : "If SoftSub or HardSub fails, try a dubbed version or another server. Changing quality on the same server may not fix the connection."}</p>}
     <div className="playback-help-actions">
       {onAlternative && alternatives.slice(0, 3).map(({ link: other, index }) => <button key={other.url} type="button" onClick={() => onAlternative(index)}>{other.quality} · {other.group} · {sourceHost(other)}</button>)}

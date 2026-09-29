@@ -155,6 +155,9 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
         hasServerClockOffset.current = true;
       }
       const previousRevision = lastAppliedRevision.current;
+      if (latestPlayback.current?.media.source.url !== state.media.source.url) {
+        setMediaIssue(""); remoteSeekInFlight.current = false; setPlayerTime(0); setPlayerDuration(0);
+      }
       lastAppliedRevision.current = Math.max(previousRevision, state.revision);
       pendingPlayback.current = state;
       latestPlayback.current = state;
@@ -568,7 +571,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
           </div>
         )}
 
-        <MediaPlayerControls frameRef={stageRef} mediaRef={isListeningRoom ? audioRef : videoRef}
+        <MediaPlayerControls frameRef={stageRef} mediaRef={isListeningRoom ? audioRef : videoRef} mediaKey={playback.media.source.url}
           paused={playback.paused} time={playerTime} duration={playerDuration} rate={playback.playbackRate} audio={isListeningRoom}
           onPlay={() => command(playback.paused ? "play" : "pause", { time: (isListeningRoom ? audioRef.current : videoRef.current)?.currentTime })}
           onSeek={time => command("seek", { time })} onRate={rate => command("rate", { rate })}
@@ -587,7 +590,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
         {!isListeningRoom && <PlayerSubtitles videoRef={videoRef} itemId={playback.media.itemId} title={playback.media.title} sourceKey={playback.media.source.url} sourceLabel={playback.media.source.label} sourceSubtitleUrl={playback.media.source.subtitleUrl ?? null} open={subtitlesOpen} onClose={() => setSubtitlesOpen(false)} selection={snapshot.subtitle} onSelectionChange={changeSubtitle} canChange={can("subtitles")} shared />}
       </div>
       <section className="party-queue">
-        {isDonyayeSerial({ url: playback.media.source.url }) && <details className="source-region-notice"><summary>راهنمای VPN · VPN help</summary><p>{regionalPlaybackHint(document.documentElement.lang.startsWith("fa"))}</p></details>}
+        {isDonyayeSerial({ url: playback.media.source.url }) && <aside className="source-region-notice" dir="rtl"><strong>برای پخش از دنیای سریال، VPN را خاموش کن</strong><p>{regionalPlaybackHint(document.documentElement.lang.startsWith("fa"))}</p><div className="playback-help-actions">{playback.media.sources.filter(source => source.url !== playback.media.source.url && !isDonyayeSerial(source) && source.season === playback.media.source.season && source.episode === playback.media.source.episode).slice(0, 2).map(source => <button type="button" key={source.url} disabled={!can("changeSource")} onClick={() => command("source", { source, time: Math.max(0, expectedPosition()) })}>منبع جایگزین · {source.label}</button>)}</div>{!can("changeSource") && <small>از میزبان بخواه منبع پخش را عوض کند.</small>}</aside>}
         <div className="section-head"><div><h2>{queueTitle}</h2><p className="muted">{queueDescription}</p></div></div>
         <section className={`party-personal-media ${personalMediaOpen ? "is-open" : ""}`} aria-label="Personal room media">
           <header>

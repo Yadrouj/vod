@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { ArrowRight, Download, Film, History, Library, ListMusic, Music2, Search, Users, WifiOff, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ActivityDialog, openActivity } from "./landing-activity";
-import { SearchSuggest } from "./search-suggest";
+import { DiscoverySearchDialog } from "./discovery-search";
 import { WatchTogetherLauncher } from "./watch-together-launcher";
 import type { Locale } from "@/lib/i18n";
 
@@ -18,9 +18,9 @@ export function MobileAppShell({ locale }: { locale: Locale }) {
   const fa = locale === "fa";
   const [offline, setOffline] = useState(false);
   const [hidden, setHidden] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchPath, setSearchPath] = useState<string | null>(null);
+  const searchOpen = searchPath === pathname;
   const [libraryOpen, setLibraryOpen] = useState(false);
-  const searchDialog = useRef<HTMLDialogElement>(null);
   const libraryDialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -82,11 +82,10 @@ export function MobileAppShell({ locale }: { locale: Locale }) {
   }, []);
 
   useEffect(() => {
-    searchDialog.current?.close();
     libraryDialog.current?.close();
   }, [pathname]);
 
-  const openSearch = () => { setSearchOpen(true); searchDialog.current?.showModal(); };
+  const openSearch = () => setSearchPath(pathname);
   return <>
     {offline && <div className="app-offline" role="status"><WifiOff size={16} />{fa ? "اتصال اینترنت قطع است؛ برای پخش و جستجو دوباره متصل شوید." : "You’re offline. Reconnect to search and play."}</div>}
     <nav className="app-mobile-nav" dir={fa ? "rtl" : "ltr"} data-theme={music ? "music" : "cinema"} data-hidden={hidden} aria-label={fa ? "منوی اصلی موبایل" : "Mobile navigation"}>
@@ -112,13 +111,6 @@ export function MobileAppShell({ locale }: { locale: Locale }) {
       <p className="app-search-tip">{fa ? "با دکمهٔ وسط منو اتاق بساز و لینک دعوت را برای دوستانت بفرست." : "Use the center button to create a room and invite your friends."}</p>
     </dialog>
     <ActivityDialog locale={locale} />
-    <dialog ref={searchDialog} className="app-search-dialog" data-theme={music ? "music" : "cinema"} dir={fa ? "rtl" : "ltr"} aria-labelledby="app-search-title" onClose={() => setSearchOpen(false)} onClick={e => { if (e.target === e.currentTarget || (e.target as Element).closest("a[href]")) searchDialog.current?.close(); }}>
-      <header><div><small>{fa ? "کشف در سرونما" : "Discover SarvNema"}</small><h2 id="app-search-title">{fa ? "چی دوست داری ببینی یا بشنوی؟" : "What would you like to discover?"}</h2></div><button autoFocus type="button" aria-label={fa ? "بستن" : "Close"} onClick={() => searchDialog.current?.close()}><X /></button></header>
-      {searchOpen && <form action={music ? "/music" : "/browse"} onSubmit={() => searchDialog.current?.close()}>
-        <SearchSuggest key={music ? "music" : "cinema"} locale={locale} endpoint={music ? "/api/music/search" : "/api/suggest"} placeholder={fa ? music ? "نام آهنگ یا خواننده…" : "نام فیلم یا سریال…" : "Search…"} hrefForItem={music ? item => `/music/${item.imdbCode}` : undefined} viewAllHref={music ? q => `/music?q=${encodeURIComponent(q)}` : undefined} />
-        <button className="app-search-submit" type="submit">{fa ? "همه نتیجه‌ها" : "All results"}</button>
-      </form>}
-      <p className="app-search-tip">{fa ? "بنویس یا روی میکروفون بزن؛ نتیجه‌ها همین‌جا نمایش داده می‌شوند." : "Type or tap the microphone. Suggestions appear here."}</p>
-    </dialog>
+    {searchOpen && <DiscoverySearchDialog locale={locale} initialCategory={music ? "music" : "all"} onClose={() => setSearchPath(null)} />}
   </>;
 }

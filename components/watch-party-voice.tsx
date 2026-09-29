@@ -86,6 +86,7 @@ export function WatchPartyVoice({
   const localMusicActiveRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioContainerRef = useRef<HTMLDivElement>(null);
+  const cameraDockRef = useRef<HTMLDivElement>(null);
   const cameraDragRef = useRef<CameraDrag | null>(null);
   const joinedRef = useRef(false);
   const talkingRef = useRef(false);
@@ -104,6 +105,7 @@ export function WatchPartyVoice({
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [permissionState, setPermissionState] = useState<VoicePermissionState>(initialVoicePermissionState);
   const [voiceIssue, setVoiceIssue] = useState<VoiceIssue | null>(null);
+  const [audioBlocked, setAudioBlocked] = useState(false);
   const [peerIds, setPeerIds] = useState<Set<string>>(new Set());
   const [activeTalkers, setActiveTalkers] = useState<Set<string>>(new Set());
   const [cameraUsers, setCameraUsers] = useState<Set<string>>(new Set());
@@ -129,6 +131,30 @@ export function WatchPartyVoice({
   const networkLabel = network.quality === "solo" ? "Waiting for peers" : network.quality === "excellent" ? "Excellent network" : network.quality === "good" ? "Good network" : "Weak network";
   const cameraControlLabel = cameraStarting ? "Starting…" : cameraEnabled ? "Camera off" : cameraAllowed ? "Camera" : "Camera locked";
   const interpreterControlLabel = interpreterActive ? "Stop signs" : interpreterAllowed ? "Interpreter" : "Signs locked";
+
+  useEffect(() => {
+    const dock = cameraDockRef.current;
+    const stage = dock?.closest<HTMLElement>(".party-player-stage");
+    if (!dock || !stage) return;
+    const contain = () => {
+      const bounds = stage.getBoundingClientRect();
+      const corrections: Record<string, CameraOffset> = {};
+      for (const item of dock.querySelectorAll<HTMLElement>("[data-camera-user]")) {
+        const rect = item.getBoundingClientRect();
+        const dx = rect.left < bounds.left + 8 ? bounds.left + 8 - rect.left : rect.right > bounds.right - 8 ? bounds.right - 8 - rect.right : 0;
+        const dy = rect.top < bounds.top + 8 ? bounds.top + 8 - rect.top : rect.bottom > bounds.bottom - 48 ? bounds.bottom - 48 - rect.bottom : 0;
+        if (Math.abs(dx) > 1 || Math.abs(dy) > 1) corrections[item.dataset.cameraUser!] = { x: dx, y: dy };
+      }
+      if (Object.keys(corrections).length) setCameraOffsets(current => {
+        const next = { ...current };
+        for (const [id, delta] of Object.entries(corrections)) next[id] = { x: (current[id]?.x ?? 0) + delta.x, y: (current[id]?.y ?? 0) + delta.y };
+        return next;
+      });
+    };
+    const observer = new ResizeObserver(contain); observer.observe(stage); observer.observe(dock);
+    document.addEventListener("fullscreenchange", contain);
+    return () => { observer.disconnect(); document.removeEventListener("fullscreenchange", contain); };
+  }, [visibleCameras.length]);
 
   useEffect(() => {
     const onSignal = (signal: VoiceSignal) => { void receiveSignal(signal); };
@@ -293,6 +319,12 @@ export function WatchPartyVoice({
         localStreamRef.current.addTrack(audioTrack);
         await replaceTrackForAll("audio", audioTrack);
       }
+      if (epoch !== captureEpochRef.current) { audioTrack.stop(); return; }
+      audioTrack.addEventListener("ended", () => {
+        if (microphoneTrackRef.current !== audioTrack) return;
+        stopTalking(); microphoneTrackRef.current = null; setMicrophoneReady(false);
+        reportIssue({ kind: "denied", title: "میکروفون قطع شد", message: "دسترسی میکروفون را در تنظیمات مرورگر بررسی کن.", hint: "بعد از فعال کردن دسترسی، دوباره دکمهٔ میکروفون را بزن." });
+      }, { once: true });
       setMicrophoneReady(true);
     } catch (reason) {
       captured?.getTracks().forEach(track => { track.stop(); localStreamRef.current?.removeTrack(track); });
@@ -330,6 +362,7 @@ export function WatchPartyVoice({
   }
 
   function leaveVoice() {
+    captureEpochRef.current += 1;
     stopTalking();
     stopCamera(false);
     stopLocalMusic(false);
@@ -350,6 +383,7 @@ export function WatchPartyVoice({
     setActiveTalkers(new Set());
     setCameraUsers(new Set());
     setTalking(false);
+    setAudioBlocked(false);
     setNetwork({ quality: "solo", rttMs: null, loss: null });
     showAppMessage({ title: "Media Lounge closed", message: "The synchronized movie keeps playing. Rejoin whenever you want.", tone: "info" });
   }
@@ -471,6 +505,7 @@ export function WatchPartyVoice({
     const preflightIssue = mediaPreflightIssue("camera");
     if (preflightIssue) return reportIssue(preflightIssue);
     setCameraStarting(true);
+    setVoiceIssue(null);
     startingRef.current = true;
     const epoch = captureEpochRef.current;
     let capturedStream: MediaStream | null = null;
@@ -492,10 +527,17 @@ export function WatchPartyVoice({
       }
 
       const result = await emitCamera(socket, roomId, true);
+      if (epoch !== captureEpochRef.current) { videoTrack.stop(); socket.emit("voice:camera", { roomId, active: false }); return; }
       if (!result.ok) throw new Error(result.error ?? "Camera streaming is unavailable.");
       cameraEnabledRef.current = true;
       setCameraEnabled(true);
       setCameraUsers(new Set(result.cameras ?? [profile.id]));
+      videoTrack.addEventListener("ended", () => {
+        if (localStreamRef.current?.getVideoTracks().includes(videoTrack)) {
+          stopCamera(false);
+          reportIssue({ kind: "denied", title: "دوربین قطع شد", message: "دسترسی دوربین را در تنظیمات مرورگر بررسی کن.", hint: "بعد از فعال کردن دسترسی، دوباره دکمهٔ دوربین را بزن." });
+        }
+      }, { once: true });
     } catch (reason) {
       capturedStream?.getTracks().forEach(track => track.stop());
       if (epoch !== captureEpochRef.current) return;
@@ -540,7 +582,8 @@ export function WatchPartyVoice({
       : { title: "Interpreter pinned", message: "Your signed interpretation is now prioritized over the movie for everyone in the room.", tone: "success" });
   }
 
-  function startCameraDrag(event: ReactPointerEvent<HTMLButtonElement>, userId: string) {
+  function startCameraDrag(event: ReactPointerEvent<HTMLElement>, userId: string) {
+    if (!event.isPrimary || event.button !== 0) return;
     event.preventDefault();
     event.stopPropagation();
     const item = event.currentTarget.closest<HTMLElement>(".party-camera-item");
@@ -561,14 +604,14 @@ export function WatchPartyVoice({
       minX: origin.x + stageRect.left + safeEdge - itemRect.left,
       maxX: origin.x + stageRect.right - safeEdge - itemRect.right,
       minY: origin.y + stageRect.top + safeEdge - itemRect.top,
-      maxY: origin.y + stageRect.bottom - safeEdge - itemRect.bottom,
+      maxY: origin.y + stageRect.bottom - 48 - itemRect.bottom,
     };
     setSelectedCameraId(userId);
     setDraggingCameraId(userId);
     event.currentTarget.setPointerCapture(event.pointerId);
   }
 
-  function dragCamera(event: ReactPointerEvent<HTMLButtonElement>) {
+  function dragCamera(event: ReactPointerEvent<HTMLElement>) {
     const drag = cameraDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     event.preventDefault();
@@ -579,11 +622,12 @@ export function WatchPartyVoice({
     setCameraOffsets((current) => ({ ...current, [drag.userId]: next }));
   }
 
-  function finishCameraDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+  function finishCameraDrag(event: ReactPointerEvent<HTMLElement>) {
     const drag = cameraDragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     cameraDragRef.current = null;
     setDraggingCameraId(null);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   }
 
   function resetCameraPosition(userId: string) {
@@ -716,7 +760,7 @@ export function WatchPartyVoice({
     }
     audio.srcObject = new MediaStream([track]);
     audio.muted = shouldMute(userId);
-    void audio.play().catch(() => undefined);
+    void audio.play().catch(() => { if (joinedRef.current) setAudioBlocked(true); });
     track.addEventListener("ended", () => {
       remoteAudioRef.current.get(audioId)?.remove();
       remoteAudioRef.current.delete(audioId);
@@ -754,13 +798,14 @@ export function WatchPartyVoice({
 
   function reportIssue(issue: VoiceIssue) {
     setVoiceIssue(issue);
+    setPanelOpen(true);
     showAppMessage({ title: issue.title, message: issue.message, tone: "error" });
   }
 
   return (
     <>
       {visibleCameras.length > 0 && (
-        <div className={`party-camera-dock has-${Math.min(visibleCameras.length, 8)} ${visibleCameras.length > 5 ? "is-crowded" : ""} ${interpreterUserId ? "has-interpreter" : ""}`} data-player-ui="true" aria-label="Room cameras">
+        <div ref={cameraDockRef} className={`${styles.cameras} party-camera-dock has-${Math.min(visibleCameras.length, 8)} ${visibleCameras.length > 5 ? "is-crowded" : ""} ${interpreterUserId ? "has-interpreter" : ""}`} data-player-ui="true" aria-label="Room cameras">
           {visibleCameras.map((participant) => {
             const local = participant.id === profile.id;
             const stream = local ? localStreamRef.current : remoteVideoStreams.get(participant.id) ?? null;
@@ -769,19 +814,32 @@ export function WatchPartyVoice({
             const offset = cameraOffsets[participant.id] ?? { x: 0, y: 0 };
             const cameraStyle = { "--camera-x": `${offset.x}px`, "--camera-y": `${offset.y}px` } as CSSProperties;
             return (
-              <div className={`party-camera-item ${selected ? "is-selected" : ""} ${draggingCameraId === participant.id ? "is-dragging" : ""}`} style={cameraStyle} key={participant.id}>
+              <div data-camera-user={participant.id} className={`party-camera-item ${selected ? "is-selected" : ""} ${draggingCameraId === participant.id ? "is-dragging" : ""}`} style={cameraStyle} key={participant.id}>
                 <article
                   className={`party-camera-tile ${participant.connected ? "is-online" : ""} ${activeTalkers.has(participant.id) ? "is-speaking" : ""} ${interpreter ? "is-interpreter" : ""}`}
                   role="button"
                   tabIndex={0}
-                  aria-label={`${participant.name} camera. Select to move.`}
+                  aria-label={`${participant.name} camera. Drag to move; arrow keys to adjust; Home to reset.`}
                   aria-pressed={selected}
+                  onPointerDown={event => startCameraDrag(event, participant.id)} onPointerMove={dragCamera} onPointerUp={finishCameraDrag} onPointerCancel={finishCameraDrag} onLostPointerCapture={finishCameraDrag}
+                  onContextMenu={event => event.preventDefault()} onDoubleClick={() => resetCameraPosition(participant.id)}
                   onClick={() => setSelectedCameraId(participant.id)}
-                  onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedCameraId(participant.id); } }}
+                  onKeyDown={event => {
+                    if (event.key === "Home") { event.preventDefault(); resetCameraPosition(participant.id); }
+                    else if (event.key.startsWith("Arrow")) {
+                      event.preventDefault(); event.stopPropagation();
+                      const bounds = event.currentTarget.closest<HTMLElement>(".party-player-stage")?.getBoundingClientRect();
+                      const rect = event.currentTarget.closest<HTMLElement>(".party-camera-item")?.getBoundingClientRect();
+                      if (!bounds || !rect) return;
+                      const step = event.shiftKey ? 30 : 10;
+                      const dx = event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0;
+                      const dy = event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0;
+                      setCameraOffsets(current => ({ ...current, [participant.id]: { x: (current[participant.id]?.x ?? 0) + clamp(dx, bounds.left + 8 - rect.left, bounds.right - 8 - rect.right), y: (current[participant.id]?.y ?? 0) + clamp(dy, bounds.top + 8 - rect.top, bounds.bottom - 48 - rect.bottom) } }));
+                    } else if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedCameraId(participant.id); }
+                  }}
                 >
                   {stream?.getVideoTracks().length ? <StreamVideo stream={stream} mirrored={local} /> : <div className="party-camera-waiting">{participant.avatarUrl ? <img src={participant.avatarUrl} alt="" /> : <span>{participant.name.slice(0, 1)}</span>}<small>Connecting camera…</small></div>}
                 </article>
-                {selected && <button className="party-camera-move" type="button" onPointerDown={(event) => startCameraDrag(event, participant.id)} onPointerMove={dragCamera} onPointerUp={finishCameraDrag} onPointerCancel={finishCameraDrag} onLostPointerCapture={finishCameraDrag} onDoubleClick={() => resetCameraPosition(participant.id)} aria-label={`Move ${participant.name} camera`} title="Drag to move · double-click to reset"><Move size={13} /></button>}
                 {local && selected && <button className="party-camera-stop" type="button" onClick={() => stopCamera()} aria-label="Turn camera off" title="Turn camera off"><CameraOff size={13} /></button>}
                 <span className={`party-camera-network is-${network.quality}`} title={networkLabel} aria-label={networkLabel}>{network.quality === "weak" ? <WifiOff size={10} /> : <Wifi size={10} />}</span>
                 <div className="party-camera-caption"><strong>{participant.name}</strong>{interpreter ? <small>Interpreter</small> : local ? <small>You</small> : null}</div>
@@ -811,9 +869,15 @@ export function WatchPartyVoice({
           <button type="button" aria-label="Voice and camera options" aria-expanded={panelVisible} onClick={() => { stopTalking(); setPanelOpen(value => !value); }}><MoreHorizontal /></button>
         </div>
         <span className={styles.status} role="status">{mutedByHost ? "Muted by host" : talking ? "Microphone live" : cameraEnabled ? "Camera on" : microphoneReady ? "Mic muted · hold to speak" : ""}</span>
+        {audioBlocked && <button className={styles.enableAudio} type="button" onClick={() => {
+          const attempts = [...remoteAudioRef.current.values()].map(audio => audio.play());
+          void Promise.all(attempts).then(() => setAudioBlocked(false)).catch(() => setAudioBlocked(true));
+        }}><Volume2 size={16} />فعال‌کردن صدای گفتگو</button>}
         {panelVisible && (
           <ResponsiveDialog open onClose={() => { stopTalking(); setPanelOpen(false); }} title="Voice & camera" description="Hold to talk. Release to mute." closeLabel="Close voice and camera" dir="ltr" theme={isListeningRoom ? "music" : "cinema"}>
           <div className={`${styles.panel} party-voice-panel`}>
+            <p className={styles.help}>دوربین و میکروفون جداگانه فعال می‌شوند. برای حرف‌زدن دکمهٔ میکروفون را نگه دار؛ با رهاکردن، صدا قطع می‌شود.</p>
+            {visibleCameras.length > 0 && <div className={styles.positionHelp}><Move size={18} /><p>تصویر دوربین را با انگشت یا ماوس بکش و جابه‌جا کن.</p><button type="button" onClick={() => setCameraOffsets({})}>بازنشانی جای دوربین‌ها</button></div>}
             <div className="party-voice-copy"><Headphones size={19} /><span><strong>Voice & camera</strong><small>Private until you turn them on.</small></span></div>
             {joined && <div className={`party-network-quality is-${network.quality}`}>{network.quality === "weak" ? <WifiOff size={15} /> : <Wifi size={15} />}<span><strong>{networkLabel}</strong><small>{network.rttMs !== null ? `${network.rttMs} ms` : "Direct WebRTC"}{network.loss !== null ? ` · ${network.loss.toFixed(1)}% loss` : ""}</small></span></div>}
             {voiceIssue && <div className={`party-voice-permission is-${voiceIssue.kind}`} role="alert"><ShieldAlert size={18} /><div><strong>{voiceIssue.title}</strong><p>{voiceIssue.message}</p><small>{voiceIssue.hint}</small></div></div>}
@@ -935,7 +999,7 @@ function describeMediaIssue(reason: unknown, device: "microphone" | "camera"): V
   const error = reason instanceof DOMException || reason instanceof Error ? reason : null;
   const name = error?.name ?? "";
   const label = device === "camera" ? "camera" : "microphone";
-  if (name === "NotAllowedError" || name === "SecurityError") return { kind: "denied", title: `${device === "camera" ? "Camera" : "Microphone"} access is blocked`, message: `SarvNema cannot use your ${label} until access is allowed for this site.`, hint: `Tap the lock/site icon beside the address → ${device === "camera" ? "Camera" : "Microphone"} → Allow, then reload the room.` };
+  if (name === "NotAllowedError" || name === "SecurityError") return { kind: "denied", title: `${device === "camera" ? "Camera" : "Microphone"} access is blocked`, message: `SarvNema cannot use your ${label} until access is allowed for this site.`, hint: /iPhone|iPad|iPod/.test(navigator.userAgent) ? `Safari: Page menu → Website Settings → ${device === "camera" ? "Camera" : "Microphone"} → Allow. Also check iOS app permissions, then try again. In an in-app browser, open this link in Safari.` : `Tap the site icon beside the address → Permissions → ${device === "camera" ? "Camera" : "Microphone"} → Allow, then try again. Also allow the browser in your phone's app permissions. In an in-app browser, open this link in Chrome.` };
   if (name === "NotFoundError" || name === "DevicesNotFoundError") return { kind: "missing-device", title: `No ${label} was found`, message: `The browser cannot find an available ${label} on this device.`, hint: `Connect or enable a ${label}, then try again.` };
   if (name === "NotReadableError" || name === "TrackStartError" || name === "AbortError") return { kind: "busy", title: `The ${label} is busy`, message: `Another app or browser tab may be using the ${label}.`, hint: "Close the other call or recorder, then try again." };
   if (name === "OverconstrainedError") return { kind: "busy", title: `This ${label} setup did not work`, message: `The selected ${label} cannot use the requested settings.`, hint: `Switch your default ${label} in browser settings and try again.` };

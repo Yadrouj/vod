@@ -35,6 +35,11 @@ export function SearchSuggest({
   viewAllHref = (query) => `/browse?q=${encodeURIComponent(query)}`,
   portal = false,
   maxItems = 14,
+  fixedKind,
+  contained = false,
+  includeMusic = false,
+  onQueryChange,
+  onNavigate,
 }: {
   name?: string;
   defaultValue?: string;
@@ -45,6 +50,11 @@ export function SearchSuggest({
   viewAllHref?: (query: string) => string;
   portal?: boolean;
   maxItems?: number;
+  fixedKind?: SearchKind;
+  contained?: boolean;
+  includeMusic?: boolean;
+  onQueryChange?: (query: string) => void;
+  onNavigate?: () => void;
 }) {
   const [query, setQuery] = useState(defaultValue);
   const [items, setItems] = useState<Suggestion[]>([]);
@@ -56,6 +66,7 @@ export function SearchSuggest({
   const [activeIndex, setActiveIndex] = useState(-1);
   const [kind, setKind] = useState<SearchKind>("all");
   const cinemaSearch = endpoint.split("?")[0] === "/api/suggest";
+  const effectiveKind = fixedKind ?? kind;
   const boxRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -97,16 +108,24 @@ export function SearchSuggest({
         suggest: "spelling-v1",
       });
       if (cinemaSearch) {
-        params.set("type", kind);
+        params.set("type", effectiveKind);
         // Keep old grouped responses in browser/edge caches off the new URL.
         params.set("sort", "imdb-desc");
       }
       if (endpoint.split("?")[0] === "/api/music/search") params.set("includeArtists", "1");
-      fetch(`${endpoint}${endpoint.includes("?") ? "&" : "?"}${params.toString()}`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(12_000)]) })
-        .then((res) => {
+      type SuggestResponse = { items?: Suggestion[]; artists?: Suggestion[]; corrections?: string[]; matchedQuery?: string };
+      const request = (url: string) => fetch(url, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(12_000)]) }).then(res => {
           if (!res.ok) throw new Error(`Suggest ${res.status}`);
-          return res.json() as Promise<{ items?: Suggestion[]; artists?: Suggestion[]; corrections?: string[]; matchedQuery?: string }>;
-        })
+          return res.json() as Promise<SuggestResponse>;
+      });
+      const mainRequest = request(`${endpoint}${endpoint.includes("?") ? "&" : "?"}${params.toString()}`);
+      const results = includeMusic ? Promise.allSettled([mainRequest, request(`/api/music/search?q=${encodeURIComponent(query.trim())}&limit=6&includeArtists=1`)]).then(([cinema, music]) => {
+        if (cinema.status === "rejected" && music.status === "rejected") throw cinema.reason;
+        const data = cinema.status === "fulfilled" ? cinema.value : {};
+        const more = music.status === "fulfilled" ? music.value : {};
+        return { ...data, items: [...(data.items ?? []).slice(0, 10), ...(more.artists ?? []).slice(0, 1), ...(more.items ?? []).slice(0, 4)], corrections: [...new Set([...(data.corrections ?? []), ...(more.corrections ?? [])])].slice(0, 5) };
+      }) : mainRequest;
+      results
         .then((data) => {
           if (controller.signal.aborted) return;
           setFailure("");
@@ -132,7 +151,7 @@ export function SearchSuggest({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [cinemaSearch, endpoint, kind, locale, maxItems, query, searchable]);
+  }, [cinemaSearch, endpoint, effectiveKind, includeMusic, locale, maxItems, query, searchable]);
 
   useEffect(() => {
     if (activeIndex >= 0) document.getElementById(`${listId}-${activeIndex}`)?.scrollIntoView({ block: "nearest" });
@@ -150,10 +169,10 @@ export function SearchSuggest({
   }, []);
 
   useEffect(() => {
-    if (!menuOpen || portal) return;
+    if (!menuOpen || portal || contained) return;
     document.documentElement.classList.add("mobile-search-open");
     return () => document.documentElement.classList.remove("mobile-search-open");
-  }, [menuOpen, portal]);
+  }, [menuOpen, portal, contained]);
 
   useLayoutEffect(() => {
     if (!menuOpen || !portal) return;
@@ -219,6 +238,7 @@ export function SearchSuggest({
 
   function clearSearch() {
     setQuery("");
+    onQueryChange?.("");
     setCorrections([]); setMatchedQuery("");
     setItems([]);
     setLoading(false);
@@ -228,6 +248,7 @@ export function SearchSuggest({
   }
 
   function updateQuery(value: string) {
+    onQueryChange?.(value);
     const canSearch = value.trim().length >= 2;
     setQuery(value); setLoading(canSearch); setOpen(canSearch); setActiveIndex(-1); setFailure("");
     setCorrections([]); setMatchedQuery(""); setItems([]);
@@ -235,6 +256,7 @@ export function SearchSuggest({
 
   function handleKeyboard(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Escape") {
+      if (contained) return;
       event.preventDefault();
       closeSearch();
       return;
@@ -250,11 +272,13 @@ export function SearchSuggest({
     } else if (event.key === "Enter" && activeIndex >= 0) {
       event.preventDefault();
       router.push(suggestionHref(visibleItems[activeIndex]));
+      onNavigate?.();
       closeSearch();
     }
   }
 
   function suggestionHref(item: Suggestion) {
+    if (includeMusic && (item.type === "Track" || item.type === "Music video")) return `/music/${item.imdbCode}`;
     return item.type === "artist" && item.href?.startsWith("/music/artists/") ? item.href : hrefForItem(item);
   }
 
@@ -271,7 +295,7 @@ export function SearchSuggest({
         {!loading && <span className="suggest-menu-count">{visibleItems.length}</span>}
       </div>
 
-      {cinemaSearch && <div className="suggest-type-filters" role="group" aria-label={locale === "fa" ? "نوع نتیجه" : "Result type"}>
+      {cinemaSearch && fixedKind === undefined && <div className="suggest-type-filters" role="group" aria-label={locale === "fa" ? "نوع نتیجه" : "Result type"}>
         {(["all", "movie", "series"] as const).map((value) => <button key={value} type="button" aria-pressed={kind === value} onClick={() => {
           if (value === kind) return;
           setKind(value); setItems([]); setActiveIndex(-1); setLoading(true); inputRef.current?.focus();
@@ -290,7 +314,7 @@ export function SearchSuggest({
             role="option"
             aria-selected={activeIndex === index}
             onMouseEnter={() => setActiveIndex(index)}
-            onClick={closeSearch}
+            onClick={() => { closeSearch(); onNavigate?.(); }}
           >
             {item.posterUrl ? (
               <img
@@ -319,7 +343,7 @@ export function SearchSuggest({
       </div>
 
       {visibleItems.length > 0 && (
-        <Link className="suggest-view-all" href={`${viewAllHref(query.trim())}${cinemaSearch && kind !== "all" ? `&type=${kind}` : ""}`} onClick={closeSearch}>
+        <Link className="suggest-view-all" href={`${viewAllHref(query.trim())}${cinemaSearch && effectiveKind !== "all" ? `&type=${effectiveKind}` : ""}`} onClick={() => { closeSearch(); onNavigate?.(); }}>
           <span>{copy.viewAll}</span>
           <ArrowUpRight size={17} aria-hidden="true" />
         </Link>
@@ -354,6 +378,7 @@ export function SearchSuggest({
           }}
           onKeyDown={handleKeyboard}
           placeholder={placeholder}
+          aria-label={placeholder}
           autoComplete="off"
           role="combobox"
           aria-autocomplete="list"

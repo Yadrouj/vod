@@ -128,6 +128,22 @@ try {
     await page.getByRole('button', { name: 'Turn camera on', exact: true }).click();
     await page.getByRole('button', { name: 'Turn camera off', exact: true }).waitFor();
     await page.waitForFunction(() => document.querySelector('.party-camera-tile video')?.srcObject?.getVideoTracks().some(t => t.readyState === 'live'));
+    const tile = page.locator('.party-camera-tile').first();
+    const before = await tile.boundingBox();
+    const touch = await context.newCDPSession(page);
+    const x = before.x + before.width / 2, y = before.y + before.height / 2;
+    await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+    await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - 35, y: y - 55 }] });
+    await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    const moved = await tile.boundingBox();
+    assert.ok(Math.abs(moved.y - before.y) > 20, 'Drag the entire camera tile with a finger');
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.waitForFunction(() => { const tile = document.querySelector('.party-camera-item').getBoundingClientRect(), stage = document.querySelector('.party-player-stage').getBoundingClientRect(); return tile.left >= stage.left && tile.right <= stage.right + 1 && tile.top >= stage.top && tile.bottom <= stage.bottom; });
+    const positionBeforeKey = await page.locator(mediaSelector).evaluate(media => media.currentTime);
+    await tile.focus(); await page.keyboard.press('ArrowUp'); await page.keyboard.press('Home');
+    assert.equal(await page.locator(mediaSelector).evaluate(media => media.currentTime), positionBeforeKey, 'Moving camera with keyboard does not seek the film');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await touch.detach();
     const guestProfile = { id: crypto.randomUUID(), name: 'Guest', avatarUrl: null };
     const guest = await setup(1440, false, guestProfile); await guest.page.goto(room.url, { waitUntil: 'domcontentloaded' }); await ready(guest.page, mediaSelector);
     await guest.page.getByRole('button', { name: 'Enable microphone', exact: true }).click();
@@ -141,11 +157,30 @@ try {
     await page.waitForFunction(selector => !document.querySelector(selector).paused, mediaSelector);
     await page.getByRole('button', { name: 'Voice and camera options', exact: true }).click();
     await page.getByRole('dialog').waitFor(); await page.getByRole('button', { name: 'Close voice and camera', exact: true }).click();
-    await page.getByRole('button', { name: 'Turn camera off', exact: true }).click();
+    await page.getByRole('group', { name: 'Room microphone and camera' }).getByRole('button', { name: 'Turn camera off', exact: true }).click();
     await page.waitForFunction(() => window.__captureStreams.flatMap(s => s.getVideoTracks()).every(t => t.readyState === 'ended'));
     await bounds(page); await page.screenshot({ path: `.media-cache/player-controls/${audio ? 'listen' : 'watch'}-room.png` });
     console.log(`PASS ${audio ? 'listen' : 'watch'} room: opt-in camera, remote video, PTT release/blur, shared seek, full-screen options`);
     await guest.context.close(); await context.close(); room.socket.disconnect();
+  }
+  {
+    const room = await createRoom();
+    const { page, context } = await setup(390, true, room.profile);
+    await page.addInitScript(() => {
+      const capture = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = constraints => constraints.video ? Promise.reject(new DOMException('Camera denied fixture', 'NotAllowedError')) : capture(constraints);
+    });
+    await page.goto(room.url, { waitUntil: 'domcontentloaded' }); await ready(page, '.party-player-stage > video');
+    await page.getByRole('button', { name: 'Turn camera on', exact: true }).click();
+    await page.getByRole('dialog').getByText('Camera access is blocked', { exact: true }).waitFor();
+    assert.equal(await page.evaluate(() => window.__captureStreams.length), 0);
+    await page.getByRole('button', { name: 'Close voice and camera', exact: true }).click();
+    await microphone(page);
+    await page.evaluate(() => { const track = window.__captureStreams.flatMap(s => s.getAudioTracks())[0]; track.stop(); track.dispatchEvent(new Event('ended')); });
+    await page.getByRole('dialog').getByText('میکروفون قطع شد', { exact: true }).waitFor();
+    assert.equal(await page.evaluate(() => window.__captureStreams.flatMap(s => s.getAudioTracks()).every(t => !t.enabled && t.readyState === 'ended')), true);
+    console.log('PASS denied camera leaves microphone usable; revoked microphone returns to permission/retry state');
+    await context.close(); room.socket.disconnect();
   }
   assert.deepEqual(errors, [], 'No browser runtime errors');
 } catch (error) {

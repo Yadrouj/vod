@@ -1,11 +1,13 @@
 "use client";
 
-import { Captions, Check, Clock3, FileUp, Link2, LoaderCircle, RefreshCw, Search, Subtitles, X } from "lucide-react";
+import { AlertCircle, Captions, Check, Clock3, FileUp, Link2, LoaderCircle, Palette, RefreshCw } from "lucide-react";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import type { Locale } from "@/lib/i18n";
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type RefObject } from "react";
 import { cuesToVtt, decodeSubtitleBytes, normalizeSubtitleToVtt, parseSubtitleCues } from "@/lib/subtitle-format";
 import { AUTO_SUBTITLE_SELECTION, OFF_SUBTITLE_SELECTION, type SubtitleSelection } from "@/lib/subtitle-types";
+import { DEFAULT_SUBTITLE_APPEARANCE, normalizeSubtitleAppearance, shiftNativeCues, subtitleColor, subtitleOffset, type SubtitleAppearance } from "@/lib/subtitle-preferences";
+import styles from "./player-subtitles.module.css";
 
 type OnlineSubtitle = {
   detailUrl: string;
@@ -62,11 +64,23 @@ export function PlayerSubtitles({
   const [onlineItems, setOnlineItems] = useState<OnlineSubtitle[]>([]);
   const [nativeTracks, setNativeTracks] = useState<NativeSubtitle[]>([]);
   const [onlineLoading, setOnlineLoading] = useState(false);
-  const [status, setStatus] = useState("Looking for embedded subtitles…");
+  const fa = locale === "fa";
+  const [status, setStatus] = useState("");
+  const [trackState, setTrackState] = useState<"loading" | "ready" | "off" | "error" | "empty">("loading");
+  const [applied, setApplied] = useState<SubtitleSelection | null>(null);
+  const [tab, setTab] = useState<"tracks" | "sync" | "appearance">("tracks");
+  const [languageFilter, setLanguageFilter] = useState("all");
+  const [searchRevision, setSearchRevision] = useState(0);
+  const [searchFailed, setSearchFailed] = useState(false);
+  const [personalSubtitle, setPersonalSubtitle] = useState<SubtitleSelection | null>(null);
   const [urlInput, setUrlInput] = useState("");
   const [urlLoading, setUrlLoading] = useState(false);
+  const [importError, setImportError] = useState("");
   const [offset, setOffset] = useState(0);
-  const [size, setSize] = useState<"small" | "medium" | "large">("medium");
+  const [appearance, setAppearance] = useState<SubtitleAppearance>(DEFAULT_SUBTITLE_APPEARANCE);
+  const [preferencesReady, setPreferencesReady] = useState(false);
+  const styleId = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  const originalCuesRef = useRef(new Map<TextTrackCue, { start: number; end: number }>());
   const managedTrackRef = useRef<HTMLTrackElement | null>(null);
   const managedUrlRef = useRef<string | null>(null);
   const managedTrackTimerRef = useRef<number | null>(null);
@@ -85,11 +99,11 @@ export function PlayerSubtitles({
     return {
       id: `source-${sourceSubtitleUrl}`,
       mode: "online",
-      label: language === "Unknown" ? "Source subtitle" : `${language} source subtitle`,
+      label: fa ? "زیرنویس همراه این نسخه" : "Included subtitle",
       language,
       url: `/api/subtitles/track?url=${encodeURIComponent(sourceSubtitleUrl)}`,
     };
-  }, [sourceSubtitleUrl]);
+  }, [sourceSubtitleUrl, fa]);
 
   const clearManagedTrack = useCallback(() => {
     if (managedTrackTimerRef.current !== null) {
@@ -102,21 +116,27 @@ export function PlayerSubtitles({
     managedUrlRef.current = null;
   }, []);
 
-  const mountManagedTrack = useCallback((video: HTMLVideoElement, vtt: string, label: string, language: string) => {
+  const mountManagedTrack = useCallback((video: HTMLVideoElement, vtt: string, resolved: SubtitleSelection, revision: number) => {
     clearManagedTrack();
     disableAllTracks(video);
     const blobUrl = URL.createObjectURL(new Blob([vtt], { type: "text/vtt;charset=utf-8" }));
     const element = document.createElement("track");
     element.kind = "subtitles";
-    element.label = label;
-    element.srclang = normalizeLanguageCode(language);
+    element.label = resolved.label;
+    element.srclang = normalizeLanguageCode(resolved.language);
     element.default = true;
     managedTrackRef.current = element;
     managedUrlRef.current = blobUrl;
     const show = () => {
-      if (managedTrackRef.current === element) element.track.mode = "showing";
+      if (managedTrackRef.current !== element || revision !== applyRevisionRef.current) return;
+      element.track.mode = "showing";
+      if (element.readyState === 2) { setApplied(resolved); setTrackState("ready"); setStatus(resolved.label); }
     };
     element.addEventListener("load", show, { once: true });
+    element.addEventListener("error", () => {
+      if (managedTrackRef.current !== element || revision !== applyRevisionRef.current) return;
+      setApplied(null); setTrackState("error"); setStatus(fa ? "این زیرنویس بارگذاری نشد؛ نسخهٔ دیگری را انتخاب کن." : "This subtitle could not load. Choose another version.");
+    }, { once: true });
     element.src = blobUrl;
     video.appendChild(element);
     // Chromium can emit `addtrack` before the blob track has finished loading.
@@ -124,7 +144,7 @@ export function PlayerSubtitles({
     // the next task prevents a native-track refresh from disabling local SRTs.
     show();
     managedTrackTimerRef.current = window.setTimeout(show, 80);
-  }, [clearManagedTrack]);
+  }, [clearManagedTrack, fa]);
 
   const fetchSubtitleText = useCallback(async (url: string, cacheKey: string) => {
     if (!url) throw new Error("Subtitle URL is missing.");
@@ -150,10 +170,11 @@ export function PlayerSubtitles({
     const video = videoRef.current;
     if (!video) return;
     disableAllTracks(video);
+    setApplied(null);
 
     if (next.mode === "off") {
       clearManagedTrack();
-      setStatus("Subtitles are off");
+      setTrackState("off"); setStatus(fa ? "زیرنویس خاموش است" : "Subtitles are off");
       return;
     }
 
@@ -164,45 +185,70 @@ export function PlayerSubtitles({
       if (embedded) {
         clearManagedTrack();
         const track = video.textTracks[embedded.index];
-        if (track) track.mode = "showing";
-        setStatus(`${embedded.label} · embedded`);
+        if (track) { track.mode = "showing"; shiftNativeCues(track, offset, originalCuesRef.current); }
+        setApplied({ id: embedded.id, mode: "embedded", label: embedded.label, language: embedded.language, nativeTrackId: embedded.id });
+        setTrackState("ready"); setStatus(embedded.label);
         return;
       }
       if (next.mode === "embedded") {
-        setStatus("This browser did not expose the embedded subtitle track.");
+        setTrackState("empty"); setStatus(fa ? "زیرنویس داخل فایل در دسترس نیست؛ یک نسخهٔ آنلاین یا فایل شخصی انتخاب کن." : "Embedded subtitles are unavailable. Choose an online subtitle or a file.");
         return;
       }
     }
 
     const resolved = next.mode === "auto"
-      ? sourceSubtitle ?? (sortedOnlineItems[0] ? onlineSelection(sortedOnlineItems[0]) : null)
+      ? sourceSubtitle ?? (sortedOnlineItems[0] ? onlineSelection(sortedOnlineItems[0], fa) : null)
       : next;
     if (!resolved) {
       clearManagedTrack();
-      setStatus(onlineLoading ? "Finding an online subtitle…" : "No compatible subtitle was found automatically.");
+      setTrackState(onlineLoading ? "loading" : "empty"); setStatus(onlineLoading ? (fa ? "در حال پیدا کردن زیرنویس…" : "Finding subtitles…") : (fa ? "هنوز زیرنویسی فعال نیست" : "No subtitle is active yet"));
       return;
     }
 
     try {
-      setStatus(`Loading ${resolved.label}…`);
+      setTrackState("loading"); setStatus(fa ? `در حال بارگذاری ${resolved.label}…` : `Loading ${resolved.label}…`);
       const raw = resolved.content ?? await fetchSubtitleText(resolved.url ?? "", resolved.id);
       if (revision !== applyRevisionRef.current) return;
       const cues = parseSubtitleCues(raw, `${resolved.label}.vtt`);
       if (!cues.length) throw new Error("This subtitle contains no readable cues.");
-      mountManagedTrack(video, cuesToVtt(cues, offset), resolved.label, resolved.language);
-      setStatus(`${resolved.label}${offset ? ` · ${offset > 0 ? "+" : ""}${offset.toFixed(1)}s` : ""}`);
+      mountManagedTrack(video, cuesToVtt(cues, offset), resolved, revision);
     } catch (reason) {
       if (revision !== applyRevisionRef.current) return;
       clearManagedTrack();
-      setStatus(reason instanceof Error ? reason.message : "Subtitle could not be loaded.");
+      setTrackState("error"); setStatus(fa ? "زیرنویس بارگذاری نشد؛ دوباره امتحان کن یا نسخهٔ دیگری انتخاب کن." : reason instanceof Error ? reason.message : "Subtitle could not be loaded.");
     }
-  }, [clearManagedTrack, fetchSubtitleText, mountManagedTrack, nativeTracks, offset, onlineLoading, sortedOnlineItems, sourceSubtitle, videoRef]);
+  }, [clearManagedTrack, fetchSubtitleText, mountManagedTrack, nativeTracks, offset, onlineLoading, sortedOnlineItems, sourceSubtitle, videoRef, fa]);
+
+  useEffect(() => {
+    let mounted = true;
+    queueMicrotask(() => {
+      if (!mounted) return;
+      try { setAppearance(normalizeSubtitleAppearance(JSON.parse(localStorage.getItem("sarvnema-subtitle-appearance") ?? "null"))); } catch { /* Defaults also work in private browsing. */ }
+      setPreferencesReady(true);
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!preferencesReady) return;
+    try { localStorage.setItem("sarvnema-subtitle-appearance", JSON.stringify(appearance)); } catch { /* Storage is optional. */ }
+  }, [appearance, preferencesReady]);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    video.dataset.subtitleSize = size;
-  }, [size, videoRef]);
+    video.dataset.subtitleStyle = styleId;
+    const sheet = document.createElement("style");
+    document.head.appendChild(sheet);
+    const update = () => {
+      const fontSize = Math.max(12, Math.min(72, video.clientWidth * .032 * appearance.size / 100));
+      // Real values, not CSS variables: native cue renderers differ in inheritance.
+      sheet.textContent = `.pro-player video[data-subtitle-style="${styleId}"]::cue, .party-player-stage video[data-subtitle-style="${styleId}"]::cue { font-size: ${fontSize}px; color: ${subtitleColor(appearance.color, appearance.textOpacity)}; background-color: ${subtitleColor(appearance.background, appearance.backgroundOpacity)}; text-shadow: 0 1px 2px #0008; }`;
+    };
+    update();
+    const observer = new ResizeObserver(update); observer.observe(video);
+    return () => { observer.disconnect(); sheet.remove(); delete video.dataset.subtitleStyle; };
+  }, [appearance, sourceKey, styleId, videoRef]);
 
   useEffect(() => {
     clearManagedTrack();
@@ -213,7 +259,7 @@ export function PlayerSubtitles({
       const managedTrack = managedTrackRef.current?.track;
       const tracks = Array.from(video.textTracks)
         .map((track, index) => ({ track, index }))
-        .filter(({ track }) => track !== managedTrack)
+        .filter(({ track }) => track !== managedTrack && (track.kind === "subtitles" || track.kind === "captions"))
         .map(({ track, index }) => ({
           id: nativeTrackId(track, index),
           index,
@@ -224,6 +270,7 @@ export function PlayerSubtitles({
     };
 
     refresh();
+    const originals = originalCuesRef.current;
     video.addEventListener("loadedmetadata", refresh);
     video.textTracks.addEventListener?.("addtrack", refresh);
     const delayedRefresh = window.setTimeout(refresh, 600);
@@ -232,6 +279,8 @@ export function PlayerSubtitles({
       video.removeEventListener("loadedmetadata", refresh);
       video.textTracks.removeEventListener?.("addtrack", refresh);
       clearManagedTrack();
+      for (const [cue, original] of originals) { cue.endTime = Math.max(cue.endTime, original.end); cue.startTime = original.start; cue.endTime = original.end; }
+      originals.clear();
     };
   }, [clearManagedTrack, sourceKey, videoRef]);
 
@@ -239,22 +288,22 @@ export function PlayerSubtitles({
     if (!itemId) return;
     const controller = new AbortController();
     queueMicrotask(() => {
-      if (!controller.signal.aborted) setOnlineLoading(true);
+      if (!controller.signal.aborted) { setOnlineLoading(true); setSearchFailed(false); setOnlineItems([]); }
     });
     fetch(`/api/subtitles/${encodeURIComponent(itemId)}?limit=18`, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error("Online subtitle search is unavailable.");
         return response.json() as Promise<{ items?: OnlineSubtitle[] }>;
       })
-      .then((data) => setOnlineItems(Array.isArray(data.items) ? data.items.filter((item) => item.trackUrl) : []))
+      .then((data) => { if (!controller.signal.aborted) setOnlineItems(Array.isArray(data.items) ? data.items.filter((item) => item.trackUrl) : []); })
       .catch((reason) => {
-        if ((reason as { name?: string })?.name !== "AbortError") setOnlineItems([]);
+        if (!controller.signal.aborted && (reason as { name?: string })?.name !== "AbortError") { setOnlineItems([]); setSearchFailed(true); }
       })
       .finally(() => {
         if (!controller.signal.aborted) setOnlineLoading(false);
       });
     return () => controller.abort();
-  }, [itemId]);
+  }, [itemId, searchRevision]);
 
   useEffect(() => {
     const revision = ++applyRevisionRef.current;
@@ -264,6 +313,7 @@ export function PlayerSubtitles({
 
   function choose(next: SubtitleSelection) {
     if (!canChange) return;
+    if (next.mode === "local") setPersonalSubtitle(next);
     if (!isControlled) setInternalSelection(next);
     onSelectionChange?.(next);
   }
@@ -279,8 +329,9 @@ export function PlayerSubtitles({
 
   async function addLocalFile(file: File | undefined) {
     if (!file || !canChange) return;
+    setImportError("");
     if (file.size > (shared ? LOCAL_SUBTITLE_LIMIT : 2 * 1024 * 1024)) {
-      setStatus(shared ? "For a shared room, keep the subtitle file below 320 KB." : "Subtitle file is too large.");
+      setImportError(fa ? `حجم فایل باید کمتر از ${shared ? "۳۲۰ کیلوبایت" : "۲ مگابایت"} باشد.` : shared ? "Keep shared subtitles below 320 KB." : "Keep subtitles below 2 MB.");
       return;
     }
     try {
@@ -288,7 +339,7 @@ export function PlayerSubtitles({
       const content = normalizeSubtitleToVtt(text, file.name);
       choose({ id: `local-${Date.now()}`, mode: "local", label: file.name.replace(/\.[^.]+$/, ""), language: guessLanguage(file.name), content });
     } catch (reason) {
-      setStatus(reason instanceof Error ? reason.message : "Local subtitle could not be read.");
+      setImportError(fa ? "فایل خوانده نشد؛ یک زیرنویس SRT یا VTT معتبر انتخاب کن." : reason instanceof Error ? reason.message : "Local subtitle could not be read.");
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
@@ -297,12 +348,14 @@ export function PlayerSubtitles({
   async function addFromUrl() {
     if (!urlInput.trim() || !canChange || urlLoading) return;
     setUrlLoading(true);
+    setImportError("");
     try {
       const rawUrl = new URL(urlInput.trim());
+      if (!/^https?:$/.test(rawUrl.protocol)) throw new Error("Use an HTTP or HTTPS subtitle link.");
       const fetchUrl = /(^|\.)subzone\.ir$|(^|\.)sub-api\.ir$/i.test(rawUrl.hostname)
         ? `/api/subtitles/track?url=${encodeURIComponent(rawUrl.toString())}`
         : rawUrl.toString();
-      const response = await fetch(fetchUrl);
+      const response = await fetch(fetchUrl, { signal: AbortSignal.timeout(16000) });
       if (!response.ok) throw new Error("That subtitle URL could not be downloaded. Check CORS or use a local file.");
       const bytes = new Uint8Array(await response.arrayBuffer());
       if (bytes.byteLength > (shared ? LOCAL_SUBTITLE_LIMIT : 2 * 1024 * 1024)) throw new Error("Subtitle file is too large.");
@@ -310,7 +363,7 @@ export function PlayerSubtitles({
       choose({ id: `url-${Date.now()}`, mode: "local", label: rawUrl.pathname.split("/").pop()?.replace(/\.[^.]+$/, "") || "Online subtitle", language: guessLanguage(rawUrl.pathname), content });
       setUrlInput("");
     } catch (reason) {
-      setStatus(reason instanceof Error ? reason.message : "Subtitle URL could not be loaded.");
+      setImportError(fa ? "لینک باز نشد؛ آدرس مستقیم SRT یا VTT را وارد کن یا فایل را از دستگاهت انتخاب کن." : reason instanceof Error ? reason.message : "Subtitle URL could not be loaded.");
     } finally {
       setUrlLoading(false);
     }
@@ -318,71 +371,69 @@ export function PlayerSubtitles({
 
   if (!open) return null;
 
-  return (
-    <ResponsiveDialog open={open} onClose={onClose} title={locale === "fa" ? "زیرنویس" : "Subtitles"} description={shared ? (locale === "fa" ? "انتخاب زیرنویس برای همهٔ اتاق همگام می‌شود" : "Synced for everyone in this room") : title} closeLabel={locale === "fa" ? "بستن زیرنویس" : "Close subtitles"} dir={locale === "fa" ? "rtl" : "ltr"}>
-    <div className="subtitle-panel">
-
-      <div className="subtitle-now"><Check size={14} /><span>{status}</span></div>
-
-      <div className="subtitle-quick-actions">
-        <button className={activeSelection.mode === "auto" ? "is-active" : ""} type="button" disabled={!canChange} onClick={() => choose(AUTO_SUBTITLE_SELECTION)}><RefreshCw size={14} /> {locale === "fa" ? "خودکار" : "Auto"}</button>
-        <button className={activeSelection.mode === "off" ? "is-active" : ""} type="button" disabled={!canChange} onClick={() => choose(OFF_SUBTITLE_SELECTION)}><X size={14} /> {locale === "fa" ? "خاموش" : "Off"}</button>
-        <button type="button" disabled={!canChange} onClick={() => fileInputRef.current?.click()}><FileUp size={14} /> {locale === "fa" ? "فایل شخصی" : "Add file"}</button>
-        <input ref={fileInputRef} type="file" hidden accept=".vtt,.srt,.ass,.ssa,.txt,text/vtt,application/x-subrip" onChange={(event) => void addLocalFile(event.target.files?.[0])} />
+  const languageLabel = (value: string) => normalizeLanguageCode(value) === "fa" ? (fa ? "فارسی" : "Persian") : normalizeLanguageCode(value) === "en" ? (fa ? "انگلیسی" : "English") : value;
+  const choices = [
+    ...nativeTracks.map(track => ({ selection: { id: track.id, mode: "embedded", label: track.label, language: track.language, nativeTrackId: track.id } as SubtitleSelection, detail: fa ? "داخل فایل ویدیو" : "Inside the video" })),
+    ...(sourceSubtitle ? [{ selection: sourceSubtitle, detail: fa ? "همراه همین نسخه" : "Included with this version" }] : []),
+    ...(personalSubtitle ? [{ selection: personalSubtitle, detail: fa ? "فایل شخصی شما" : "Your subtitle file" }] : []),
+    ...sortedOnlineItems.map(item => ({ selection: onlineSelection(item, fa), detail: item.releases.slice(0, 2).join(" · ") || item.author || (fa ? "زیرنویس آنلاین" : "Online subtitle") })),
+  ];
+  const visibleChoices = choices.filter(item => languageFilter === "all" || normalizeLanguageCode(item.selection.language) === languageFilter);
+  const adjustAppearance = (next: Partial<SubtitleAppearance>) => setAppearance(current => normalizeSubtitleAppearance({ ...current, ...next }));
+  return <ResponsiveDialog open={open} onClose={onClose} title={fa ? "زیرنویس" : "Subtitles"} description={title} closeLabel={fa ? "بستن زیرنویس" : "Close subtitles"} dir={fa ? "rtl" : "ltr"}>
+    <div className={styles.panel} data-subtitle-panel>
+      <div className={styles.current} data-state={trackState} role="status">
+        {trackState === "ready" ? <Check size={20} /> : trackState === "loading" ? <LoaderCircle className="is-spinning" size={20} /> : trackState === "error" ? <AlertCircle size={20} /> : <Captions size={20} />}
+        <div><small>{trackState === "ready" ? (fa ? "زیرنویس فعال" : "Active subtitle") : fa ? "وضعیت زیرنویس" : "Subtitle status"}</small><strong dir="auto">{status}</strong></div>
+        <button type="button" role="switch" aria-checked={activeSelection.mode !== "off"} aria-label={fa ? "نمایش زیرنویس" : "Show subtitles"} disabled={!canChange} onClick={() => choose(activeSelection.mode === "off" ? lastEnabledSelection.current : OFF_SUBTITLE_SELECTION)}><i /></button>
       </div>
-
-      {nativeTracks.length > 0 && (
-        <section className="subtitle-source-group">
-          <div className="subtitle-group-title"><Subtitles size={14} /><span>{locale === "fa" ? "داخل فایل ویدیو" : "Inside this video"}</span></div>
-          <div className="subtitle-option-list">
-            {nativeTracks.map((track) => (
-              <button type="button" disabled={!canChange} className={activeSelection.mode === "embedded" && activeSelection.nativeTrackId === track.id ? "is-active" : ""} key={track.id} onClick={() => choose({ id: track.id, mode: "embedded", label: track.label, language: track.language, nativeTrackId: track.id })}>
-                <span><strong>{track.label}</strong><small>{readableLanguage(track.language)} · embedded</small></span><Check size={14} />
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {sourceSubtitle && (
-        <section className="subtitle-source-group">
-          <div className="subtitle-group-title"><Subtitles size={14} /><span>{locale === "fa" ? "همراه این نسخه" : "Included with this file"}</span></div>
-          <div className="subtitle-option-list">
-            <button type="button" disabled={!canChange} className={activeSelection.id === sourceSubtitle.id ? "is-active" : ""} onClick={() => choose(sourceSubtitle)}>
-              <span><strong>{sourceSubtitle.label}</strong><small>{locale === "fa" ? "هماهنگ با همین فیلم یا قسمت" : "Matched to this exact movie or episode"}</small></span><Check size={14} />
-            </button>
-          </div>
-        </section>
-      )}
-
-      <section className="subtitle-source-group">
-        <div className="subtitle-group-title"><Search size={14} /><span>{locale === "fa" ? "زیرنویس‌های آنلاین" : "Online subtitles"}</span>{onlineLoading && <LoaderCircle className="spin" size={13} />}</div>
-        <div className="subtitle-option-list subtitle-online-list">
-          {sortedOnlineItems.length ? sortedOnlineItems.slice(0, 10).map((item) => {
-            const next = onlineSelection(item);
-            return <button type="button" disabled={!canChange} className={activeSelection.id === next.id ? "is-active" : ""} key={item.detailUrl} onClick={() => choose(next)}><span><strong>{item.language}</strong><small>{item.releases.slice(0, 2).join(" · ") || item.author || "Matched online"}</small></span>{item.rating === "good" ? <Check size={14} /> : <Captions size={14} />}</button>;
-          }) : <p>{onlineLoading ? (locale === "fa" ? "در حال پیدا کردن زیرنویس فارسی و انگلیسی…" : "Searching Persian and English sources…") : (locale === "fa" ? "زیرنویس آنلاین پیدا نشد؛ می‌توانید فایل یا لینک خودتان را اضافه کنید." : "No online subtitle matched; add your own file or link.")}</p>}
+      <div className={styles.tabs} role="group" aria-label={fa ? "تنظیمات زیرنویس" : "Subtitle settings"}>
+        {([{ id: "tracks", label: fa ? "زیرنویس‌ها" : "Subtitles", icon: Captions }, { id: "sync", label: fa ? "هماهنگی" : "Sync", icon: Clock3 }, { id: "appearance", label: fa ? "ظاهر" : "Style", icon: Palette }] as const).map(({ id, label, icon: Icon }) => <button key={id} type="button" aria-pressed={tab === id} onClick={() => setTab(id)}><Icon size={17} />{label}</button>)}
+      </div>
+      {shared && <p className={styles.note}>{fa ? (canChange ? "انتخاب زیرنویس برای اتاق؛ ظاهر و زمان‌بندی فقط برای شما." : "زیرنویس را میزبان انتخاب می‌کند؛ ظاهر و زمان‌بندی را برای خودت تنظیم کن.") : (canChange ? "Subtitle selection is shared. Style and timing are personal." : "The host selects subtitles. Style and timing are yours to adjust.")}</p>}
+      {tab === "tracks" && <section className={styles.section}>
+        {importError && <p className={styles.warning} role="alert">{importError}</p>}
+        <div className={styles.actions}>
+          <button type="button" disabled={!canChange} aria-pressed={activeSelection.mode === "auto"} onClick={() => choose(AUTO_SUBTITLE_SELECTION)}><RefreshCw size={17} />{fa ? "انتخاب خودکار" : "Automatic"}</button>
+          <button type="button" disabled={!canChange} onClick={() => fileInputRef.current?.click()}><FileUp size={17} />{fa ? "افزودن فایل" : "Add file"}</button>
+          <input ref={fileInputRef} type="file" hidden accept=".vtt,.srt,.ass,.ssa,.txt,text/vtt,application/x-subrip" onChange={event => void addLocalFile(event.target.files?.[0])} />
         </div>
-      </section>
-
-      <details className="subtitle-advanced"><summary>{locale === "fa" ? "لینک شخصی، اندازه و هماهنگی" : "Custom link, size & timing"}</summary>
-      <section className="subtitle-url-row">
-        <label><Link2 size={14} /><input value={urlInput} disabled={!canChange || urlLoading} onChange={(event) => setUrlInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void addFromUrl(); }} dir="ltr" aria-label={locale === "fa" ? "لینک زیرنویس" : "Subtitle URL"} placeholder="https://…/subtitle.srt" /></label>
-        <button type="button" disabled={!canChange || !urlInput.trim() || urlLoading} onClick={() => void addFromUrl()}>{urlLoading ? <LoaderCircle className="spin" size={15} /> : (locale === "fa" ? "افزودن" : "Add")}</button>
-      </section>
-
-      <footer>
-        <label>{locale === "fa" ? "اندازهٔ متن" : "Size"}<select value={size} onChange={(event) => setSize(event.target.value as typeof size)}><option value="small">{locale === "fa" ? "کوچک" : "Small"}</option><option value="medium">{locale === "fa" ? "متوسط" : "Medium"}</option><option value="large">{locale === "fa" ? "بزرگ" : "Large"}</option></select></label>
-        <div className="subtitle-offset"><Clock3 size={13} /><span>{locale === "fa" ? "هماهنگی" : "Sync"}</span><button type="button" onClick={() => setOffset((value) => Math.max(-10, Number((value - .5).toFixed(1))))}>−0.5s</button><button type="button" onClick={() => setOffset(0)}>{offset > 0 ? "+" : ""}{offset.toFixed(1)}s</button><button type="button" onClick={() => setOffset((value) => Math.min(10, Number((value + .5).toFixed(1))))}>+0.5s</button></div>
-      </footer>
-      </details>
+        <div className={styles.listHeading}><strong>{fa ? "زیرنویس‌های پیدا‌شده" : "Found subtitles"} <small>({choices.length.toLocaleString(locale)})</small></strong><button type="button" disabled={onlineLoading} aria-label={fa ? "جستجوی دوباره زیرنویس" : "Refresh subtitle search"} onClick={() => setSearchRevision(value => value + 1)}><RefreshCw size={17} className={onlineLoading ? "is-spinning" : ""} /></button></div>
+        <div className={styles.filters} role="group" aria-label={fa ? "زبان زیرنویس" : "Subtitle language"}>{["all", "fa", "en"].map(value => <button type="button" key={value} aria-pressed={languageFilter === value} onClick={() => setLanguageFilter(value)}>{value === "all" ? (fa ? "همه" : "All") : languageLabel(value)}</button>)}</div>
+        {onlineLoading && <p className={styles.note} role="status">{fa ? "جستجوی زیرنویس فارسی و انگلیسی…" : "Searching Persian and English subtitles…"}</p>}
+        {searchFailed && <p className={styles.warning} role="status">{fa ? "جستجوی آنلاین در دسترس نیست. دوباره تلاش کن یا فایل اضافه کن." : "Online search is unavailable. Retry or add a file."}</p>}
+        <div className={styles.options}>
+          {visibleChoices.map(({ selection: next, detail }) => <button type="button" disabled={!canChange} key={next.id} aria-pressed={applied?.id === next.id} onClick={() => choose(next)}><Captions size={20} /><span><strong dir="auto">{next.mode === "local" ? next.label : languageLabel(next.language)}</strong><small dir="auto">{detail}</small></span>{applied?.id === next.id ? <Check size={18} /> : activeSelection.id === next.id && trackState === "loading" ? <LoaderCircle size={18} className="is-spinning" /> : null}</button>)}
+        </div>
+        {!visibleChoices.length && !onlineLoading && <p className={styles.note}>{fa ? "برای این انتخاب زیرنویسی پیدا نشد. فایل SRT یا VTT خودت را اضافه کن." : "No subtitles match this filter. You can add your own SRT or VTT file."}</p>}
+        <details className={styles.customLink}><summary><Link2 size={16} />{fa ? "لینک زیرنویس داری؟" : "Have a subtitle link?"}</summary><div><input type="url" inputMode="url" autoComplete="off" value={urlInput} disabled={!canChange || urlLoading} onChange={event => setUrlInput(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); void addFromUrl(); } }} dir="ltr" aria-label={fa ? "لینک زیرنویس" : "Subtitle URL"} placeholder="https://…/subtitle.srt" /><button type="button" disabled={!canChange || !urlInput.trim() || urlLoading} onClick={() => void addFromUrl()}>{urlLoading ? <LoaderCircle className="is-spinning" size={18} /> : fa ? "افزودن" : "Add"}</button></div></details>
+      </section>}
+      {tab === "sync" && <section className={styles.section}>
+        <p className={styles.note}>{fa ? "متن جلوتر از صداست؟ «دیرتر» را بزن. اگر عقب افتاده، «زودتر» را بزن." : "Text appears before the dialogue? Tap Later. If it lags behind, tap Earlier."}</p>
+        <div className={styles.sync}>
+          <button type="button" onClick={() => setOffset(value => subtitleOffset(value - .5))}>{fa ? "زودتر" : "Earlier"}<small dir="ltr">−0.5s</small></button>
+          <label>{fa ? "اختلاف زمانی (ثانیه)" : "Offset (seconds)"}<input aria-label={fa ? "اختلاف زمانی زیرنویس" : "Subtitle offset"} type="number" inputMode="decimal" step="0.1" min="-120" max="120" dir="ltr" value={offset} onChange={event => setOffset(subtitleOffset(Number(event.target.value)))} /></label>
+          <button type="button" onClick={() => setOffset(value => subtitleOffset(value + .5))}>{fa ? "دیرتر" : "Later"}<small dir="ltr">+0.5s</small></button>
+        </div>
+        <p className={styles.note} role="status">{offset === 0 ? (fa ? "زمان اصلی زیرنویس" : "Original timing") : `${Math.abs(offset).toLocaleString(locale)} ${fa ? (offset > 0 ? "ثانیه دیرتر" : "ثانیه زودتر") : (offset > 0 ? "seconds later" : "seconds earlier")}`}</p>
+        <button className={styles.reset} type="button" onClick={() => setOffset(0)}><RefreshCw size={16} />{fa ? "بازگشت به زمان اصلی" : "Reset timing"}</button>
+      </section>}
+      {tab === "appearance" && <section className={styles.section}>
+        <div className={styles.preview} aria-label={fa ? "پیش‌نمایش زیرنویس" : "Subtitle preview"}><span style={{ fontSize: `${appearance.size * .2}px`, color: subtitleColor(appearance.color, appearance.textOpacity), backgroundColor: subtitleColor(appearance.background, appearance.backgroundOpacity) }}>{fa ? "یک داستان خوب، از اینجا شروع می‌شه." : "Every great story starts here."}</span></div>
+        <label className={styles.slider}><span>{fa ? "اندازهٔ متن" : "Text size"}<output>{appearance.size}%</output></span><input aria-label={fa ? "اندازهٔ متن" : "Text size"} type="range" min="75" max="175" step="5" value={appearance.size} onChange={event => adjustAppearance({ size: Number(event.target.value) })} /></label>
+        <div className={styles.colors}><label>{fa ? "رنگ متن" : "Text color"}<input type="color" value={appearance.color} onChange={event => adjustAppearance({ color: event.target.value })} /></label><label>{fa ? "رنگ پس‌زمینه" : "Background color"}<input type="color" value={appearance.background} onChange={event => adjustAppearance({ background: event.target.value })} /></label></div>
+        <label className={styles.slider}><span>{fa ? "وضوح متن" : "Text opacity"}<output>{appearance.textOpacity}%</output></span><input aria-label={fa ? "وضوح متن" : "Text opacity"} type="range" min="20" max="100" step="5" value={appearance.textOpacity} onChange={event => adjustAppearance({ textOpacity: Number(event.target.value) })} /></label>
+        <label className={styles.slider}><span>{fa ? "تیرگی پس‌زمینه" : "Background opacity"}<output>{appearance.backgroundOpacity}%</output></span><input aria-label={fa ? "تیرگی پس‌زمینه" : "Background opacity"} type="range" min="0" max="100" step="5" value={appearance.backgroundOpacity} onChange={event => adjustAppearance({ backgroundOpacity: Number(event.target.value) })} /></label>
+        <button className={styles.reset} type="button" onClick={() => setAppearance(DEFAULT_SUBTITLE_APPEARANCE)}><RefreshCw size={16} />{fa ? "بازگشت به ظاهر پیش‌فرض" : "Reset appearance"}</button>
+        <p className={styles.note}>{fa ? "ظاهر انتخابی روی این مرورگر ذخیره می‌شود. زیرنویس چسبیده به تصویر قابل تغییر نیست." : "Your style is saved in this browser. Burned-in subtitles cannot be changed."}</p>
+      </section>}
     </div>
-    </ResponsiveDialog>
-  );
+  </ResponsiveDialog>;
 }
 
-function onlineSelection(item: OnlineSubtitle): SubtitleSelection {
-  return { id: item.detailUrl, mode: "online", label: `${item.language} subtitle`, language: item.language, url: item.trackUrl };
+function onlineSelection(item: OnlineSubtitle, fa = false): SubtitleSelection {
+  const language = normalizeLanguageCode(item.language);
+  return { id: item.detailUrl, mode: "online", label: fa ? `زیرنویس ${language === "fa" ? "فارسی" : language === "en" ? "انگلیسی" : item.language}` : `${item.language} subtitle`, language: item.language, url: item.trackUrl };
 }
 
 function subtitleScore(item: OnlineSubtitle, sourceLabel: string, sourceKey: string) {

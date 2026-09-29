@@ -5,6 +5,7 @@ import { CategoryExplorer } from "./category-explorer";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { LandingActivity } from "@/components/landing-activity";
+import { LandingSearchLauncher } from "@/components/discovery-search";
 import { formatNumber, getDictionary, type Locale } from "@/lib/i18n";
 
 export type MegaMenuItem = {
@@ -60,6 +61,7 @@ export function GradientMenu({
           </Link>
         ))}
       </nav>
+      <LandingSearchLauncher locale={locale} />
       <LanguageToggle locale={locale} />
       <Link className="hover-button" href="/browse">
         {t.nav.browse} {totalTitles ? formatNumber(totalTitles, locale) : ""}

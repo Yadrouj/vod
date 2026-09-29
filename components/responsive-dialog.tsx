@@ -29,6 +29,7 @@ type Props = {
   open: boolean; onClose: () => void; title: string; description?: string;
   children: ReactNode; footer?: ReactNode; mobileOnly?: boolean;
   theme?: "cinema" | "music"; closeLabel?: string; dir?: "rtl" | "ltr";
+  initialFocus?: string;
 };
 
 /** Only panels move into the top layer. The media engine never changes parents. */
@@ -39,7 +40,7 @@ export function ResponsiveDialog(props: Props) {
   return <DialogSurface {...props} />;
 }
 
-function DialogSurface({ onClose, title, description, children, footer, theme = "cinema", closeLabel = "بستن", dir = "rtl" }: Props) {
+function DialogSurface({ onClose, title, description, children, footer, theme = "cinema", closeLabel = "بستن", dir = "rtl", initialFocus }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const close = useRef(onClose);
   const id = useId();
@@ -58,6 +59,7 @@ function DialogSurface({ onClose, title, description, children, footer, theme = 
     };
     place();
     dialog.showModal();
+    if (initialFocus) dialog.querySelector<HTMLElement>(initialFocus)?.focus({ preventScroll: true });
     // A close event is queued. Strict Mode can reopen the same element before
     // that old event arrives; it must not dismiss the newly opened panel.
     const closed = () => { if (!dialog.open) close.current(); };
@@ -74,7 +76,7 @@ function DialogSurface({ onClose, title, description, children, footer, theme = 
       unlock();
       if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     };
-  }, []);
+  }, [initialFocus]);
   if (typeof document === "undefined") return null;
   return createPortal(<dialog ref={ref} className={styles.dialog} data-responsive-dialog data-player-ui="true" data-media-theme={theme}
     dir={dir} aria-labelledby={`${id}-title`} aria-describedby={description ? `${id}-description` : undefined}

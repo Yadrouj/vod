@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Info, Pause, Play, TrendingUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { SearchSuggest } from "@/components/search-suggest";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import { getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
@@ -64,7 +63,6 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
         {trend && <a className={styles.source} href={trend.sourceUrl} target="_blank" rel="noreferrer">{fa ? "رتبهٔ ترند IMDb" : "IMDb trend rank"} #{trend.rank} · {new Intl.DateTimeFormat(fa ? "fa-IR" : "en-US", { month: "short", day: "numeric", timeZone: "Asia/Tehran" }).format(new Date(trend.observedAt))}</a>}
       </div>
       <div className={styles.bottom}>
-        <form className={styles.search} action="/browse" role="search"><SearchSuggest placeholder={t.home.searchPlaceholder} locale={locale} portal maxItems={14} /><button type="submit">{t.common.search}</button></form>
         {total > 1 && <div className={styles.navigation} dir="ltr">
           <button type="button" onClick={() => select(active - 1)} aria-label={fa ? "عنوان قبلی" : "Previous title"}><ChevronLeft size={20} /></button>
           <div className={styles.dots}>{items.map((entry, i) => <button key={entry.imdbCode} type="button" aria-current={i === active ? "true" : undefined} onClick={() => select(i)} aria-label={`${fa ? "نمایش" : "Show"} ${entry.title}`}><span /></button>)}</div>

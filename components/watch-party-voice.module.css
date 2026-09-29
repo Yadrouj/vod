@@ -7,6 +7,18 @@
 .toolbar > button:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
 .toolbar svg { width: 20px; height: 20px; flex-shrink: 0; }
 .status { min-height: 14px; padding-inline: 10px; font: 10px/1.4 Arial, sans-serif; color: #e9f6ec; text-shadow: 0 1px 4px #000; pointer-events: none; }
+.enableAudio { pointer-events: auto; min-height: 44px; padding: 8px 12px; border: 1px solid #ffffff30; border-radius: 12px !important; color: #fff; background: #202520; display: flex; align-items: center; gap: 8px; font: inherit; }
+.help { margin: 0; color: #c0c6c0; font-size: 13px; line-height: 1.9; direction: rtl; }
+.positionHelp { display: grid; grid-template-columns: 20px 1fr; gap: 10px; align-items: center; direction: rtl; }
+.positionHelp p { margin: 0; color: #c0c6c0; font-size: 13px; line-height: 1.9; }
+.positionHelp button { grid-column: 1 / -1; background: #ffffff08; color: #eee; border: 1px solid #ffffff20; }
+.cameras:global(.party-camera-dock) :global(.party-camera-tile) { touch-action: none; cursor: grab; -webkit-touch-callout: none; user-select: none; animation: none; }
+.cameras:global(.party-camera-dock) :global(.party-camera-item.is-dragging .party-camera-tile) { cursor: grabbing; }
+.cameras:global(.party-camera-dock) :global(.party-camera-item) { transition: none; }
+.cameras:global(.party-camera-dock) :global(.party-camera-tile:focus-visible) { outline: 2px solid #fff; outline-offset: 3px; }
+.cameras:global(.party-camera-dock) :global(.party-camera-tile video) { pointer-events: none; }
+.cameras:global(.party-camera-dock) :global(.party-camera-move), .cameras:global(.party-camera-dock) :global(.party-camera-stop) { width: 32px; height: 32px; border-radius: 50% !important; }
+.cameras:global(.party-camera-dock) :global(.party-camera-move)::after, .cameras:global(.party-camera-dock) :global(.party-camera-stop)::after { content: ""; position: absolute; inset: -6px; }
 .panel:global(.party-voice-panel) { display: grid; grid-template-columns: 1fr; gap: 14px; padding: 0; width: 100%; border: 0; box-shadow: none; background: none; backdrop-filter: none; }
 .panel:global(.party-voice-panel) :global(.party-voice-copy), .panel:global(.party-voice-panel) :global(.party-voice-privacy) { display: none; }
 .panel:global(.party-voice-panel) button { font-size: 14px; min-height: 48px; border-radius: 12px !important; }
