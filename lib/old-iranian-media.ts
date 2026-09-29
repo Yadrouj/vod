@@ -1017,6 +1017,13 @@ const BATCH_ONE_HUNDRED_SIX_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1354008": [publicYouTubeVideo("hJy8iFBIj1E", "The Mandrake (1975) - full film - Mehre giah", "Pars Film Studio", 6069, "2026-09-29")],
 };
 
+// One-hundred-seventh review batch: exact 1975 full-film upload for Golden
+// Heel (Pashneh Tala). The publisher's listing names the same feature and
+// provides a 114-minute runtime.
+const BATCH_ONE_HUNDRED_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1354002": [publicYouTubeVideo("PKMW8M6HHko", "Golden Heel (1975) - full film - Pashneh Tala", "Pars Film Official", 6840, "2026-09-29")],
+};
+
 // One-hundredth review batch: a direct full-film upload for Goodbye Little
 // One (1354). The catalogue runtime is 102 minutes and the indexed YouTube
 // title identifies the upload as a complete film.
@@ -1234,6 +1241,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIX_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIX_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FIVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIVE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FOUR_YOUTUBE_BY_ID[key];

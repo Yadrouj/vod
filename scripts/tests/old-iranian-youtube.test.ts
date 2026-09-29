@@ -1284,3 +1284,12 @@ test("one-hundred-sixth review batch exposes the duration-checked Mandrake uploa
   assert.match(item[0].title, /Mandrake/i);
 });
 
+test("one-hundred-seventh review batch exposes the duration-checked Golden Heel upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1354002");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "PKMW8M6HHko");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=PKMW8M6HHko");
+  assert.equal(item[0].durationSeconds, 6840);
+  assert.match(item[0].title, /Golden Heel/i);
+});
+
