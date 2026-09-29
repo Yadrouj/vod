@@ -152,6 +152,20 @@ const BATCH_ONE_HUNDRED_FIFTEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> =
   "old-iranian-1354046": [publicYouTubeVideo("RtpqqSt5XgE", "Hasrat | 1354 | Full Movie", "Beykiha", 6568, "2026-09-29")],
 };
 
+// 2026-09-29 research batch: exact archive-title matches with independently
+// checked feature-length runtimes. Duplicate and ambiguous year matches omitted.
+const BATCH_ONE_HUNDRED_SIXTEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1354051": [publicYouTubeVideo("UgyQu0linbI", "Mard Na Aram | 1354 | Full Movie", "Beykiha", 5269, "2026-09-29")],
+  "old-iranian-1354053": [publicYouTubeVideo("qzV7-IbzILc", "Be Omide Didar | 1354 | Full Movie", "Shouka Film", 5797, "2026-09-29")],
+  "old-iranian-1354059": [publicYouTubeVideo("kizYrD1oCOw", "Do Aghaye Ba Shakhsiyat | 1354 | Full Movie", "Beykiha", 5977, "2026-09-29")],
+  "old-iranian-1354062": [publicYouTubeVideo("9BIDZZ5egEk", "Madar Doostat Daram | 1354 | Full Movie", "Cinema Rex", 5890, "2026-09-29")],
+  "old-iranian-1354021": [publicYouTubeVideo("vzKgy4zqY54", "Tabiate Bijan | 1354 | Full Movie", "Persian Films Archive", 5399, "2026-09-29")],
+  "old-iranian-1353042": [publicYouTubeVideo("BpF8aEmrPoc", "Mosafer | 1353 | Full Movie", "Film Ghadimi Rangi", 5566, "2026-09-29")],
+  "old-iranian-1352066": [publicYouTubeVideo("iV47jXhcPjo", "Saz Dahani | 1352 | Full Movie", "Amirbahador Zandi", 4406, "2026-09-29")],
+  "old-iranian-1354012": [publicYouTubeVideo("dH6zlYifz3E", "Gharibeh Va Meh | 1354 | Full Movie", "Cine Persia", 7248, "2026-09-29")],
+  "old-iranian-1353015": [publicYouTubeVideo("O30ckFCpWt8", "Zir-e Poost-e Shab | 1353 | Full Movie", "Rakhshan", 7160, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1343,6 +1357,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SIXTEEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTEEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FIFTEEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIFTEEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FOURTEEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FOURTEEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_THIRTEEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_THIRTEEN_YOUTUBE_BY_ID[key];
