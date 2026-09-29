@@ -1714,3 +1714,11 @@ test("one-hundred-twenty-ninth review batch exposes two exact full-film uploads"
   }
 });
 
+test("one-hundred-thirtieth review batch exposes the exact Morad Barghi full-film upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1353004");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "MlMTwjiRHM4");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=MlMTwjiRHM4");
+  assert.match(item[0].title, /full movie/i);
+});
+
