@@ -85,6 +85,20 @@ const BATCH_ONE_HUNDRED_TEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1354052": [publicYouTubeVideo("RvydlA2HljQ", "فیلم در غربت · ۱۳۵۴ · نسخه کامل", "Persian Films Archive", 5177, "2026-09-29")],
 };
 
+// 2026-09-29 research batch: exact-title classic uploads with verified
+// feature-length runtimes. Search lookalikes and short excerpts are excluded.
+const BATCH_ONE_HUNDRED_ELEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1354033": [publicYouTubeVideo("Er_eP6Y5UIQ", "خانه خراب · نسخه کامل", "FilmFarsi", 6071, "2026-09-29")],
+  "old-iranian-1355066": [publicYouTubeVideo("pKEvZFOZjec", "فیلم قدیمی؛ سه رفیق · ۱۳۵۵", "Filmrangi", 4877, "2026-09-29")],
+  "old-iranian-1354025": [publicYouTubeVideo("jjKFEj9PH3o", "فیلم ایرانی قدیمی هم قسم · ۱۳۵۴", "سینما رنگارنگ", 5010, "2026-09-29")],
+  "old-iranian-1355002": [publicYouTubeVideo("xs4zGOqNyac", "قرار بزرگ · فیلم کامل ایرانی", "Global Vault TV", 5768, "2026-09-29")],
+  "old-iranian-1354047": [publicYouTubeVideo("BpKcHF6J8VY", "فیلم قدیمی؛ ذبیح · ۱۳۵۴", "Filmrangi", 5241, "2026-09-29")],
+  "old-iranian-1353050": [publicYouTubeVideo("TS1x-2FBlw8", "مواظب کلات باش · ۱۳۵۳ · نسخه کامل", "Cinema Rex", 6568, "2026-09-29")],
+  "old-iranian-1354063": [publicYouTubeVideo("yYmGn6dPQI4", "فیلم قدیمی؛ آلوده · ۱۳۵۴", "Filmrangi", 6550, "2026-09-29")],
+  "old-iranian-1354023": [publicYouTubeVideo("vDS3bak7u5g", "فیلم قدیمی؛ هم‌خون · ۱۳۵۴", "Filmrangi", 4952, "2026-09-29")],
+  "old-iranian-1355067": [publicYouTubeVideo("1nACXIXt31E", "فیلم قدیمی؛ راننده سربلند · ۱۳۵۵", "Filmrangi", 4799, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1276,6 +1290,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_ELEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_ELEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_NINE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_EIGHT_YOUTUBE_BY_ID[key];

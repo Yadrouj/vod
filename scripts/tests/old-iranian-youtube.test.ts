@@ -199,6 +199,27 @@ test("one-hundred-tenth review batch exposes exact Persian-title feature films",
   }
 });
 
+test("one-hundred-eleventh review batch exposes exact classic feature uploads", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1354033", "Er_eP6Y5UIQ", 6071],
+    ["old-iranian-1355066", "pKEvZFOZjec", 4877],
+    ["old-iranian-1354025", "jjKFEj9PH3o", 5010],
+    ["old-iranian-1355002", "xs4zGOqNyac", 5768],
+    ["old-iranian-1354047", "BpKcHF6J8VY", 5241],
+    ["old-iranian-1353050", "TS1x-2FBlw8", 6568],
+    ["old-iranian-1354063", "yYmGn6dPQI4", 6550],
+    ["old-iranian-1354023", "vDS3bak7u5g", 4952],
+    ["old-iranian-1355067", "1nACXIXt31E", 4799],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.equal(item[0].checkedAt, "2026-09-29");
+    assert.ok((item[0].durationSeconds ?? 0) >= 3600);
+  }
+});
+
 test("thirteenth review batch exposes the verified full-length Rebellious upload", () => {
   const item = getOldIranianYouTubeVideos("old-iranian-1357008");
   assert.ok(item);
