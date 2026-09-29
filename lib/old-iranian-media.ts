@@ -1010,6 +1010,13 @@ const BATCH_ONE_HUNDRED_FIVE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1353011": [publicYouTubeVideo("6HClUhQZevw", "Pari Khoshgeleh (1974) - full film", "FilmFarsi", 5513, "2026-09-28")],
 };
 
+// One-hundred-sixth review batch: exact 1975 full-film upload for The
+// Mandrake (Mehre giah). The catalogue and IMDb identify the same Iranian
+// feature, while the archived source confirms the YouTube video's runtime.
+const BATCH_ONE_HUNDRED_SIX_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1354008": [publicYouTubeVideo("hJy8iFBIj1E", "The Mandrake (1975) - full film - Mehre giah", "Pars Film Studio", 6069, "2026-09-29")],
+};
+
 // One-hundredth review batch: a direct full-film upload for Goodbye Little
 // One (1354). The catalogue runtime is 102 minutes and the indexed YouTube
 // title identifies the upload as a complete film.
@@ -1227,6 +1234,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SIX_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIX_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FIVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIVE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FOUR_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_THREE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_THREE_YOUTUBE_BY_ID[key];

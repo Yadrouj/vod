@@ -1275,3 +1275,12 @@ test("one-hundred-fifth review batch exposes the duration-checked Pari Khoshgele
   assert.match(item[0].title, /full film/i);
 });
 
+test("one-hundred-sixth review batch exposes the duration-checked Mandrake upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1354008");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "hJy8iFBIj1E");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=hJy8iFBIj1E");
+  assert.equal(item[0].durationSeconds, 6069);
+  assert.match(item[0].title, /Mandrake/i);
+});
+
