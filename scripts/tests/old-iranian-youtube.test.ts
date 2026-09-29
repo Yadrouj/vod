@@ -1750,3 +1750,11 @@ test("one-hundred-thirty-second review batch exposes three duration-checked or e
   }
 });
 
+test("one-hundred-thirty-third review batch exposes the exact Agha Mehdi Kalle-Paz full-film upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1352028");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "jYOxAdhfDLY");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=jYOxAdhfDLY");
+  assert.match(item[0].title, /full movie/i);
+});
+
