@@ -1630,3 +1630,20 @@ test("one-hundred-seventh review batch exposes the duration-checked Golden Heel 
   assert.match(item[0].title, /Golden Heel/i);
 });
 
+test("one-hundred-twenty-fifth review batch exposes five duration-checked full-film uploads", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1353043", "qTYdG_eVv4Q", 4395],
+    ["old-iranian-1353051", "BhbP3qnOkww", 6600],
+    ["old-iranian-1352062", "PuC-fLRxqX4", 5400],
+    ["old-iranian-1352002", "wxAHo3Di2e0", 5580],
+    ["old-iranian-1352011", "_vEVtQaQewQ", 6960],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.match(item[0].title, /full movie/i);
+  }
+});
+

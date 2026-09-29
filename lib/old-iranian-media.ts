@@ -269,6 +269,16 @@ const BATCH_ONE_HUNDRED_TWENTY_FOUR_YOUTUBE_BY_ID: Record<string, YouTubeSource[
   "old-iranian-1352013": [publicYouTubeVideo("_2QDqSLGB1c", "Bandari | 1352 | Full Movie", "Filmrangi", 5314, "2026-09-29")],
 };
 
+// 2026-09-29 research batch: direct YouTube uploads matched to the archive
+// title/year and checked against a feature-length runtime source.
+const BATCH_ONE_HUNDRED_TWENTY_FIVE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1353043": [publicYouTubeVideo("qTYdG_eVv4Q", "Mosafer | 1353 | Full Movie", "MalayerBook Media", 4395, "2026-09-29")],
+  "old-iranian-1353051": [publicYouTubeVideo("BhbP3qnOkww", "Golnesa in Paris | 1353 | Full Movie", "Cinema Rex", 6600, "2026-09-29")],
+  "old-iranian-1352062": [publicYouTubeVideo("PuC-fLRxqX4", "The Kiss on Bloody Lips | 1352 | Full Movie", "FilmFarsi", 5400, "2026-09-29")],
+  "old-iranian-1352002": [publicYouTubeVideo("wxAHo3Di2e0", "Kaka Siyah | 1352 | Full Movie", "FilmFarsi", 5580, "2026-09-29")],
+  "old-iranian-1352011": [publicYouTubeVideo("_vEVtQaQewQ", "Papoosh | 1352 | Full Movie", "FilmFarsi", 6960, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1460,6 +1470,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_TWENTY_FIVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_FIVE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_FOUR_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_THREE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_TWO_YOUTUBE_BY_ID[key];
