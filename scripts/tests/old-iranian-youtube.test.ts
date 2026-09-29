@@ -1892,3 +1892,16 @@ test("one-hundred-forty-third review batch exposes three exact full-film uploads
   }
 });
 
+test("one-hundred-forty-fourth review batch exposes two exact full-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1351080", "NxiPYTQMEfE", "تختخواب سه نفره"],
+    ["old-iranian-1351086", "pI325KKXq6g", "یک میلیونر و دو مفلس"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+});
+
