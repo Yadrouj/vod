@@ -259,6 +259,16 @@ const BATCH_ONE_HUNDRED_TWENTY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource
   "old-iranian-1352073": [publicYouTubeVideo("r0z2Y79HCyk", "Ghool | 1352 | Full Movie", "TimeTravel TV", 6047, "2026-09-29")],
 };
 
+// 2026-09-29 research batch: exact archive-title/year matches with known
+// feature-length runtime. Results without reliable duration are omitted.
+const BATCH_ONE_HUNDRED_TWENTY_FOUR_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1352067": [publicYouTubeVideo("G56oyeve94Y", "Maghrebi | 1352 | Full Movie", "Mordegan Mohtaram", 4991, "2026-09-29")],
+  "old-iranian-1352045": [publicYouTubeVideo("CQIkcddYESY", "Ali Konkouri | 1352 | Full Movie", "Persian Comedy Channel", 6118, "2026-09-29")],
+  "old-iranian-1353017": [publicYouTubeVideo("MXFT5wHttck", "Aghaye Jahel | 1353 | Full Movie", "Film Haye Ghadimi", 6565, "2026-09-29")],
+  "old-iranian-1352007": [publicYouTubeVideo("FZIZ0_g83NE", "Ki Daste Gol Beh Ab Dadeh | 1352 | Full Movie", "Filmrangi", 6057, "2026-09-29")],
+  "old-iranian-1352013": [publicYouTubeVideo("_2QDqSLGB1c", "Bandari | 1352 | Full Movie", "Filmrangi", 5314, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1450,6 +1460,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_TWENTY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_FOUR_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_THREE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_ONE_YOUTUBE_BY_ID[key];
