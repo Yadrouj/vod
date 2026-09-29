@@ -144,6 +144,23 @@ test("eleventh review batch keeps live, exact long-form matches", () => {
   }
 });
 
+test("one-hundred-eighth review batch exposes only exact feature-length uploads", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1357010", "0mA75WPm2t0", 6309],
+    ["old-iranian-1355011", "XT2NkIdYlLE", 6239],
+    ["old-iranian-1355022", "FgjlWf6lmco", 6124],
+    ["old-iranian-1354048", "Oms9TQWIYCo", 6088],
+    ["old-iranian-1355014", "NEEIag8N10A", 6176],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.equal(item[0].checkedAt, "2026-09-29");
+    assert.match(item[0].sourceUrl, /^https:\/\/www\.youtube\.com\/watch\?v=/);
+  }
+});
+
 test("thirteenth review batch exposes the verified full-length Rebellious upload", () => {
   const item = getOldIranianYouTubeVideos("old-iranian-1357008");
   assert.ok(item);

@@ -50,6 +50,17 @@ function publicOitnVideo(videoId: string, title: string, durationSeconds: number
   };
 }
 
+// 2026-09-29 research batch: exact-title, feature-length public uploads for
+// previously unlinked archive entries. Short clips and ambiguous matches stay
+// excluded even when the search returned a similarly named video.
+const BATCH_ONE_HUNDRED_EIGHT_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1357010": [publicYouTubeVideo("0mA75WPm2t0", "Faryadras · full film", "Beykiha", 6309, "2026-09-29")],
+  "old-iranian-1355011": [publicYouTubeVideo("XT2NkIdYlLE", "Agitation · full film", "Persian Culture HD", 6239, "2026-09-29")],
+  "old-iranian-1355022": [publicYouTubeVideo("FgjlWf6lmco", "Mr. Mostafa's Mother · full film", "Filmrangi", 6124, "2026-09-29")],
+  "old-iranian-1354048": [publicYouTubeVideo("Oms9TQWIYCo", "Reed Bed · full film", "tiktok challenge", 6088, "2026-09-29")],
+  "old-iranian-1355014": [publicYouTubeVideo("NEEIag8N10A", "Herfei · full film", "Shahre Farang", 6176, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1241,6 +1252,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIX_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIX_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FIVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIVE_YOUTUBE_BY_ID[key];

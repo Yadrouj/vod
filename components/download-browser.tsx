@@ -144,14 +144,19 @@ function EpisodeRow({ episode, itemId, seriesTitle, fallbackImage, playable, pla
   const [visible, setVisible] = useState(6);
   const [imageFailed, setImageFailed] = useState(false);
   const fa = locale === "fa";
-  const image = imageFailed ? fallbackImage : episode.imageUrl ?? fallbackImage;
+  // Keep the fallback episode-specific. Falling back to the series poster here
+  // made every failed/blocked still look like the same episode image.
+  const episodeFallback = episode.episode != null
+    ? `/api/episode-art/${encodeURIComponent(itemId)}/${episode.season}/${episode.episode}`
+    : fallbackImage;
+  const image = imageFailed ? episodeFallback : episode.imageUrl ?? episodeFallback;
   const identity = episode.episode != null ? `${fa ? "فصل" : "Season"} ${episode.season} · ${fa ? "قسمت" : "Episode"} ${episode.episode}` : fa ? "مجموعه فصل" : "Season pack";
   const subtitle = /^Episode \d+$|^Season pack$/i.test(episode.title) ? "" : episode.title;
   const imageAlt = episode.imageAlt || `${seriesTitle} · ${identity}`;
   return <details className="episode-row" data-episode-artwork="customizable" data-image-source={episode.imageSource ?? "none"} open={open} onToggle={event => setOpen(event.currentTarget.open)}>
     <summary>
       <span className="episode-thumb">
-        {image && <img key={image} src={sizedImageUrl(image, 320) ?? image} alt={imageAlt} loading="lazy" decoding="async" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:episode.imageFit ?? "cover",objectPosition:episode.imagePosition ?? "50% 50%"}} onError={event => { if (!imageFailed && image !== fallbackImage) setImageFailed(true); else event.currentTarget.style.visibility = "hidden"; }} />}
+        {image && <img key={image} src={sizedImageUrl(image, 320) ?? image} alt={imageAlt} loading="lazy" decoding="async" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:episode.imageFit ?? "cover",objectPosition:episode.imagePosition ?? "50% 50%"}} onError={event => { if (!imageFailed && image !== episodeFallback) setImageFailed(true); else event.currentTarget.style.visibility = "hidden"; }} />}
         <span style={{position:"relative"}}>{episode.code}</span>
       </span>
       <div className="episode-copy"><h3>{identity}</h3><p dir="auto">{subtitle || `${episode.files.length} ${fa ? "نسخه برای دانلود" : "download versions"}`}</p></div>
