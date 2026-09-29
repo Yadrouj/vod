@@ -215,6 +215,21 @@ const BATCH_ONE_HUNDRED_TWENTY_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = 
   "old-iranian-1353025": [publicYouTubeVideo("BAYyxGSvggs", "Doctor va Raghasseh | 1353 | Full Movie", "Filmrangi", 6357, "2026-09-29")],
 };
 
+// 2026-09-29 research batch: exact archive-title matches with verified
+// feature-length runtimes. Trailers, clips and unrelated modern titles omitted.
+const BATCH_ONE_HUNDRED_TWENTY_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1353031": [publicYouTubeVideo("RqJTwUCFI3Y", "Mozaffar | 1353 | Full Movie", "Film Ghadimi Rangi", 4229, "2026-09-29")],
+  "old-iranian-1353041": [publicYouTubeVideo("cm0tHBqmtGc", "Dorooghgoo-ye Koochooloo | 1353 | Full Movie", "FilmFarsi", 6171, "2026-09-29")],
+  "old-iranian-1353045": [publicYouTubeVideo("IbPLA4Ko_gc", "Asrar-e Ganj-e Darreh-ye Jeni | 1353 | Full Movie", "Film Irooni", 9374, "2026-09-29")],
+  "old-iranian-1353047": [publicYouTubeVideo("bSnWboEe6Q0", "Ab-e Tobe | 1353 | Full Movie", "Cinema Rangarang", 5686, "2026-09-29")],
+  "old-iranian-1353052": [publicYouTubeVideo("MG9broZvsq8", "Mard-e Shab | 1353 | Full Movie", "Filmrangi", 6312, "2026-09-29")],
+  "old-iranian-1353057": [publicYouTubeVideo("jOdulOqQ8Bw", "Mehdi Farangi | 1353 | Full Movie", "Cinema Rex", 5103, "2026-09-29")],
+  "old-iranian-1353060": [publicYouTubeVideo("w0gb4C2jIwo", "Ab | 1353 | Full Movie", "Filmrangi", 4617, "2026-09-29")],
+  "old-iranian-1353063": [publicYouTubeVideo("w6qgy1m8ik4", "Khashm-o Khoon | 1353 | Full Movie", "FilmFarsi", 5470, "2026-09-29")],
+  "old-iranian-1353064": [publicYouTubeVideo("oeO3zkD9wDU", "Kowsar | 1353 | Full Movie", "Filmrangi", 5303, "2026-09-29")],
+  "old-iranian-1352063": [publicYouTubeVideo("EDb6aaZXRqU", "Yek Etefagh Sadeh | 1352 | Full Movie", "Cine Persia", 4664, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1406,6 +1421,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_TWENTY_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_ONE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_NINETEEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETEEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_EIGHTEEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_EIGHTEEN_YOUTUBE_BY_ID[key];
