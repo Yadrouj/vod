@@ -230,6 +230,21 @@ const BATCH_ONE_HUNDRED_TWENTY_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]
   "old-iranian-1352063": [publicYouTubeVideo("EDb6aaZXRqU", "Yek Etefagh Sadeh | 1352 | Full Movie", "Cine Persia", 4664, "2026-09-29")],
 };
 
+// 2026-09-29 research batch: exact archive-title/year matches with verified
+// feature-length runtimes. Short clips and unrelated modern results omitted.
+const BATCH_ONE_HUNDRED_TWENTY_TWO_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1352009": [publicYouTubeVideo("GXI9J9dWzJk", "Tangna | 1352 | Full Movie", "Filmrangi", 6039, "2026-09-29")],
+  "old-iranian-1352016": [publicYouTubeVideo("2MuaJZNbbFI", "Khialati | 1352 | Full Movie", "Beykiha", 6689, "2026-09-29")],
+  "old-iranian-1352031": [publicYouTubeVideo("1rUeQkud4zM", "Nemat Nafti | 1352 | Full Movie", "FilmFarsi", 6518, "2026-09-29")],
+  "old-iranian-1352069": [publicYouTubeVideo("TAWDAGnnjsk", "Khorous | 1352 | Full Movie", "Hidalo Dust", 6468, "2026-09-29")],
+  "old-iranian-1352077": [publicYouTubeVideo("tigJIc5spAE", "Mogholha | 1352 | Full Movie", "Mordegan Mohtaram", 6799, "2026-09-29")],
+  "old-iranian-1352039": [publicYouTubeVideo("IuPGZUhuMbQ", "Ghesseh Shab | 1352 | Full Movie", "Beykiha", 6524, "2026-09-29")],
+  "old-iranian-1352051": [publicYouTubeVideo("MhKZQrMmnXk", "Gorg-e Bizar | 1352 | Full Movie", "FilmFarsi", 5840, "2026-09-29")],
+  "old-iranian-1352021": [publicYouTubeVideo("X4qXRk8TnCU", "Ghiamat-e Eshgh | 1352 | Full Movie", "Filmrangi", 5122, "2026-09-29")],
+  "old-iranian-1352043": [publicYouTubeVideo("vfUBWBy0O8s", "Khak | 1352 | Full Movie", "Filmrangi", 6141, "2026-09-29")],
+  "old-iranian-1352058": [publicYouTubeVideo("MmXID92UYeQ", "Nefrin | 1352 | Full Movie", "Filmrangi", 5041, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1421,6 +1436,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_TWENTY_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_ONE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWENTY_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWENTY_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_NINETEEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETEEN_YOUTUBE_BY_ID[key];

@@ -318,6 +318,28 @@ test("one-hundred-twenty-first review batch exposes exact archive feature films"
   }
 });
 
+test("one-hundred-twenty-second review batch exposes exact archive feature films", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1352009", "GXI9J9dWzJk", 6039],
+    ["old-iranian-1352016", "2MuaJZNbbFI", 6689],
+    ["old-iranian-1352031", "1rUeQkud4zM", 6518],
+    ["old-iranian-1352069", "TAWDAGnnjsk", 6468],
+    ["old-iranian-1352077", "tigJIc5spAE", 6799],
+    ["old-iranian-1352039", "IuPGZUhuMbQ", 6524],
+    ["old-iranian-1352051", "MhKZQrMmnXk", 5840],
+    ["old-iranian-1352021", "X4qXRk8TnCU", 5122],
+    ["old-iranian-1352043", "vfUBWBy0O8s", 6141],
+    ["old-iranian-1352058", "MmXID92UYeQ", 5041],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.equal(item[0].checkedAt, "2026-09-29");
+    assert.ok((item[0].durationSeconds ?? 0) >= 3600);
+  }
+});
+
 test("one-hundred-sixteenth review batch exposes exact archive feature films", () => {
   for (const [id, videoId, duration] of [
     ["old-iranian-1354051", "UgyQu0linbI", 5269],
