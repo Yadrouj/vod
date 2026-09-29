@@ -219,6 +219,22 @@ test("one-hundred-fifteenth review batch exposes exact 1354 feature films", () =
   }
 });
 
+test("one-hundred-seventeenth review batch exposes exact 1353 feature films", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1353055", "5T1MBAuEcJA", 6631],
+    ["old-iranian-1353058", "Xk9ywF5ybEk", 5274],
+    ["old-iranian-1353044", "Pl9IDBiCO6w", 5447],
+    ["old-iranian-1353028", "pvnzzW_0vkU", 5941],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.equal(item[0].checkedAt, "2026-09-29");
+    assert.ok((item[0].durationSeconds ?? 0) >= 3600);
+  }
+});
+
 test("one-hundred-sixteenth review batch exposes exact archive feature films", () => {
   for (const [id, videoId, duration] of [
     ["old-iranian-1354051", "UgyQu0linbI", 5269],
