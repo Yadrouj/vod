@@ -1792,3 +1792,18 @@ test("one-hundred-thirty-sixth review batch exposes the exact Holoo-ye Poost-Kan
   assert.match(item[0].title, /full movie/i);
 });
 
+test("one-hundred-thirty-seventh review batch exposes three exact full-film uploads", () => {
+  for (const [id, videoId, duration] of [
+    ["old-iranian-1354026", "kzBLbCtnZyA", undefined],
+    ["old-iranian-1353007", "NTCKsQC001c", undefined],
+    ["old-iranian-1352003", "KFdxGW36-IM", 6840],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.equal(item[0].durationSeconds, duration);
+    assert.match(item[0].title, /full movie/i);
+  }
+});
+
