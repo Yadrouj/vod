@@ -188,6 +188,20 @@ const BATCH_ONE_HUNDRED_EIGHTEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> 
   "old-iranian-1353013": [publicYouTubeVideo("wSp3Oufr4_E", "Kaniz | 1353 | Full Movie", "Filmrangi", 7020, "2026-09-29")],
 };
 
+// 2026-09-29 research batch: exact archive-title/year matches with verified
+// feature-length runtimes. Search lookalikes and partial uploads are excluded.
+const BATCH_ONE_HUNDRED_NINETEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1353029": [publicYouTubeVideo("zCjRDVRurvU", "Mashin-e Mashti Mamdali | 1353 | Full Movie", "Cinema Rex", 5697, "2026-09-29")],
+  "old-iranian-1353033": [publicYouTubeVideo("fbVWn0eqM5Q", "Aroos-e Pa-Berahne | 1353 | Full Movie", "Filmrangi", 6531, "2026-09-29")],
+  "old-iranian-1353046": [publicYouTubeVideo("zwZyZi5wpEA", "Alaki Khosh | 1353 | Full Movie", "Filmrangi", 5942, "2026-09-29")],
+  "old-iranian-1353022": [publicYouTubeVideo("1VyDDAwUBzM", "Bandeh Khoda | 1353 | Full Movie", "Filmrangi", 6300, "2026-09-29")],
+  "old-iranian-1353005": [publicYouTubeVideo("YearyStuv7E", "Miram Baba Bekharam | 1353 | Full Movie", "Filmrangi", 6535, "2026-09-29")],
+  "old-iranian-1353048": [publicYouTubeVideo("PaH9qCDr-HE", "Moosorkheh | 1353 | Full Movie", "Watch and Enjoy Movie", 5468, "2026-09-29")],
+  "old-iranian-1353008": [publicYouTubeVideo("zC8HbSzY3bY", "Torkaman | 1353 | Full Movie", "Persian Films Archive", 6142, "2026-09-29")],
+  "old-iranian-1352055": [publicYouTubeVideo("DGnw2kVAahg", "Salome | 1352 | Full Movie", "Filmrangi", 5877, "2026-09-29")],
+  "old-iranian-1353039": [publicYouTubeVideo("7Ng91o94iAQ", "Hayahoo | 1353 | Full Movie", "Filmrangi", 5504, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1379,6 +1393,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_NINETEEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETEEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_EIGHTEEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_EIGHTEEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SEVENTEEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVENTEEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTEEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTEEN_YOUTUBE_BY_ID[key];
