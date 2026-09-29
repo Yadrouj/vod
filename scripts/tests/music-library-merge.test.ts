@@ -21,6 +21,9 @@ test("existing singer profile gets every local song, tag, count and alias withou
   assert.equal(result.artists.length, 1);
   assert.equal(result.artists[0].trackCount, 12);
   assert.ok(result.artists[0].categories.includes("Workout"));
+  assert.equal(result.categoryCounts?.["پاپ"], 2);
+  assert.equal(result.categoryCounts?.Workout, 2);
+  assert.equal(result.categoryCounts?.Chill, 2);
   assert.deepEqual(result.artistTrackIds.rezaya, ["old", "melodify-1", "melodify-2"]);
   assert.equal(result.tracks[0].artist.slug, "rezaya");
   assert.deepEqual(base.artists[0], singer, "Must not mutate the cached base catalog");
@@ -35,6 +38,8 @@ test("compact homepage includes a bounded selection but correct complete archive
   assert.equal(result.archiveStats.tracks, 200);
   assert.equal(result.archiveStats.artists, 25);
   assert.ok(result.categories.includes("Chill"));
+  assert.equal(result.categoryCounts?.["پاپ"], 100);
+  assert.equal(result.categoryCounts?.Workout, 100);
   assert.equal(result.artists[0].trackIds.length, 100);
   assert.equal(mergeMelodifyCatalog({ ...base, scope: "home" }, library).tracks.length, 24);
 });

@@ -57,11 +57,15 @@ export function mergeMelodifyCatalog<T extends MusicIndex>(base: T, library: Mus
   const scope = indexedBase.scope;
   const selected = scope === "landing" || scope === "home" ? selectLibraryArrivals(additions, scope === "home" ? 24 : 48) : additions;
   const stats = indexedBase.archiveStats;
+  const libraryCategoryCounts = library.categoryCounts ?? countCategories(library.tracks);
+  const categoryCounts = mergeCategoryCounts(base, libraryCategoryCounts);
   return {
     ...base,
     updatedAt: library.updatedAt > base.updatedAt ? library.updatedAt : base.updatedAt,
     tracks: [...base.tracks, ...selected],
     artists: [...artists.values()],
+    categoryCounts,
+    libraryCategoryCounts,
     categories: [...new Set([...base.categories, ...library.categories, ...library.tracks.flatMap(t => [t.category, ...(t.moods ?? [])])])],
     ...(stats ? { archiveStats: { ...stats,
       tracks: stats.tracks + additions.filter(t => t.kind === "track").length,
@@ -69,6 +73,46 @@ export function mergeMelodifyCatalog<T extends MusicIndex>(base: T, library: Mus
     } } : {}),
     ...(artistTrackIds ? { artistTrackIds: Object.fromEntries(Object.entries(artistTrackIds).map(([slug, ids]) => [slug, [...ids]])) } : {}),
   } as T;
+}
+
+function mergeCategoryCounts(base: MusicIndex, libraryCategoryCounts: Record<string, number>) {
+  const result = new Map<string, number>();
+  const add = (counts: Record<string, number> | undefined) => {
+    for (const [category, count] of Object.entries(counts ?? {})) {
+      if (Number.isFinite(count) && count > 0) result.set(category, (result.get(category) ?? 0) + count);
+    }
+  };
+  const subtract = (counts: Record<string, number> | undefined) => {
+    for (const [category, count] of Object.entries(counts ?? {})) {
+      const remaining = (result.get(category) ?? 0) - count;
+      if (remaining > 0) result.set(category, remaining);
+      else result.delete(category);
+    }
+  };
+  if (base.categoryCounts) {
+    add(base.categoryCounts);
+    // A second merge starts from an already merged compact/full index. Remove
+    // the previous import before adding the latest server snapshot.
+    subtract(base.libraryCategoryCounts);
+  } else {
+    for (const track of base.tracks) {
+      for (const category of new Set([track.category, ...(track.moods ?? [])].filter(Boolean))) {
+        result.set(category, (result.get(category) ?? 0) + 1);
+      }
+    }
+  };
+  add(libraryCategoryCounts);
+  return Object.fromEntries([...result.entries()].sort(([left], [right]) => left.localeCompare(right, "fa")));
+}
+
+function countCategories(tracks: MusicTrack[]) {
+  const counts: Record<string, number> = {};
+  for (const track of tracks) {
+    for (const category of new Set([track.category, ...(track.moods ?? [])].filter(Boolean))) {
+      counts[category] = (counts[category] ?? 0) + 1;
+    }
+  }
+  return counts;
 }
 
 export function selectLibraryArrivals(tracks: MusicTrack[], limit: number) {

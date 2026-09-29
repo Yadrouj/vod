@@ -3,8 +3,8 @@ import styles from "./music-category-nav.module.css";
 
 const PINNED_CATEGORIES = ["آهنگ", "موزیک ویدیو", "موسیقی قدیمی فارسی", "موسیقی خارجی", "ریمیکس"];
 
-export function MusicCategoryNav({ categories, activeCategory = "", libraryOnly = false }: { categories: string[]; activeCategory?: string; libraryOnly?: boolean }) {
-  const values = [...new Set(categories.map((category) => category.trim()).filter(Boolean))]
+export function MusicCategoryNav({ categories, categoryCounts = {}, activeCategory = "", libraryOnly = false }: { categories: string[]; categoryCounts?: Record<string, number>; activeCategory?: string; libraryOnly?: boolean }) {
+  const values = [...new Set([...categories, ...Object.keys(categoryCounts)].map((category) => category.trim()).filter(Boolean))]
     .sort((left, right) => {
       const leftIndex = PINNED_CATEGORIES.indexOf(left);
       const rightIndex = PINNED_CATEGORIES.indexOf(right);
@@ -28,7 +28,8 @@ export function MusicCategoryNav({ categories, activeCategory = "", libraryOnly 
         <Link className={libraryOnly ? styles.active : undefined} href="/music?added=library">تازه‌های آرشیو</Link>
         {values.map((category) => (
           <Link className={activeCategory === category ? styles.active : undefined} href={`/music?category=${encodeURIComponent(category)}`} key={category}>
-            {category}
+            <span>{category}</span>
+            {categoryCounts[category] ? <small>{categoryCounts[category].toLocaleString("fa-IR")}</small> : null}
           </Link>
         ))}
       </nav>

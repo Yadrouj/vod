@@ -71,9 +71,20 @@ function makeIndex(source, tracks, artists, archiveStats, scope) {
     tracks,
     artists,
     categories: source.categories ?? [],
+    categoryCounts: source.categoryCounts ?? countCategories(source.tracks ?? []),
     archiveStats,
     scope,
   };
+}
+
+function countCategories(tracks) {
+  const counts = {};
+  for (const track of tracks) {
+    for (const category of new Set([track.category, ...(track.moods ?? [])].filter(Boolean))) {
+      counts[category] = (counts[category] ?? 0) + 1;
+    }
+  }
+  return Object.fromEntries(Object.entries(counts).sort(([left], [right]) => left.localeCompare(right, "fa")));
 }
 
 function compactTrack(track) {

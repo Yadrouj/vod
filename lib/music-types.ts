@@ -75,6 +75,10 @@ export type MusicIndex = {
   tracks: MusicTrack[];
   artists: MusicArtist[];
   categories: string[];
+  /** Number of unique tracks carrying each category/tag. */
+  categoryCounts?: Record<string, number>;
+  /** Runtime provenance used to replace an updated imported library idempotently. */
+  libraryCategoryCounts?: Record<string, number>;
   /** Imported artist identities already represented in the upstream archive. */
   libraryExistingArtistSlugs?: string[];
 };

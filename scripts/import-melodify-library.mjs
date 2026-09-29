@@ -64,11 +64,22 @@ export function buildMelodifyCatalog(snapshot, previous = {}, now = new Date().t
     scanned: { musicPages: 0, videoPages: 0, full: true },
     tracks: [...tracks.values()], artists: [...artists.values()],
     libraryExistingArtistSlugs: [...existingArtistSlugs].sort(),
+    categoryCounts: countCategories([...tracks.values()]),
     categories: [...new Set([...tracks.values()].flatMap(t => [t.category, ...t.moods]))].sort((a, b) => a.localeCompare(b, "fa")),
   };
   // Re-running an unchanged import must not mark every song as new again.
   if (JSON.stringify({ ...catalog, updatedAt: "" }) === JSON.stringify({ ...previous, updatedAt: "" })) catalog.updatedAt = previous.updatedAt;
   return catalog;
+}
+
+function countCategories(tracks) {
+  const counts = {};
+  for (const track of tracks) {
+    for (const category of new Set([track.category, ...(track.moods ?? [])].filter(Boolean))) {
+      counts[category] = (counts[category] ?? 0) + 1;
+    }
+  }
+  return Object.fromEntries(Object.entries(counts).sort(([left], [right]) => left.localeCompare(right, "fa")));
 }
 
 async function main() {

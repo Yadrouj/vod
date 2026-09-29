@@ -10,6 +10,8 @@ test("Melodify export contains every downloaded track as a catalogued local sour
   assert.equal(new Set(catalog.tracks.map((track) => track.id)).size, catalog.tracks.length);
   assert.ok(catalog.categories.includes("Chill"));
   assert.ok(catalog.categories.includes("پاپ"));
+  assert.equal(catalog.categoryCounts.Chill, 731);
+  assert.equal(catalog.categoryCounts["پاپ"], 2020);
   for (const track of catalog.tracks) {
     assert.match(track.id, /^melodify-\d+$/u);
     assert.ok(track.moods.length >= 1);
@@ -31,6 +33,7 @@ test("import preserves all tags, canonical singer aliases, arrival dates and sta
   const second = buildMelodifyCatalog(snapshot, first, "2026-09-02T00:00:00Z", baseArtists);
   assert.deepEqual(second, first, "An unchanged refresh is idempotent");
   assert.deepEqual(first.tracks[0].moods, ["Chill", "پاپ"]);
+  assert.deepEqual(first.categoryCounts, { "Chill": 1, "پاپ": 1 });
   assert.equal(first.tracks[0].artist.slug, "rezaya");
   assert.equal(first.tracks[0].publishedAt, null, "An archive addition is not a new release");
   assert.deepEqual(first.libraryExistingArtistSlugs, ["rezaya"]);
