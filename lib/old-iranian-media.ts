@@ -111,6 +111,21 @@ const BATCH_ONE_HUNDRED_TWELVE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = 
   "old-iranian-1354020": [publicYouTubeVideo("QV6Ni6_UV_w", "فیلم قدیمی؛ مشکی · ۱۳۵۴", "Filmrangi", 5417, "2026-09-29")],
 };
 
+// 2026-09-29 research batch: exact-title full films with a verified runtime
+// over one hour. Modern films, clips and unrelated same-name results omitted.
+const BATCH_ONE_HUNDRED_THIRTEEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1354054": [publicYouTubeVideo("HK2al2rmnfg", "شاهرگ · فیلم کامل · ۱۳۵۴", "FilmFarsi", 5012, "2026-09-29")],
+  "old-iranian-1354024": [publicYouTubeVideo("neRk7oMRnFM", "فیلم قدیمی؛ همت · ۱۳۵۴", "Filmrangi", 5369, "2026-09-29")],
+  "old-iranian-1354056": [publicYouTubeVideo("SivepD-Tz5U", "عبور از مرز زندگی · ۱۳۵۴", "Donyayefilmfarsi", 4852, "2026-09-29")],
+  "old-iranian-1354032": [publicYouTubeVideo("Jf-aKCm0liM", "فیلم زیبای مجازات · نسخه کامل", "Shouka Film", 6894, "2026-09-29")],
+  "old-iranian-1354007": [publicYouTubeVideo("PvrZslImrrM", "فیلم ایرانی قدیمی هوس · ۱۳۵۴", "FARSI TOP", 6286, "2026-09-29")],
+  "old-iranian-1354029": [publicYouTubeVideo("qfY-ePY1vvo", "فیلم قدیمی زیبای پررو · نسخه کامل", "Beykiha", 4256, "2026-09-29")],
+  "old-iranian-1354043": [publicYouTubeVideo("m9yl9_OaW7Q", "فیلم قدیمی؛ اخم نکن سرکار · ۱۳۵۴", "Filmrangi", 5297, "2026-09-29")],
+  "old-iranian-1354010": [publicYouTubeVideo("pT15jtiFgRk", "فرار از حجله · نسخه کامل", "Shouka Film", 5367, "2026-09-29")],
+  "old-iranian-1354004": [publicYouTubeVideo("FYqvnfIbo6E", "فیلم سینمایی ایرانی زنبورک", "Persian Comedy Channel", 5644, "2026-09-29")],
+  "old-iranian-1354005": [publicYouTubeVideo("GZWhqvbuiPI", "فیلم قدیمی؛ شبگرد · ۱۳۵۴", "Filmrangi", 5761, "2026-09-29")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1302,6 +1317,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_THIRTEEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_THIRTEEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TWELVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TWELVE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_ELEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_ELEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_TEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_TEN_YOUTUBE_BY_ID[key];
