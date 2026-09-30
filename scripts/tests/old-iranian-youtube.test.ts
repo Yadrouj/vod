@@ -2457,6 +2457,14 @@ test("one-hundred-eighty-ninth review batch exposes the official Shohare Ahoo Kh
   assert.ok(item[0].title.includes("Shohare Ahoo Khanoom"));
 });
 
+test("one-hundred-ninetieth review batch exposes the complete Azhir-e Khatari upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1349015");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "39ioR8UAYQI");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=39ioR8UAYQI");
+  assert.ok(item[0].title.includes("Azhir-e Khatari"));
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
