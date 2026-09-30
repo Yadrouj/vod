@@ -2305,6 +2305,20 @@ test("one-hundred-seventy-fourth review batch exposes two exact classic-film upl
   assert.equal(getOldIranianYouTubeVideos("old-iranian-1351068")?.[0].durationSeconds, 5460);
 });
 
+test("one-hundred-seventy-fifth review batch exposes two exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1350051", "WDjTalRAuAg", "The Scandal of Love"],
+    ["old-iranian-1350084", "2nId-SKolvY", "Three Fearless Heroes"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1350084")?.[0].durationSeconds, 5340);
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
