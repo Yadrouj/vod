@@ -2425,6 +2425,14 @@ test("one-hundred-eighty-fifth review batch exposes the official Badnam upload",
   assert.ok(item[0].title.includes("Badnam"));
 });
 
+test("one-hundred-eighty-sixth review batch exposes the official Raze Derakhte Senjed upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1350073");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "01ofDJRTEwY");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=01ofDJRTEwY");
+  assert.ok(item[0].title.includes("Raze Derakhte Senjed"));
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
