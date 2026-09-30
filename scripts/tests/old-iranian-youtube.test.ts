@@ -2215,6 +2215,23 @@ test("one-hundred-sixty-eighth review batch exposes four exact classic-film uplo
   assert.equal(getOldIranianYouTubeVideos("old-iranian-1351092")?.[0].durationSeconds, 3600);
 });
 
+test("one-hundred-sixty-ninth review batch exposes four exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1350018", "3UYc9I0z8Rg", "Mah-pishooni"],
+    ["old-iranian-1350058", "RAb-B1mJszQ", "Beautiful of the Neighborhood"],
+    ["old-iranian-1350030", "iXmO17jESAU", "Die Hard"],
+    ["old-iranian-1350005", "KAjJNJ9x1nM", "The Bridge"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1350030")?.[0].durationSeconds, 5640);
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1350005")?.[0].durationSeconds, 5400);
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],

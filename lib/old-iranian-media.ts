@@ -556,6 +556,15 @@ const BATCH_ONE_HUNDRED_SIXTY_EIGHT_YOUTUBE_BY_ID: Record<string, YouTubeSource[
   "old-iranian-1351092": [publicYouTubeVideo("d974u5msmjs", "How Scary Is the Darkness of the Soul (1972) - full film", "passargad10", 3600, "2026-09-30")],
 };
 
+// 2026-09-30 research batch: exact 1350-title feature matches, including
+// source-reported runtimes for the two long-form uploads that provide them.
+const BATCH_ONE_HUNDRED_SIXTY_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1350018": [publicYouTubeVideo("3UYc9I0z8Rg", "Mah-pishooni (1971) - full film", "Shouka Film", undefined, "2026-09-30")],
+  "old-iranian-1350058": [publicYouTubeVideo("RAb-B1mJszQ", "Beautiful of the Neighborhood (1971) - full film", "Film Ghadimi Rangi", undefined, "2026-09-30")],
+  "old-iranian-1350030": [publicYouTubeVideo("iXmO17jESAU", "Die Hard (1971) - full film", "Pars Film Official", 5640, "2026-09-30")],
+  "old-iranian-1350005": [publicYouTubeVideo("KAjJNJ9x1nM", "The Bridge (1971) - full film", "Pars Film Official", 5400, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1747,6 +1756,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SIXTY_NINE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_NINE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_SIX_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_SIX_YOUTUBE_BY_ID[key];
