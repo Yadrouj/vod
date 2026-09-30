@@ -492,6 +492,12 @@ const BATCH_ONE_HUNDRED_SIXTY_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]>
   "old-iranian-1350007": [publicYouTubeVideo("Fv5ftNBLAws", "The Carriage Driver (1971) - full film", "FilmFarsi", undefined, "2026-09-30")],
   "old-iranian-1350012": [publicYouTubeVideo("XbIKAlcy4r4", "Hot Sensation (1971) - full film", "Pars Films", undefined, "2026-09-30")],
 };
+const BATCH_ONE_HUNDRED_SIXTY_TWO_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1353056": [publicYouTubeVideo("FG9JCrulGz0", "Shazdeh Ehtejab (1974) - full film", "Film O Honar", undefined, "2026-09-30")],
+  "old-iranian-1352068": [publicYouTubeVideo("4jyjwWhVzYM", "The Chase to Hell (1973) - full film", "Film Ghadimi", undefined, "2026-09-30")],
+  "old-iranian-1351027": [publicYouTubeVideo("omLSC45rfNo", "The Suitor (1972) - full film", "Persian Films Archive", undefined, "2026-09-30")],
+  "old-iranian-1351026": [publicYouTubeVideo("L1G8JnIDMMA", "Morghe Tokhm Tala (1972) - full film", "Dele Zaman", undefined, "2026-09-30")],
+};
 
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
@@ -1684,6 +1690,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SIXTY_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_ONE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FIFTY_NINE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIFTY_NINE_YOUTUBE_BY_ID[key];
