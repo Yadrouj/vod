@@ -499,6 +499,16 @@ const BATCH_ONE_HUNDRED_SIXTY_TWO_YOUTUBE_BY_ID: Record<string, YouTubeSource[]>
   "old-iranian-1351026": [publicYouTubeVideo("L1G8JnIDMMA", "Morghe Tokhm Tala (1972) - full film", "Dele Zaman", undefined, "2026-09-30")],
 };
 
+// 2026-09-30 research batch: exact archive-title matches from public Iranian
+// cinema channels. Clips, trailers and similarly named uploads were excluded.
+const BATCH_ONE_HUNDRED_SIXTY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1352025": [publicYouTubeVideo("rl-J1yiwW9E", "Escape from Death (1973) - full film", "Beykiha", undefined, "2026-09-30")],
+  "old-iranian-1351015": [publicYouTubeVideo("2mvocsKYMe4", "Ragbar (1972) - full film", "Persian Films Archive", undefined, "2026-09-30")],
+  "old-iranian-1351074": [publicYouTubeVideo("dwX1dbyLnRc", "Pedar ke na-khalaf oftad (1972) - full film", "FilmFarsi", undefined, "2026-09-30")],
+  "old-iranian-1351008": [publicYouTubeVideo("yKa3-LYZWoc", "The Golden Waterfall (1972) - full film", "Pars Films", undefined, "2026-09-30")],
+  "old-iranian-1351014": [publicYouTubeVideo("zIw_BolG_MA", "Ba Sharafha (1972) - full film", "Film Ghadimi Official", undefined, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1690,6 +1700,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SIXTY_THREE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_ONE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_YOUTUBE_BY_ID[key];

@@ -2118,6 +2118,22 @@ test("one-hundred-sixty-second review batch exposes four exact classic-film uplo
   }
 });
 
+test("one-hundred-sixty-third review batch exposes five exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1352025", "rl-J1yiwW9E", "Escape from Death"],
+    ["old-iranian-1351015", "2mvocsKYMe4", "Ragbar"],
+    ["old-iranian-1351074", "dwX1dbyLnRc", "Pedar ke na-khalaf oftad"],
+    ["old-iranian-1351008", "yKa3-LYZWoc", "The Golden Waterfall"],
+    ["old-iranian-1351014", "zIw_BolG_MA", "Ba Sharafha"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
