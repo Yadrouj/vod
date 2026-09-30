@@ -82,6 +82,14 @@ test("TheTVDB resolver tries known title slugs when IMDb and TheTVDB names diffe
  assert.equal(artwork.get("1:1"),"https://artworks.thetvdb.com/banners/episodes/280446/1.jpg");
  assert.ok(requested.some(url=>url.includes("the-tom-and-jerry-show-2014")));
 });
+test("TheTVDB resolver tries the release-year slug for My Dearest",async()=>{
+ const html=`<span class="text-muted episode-label">S01E01</span><img data-src="https://artworks.thetvdb.com/banners/v4/episode/1/screencap/one.jpg">`;
+ const requested:string[]=[];
+ const request=(async(url:string)=>{requested.push(url);return url.includes("my-dearest-2023")?new Response(html,{status:200}):new Response("",{status:404});}) as typeof fetch;
+ const artwork=await fetchTheTvdbEpisodeImages({name:"My Dearest"},request);
+ assert.equal(artwork.get("1:1"),"https://artworks.thetvdb.com/banners/v4/episode/1/screencap/one.jpg");
+ assert.ok(requested.some(url=>url.includes("my-dearest-2023")));
+});
 test("TheTVDB slugifier removes combining accents before applying aliases",async()=>{
  const requested:string[]=[];
  const request=(async(url:string)=>{requested.push(url);return new Response("",{status:404});}) as typeof fetch;

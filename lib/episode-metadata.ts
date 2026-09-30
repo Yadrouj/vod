@@ -346,6 +346,8 @@ function slugifyTheTvdbName(value: string) {
 const THE_TVDB_SLUG_ALIASES: Record<string, string[]> = {
   // TheTVDB keeps the release year in this title while IMDb/TVMaze do not.
   "the-tom-and-jerry-show": ["the-tom-and-jerry-show-2014"],
+  // The Korean drama is indexed with its release year on TheTVDB.
+  "my-dearest": ["my-dearest-2023"],
   // The German title is indexed under its shorter English slug.
   "alarm-fur-cobra-11-die-autobahnpolizei": ["alarm-for-cobra-11"],
 };
