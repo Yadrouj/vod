@@ -2441,6 +2441,14 @@ test("one-hundred-eighty-seventh review batch exposes the official Aziz Gherghi 
   assert.ok(item[0].title.includes("Aziz Gherghi"));
 });
 
+test("one-hundred-eighty-eighth review batch exposes the full Vahshi-ye Jangal upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1350028");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "ZtqlLX6r-6s");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=ZtqlLX6r-6s");
+  assert.ok(item[0].title.includes("Vahshi-ye Jangal"));
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
