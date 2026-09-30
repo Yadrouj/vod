@@ -538,6 +538,15 @@ const BATCH_ONE_HUNDRED_SIXTY_SIX_YOUTUBE_BY_ID: Record<string, YouTubeSource[]>
   "old-iranian-1350046": [publicYouTubeVideo("qX_K80x_C9Q", "The Most Beautiful Woman in the World (1971) - full film", "Cinema Rex", undefined, "2026-09-30")],
 };
 
+// 2026-09-30 research batch: exact archive-title matches from established
+// Iranian cinema channels, with duration metadata where the source provides it.
+const BATCH_ONE_HUNDRED_SIXTY_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1350002": [publicYouTubeVideo("ka0XBl3KI7o", "Ayyoob (1971) - full film", "Pars Films", undefined, "2026-09-30")],
+  "old-iranian-1350053": [publicYouTubeVideo("Q0RXucj01pg", "Howff of Anger (1971) - full film", "Pars Film Official", 5460, "2026-09-30")],
+  "old-iranian-1349057": [publicYouTubeVideo("y7hh7S3r7PY", "Night of the Execution (1970) - full film", "Pars Films", undefined, "2026-09-30")],
+  "old-iranian-1351039": [publicYouTubeVideo("THjaj0b-o1k", "Sun City (1972) - full film", "Pars Film Official", 5760, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1729,6 +1738,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SIXTY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_SIX_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_SIX_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_FIVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_FIVE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_FOUR_YOUTUBE_BY_ID[key];
