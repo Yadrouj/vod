@@ -2011,3 +2011,11 @@ test("one-hundred-fifty-second review batch exposes three exact classic-film upl
   }
 });
 
+test("one-hundred-fifty-third review batch exposes one exact classic-film upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1351016");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "ET9DPUv2e8g");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=ET9DPUv2e8g");
+  assert.ok(item[0].title.includes("احمد چوپان"));
+});
+
