@@ -519,6 +519,16 @@ const BATCH_ONE_HUNDRED_SIXTY_FOUR_YOUTUBE_BY_ID: Record<string, YouTubeSource[]
   "old-iranian-1351083": [publicYouTubeVideo("Kz5ueF03SDQ", "Khanoom Khanooma (1972) - full film", "Pars Films", undefined, "2026-09-30")],
 };
 
+// 2026-09-30 research batch: exact feature-film matches from public Iranian
+// cinema channels. Short clips and unrelated uploads were excluded.
+const BATCH_ONE_HUNDRED_SIXTY_FIVE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1350033": [publicYouTubeVideo("y9uC-XoxFmE", "Escape from the Trap (1971) - full film", "Nabat", undefined, "2026-09-30")],
+  "old-iranian-1350061": [publicYouTubeVideo("YdZjYAOkAUI", "A Man and a City (1971) - full film", "Pars Films", undefined, "2026-09-30")],
+  "old-iranian-1350054": [publicYouTubeVideo("i3c_uKDU04Q", "Gholam Jandarm (1971) - full film", "Pars Films", undefined, "2026-09-30")],
+  "old-iranian-1350063": [publicYouTubeVideo("IUg1V_N3z2s", "Adamak (1971) - full film", "Persian film", undefined, "2026-09-30")],
+  "old-iranian-1351032": [publicYouTubeVideo("4RBYDKzM_Bo", "Fetne in Boots (1972) - full film", "Persian Films Archive", undefined, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1710,6 +1720,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SIXTY_FIVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_FIVE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_FOUR_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_THREE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_TWO_YOUTUBE_BY_ID[key];
