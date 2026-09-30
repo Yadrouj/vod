@@ -4,7 +4,7 @@ import { ArrowUpLeft, ListMusic } from "lucide-react";
 import { useState } from "react";
 import type { MoodPlaylist } from "@/lib/mood-playlists";
 import styles from "./mood-collections.module.css";
-const scopes: Record<string, string> = { mix: "ترکیبی", persian: "فارسی", turkish: "ترکی", korean: "کره‌ای", international: "بین‌المللی" };
+const scopes: Record<string, string> = { archive: "آرشیو", mix: "ترکیبی", persian: "فارسی", turkish: "ترکی", korean: "کره‌ای", international: "بین‌المللی", video: "ویدیو" };
 export function MoodCollections({ playlists, preview = false }: { playlists: MoodPlaylist[]; preview?: boolean }) {
   const [scope, setScope] = useState("all"), [query, setQuery] = useState(""), [limit, setLimit] = useState(24);
   const matches = playlists.filter(p => (scope === "all" || p.scope === scope) && p.title.includes(query));

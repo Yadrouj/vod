@@ -30,9 +30,28 @@ export const SCOPES = [
 const hash = value => createHash("sha256").update(value).digest("hex");
 const tags = t => [t.title, t.persianTitle, t.category, ...(t.moods ?? []), ...(t.album?.genres ?? [])].join(" ");
 
-export function buildMoodPlaylists(tracks, date = new Date()) {
+export function buildMoodPlaylists(tracks, date = new Date(), libraryTracks = []) {
   const week = Math.floor(date.getTime() / (7 * 86400_000));
   const playlists = [], gaps = [];
+  const taggedLibrary = libraryTracks
+    .filter(t => t.kind === "track" && t.sources?.some(s => s.provider === "melodify" && s.available !== false))
+    .sort((a, b) => String(b.addedAt ?? "").localeCompare(String(a.addedAt ?? "")) || String(a.id).localeCompare(String(b.id), "en", { numeric: true }));
+  if (taggedLibrary.length) {
+    const covers = [...new Set(taggedLibrary.map(t => t.coverUrl).filter(Boolean))].slice(0, 4);
+    const artists = new Set(taggedLibrary.flatMap(t => (t.artists ?? [t.artist]).filter(Boolean).map(a => a.slug)));
+    playlists.push({
+      id: "melodify-tagged-library",
+      title: "آرشیو تگ‌دار ملودیفای",
+      scope: "archive",
+      mood: "tags",
+      description: "همهٔ آهنگ‌های تازه‌وارد ملودیفای، مرتب‌شده با تگ‌های واقعی فایل‌ها؛ هر تگ را می‌توانی از دسته‌بندی‌های موسیقی جداگانه دنبال کنی.",
+      trackIds: taggedLibrary.map(t => t.id),
+      covers,
+      artistCount: artists.size,
+      selection: "library-tags",
+      updatedAt: date.toISOString(),
+    });
+  }
   const freshVideos = tracks
     .filter(t => t.kind === "video" && t.sources?.some(s => s.available !== false) && t.coverUrl)
     .sort((a, b) => String(b.publishedAt || b.releaseDate || "").localeCompare(String(a.publishedAt || a.releaseDate || "")));
@@ -77,7 +96,8 @@ export function buildMoodPlaylists(tracks, date = new Date()) {
 
 async function main() {
   const index = JSON.parse(await readFile("public/data/music-index.json", "utf8"));
-  const result = buildMoodPlaylists(index.tracks);
+  const library = JSON.parse(await readFile("public/data/melodify-library.json", "utf8").catch(() => "{\"tracks\":[]}"));
+  const result = buildMoodPlaylists(index.tracks, new Date(), library.tracks ?? []);
   await mkdir("public/data", { recursive: true });
   const file = "public/data/music-mood-playlists.json";
   const ids = new Set(result.playlists.flatMap(p => p.trackIds));

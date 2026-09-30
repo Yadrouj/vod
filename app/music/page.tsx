@@ -113,6 +113,7 @@ export default async function MusicPage({ searchParams }: Props) {
       artists: track.artists.map((artist) => ({ name: artist.name })),
     }));
   const discovery = [
+    { href: "/music/collections/melodify-tagged-library", label: "آرشیو تگ‌دار", description: "همهٔ آهنگ‌های تازه با دسته‌بندی‌های واقعی", coverUrl: libraryArrivals[0]?.coverUrl ?? null },
     { href: `/music?category=${encodeURIComponent(REMIX_CATEGORY)}`, label: REMIX_CATEGORY, description: REMIX_DESCRIPTION, coverUrl: remixes[0]?.coverUrl ?? null },
     { href: "/music/collections", label: "پلی‌لیست‌های حال‌وهوا", description: "سفر، تمرکز، ورزش و خاطره‌ها", coverUrl: heroTracks[0]?.coverUrl ?? null },
     { href: "/music?kind=video", label: "موزیک‌ویدیو", description: "تصویر، صدا و اجرای زنده", coverUrl: recentVideos[0]?.coverUrl ?? null },

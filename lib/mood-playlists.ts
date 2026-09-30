@@ -1,7 +1,7 @@
 import path from "node:path";
 import { readFileSnapshot, type FileSnapshot } from "./file-snapshot";
 import type { MusicTrack } from "./music-types";
-export type MoodPlaylist = { id: string; title: string; scope: string; mood: string; description: string; trackIds: string[]; covers: string[]; artistCount: number; updatedAt: string };
+export type MoodPlaylist = { id: string; title: string; scope: string; mood: string; description: string; trackIds: string[]; covers: string[]; artistCount: number; updatedAt: string; selection?: string };
 export type MoodPlaylistIndex = { version: number; updatedAt: string; uniqueTracks: number; playlists: MoodPlaylist[] };
 const cache: FileSnapshot<MoodPlaylistIndex> = {};
 const tracksCache: FileSnapshot<{ tracks: MusicTrack[] }> = {};

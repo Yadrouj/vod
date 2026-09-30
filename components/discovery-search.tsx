@@ -23,8 +23,13 @@ export function DiscoverySearchDialog({ locale, onClose, initialCategory = "all"
   const fa = locale === "fa", music = category === "music";
   const options = [{ id: "all", label: fa ? "همه" : "All", icon: Grid2X2 }, { id: "movie", label: fa ? "فیلم" : "Films", icon: Film }, { id: "series", label: fa ? "سریال" : "Series", icon: Tv }, { id: "music", label: fa ? "موسیقی" : "Music", icon: Music2 }] as const;
   const browseHref = `${music ? "/music" : "/browse"}?q=${encodeURIComponent(query.trim())}${category === "movie" || category === "series" ? `&type=${category}` : ""}`;
-  return <ResponsiveDialog open onClose={onClose} initialFocus="input[role=combobox]" title={fa ? "چی دوست داری ببینی یا بشنوی؟" : "What would you like to discover?"} description={fa ? "فیلم، سریال، آهنگ یا خواننده را پیدا کن" : "Find a film, series, song or artist"} dir={fa ? "rtl" : "ltr"} closeLabel={fa ? "بستن جستجو" : "Close search"} theme={music ? "music" : "cinema"}>
+  return <ResponsiveDialog open onClose={onClose} initialFocus="input[role=combobox]" title={fa ? "جست‌وجوی هوشمند فیلم و سریال" : "Powerful film & series search"} description={fa ? "عنوان، بازیگر، IMDb یا آهنگ را بنویس؛ نزدیک‌ترین نتیجه‌ها را پیدا می‌کنیم." : "Search by title, cast, IMDb or music and jump to the closest result."} dir={fa ? "rtl" : "ltr"} closeLabel={fa ? "بستن جستجو" : "Close search"} theme={music ? "music" : "cinema"}>
     <div className={styles.search} data-discovery-search>
+      <div className={styles.spotlight}>
+        <span className={styles.spotlightKicker}>{fa ? "جست‌وجوی قدرتمند سرونما" : "SarvNema smart search"}</span>
+        <strong>{fa ? "هر چیزی را که یادت هست بنویس" : "Type whatever you remember"}</strong>
+        <span>{fa ? "املای ناقص، عنوان فارسی یا انگلیسی و کد IMDb هم قابل جست‌وجوست." : "Misspellings, Persian or English titles, and IMDb codes are welcome."}</span>
+      </div>
       <div className={styles.categories} role="group" aria-label={fa ? "نوع محتوا" : "Content type"}>{options.map(({ id, label, icon: Icon }) => <button key={id} type="button" aria-pressed={category === id} onClick={() => setCategory(id)}><Icon size={20} /><span>{label}</span></button>)}</div>
       <form role="search" action={music ? "/music" : "/browse"} onSubmit={event => { event.preventDefault(); router.push(browseHref); onClose(); }}>
         <SearchSuggest key={category} defaultValue={query} onQueryChange={setQuery} onNavigate={onClose} contained locale={locale} fixedKind={category === "movie" || category === "series" ? category : "all"} includeMusic={category === "all"} endpoint={music ? "/api/music/search" : "/api/suggest"} placeholder={fa ? (music ? "نام آهنگ یا خواننده…" : "اسمش رو اینجا بنویس…") : music ? "Song or artist…" : "Start typing a title…"} hrefForItem={music ? item => `/music/${item.imdbCode}` : undefined} viewAllHref={music ? q => `/music?q=${encodeURIComponent(q)}` : undefined} maxItems={16} />

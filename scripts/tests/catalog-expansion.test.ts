@@ -71,6 +71,19 @@ test("fresh music video playlist is sorted by publication and caps one artist", 
   assert.equal(playlist.trackIds.length, 12);
   assert.deepEqual(playlist.trackIds.slice(0, 4), ["video-0", "video-1", "video-2", "video-3"]);
 });
+test("tagged library playlist keeps every imported track in arrival order", () => {
+  const library = Array.from({length: 6}, (_, i) => ({
+    id: `melodify-${i + 1}`, kind: "track", title: `song ${i}`, artist: { slug: `artist-${i % 3}` },
+    artists: [{ slug: `artist-${i % 3}` }], coverUrl: `cover-${i}`, addedAt: new Date(Date.UTC(2026, 8, 10 - i)).toISOString(),
+    sources: [{ provider: "melodify", available: true }],
+  }));
+  const result = buildMoodPlaylists([], new Date("2026-09-10T00:00:00Z"), library);
+  const playlist = result.playlists.find(item => item.id === "melodify-tagged-library");
+  assert.ok(playlist);
+  assert.equal(playlist.selection, "library-tags");
+  assert.deepEqual(playlist.trackIds, library.map(track => track.id));
+  assert.equal(playlist.artistCount, 3);
+});
 test("only exact approved publisher embed URLs are accepted", () => {
   const source = {provider:"nfb" as const,sourceUrl:"https://www.nfb.ca/film/hypersensitive/",embedUrl:"https://www.nfb.ca/film/hypersensitive/embed/player/",checkedAt:"2026-09-08",playbackStatus:"not-tested" as const};
   assert.ok(validPublisherPlayer(source));

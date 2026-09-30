@@ -33,6 +33,7 @@ For an offline metadata snapshot, use `--output=<file>` on the exporter and `--i
 ## Where users find the music
 
 - `/music`: the **تازه‌های آرشیو** shelf and tag-category navigation.
+- `/music/collections/melodify-tagged-library`: the complete tagged-library playlist, with all imported tracks in arrival order.
 - `/music?added=library`: the entire imported archive, 80 tracks per page.
 - `/music?category=Chill` (or any source tag): all matching tracks, with filter-preserving pagination.
 - `/music/artists/<slug>`: existing and imported tracks together, including all collaborators.
