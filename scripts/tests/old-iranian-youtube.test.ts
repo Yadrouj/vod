@@ -2377,6 +2377,14 @@ test("one-hundred-seventy-ninth review batch exposes three exact classic-film up
   assert.equal(getOldIranianYouTubeVideos("old-iranian-1350074")?.[0].durationSeconds, 5520);
 });
 
+test("one-hundred-eightieth review batch exposes the exact Goodbye My Friend upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1350049");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "JUfIDKVbmLY");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=JUfIDKVbmLY");
+  assert.ok(item[0].title.includes("Goodbye, My Friend"));
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
