@@ -623,6 +623,12 @@ const BATCH_ONE_HUNDRED_SEVENTY_EIGHT_YOUTUBE_BY_ID: Record<string, YouTubeSourc
   "old-iranian-1350022": [publicYouTubeVideo("OrfZBuiZ_lE", "The Hero Mofrad (1971) - full film", "Pars Film Official", 5400, "2026-09-30")],
 };
 
+const BATCH_ONE_HUNDRED_SEVENTY_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1350074": [publicYouTubeVideo("mnx5N9OsKOI", "For Whom the Hearts Beat (1971) - full film", "Pars Film Official", 5520, "2026-09-30")],
+  "old-iranian-1350008": [publicYouTubeVideo("gEsyQisoOcY", "Nobar-e Esfahan (1971) - full film", "FilmFarsi", undefined, "2026-09-30")],
+  "old-iranian-1350019": [publicYouTubeVideo("tyJvw5Dqq9A", "Ra'd o Bargh (1971) - full film", "FilmFarsi", undefined, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1814,6 +1820,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SEVENTY_NINE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVENTY_NINE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SEVENTY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVENTY_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SEVENTY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVENTY_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SEVENTY_SIX_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVENTY_SIX_YOUTUBE_BY_ID[key];

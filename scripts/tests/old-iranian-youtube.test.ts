@@ -2362,6 +2362,21 @@ test("one-hundred-seventy-eighth review batch exposes two exact classic-film upl
   assert.equal(getOldIranianYouTubeVideos("old-iranian-1350022")?.[0].durationSeconds, 5400);
 });
 
+test("one-hundred-seventy-ninth review batch exposes three exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1350074", "mnx5N9OsKOI", "For Whom the Hearts Beat"],
+    ["old-iranian-1350008", "gEsyQisoOcY", "Nobar-e Esfahan"],
+    ["old-iranian-1350019", "tyJvw5Dqq9A", "Ra'd o Bargh"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1350074")?.[0].durationSeconds, 5520);
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
