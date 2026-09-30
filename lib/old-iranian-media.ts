@@ -594,6 +594,12 @@ const BATCH_ONE_HUNDRED_SEVENTY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSourc
   "old-iranian-1350045": [publicYouTubeVideo("YOZciq1J16A", "Mard Afkan (1971) - full film", "Pars Films", undefined, "2026-09-30")],
 };
 
+// 2026-09-30 research batch: exact 1351 full-film uploads with source runtime.
+const BATCH_ONE_HUNDRED_SEVENTY_FOUR_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1351053": [publicYouTubeVideo("lVNbpdKfsEs", "Yek Jo Gheyrat (1972) - full film", "Film Ghadimi", undefined, "2026-09-30")],
+  "old-iranian-1351068": [publicYouTubeVideo("_rjwRCWf0us", "Toghrul (1972) - full film", "Pars Film Official", 5460, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1785,6 +1791,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SEVENTY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVENTY_FOUR_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SEVENTY_THREE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVENTY_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SEVENTY_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVENTY_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SEVENTY_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVENTY_ONE_YOUTUBE_BY_ID[key];
