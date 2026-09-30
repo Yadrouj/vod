@@ -421,6 +421,11 @@ const BATCH_ONE_HUNDRED_FORTY_EIGHT_YOUTUBE_BY_ID: Record<string, YouTubeSource[
   "old-iranian-1351065": [publicYouTubeVideo("dwMu2WiYcd4", "فیلم کامل فاتح دلها", "FilmFarsi", undefined, "2026-09-30")],
 };
 
+const BATCH_ONE_HUNDRED_FORTY_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1351042": [publicYouTubeVideo("AiMkkS8imCI", "فیلم کامل غریبه", "ایرانیمه", undefined, "2026-09-30")],
+  "old-iranian-1351087": [publicYouTubeVideo("bWvTnAx3XMQ", "نسخه کامل فیلم فارسی مستاجر", "FilmFarsi", undefined, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1612,6 +1617,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_FORTY_NINE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FORTY_NINE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FORTY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FORTY_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FORTY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FORTY_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FORTY_SIX_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FORTY_SIX_YOUTUBE_BY_ID[key];
