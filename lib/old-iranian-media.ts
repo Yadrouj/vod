@@ -692,6 +692,12 @@ const BATCH_ONE_HUNDRED_NINETY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource
   "old-iranian-1351002": [publicYouTubeVideo("2WDHA0-bqg0", "An Isfahani in New York (1972) - full film", "Iran Ghadim", undefined, "2026-09-30")],
 };
 
+const BATCH_ONE_HUNDRED_NINETY_FOUR_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1350020": [publicYouTubeVideo("Vu0HdETns24", "Tricksters (1971) - full film", "Lalehzar", undefined, "2026-09-30")],
+  "old-iranian-1350026": [publicYouTubeVideo("PGByxY8rMzw", "Three Villains (1971) - full film", "1001 Shab", undefined, "2026-09-30")],
+  "old-iranian-1350082": [publicYouTubeVideo("u8PeY3wlHFI", "It Happened in America (1971) - full film", "FilmFarsi", undefined, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1883,6 +1889,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_NINETY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETY_FOUR_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_NINETY_THREE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETY_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_NINETY_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETY_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_NINETY_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETY_ONE_YOUTUBE_BY_ID[key];

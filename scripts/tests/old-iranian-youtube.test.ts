@@ -2509,6 +2509,20 @@ test("one-hundred-ninety-third review batch exposes five exact classic-film uplo
   assert.equal(getOldIranianYouTubeVideos("old-iranian-1350083")?.[0].durationSeconds, 5400);
 });
 
+test("one-hundred-ninety-fourth review batch exposes three exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1350020", "Vu0HdETns24", "Tricksters"],
+    ["old-iranian-1350026", "PGByxY8rMzw", "Three Villains"],
+    ["old-iranian-1350082", "u8PeY3wlHFI", "It Happened in America"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
