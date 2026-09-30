@@ -2465,6 +2465,19 @@ test("one-hundred-ninetieth review batch exposes the complete Azhir-e Khatari up
   assert.ok(item[0].title.includes("Azhir-e Khatari"));
 });
 
+test("one-hundred-ninety-first review batch exposes two exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1350004", "UhgYDZi7IvA", "Fatehin-e Sahra"],
+    ["old-iranian-1349026", "ThLj3OYmgx0", "Saghi"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
