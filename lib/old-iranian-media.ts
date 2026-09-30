@@ -565,6 +565,14 @@ const BATCH_ONE_HUNDRED_SIXTY_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]
   "old-iranian-1350005": [publicYouTubeVideo("KAjJNJ9x1nM", "The Bridge (1971) - full film", "Pars Film Official", 5400, "2026-09-30")],
 };
 
+// 2026-09-30 research batch: exact title matches for full-length YouTube uploads.
+const BATCH_ONE_HUNDRED_SEVENTY_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1352084": [publicYouTubeVideo("fGv6HEaZEBg", "Do Kabootar (1973) - full film", "Shouka Film", undefined, "2026-09-30")],
+  "old-iranian-1351082": [publicYouTubeVideo("exaAONTMEh8", "The Insurgent (1972) - full film", "Iranian Movies", undefined, "2026-09-30")],
+  "old-iranian-1350072": [publicYouTubeVideo("3dVo_8s1ICQ", "The Interim Husband (1971) - full film", "YouTube archive", undefined, "2026-09-30")],
+  "old-iranian-1351049": [publicYouTubeVideo("gGsa_Q84cP0", "Fataneh (1972) - full film", "Film Ghadimi", undefined, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1756,6 +1764,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SEVENTY_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVENTY_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_NINE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_NINE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_SEVEN_YOUTUBE_BY_ID[key];
