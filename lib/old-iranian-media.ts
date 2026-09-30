@@ -480,6 +480,13 @@ const BATCH_ONE_HUNDRED_FIFTY_EIGHT_YOUTUBE_BY_ID: Record<string, YouTubeSource[
 const BATCH_ONE_HUNDRED_FIFTY_NINE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
   "old-iranian-1351054": [publicYouTubeVideo("vZtGzJhEydI", "Khar-e Dajjal (1972) - full film", "Iranian Movies", undefined, "2026-09-30")],
 };
+const BATCH_ONE_HUNDRED_SIXTY_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1351058": [publicYouTubeVideo("7oNEmbLk-Xw", "Master Sergeant (1972) - full film", "FilmFarsi", undefined, "2026-09-30")],
+  "old-iranian-1351024": [publicYouTubeVideo("UHK-ac9f9gM", "The Lover (1972) - full film", "FilmFarsi", undefined, "2026-09-30")],
+  "old-iranian-1351004": [publicYouTubeVideo("IbmwBSiQX8o", "Cunning Reza (1972) - full film", "FilmFarsi", undefined, "2026-09-30")],
+  "old-iranian-1350068": [publicYouTubeVideo("Jl8IkoqvEbg", "Noghre-dagh (1972) - full film", "FilmFarsi", undefined, "2026-09-30")],
+  "old-iranian-1351073": [publicYouTubeVideo("qWXaOOIGVnY", "The only Man in the Neighborhood (1972) - full film", "FilmFarsi", undefined, "2026-09-30")],
+};
 
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
@@ -1672,6 +1679,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SIXTY_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FIFTY_NINE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIFTY_NINE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FIFTY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIFTY_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FIFTY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIFTY_SEVEN_YOUTUBE_BY_ID[key];

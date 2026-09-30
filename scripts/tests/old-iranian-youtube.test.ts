@@ -2073,6 +2073,22 @@ test("one-hundred-fifty-ninth review batch exposes the exact Khar-e Dajjal uploa
   assert.ok(item[0].title.includes("Khar-e Dajjal"));
 });
 
+test("one-hundred-sixtieth review batch exposes five exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1351058", "7oNEmbLk-Xw", "Master Sergeant"],
+    ["old-iranian-1351024", "UHK-ac9f9gM", "The Lover"],
+    ["old-iranian-1351004", "IbmwBSiQX8o", "Cunning Reza"],
+    ["old-iranian-1350068", "Jl8IkoqvEbg", "Noghre-dagh"],
+    ["old-iranian-1351073", "qWXaOOIGVnY", "The only Man in the Neighborhood"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
