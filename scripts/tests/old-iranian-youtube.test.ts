@@ -2052,6 +2052,19 @@ test("one-hundred-fifty-seventh review batch exposes seven exact classic-film up
   }
 });
 
+test("one-hundred-fifty-eighth review batch exposes two exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1351063", "GoiXr3F2Ju4", "Navvab"],
+    ["old-iranian-1351018", "GHVm5qImI0E", "Jadal dar Kavir"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],

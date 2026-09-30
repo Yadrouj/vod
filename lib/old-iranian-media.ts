@@ -473,6 +473,10 @@ const BATCH_ONE_HUNDRED_FIFTY_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[
   "old-iranian-1351052": [publicYouTubeVideo("ZxmDq_7N58I", "Boatmen (1972) - full film", "Lalezar", undefined, "2026-09-30")],
   "old-iranian-1351061": [publicYouTubeVideo("G1t74co2Z1M", "The sergeant major and the cop (1972) - full film", "Pars Films", undefined, "2026-09-30")],
 };
+const BATCH_ONE_HUNDRED_FIFTY_EIGHT_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1351063": [publicYouTubeVideo("GoiXr3F2Ju4", "Navvab (1972) - full film", "FilmFarsi", undefined, "2026-09-30")],
+  "old-iranian-1351018": [publicYouTubeVideo("GHVm5qImI0E", "Jadal dar Kavir (1972) - full film", "Shouka Film", undefined, "2026-09-30")],
+};
 
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
@@ -1665,6 +1669,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_FIFTY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIFTY_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FIFTY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIFTY_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FIFTY_SIX_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIFTY_SIX_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FIFTY_FIVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIFTY_FIVE_YOUTUBE_BY_ID[key];
