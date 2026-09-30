@@ -3,7 +3,7 @@ import styles from "./music-category-nav.module.css";
 
 const PINNED_CATEGORIES = ["آهنگ", "موزیک ویدیو", "موسیقی قدیمی فارسی", "موسیقی خارجی", "ریمیکس"];
 
-export function MusicCategoryNav({ categories, categoryCounts = {}, activeCategory = "", libraryOnly = false }: { categories: string[]; categoryCounts?: Record<string, number>; activeCategory?: string; libraryOnly?: boolean }) {
+export function MusicCategoryNav({ categories, categoryCounts = {}, libraryCategoryCounts = {}, activeCategory = "", libraryOnly = false }: { categories: string[]; categoryCounts?: Record<string, number>; libraryCategoryCounts?: Record<string, number>; activeCategory?: string; libraryOnly?: boolean }) {
   const values = [...new Set([...categories, ...Object.keys(categoryCounts)].map((category) => category.trim()).filter(Boolean))]
     .sort((left, right) => {
       const leftIndex = PINNED_CATEGORIES.indexOf(left);
@@ -27,7 +27,13 @@ export function MusicCategoryNav({ categories, categoryCounts = {}, activeCatego
         <Link className={!activeCategory && !libraryOnly ? styles.active : undefined} href="/music">همه</Link>
         <Link className={libraryOnly ? styles.active : undefined} href="/music?added=library">تازه‌های آرشیو</Link>
         {values.map((category) => (
-          <Link className={activeCategory === category ? styles.active : undefined} href={`/music?category=${encodeURIComponent(category)}`} key={category}>
+          <Link
+            className={activeCategory === category ? styles.active : undefined}
+            data-library-tag={libraryCategoryCounts[category] ? "true" : undefined}
+            href={`/music?category=${encodeURIComponent(category)}`}
+            key={category}
+            title={libraryCategoryCounts[category] ? "برچسب‌های آرشیو موسیقی جدید" : undefined}
+          >
             <span>{category}</span>
             {categoryCounts[category] ? <small>{categoryCounts[category].toLocaleString("fa-IR")}</small> : null}
           </Link>

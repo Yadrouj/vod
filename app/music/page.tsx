@@ -134,7 +134,7 @@ export default async function MusicPage({ searchParams }: Props) {
             </div>
           </header>
           <MusicLandingHero tracks={heroTracks} archiveStats={archiveStats} initialQuery={q} initialKind={kind} />
-          <MusicCategoryNav categories={index.categories} categoryCounts={index.categoryCounts} activeCategory={category} libraryOnly={libraryOnly} />
+          <MusicCategoryNav categories={index.categories} categoryCounts={index.categoryCounts} libraryCategoryCounts={index.libraryCategoryCounts} activeCategory={category} libraryOnly={libraryOnly} />
           <LandingPulse initial={{ version: index.updatedAt, updatedAt: Date.parse(index.updatedAt) > 0 ? index.updatedAt : null, recentCount: 0 }} locale={locale} endpoint="/api/music/pulse" updatesHref="/music?fresh=week" />
         </div>
       </section>

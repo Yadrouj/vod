@@ -44,6 +44,30 @@ test("compact homepage includes a bounded selection but correct complete archive
   assert.equal(mergeMelodifyCatalog({ ...base, scope: "home" }, library).tracks.length, 24);
 });
 
+test("tag categories stay visible on the landing index while all tagged songs stay available to singer profiles", () => {
+  const base: MusicLandingIndex = {
+    ...empty,
+    scope: "landing",
+    archiveStats: { tracks: 12, artists: 2, videos: 0 },
+    artists: [singer],
+    categories: ["آهنگ"],
+    categoryCounts: { "آهنگ": 12 },
+  };
+  const library = {
+    ...empty,
+    tracks: [track(1, singer), track(2, singer)],
+    categories: ["پاپ", "Workout", "Chill"],
+    categoryCounts: { "پاپ": 2, Workout: 2, Chill: 2 },
+    libraryExistingArtistSlugs: ["rezaya"],
+  };
+  const result = mergeMelodifyCatalog(base, library);
+  assert.deepEqual(result.libraryCategoryCounts, { "پاپ": 2, Workout: 2, Chill: 2 });
+  assert.ok(result.categories.includes("Workout"));
+  assert.equal(result.categoryCounts?.Workout, 2);
+  assert.equal(result.artists[0].categories.includes("Workout"), true);
+  assert.equal(result.artists[0].trackCount, 12);
+});
+
 test("a compact artist selection cannot merge canonical singers who share a display name", () => {
   const base = { ...empty, artists: [{ ...singer, slug: "another-rezaya" }] };
   const library = { ...empty, tracks: [track(1, singer)], libraryExistingArtistSlugs: ["rezaya"] };
