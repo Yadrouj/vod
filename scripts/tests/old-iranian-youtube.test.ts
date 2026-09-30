@@ -2089,6 +2089,20 @@ test("one-hundred-sixtieth review batch exposes five exact classic-film uploads"
   }
 });
 
+test("one-hundred-sixty-first review batch exposes three exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1351072", "AVdRtI-7Iqc", "Shir Too Shir"],
+    ["old-iranian-1350007", "Fv5ftNBLAws", "The Carriage Driver"],
+    ["old-iranian-1350012", "XbIKAlcy4r4", "Hot Sensation"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
