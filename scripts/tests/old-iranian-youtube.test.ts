@@ -2393,6 +2393,14 @@ test("one-hundred-eighty-first review batch exposes the exact Sharareh upload", 
   assert.ok(item[0].title.includes("Sharareh"));
 });
 
+test("one-hundred-eighty-second review batch exposes the exact Jungle Man upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1349064");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "EHBsipJcc5Q");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=EHBsipJcc5Q");
+  assert.ok(item[0].title.includes("The Jungle Man"));
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
