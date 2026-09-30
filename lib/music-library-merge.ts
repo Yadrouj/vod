@@ -3,7 +3,9 @@ import type { MusicArtist, MusicArtistIndex, MusicIndex, MusicLandingIndex, Musi
 const key = (value: string) => value.normalize("NFKD").replace(/[\u0300-\u036f]/gu, "")
   .replace(/[\u064a\u0649]/gu, "ی").replace(/\u0643/gu, "ک").toLowerCase()
   .replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/gu, "");
-const identities = (artist: MusicArtist) => [artist.slug, artist.name, ...(artist.aliases ?? [])].map(key).filter(Boolean);
+const exactIdentity = (value: string) => value.normalize("NFKC").trim().toLocaleLowerCase();
+const identityKeys = (value: string) => [...new Set([key(value), exactIdentity(value)].filter(Boolean))];
+const identities = (artist: MusicArtist) => [artist.slug, artist.name, ...(artist.aliases ?? [])].flatMap(identityKeys);
 
 /** Exact names/aliases only: never merge different singers using fuzzy search. */
 export function mergeMelodifyCatalog<T extends MusicIndex>(base: T, library: MusicIndex): T {
@@ -26,7 +28,7 @@ export function mergeMelodifyCatalog<T extends MusicIndex>(base: T, library: Mus
   // bounded selection of songs, not the entire 5k-track library.
   for (const track of library.tracks) {
     const refs = track.artists.map(ref => {
-      const candidates = [ref.slug, ref.name, ...(ref.aliases ?? [])].map(key);
+      const candidates = [ref.slug, ref.name, ...(ref.aliases ?? [])].flatMap(identityKeys);
       // New exports resolve names against the FULL artist directory. Resolving
       // them again against a small landing selection can collapse namesakes.
       const slug = library.libraryExistingArtistSlugs || artists.has(ref.slug)

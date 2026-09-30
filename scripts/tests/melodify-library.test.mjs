@@ -41,6 +41,15 @@ test("import preserves all tags, canonical singer aliases, arrival dates and sta
   assert.equal(changed.tracks[0].addedAt, first.tracks[0].addedAt);
   assert.deepEqual(changed.tracks[0].moods, ["Workout"]);
 });
+test("import resolves a Persian display name to an existing Latin singer slug", () => {
+  const baseArtists = [
+    { slug: "rezaya", name: "\u0631\u0636\u0627\u06cc\u0627", aliases: ["\u0631\u0636\u0627\u06cc\u0627"], sourceUrl: "https://example.test/rezaya" },
+    { slug: "\u0631\u0636\u0627\u06cc\u0627", name: "\u0631\u0636\u0627\u06cc\u0627", aliases: [], sourceUrl: "https://example.test/rezaya" },
+  ];
+  const result = buildMelodifyCatalog({ tracks: [{ ...snapshot.tracks[0], artists: [{ name: "\u0631\u0636\u0627\u06cc\u0627" }] }] }, {}, "2026-09-01T00:00:00Z", baseArtists);
+  assert.equal(result.tracks[0].artist.slug, "rezaya");
+  assert.equal(result.artists[0].slug, "rezaya");
+});
 test("import refuses empty snapshots and unsafe filenames", () => {
   assert.throws(() => buildMelodifyCatalog({ tracks: [] }));
   assert.throws(() => buildMelodifyCatalog({ tracks: [{ ...snapshot.tracks[0], filename: "../secret.mp3" }] }));

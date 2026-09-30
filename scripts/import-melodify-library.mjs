@@ -6,6 +6,9 @@ import { writeJsonAtomic } from "./atomic-json.mjs";
 const slug = value => String(value ?? "").normalize("NFKD").replace(/[\u0300-\u036f]/gu, "")
   .replace(/[\u064a\u0649]/gu, "ی").replace(/\u0643/gu, "ک").toLowerCase()
   .replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/gu, "");
+const exactIdentity = value => String(value ?? "").normalize("NFKC").trim().toLocaleLowerCase();
+const identityKeys = value => [...new Set([slug(value), exactIdentity(value)].filter(Boolean))];
+const sameArtistSource = (left, right) => Boolean(left && right && left.sourceUrl && right.sourceUrl && left.sourceUrl === right.sourceUrl);
 const imageUrl = value => typeof value === "string" && /^https:\/\//u.test(value) ? value : null;
 
 export function buildMelodifyCatalog(snapshot, previous = {}, now = new Date().toISOString(), baseArtists = []) {
@@ -15,11 +18,26 @@ export function buildMelodifyCatalog(snapshot, previous = {}, now = new Date().t
   const artists = new Map();
   const artistsBySlug = new Map(baseArtists.map(artist => [artist.slug, artist]));
   const artistAliases = new Map();
+  const artistsByExactName = new Map();
+  const artistsByRawName = new Map();
   for (const artist of baseArtists) {
     for (const name of [artist.slug, artist.name, ...(artist.aliases ?? [])]) {
-      const identity = slug(name);
-      const prior = artistAliases.get(identity);
-      artistAliases.set(identity, artistAliases.has(identity) && prior?.slug !== artist.slug ? null : artist);
+      const raw = String(name ?? "");
+      const rawPrior = artistsByRawName.get(raw);
+      artistsByRawName.set(raw, artistsByRawName.has(raw) && rawPrior?.slug !== artist.slug
+        ? sameArtistSource(rawPrior, artist) ? rawPrior : null
+        : artist);
+      const exact = exactIdentity(name);
+      const exactPrior = artistsByExactName.get(exact);
+      artistsByExactName.set(exact, artistsByExactName.has(exact) && exactPrior?.slug !== artist.slug
+        ? sameArtistSource(exactPrior, artist) ? exactPrior : null
+        : artist);
+      for (const identity of identityKeys(name)) {
+        const prior = artistAliases.get(identity);
+        artistAliases.set(identity, artistAliases.has(identity) && prior?.slug !== artist.slug
+          ? sameArtistSource(prior, artist) ? prior : null
+          : artist);
+      }
     }
   }
   const existingArtistSlugs = new Set();
@@ -27,7 +45,9 @@ export function buildMelodifyCatalog(snapshot, previous = {}, now = new Date().t
     if (!Number.isSafeInteger(row.id) || row.id < 1 || !/^[^/\\\0]+\.mp3$/iu.test(row.filename)) throw new Error(`Invalid local track: ${row.id}`);
     const id = `melodify-${row.id}`;
     const refs = (row.artists ?? []).filter(a => a.name?.trim()).map(a => {
-      const existing = artistsBySlug.get(slug(a.name)) || artistAliases.get(slug(a.name));
+      const existing = identityKeys(a.name).map(identity => artistAliases.get(identity) || artistsBySlug.get(identity)).find(Boolean)
+        || artistsByExactName.get(exactIdentity(a.name))
+        || artistsByRawName.get(String(a.name ?? ""));
       if (existing) existingArtistSlugs.add(existing.slug);
       return { slug: existing?.slug || slug(a.name), name: existing?.name || a.name.trim(),
         aliases: [...new Set([...(existing?.aliases ?? []), a.name.trim()])],
