@@ -2401,6 +2401,14 @@ test("one-hundred-eighty-second review batch exposes the exact Jungle Man upload
   assert.ok(item[0].title.includes("The Jungle Man"));
 });
 
+test("one-hundred-eighty-third review batch exposes the alternate-title Shab-e Bazigaran upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1357027");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "nlk2i3UXml8");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=nlk2i3UXml8");
+  assert.ok(item[0].title.includes("Shab-e Bazigaran"));
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
