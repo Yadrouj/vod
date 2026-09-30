@@ -52,6 +52,23 @@ function compareSeries(a, b) {
     String(a.imdbCode ?? "").localeCompare(String(b.imdbCode ?? ""));
 }
 
+/** The catalog can contain the same IMDb title from more than one source. */
+export function dedupeSeriesByImdb(items) {
+  const unique = new Map();
+  for (const item of items) {
+    const imdbCode = String(item?.imdbCode ?? "").trim();
+    if (!/^tt\d+$/.test(imdbCode)) continue;
+    const current = unique.get(imdbCode);
+    if (!current || catalogRichness(item) > catalogRichness(current)) unique.set(imdbCode, item);
+  }
+  return [...unique.values()];
+}
+
+function catalogRichness(item) {
+  return Number(Boolean(item?.title)) + Number(Boolean(item?.posterUrl)) + Number(Boolean(item?.backdropUrl))
+    + Number(Boolean(item?.imdbRating)) + Number(Boolean(item?.imdbVotes)) + (Array.isArray(item?.genres) ? item.genres.length : 0);
+}
+
 function compactSeries(item, rank) {
   return {
     rank,
@@ -214,7 +231,7 @@ async function main() {
   await streamVodArchiveItems(path.resolve(ROOT, CATALOG), (item) => {
     if (normalizeType(item.type) === "series" && typeof item.imdbCode === "string") series.push(item);
   });
-  series.sort(compareSeries);
+  series.splice(0, series.length, ...dedupeSeriesByImdb(series).sort(compareSeries));
 
   const report = await readJson(REPORT_FILE, { version: 1, items: [] });
   const previous = new Map((report.items ?? []).map((item) => [item.imdbCode, item]));
