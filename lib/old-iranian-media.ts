@@ -573,6 +573,13 @@ const BATCH_ONE_HUNDRED_SEVENTY_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> =
   "old-iranian-1351049": [publicYouTubeVideo("gGsa_Q84cP0", "Fataneh (1972) - full film", "Film Ghadimi", undefined, "2026-09-30")],
 };
 
+// 2026-09-30 research batch: three more exact title/year full-film uploads.
+const BATCH_ONE_HUNDRED_SEVENTY_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1350076": [publicYouTubeVideo("QPuMa3hcsb0", "A Suitcaseful of Sex (1971) - full film", "Pars Films", undefined, "2026-09-30")],
+  "old-iranian-1350003": [publicYouTubeVideo("Qnm03EujMaM", "One Beautiful and 1000 Problems (1971) - full film", "FilmFarsi", undefined, "2026-09-30")],
+  "old-iranian-1350055": [publicYouTubeVideo("_a6X4JRnRLA", "Heydar (1971) - full film", "Pars Film Official", 5040, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1764,6 +1771,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SEVENTY_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVENTY_ONE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SEVENTY_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SEVENTY_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_NINE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_NINE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_EIGHT_YOUTUBE_BY_ID[key];
