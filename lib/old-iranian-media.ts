@@ -645,6 +645,14 @@ const BATCH_ONE_HUNDRED_EIGHTY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource
   "old-iranian-1357027": [publicYouTubeVideo("nlk2i3UXml8", "Mobarzi dar Nimeye Rah / Shab-e Bazigaran (1978) - full film", "FilmFarsi", undefined, "2026-09-30")],
 };
 
+const BATCH_ONE_HUNDRED_EIGHTY_FOUR_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1350050": [publicYouTubeVideo("hTrzk7P-I1k", "Reza Chelchele (1971) - full film", "Beikiha", undefined, "2026-09-30")],
+};
+
+const BATCH_ONE_HUNDRED_EIGHTY_FIVE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1350065": [publicYouTubeVideo("WPe46pn0jvI", "Badnam (1971) - full film", "FilmFarsi", undefined, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1836,6 +1844,8 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_EIGHTY_FIVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_EIGHTY_FIVE_YOUTUBE_BY_ID[key];
+  if (BATCH_ONE_HUNDRED_EIGHTY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_EIGHTY_FOUR_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_EIGHTY_THREE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_EIGHTY_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_EIGHTY_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_EIGHTY_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_EIGHTY_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_EIGHTY_ONE_YOUTUBE_BY_ID[key];

@@ -2409,6 +2409,22 @@ test("one-hundred-eighty-third review batch exposes the alternate-title Shab-e B
   assert.ok(item[0].title.includes("Shab-e Bazigaran"));
 });
 
+test("one-hundred-eighty-fourth review batch exposes the exact Reza Chelchele upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1350050");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "hTrzk7P-I1k");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=hTrzk7P-I1k");
+  assert.ok(item[0].title.includes("Reza Chelchele"));
+});
+
+test("one-hundred-eighty-fifth review batch exposes the official Badnam upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1350065");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "WPe46pn0jvI");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=WPe46pn0jvI");
+  assert.ok(item[0].title.includes("Badnam"));
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
