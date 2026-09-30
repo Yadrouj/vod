@@ -2492,6 +2492,23 @@ test("one-hundred-ninety-second review batch exposes three exact classic-film up
   }
 });
 
+test("one-hundred-ninety-third review batch exposes five exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1350014", "OQGvVWTB16Q", "Shohar-e Pastorize"],
+    ["old-iranian-1350027", "k3_Fi4V7V8Y", "Eshghiha"],
+    ["old-iranian-1349049", "iVXkZayeJTw", "The Pretty Pickpocket"],
+    ["old-iranian-1350083", "xQ9Y2eWw9jo", "The Story of a Thief"],
+    ["old-iranian-1351002", "2WDHA0-bqg0", "An Isfahani in New York"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1350083")?.[0].durationSeconds, 5400);
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],

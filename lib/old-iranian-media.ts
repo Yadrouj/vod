@@ -684,6 +684,14 @@ const BATCH_ONE_HUNDRED_NINETY_TWO_YOUTUBE_BY_ID: Record<string, YouTubeSource[]
   "old-iranian-1350078": [publicYouTubeVideo("dSQVG6BViDA", "Alkoli (1971) - full film", "FilmFarsi", undefined, "2026-09-30")],
 };
 
+const BATCH_ONE_HUNDRED_NINETY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1350014": [publicYouTubeVideo("OQGvVWTB16Q", "Shohar-e Pastorize (1971) - full film", "FilmFarsi", undefined, "2026-09-30")],
+  "old-iranian-1350027": [publicYouTubeVideo("k3_Fi4V7V8Y", "Eshghiha (1971) - full film", "FilmFarsi", undefined, "2026-09-30")],
+  "old-iranian-1349049": [publicYouTubeVideo("iVXkZayeJTw", "The Pretty Pickpocket (1971) - full film", "Cinema Rex", undefined, "2026-09-30")],
+  "old-iranian-1350083": [publicYouTubeVideo("xQ9Y2eWw9jo", "The Story of a Thief (1971) - full film", "Filmrangi", 5400, "2026-09-30")],
+  "old-iranian-1351002": [publicYouTubeVideo("2WDHA0-bqg0", "An Isfahani in New York (1972) - full film", "Iran Ghadim", undefined, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1875,6 +1883,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_NINETY_THREE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETY_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_NINETY_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETY_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_NINETY_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETY_ONE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_NINETY_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETY_YOUTUBE_BY_ID[key];
