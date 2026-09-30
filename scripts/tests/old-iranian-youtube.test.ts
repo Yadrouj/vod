@@ -2034,6 +2034,24 @@ test("one-hundred-fifty-sixth review batch exposes two exact classic-film upload
   }
 });
 
+test("one-hundred-fifty-seventh review batch exposes seven exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1352014", "dx3wmZ0Ts34", "Manic"],
+    ["old-iranian-1351023", "ia9Q9fAbKcg", "Chubby"],
+    ["old-iranian-1351038", "qACqqgnRZas", "Life Gambling"],
+    ["old-iranian-1351028", "pmKEPWmNVcM", "Prodigies"],
+    ["old-iranian-1351048", "xMa0ooGtM1c", "The White Clove"],
+    ["old-iranian-1351052", "ZxmDq_7N58I", "Boatmen"],
+    ["old-iranian-1351061", "G1t74co2Z1M", "The sergeant major and the cop"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],

@@ -464,6 +464,15 @@ const BATCH_ONE_HUNDRED_FIFTY_SIX_YOUTUBE_BY_ID: Record<string, YouTubeSource[]>
   "old-iranian-1351046": [publicYouTubeVideo("5_Z_QVEQr-Y", "Baluch (1972) - full film", "FilmFarsi", undefined, "2026-09-30")],
   "old-iranian-1352078": [publicYouTubeVideo("PKzkuphoo3w", "Mostafa Loreh (1973) - full film", "FilmFarsi", undefined, "2026-09-30")],
 };
+const BATCH_ONE_HUNDRED_FIFTY_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1352014": [publicYouTubeVideo("dx3wmZ0Ts34", "Manic (1973) - full film", "Pars Films", undefined, "2026-09-30")],
+  "old-iranian-1351023": [publicYouTubeVideo("ia9Q9fAbKcg", "Chubby (1972) - full film", "FilmFarsi", undefined, "2026-09-30")],
+  "old-iranian-1351038": [publicYouTubeVideo("qACqqgnRZas", "Life Gambling (1972) - full film", "FilmFarsi", undefined, "2026-09-30")],
+  "old-iranian-1351028": [publicYouTubeVideo("pmKEPWmNVcM", "Prodigies (1972) - full film", "Pars Films", undefined, "2026-09-30")],
+  "old-iranian-1351048": [publicYouTubeVideo("xMa0ooGtM1c", "The White Clove (1972) - full film", "FilmFarsi", undefined, "2026-09-30")],
+  "old-iranian-1351052": [publicYouTubeVideo("ZxmDq_7N58I", "Boatmen (1972) - full film", "Lalezar", undefined, "2026-09-30")],
+  "old-iranian-1351061": [publicYouTubeVideo("G1t74co2Z1M", "The sergeant major and the cop (1972) - full film", "Pars Films", undefined, "2026-09-30")],
+};
 
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
@@ -1656,6 +1665,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_FIFTY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIFTY_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FIFTY_SIX_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIFTY_SIX_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FIFTY_FIVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIFTY_FIVE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_FIFTY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_FIFTY_FOUR_YOUTUBE_BY_ID[key];
