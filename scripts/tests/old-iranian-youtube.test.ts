@@ -1905,3 +1905,11 @@ test("one-hundred-forty-fourth review batch exposes two exact full-film uploads"
   }
 });
 
+test("one-hundred-forty-fifth review batch exposes one exact full-film upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1350069");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "6xSJ8y7Ffqk");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=6xSJ8y7Ffqk");
+  assert.ok(item[0].title.includes("رشید"));
+});
+
