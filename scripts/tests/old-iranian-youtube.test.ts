@@ -2166,6 +2166,22 @@ test("one-hundred-sixty-fifth review batch exposes five exact classic-film uploa
   }
 });
 
+test("one-hundred-sixty-sixth review batch exposes five exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1350079", "qcAcTfvh0TM", "Starless Sky"],
+    ["old-iranian-1350043", "q4pqGEW4Ylk", "Trees Die Standing"],
+    ["old-iranian-1350037", "B1-5P0yHXAI", "Looti"],
+    ["old-iranian-1350077", "Tnp3H575ZZs", "The Glass Wall"],
+    ["old-iranian-1350046", "qX_K80x_C9Q", "The Most Beautiful Woman in the World"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],

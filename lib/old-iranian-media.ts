@@ -529,6 +529,15 @@ const BATCH_ONE_HUNDRED_SIXTY_FIVE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]
   "old-iranian-1351032": [publicYouTubeVideo("4RBYDKzM_Bo", "Fetne in Boots (1972) - full film", "Persian Films Archive", undefined, "2026-09-30")],
 };
 
+// 2026-09-30 research batch: additional exact 1350-title feature matches.
+const BATCH_ONE_HUNDRED_SIXTY_SIX_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1350079": [publicYouTubeVideo("qcAcTfvh0TM", "Starless Sky (1971) - full film", "Cinema Rex", undefined, "2026-09-30")],
+  "old-iranian-1350043": [publicYouTubeVideo("q4pqGEW4Ylk", "Trees Die Standing (1971) - full film", "Pars Films", undefined, "2026-09-30")],
+  "old-iranian-1350037": [publicYouTubeVideo("B1-5P0yHXAI", "Looti (1971) - full film", "Pars Films", undefined, "2026-09-30")],
+  "old-iranian-1350077": [publicYouTubeVideo("Tnp3H575ZZs", "The Glass Wall (1971) - full film", "Pars Films", undefined, "2026-09-30")],
+  "old-iranian-1350046": [publicYouTubeVideo("qX_K80x_C9Q", "The Most Beautiful Woman in the World (1971) - full film", "Cinema Rex", undefined, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1720,6 +1729,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SIXTY_SIX_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_SIX_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_FIVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_FIVE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_FOUR_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_THREE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_THREE_YOUTUBE_BY_ID[key];
