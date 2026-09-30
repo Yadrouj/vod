@@ -2433,6 +2433,14 @@ test("one-hundred-eighty-sixth review batch exposes the official Raze Derakhte S
   assert.ok(item[0].title.includes("Raze Derakhte Senjed"));
 });
 
+test("one-hundred-eighty-seventh review batch exposes the official Aziz Gherghi upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1350070");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "lFNvw67sxn4");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=lFNvw67sxn4");
+  assert.ok(item[0].title.includes("Aziz Gherghi"));
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
