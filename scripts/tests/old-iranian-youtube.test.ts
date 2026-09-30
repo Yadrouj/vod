@@ -2019,6 +2019,19 @@ test("one-hundred-fifty-third review batch exposes one exact classic-film upload
   assert.ok(item[0].title.includes("احمد چوپان"));
 });
 
+test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
+    ["old-iranian-1351055", "aaPGoVshnVs", "Hour of Calamity"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+});
+
 test("one-hundred-fifty-fourth review batch exposes one exact classic-film upload", () => {
   const item = getOldIranianYouTubeVideos("old-iranian-1351025");
   assert.ok(item);
