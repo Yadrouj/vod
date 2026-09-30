@@ -2199,6 +2199,22 @@ test("one-hundred-sixty-seventh review batch exposes four exact classic-film upl
   assert.equal(getOldIranianYouTubeVideos("old-iranian-1351039")?.[0].durationSeconds, 5760);
 });
 
+test("one-hundred-sixty-eighth review batch exposes four exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1351009", "8J3sTqAzN24", "Repentance"],
+    ["old-iranian-1351019", "YDTKfV8lhdc", "Escaping from Life"],
+    ["old-iranian-1351017", "ha8N9UzaSWg", "The Saving Angel"],
+    ["old-iranian-1351092", "d974u5msmjs", "How Scary Is the Darkness of the Soul"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1351092")?.[0].durationSeconds, 3600);
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],

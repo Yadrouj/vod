@@ -547,6 +547,15 @@ const BATCH_ONE_HUNDRED_SIXTY_SEVEN_YOUTUBE_BY_ID: Record<string, YouTubeSource[
   "old-iranian-1351039": [publicYouTubeVideo("THjaj0b-o1k", "Sun City (1972) - full film", "Pars Film Official", 5760, "2026-09-30")],
 };
 
+// 2026-09-30 research batch: exact 1351-title feature matches. The short
+// trailer result for Fetaneh was deliberately excluded from this batch.
+const BATCH_ONE_HUNDRED_SIXTY_EIGHT_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1351009": [publicYouTubeVideo("8J3sTqAzN24", "Repentance (1972) - full film", "Beykiha", undefined, "2026-09-30")],
+  "old-iranian-1351019": [publicYouTubeVideo("YDTKfV8lhdc", "Escaping from Life (1972) - full film", "Shouka Film", undefined, "2026-09-30")],
+  "old-iranian-1351017": [publicYouTubeVideo("ha8N9UzaSWg", "The Saving Angel (1972) - full film", "Shouka Film", undefined, "2026-09-30")],
+  "old-iranian-1351092": [publicYouTubeVideo("d974u5msmjs", "How Scary Is the Darkness of the Soul (1972) - full film", "passargad10", 3600, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1738,6 +1747,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SIXTY_EIGHT_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_EIGHT_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_SEVEN_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_SEVEN_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_SIX_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_SIX_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_FIVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_FIVE_YOUTUBE_BY_ID[key];
