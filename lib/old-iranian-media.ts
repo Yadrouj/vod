@@ -509,6 +509,16 @@ const BATCH_ONE_HUNDRED_SIXTY_THREE_YOUTUBE_BY_ID: Record<string, YouTubeSource[
   "old-iranian-1351014": [publicYouTubeVideo("zIw_BolG_MA", "Ba Sharafha (1972) - full film", "Film Ghadimi Official", undefined, "2026-09-30")],
 };
 
+// 2026-09-30 research batch: additional exact 1351-title matches. The
+// selected uploads are presented as complete films by their source channels.
+const BATCH_ONE_HUNDRED_SIXTY_FOUR_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1351035": [publicYouTubeVideo("LeWfFcx-MMw", "Kheyli Ham Mamnoon (1972) - full film", "Beykiha", undefined, "2026-09-30")],
+  "old-iranian-1351034": [publicYouTubeVideo("QDYLJNQ_il4", "Pakhmeh (1972) - full film", "Hezar-o Yek Shab", undefined, "2026-09-30")],
+  "old-iranian-1351064": [publicYouTubeVideo("w_6jxnlFGmE", "Hamisheh Ghahreman (1972) - full film", "Pars Films", undefined, "2026-09-30")],
+  "old-iranian-1351075": [publicYouTubeVideo("JAWEJ5clEJM", "Shirbaha (1972) - full film", "Beykiha", undefined, "2026-09-30")],
+  "old-iranian-1351083": [publicYouTubeVideo("Kz5ueF03SDQ", "Khanoom Khanooma (1972) - full film", "Pars Films", undefined, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1700,6 +1710,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_SIXTY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_FOUR_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_THREE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_TWO_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_SIXTY_ONE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_SIXTY_ONE_YOUTUBE_BY_ID[key];

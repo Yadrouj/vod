@@ -2134,6 +2134,22 @@ test("one-hundred-sixty-third review batch exposes five exact classic-film uploa
   }
 });
 
+test("one-hundred-sixty-fourth review batch exposes five exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1351035", "LeWfFcx-MMw", "Kheyli Ham Mamnoon"],
+    ["old-iranian-1351034", "QDYLJNQ_il4", "Pakhmeh"],
+    ["old-iranian-1351064", "w_6jxnlFGmE", "Hamisheh Ghahreman"],
+    ["old-iranian-1351075", "JAWEJ5clEJM", "Shirbaha"],
+    ["old-iranian-1351083", "Kz5ueF03SDQ", "Khanoom Khanooma"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
