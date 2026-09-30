@@ -2019,3 +2019,11 @@ test("one-hundred-fifty-third review batch exposes one exact classic-film upload
   assert.ok(item[0].title.includes("احمد چوپان"));
 });
 
+test("one-hundred-fifty-fourth review batch exposes one exact classic-film upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1351025");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "s9WIgVR_w48");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=s9WIgVR_w48");
+  assert.ok(item[0].title.includes("اتل متل توتوله"));
+});
+
