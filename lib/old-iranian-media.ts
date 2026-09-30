@@ -698,6 +698,11 @@ const BATCH_ONE_HUNDRED_NINETY_FOUR_YOUTUBE_BY_ID: Record<string, YouTubeSource[
   "old-iranian-1350082": [publicYouTubeVideo("u8PeY3wlHFI", "It Happened in America (1971) - full film", "FilmFarsi", undefined, "2026-09-30")],
 };
 
+const BATCH_ONE_HUNDRED_NINETY_FIVE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
+  "old-iranian-1350056": [publicYouTubeVideo("N2YplR_WTs8", "Hero in the Atomic Age (1971) - full film", "Filmrangi", 5460, "2026-09-30")],
+  "old-iranian-1350080": [publicYouTubeVideo("h3yaR5MsIeQ", "Rainbow (1971) - full film", "Lalehzar", undefined, "2026-09-30")],
+};
+
 // Exact title matches verified in the first 50-title archival research batch.
 // Only public videos whose returned title names the same film are included.
 const BATCH_ONE_YOUTUBE_BY_ID: Record<string, YouTubeSource[]> = {
@@ -1889,6 +1894,7 @@ export function getOldIranianFilmMedia(id: string | null | undefined) {
 export function getOldIranianYouTubeVideos(id: string | null | undefined) {
   if (!id) return null;
   const key = id.toLowerCase();
+  if (BATCH_ONE_HUNDRED_NINETY_FIVE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETY_FIVE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_NINETY_FOUR_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETY_FOUR_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_NINETY_THREE_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETY_THREE_YOUTUBE_BY_ID[key];
   if (BATCH_ONE_HUNDRED_NINETY_TWO_YOUTUBE_BY_ID[key]) return BATCH_ONE_HUNDRED_NINETY_TWO_YOUTUBE_BY_ID[key];
