@@ -2348,6 +2348,20 @@ test("one-hundred-seventy-seventh review batch exposes two exact classic-film up
   assert.equal(getOldIranianYouTubeVideos("old-iranian-1349056")?.[0].durationSeconds, 5400);
 });
 
+test("one-hundred-seventy-eighth review batch exposes two exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1350038", "hMr9KoFpn8U", "The World Is Mine"],
+    ["old-iranian-1350022", "OrfZBuiZ_lE", "The Hero Mofrad"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+  assert.equal(getOldIranianYouTubeVideos("old-iranian-1350022")?.[0].durationSeconds, 5400);
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
