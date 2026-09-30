@@ -1913,3 +1913,16 @@ test("one-hundred-forty-fifth review batch exposes one exact full-film upload", 
   assert.ok(item[0].title.includes("رشید"));
 });
 
+test("one-hundred-forty-sixth review batch exposes two exact classic-film uploads", () => {
+  for (const [id, videoId, title] of [
+    ["old-iranian-1351001", "jVFUAbEeF2U", "مهدی مشکی و شلوارک داغ"],
+    ["old-iranian-1351006", "PeNquB4Nyng", "حسن دینامیت"],
+  ] as const) {
+    const item = getOldIranianYouTubeVideos(id);
+    assert.ok(item);
+    assert.equal(item[0].videoId, videoId);
+    assert.equal(item[0].sourceUrl, `https://www.youtube.com/watch?v=${videoId}`);
+    assert.ok(item[0].title.includes(title));
+  }
+});
+
