@@ -14,6 +14,7 @@ const waitMs = Math.max(0, Number(process.env.TMDB_DELAY_MS || 350));
 const concurrency = Math.min(3, Math.max(1, Number(process.env.TMDB_CONCURRENCY || 2)));
 const args = new Set(process.argv.slice(2));
 const unprocessed = args.has("--unprocessed");
+const partialOnly = args.has("--partial-only");
 const onlyId = process.argv.find(value => value.startsWith("--id="))?.slice(5) || null;
 const offsetArg = Number(process.argv.find(value => value.startsWith("--offset="))?.slice(9));
 const offset = Number.isFinite(offsetArg) && offsetArg > 0 ? Math.floor(offsetArg) : 0;
@@ -237,6 +238,7 @@ async function main() {
     report = JSON.parse(await readFile(REPORT_FILE, "utf8"));
     candidates = (report.items || []).filter(item => /^tt\d+$/.test(item.imdbCode))
       .filter(item => !onlyId || item.imdbCode === onlyId)
+      .filter(item => !partialOnly || item.status === "partial" || item.status === "pending")
       .filter(item => !unprocessed || (!item.tmdbId && !item.tmdbCheckedAt && item.status !== "complete"))
       .filter(item => args.has("--all") || item.status !== "complete");
   }
