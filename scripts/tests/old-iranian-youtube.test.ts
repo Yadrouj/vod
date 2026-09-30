@@ -2449,6 +2449,14 @@ test("one-hundred-eighty-eighth review batch exposes the full Vahshi-ye Jangal u
   assert.ok(item[0].title.includes("Vahshi-ye Jangal"));
 });
 
+test("one-hundred-eighty-ninth review batch exposes the official Shohare Ahoo Khanoom upload", () => {
+  const item = getOldIranianYouTubeVideos("old-iranian-1347048");
+  assert.ok(item);
+  assert.equal(item[0].videoId, "zaOrPfROSGk");
+  assert.equal(item[0].sourceUrl, "https://www.youtube.com/watch?v=zaOrPfROSGk");
+  assert.ok(item[0].title.includes("Shohare Ahoo Khanoom"));
+});
+
 test("one-hundred-fifty-fifth review batch exposes two exact classic-film uploads", () => {
   for (const [id, videoId, title] of [
     ["old-iranian-1351040", "OhAxZpViVrk", "Motreb"],
