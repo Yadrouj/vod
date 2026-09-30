@@ -57,9 +57,10 @@ export function dedupeSeriesByImdb(items) {
   const unique = new Map();
   for (const item of items) {
     const imdbCode = String(item?.imdbCode ?? "").trim();
-    if (!/^tt\d+$/.test(imdbCode)) continue;
-    const current = unique.get(imdbCode);
-    if (!current || catalogRichness(item) > catalogRichness(current)) unique.set(imdbCode, item);
+    if (!imdbCode) continue;
+    const key = /^tt\d+$/.test(imdbCode) ? `imdb:${imdbCode}` : `legacy:${imdbCode}`;
+    const current = unique.get(key);
+    if (!current || catalogRichness(item) > catalogRichness(current)) unique.set(key, item);
   }
   return [...unique.values()];
 }

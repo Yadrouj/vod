@@ -9,6 +9,6 @@ test("episode audit counts one row per IMDb series", () => {
     { imdbCode: "tt7654321", title: "Other", genres: [] },
     { imdbCode: "legacy-no-imdb", title: "Unsupported" },
   ]);
-  assert.deepEqual(rows.map((row) => row.imdbCode), ["tt1234567", "tt7654321"]);
+  assert.deepEqual(rows.map((row) => row.imdbCode), ["tt1234567", "tt7654321", "legacy-no-imdb"]);
   assert.equal(rows[0].posterUrl, "poster.jpg");
 });
