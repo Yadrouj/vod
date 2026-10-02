@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { firstMonth } from '../content/magazine/first-month.mjs';
 import { tehranClock } from './lib/telegram-publishing-schedule.mjs';
 import { writeJsonAtomic } from './atomic-json.mjs';
+import { enrichEditorial, publicArticle, revisionFingerprint } from './lib/magazine-editorial.mjs';
 
 const read = async (file, fallback) => { try { return JSON.parse(await readFile(file, 'utf8')); } catch (e) { if (e.code === 'ENOENT') return fallback; throw e; } };
 const compact = value => String(value ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -82,15 +83,15 @@ export function selectMedia(seed, vod, music, updates, trending, now = new Date(
     for (const track of songs) { if (!artist && unique.has(track.artist?.slug)) continue; unique.set(artist ? track.id : track.artist?.slug, track); if (unique.size >= 5) break; }
     for (const track of unique.values()) {
       const detail = `/music/${encodeURIComponent(track.id)}`;
-      media.push({ id: track.id, kind: 'music', title: track.persianTitle || track.title, description: `اثر ${track.artists?.map(a => a.name).join('، ') || track.artist?.name}؛ برچسب‌های آرشیو: ${(track.moods ?? [track.category]).join('، ')}. نسخه و کیفیت را در صفحهٔ آهنگ انتخاب کنید.`, image: track.coverUrl, detail, play: detail, together: `${detail}?together=1`, download: `${detail}#downloads` });
+      media.push({ id: track.id, kind: 'music', title: track.persianTitle || track.title, artistName: track.artist?.name, artistHref: track.artist?.slug ? `/music/artists/${encodeURIComponent(track.artist.slug)}` : undefined, description: `اثر ${track.artists?.map(a => a.name).join('، ') || track.artist?.name}؛ برچسب‌های آرشیو: ${(track.moods ?? [track.category]).join('، ')}. نسخه و کیفیت را در صفحهٔ آهنگ انتخاب کنید.`, image: track.coverUrl, detail, play: detail, together: `${detail}?together=1`, download: `${detail}#downloads` });
     }
   }
   return media;
 }
 
 export async function prepareQueue({ dataDir = process.env.VOD_DATA_DIR || 'public/data', contentDir = 'content/magazine', now = new Date() } = {}) {
-  const [vod, music, library, updates, trending] = await Promise.all([
-    read(path.join(dataDir, 'vod-index.json'), { items: [] }), read(path.join(dataDir, 'music-index.json'), { tracks: [] }), read(path.join(dataDir, 'melodify-library.json'), { tracks: [] }), read(path.join(dataDir, 'vod-updates.json'), { items: [] }), read(path.join(dataDir, 'imdb-trending.json'), {}),
+  const [vod, music, library, updates, trending, collections] = await Promise.all([
+    read(path.join(dataDir, 'vod-index.json'), { items: [] }), read(path.join(dataDir, 'music-index.json'), { tracks: [] }), read(path.join(dataDir, 'melodify-library.json'), { tracks: [] }), read(path.join(dataDir, 'vod-updates.json'), { items: [] }), read(path.join(dataDir, 'imdb-trending.json'), {}), read(path.join(dataDir, 'music-mood-playlists.json'), { playlists: [] }),
   ]);
   music.tracks = [...new Map([...(library.tracks ?? []), ...(music.tracks ?? [])].map(t => [t.id, t])).values()];
   const drafts = [];
@@ -107,7 +108,8 @@ export async function prepareQueue({ dataDir = process.env.VOD_DATA_DIR || 'publ
       const observed = Date.parse(chart.observedAt);
       if (media.length && Number.isFinite(observed) && observed <= now.valueOf() && now.valueOf() - observed <= 7 * 86400000 && /^https:\/\/www\.imdb\.com\/chart\//.test(chart.sourceUrl ?? '')) sources.push({ title: 'فهرست محبوبیت IMDb · زمان مشاهدهٔ رتبه‌ها', url: chart.sourceUrl, checkedAt: chart.observedAt });
     }
-    const article = validateArticle({ ...seed, ...body, sources, description: body.intro.slice(0, 170), author: 'تحریریه سرونما', faqs, media, publishedAt: '', modifiedAt: now.toISOString() });
+    const editorial = enrichEditorial(seed, body, media, collections);
+    const article = validateArticle({ ...seed, ...editorial, sources, author: 'تحریریه سرونما', faqs, media, publishedAt: '', modifiedAt: now.toISOString() });
     drafts.push({ ...article, manuscriptHash: hash(manuscript), preparedAt: now.toISOString() });
   }
   return drafts;
@@ -119,7 +121,7 @@ export function chooseDailyDraft(drafts, state, now, hour = 9) {
   return drafts.find(d => !state.publishedSlugs?.[d.slug]) || null;
 }
 
-export async function runBlogAgent({ publish = false, validate = false, kernelLocked = false, bootstrap = false, indexing = true, now = new Date(), stateDir = process.env.BLOG_STATE_DIR || '.media-cache/blog-agent', dataDir = process.env.VOD_DATA_DIR || 'public/data', contentDir = 'content/magazine' } = {}) {
+export async function runBlogAgent({ publish = false, validate = false, revisePublished = false, kernelLocked = false, bootstrap = false, indexing = true, now = new Date(), stateDir = process.env.BLOG_STATE_DIR || '.media-cache/blog-agent', dataDir = process.env.VOD_DATA_DIR || 'public/data', contentDir = 'content/magazine' } = {}) {
   if (validate) publish = false;
   const directory = path.resolve(stateDir);
   await mkdir(directory, { recursive: true });
@@ -137,12 +139,29 @@ export async function runBlogAgent({ publish = false, validate = false, kernelLo
     const indexFile = path.join(dataDir, 'magazine.json');
     const index = await read(indexFile, { version: 1, articles: [], updatedAt: '' });
     for (const a of index.articles) { state.publishedSlugs[a.slug] = a.publishedAt; state.publishedDates[tehranClock(a.publishedAt).dateKey] = a.slug; }
+    if (publish && revisePublished) {
+      let revised = 0;
+      index.articles = index.articles.map(previous => {
+        const fresh = drafts.find(d => d.slug === previous.slug);
+        if (!fresh) return previous;
+        const candidate = publicArticle(fresh, previous.publishedAt, previous.modifiedAt);
+        if (revisionFingerprint(candidate) === revisionFingerprint(previous)) return previous;
+        candidate.modifiedAt = now.toISOString(); revised++;
+        delete state.indexedSlugs[candidate.slug];
+        return candidate;
+      });
+      if (revised) {
+        index.updatedAt = now.toISOString();
+        await writeJsonAtomic(indexFile, index);
+        await writeJsonAtomic(stateFile, state);
+        console.log(JSON.stringify({ revised, originalPublicationDatesPreserved: true }));
+      }
+    }
     const hour = Number(process.env.BLOG_PUBLISH_HOUR || 9);
     if (!Number.isInteger(hour) || hour < 0 || hour > 23) throw new Error('BLOG_PUBLISH_HOUR must be an integer from 0 to 23');
     const draft = chooseDailyDraft(drafts, state, now, bootstrap && !index.articles.length ? 0 : hour);
-    if (publish && draft) {
-      const article = { ...draft, publishedAt: now.toISOString(), modifiedAt: now.toISOString() };
-      delete article.manuscript; delete article.manuscriptHash; delete article.preparedAt; delete article.selectors; delete article.primaryKeyword;
+    if (publish && draft && !revisePublished) {
+      const article = publicArticle(draft, now.toISOString(), now.toISOString());
       index.articles.push(article); index.updatedAt = now.toISOString();
       await writeJsonAtomic(indexFile, index);
       state.publishedSlugs[draft.slug] = article.publishedAt;
@@ -153,7 +172,7 @@ export async function runBlogAgent({ publish = false, validate = false, kernelLo
       console.log(JSON.stringify({ published: draft.slug, words: draft.wordCount, url: `https://sarvnema.ir/mag/${draft.slug}` }));
     }
     if (publish) {
-      const unindexed = index.articles.filter(a => !state.indexedSlugs[a.slug]);
+      const unindexed = index.articles.filter(a => !state.indexedSlugs[a.slug] || Date.parse(a.modifiedAt) > Date.parse(state.indexedSlugs[a.slug]));
       if (unindexed.length) state.indexingPending = [...new Set([...(state.indexingPending ?? []), ...unindexed.flatMap(a => [`/mag/${a.slug}`, `/mag/topics/${a.category}`]), '/mag'])];
     }
     if (publish && indexing && state.indexingPending?.length && (!Number.isFinite(Date.parse(state.indexingRetryAt)) || now.valueOf() - Date.parse(state.indexingRetryAt) >= 15 * 60_000)) {
@@ -189,7 +208,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     const child = spawn('flock', ['--nonblock', '--conflict-exit-code', '75', '--no-fork', path.join(directory, 'agent.flock'), process.execPath, process.argv[1], ...process.argv.slice(2), '--lock-held'], { stdio: 'inherit' });
     child.on('exit', code => { process.exitCode = code ?? 1; }); child.on('error', () => { process.exitCode = 1; });
   } else {
-    const cycle = async () => { try { console.log(await runBlogAgent({ publish: !process.argv.includes('--validate') && (process.argv.includes('--publish') || process.env.BLOG_ENABLED === '1'), validate: process.argv.includes('--validate'), kernelLocked: process.argv.includes('--lock-held'), bootstrap: process.argv.includes('--bootstrap'), indexing: !process.argv.includes('--no-indexing') })); } catch (error) { console.error(error.message); if (!process.argv.includes('--daemon')) process.exitCode = 1; } };
+    const cycle = async () => { try { console.log(await runBlogAgent({ publish: !process.argv.includes('--validate') && (process.argv.includes('--publish') || process.env.BLOG_ENABLED === '1'), validate: process.argv.includes('--validate'), revisePublished: process.argv.includes('--revise-published'), kernelLocked: process.argv.includes('--lock-held'), bootstrap: process.argv.includes('--bootstrap'), indexing: !process.argv.includes('--no-indexing') })); } catch (error) { console.error(error.message); if (!process.argv.includes('--daemon')) process.exitCode = 1; } };
     await cycle();
     if (process.argv.includes('--daemon')) { const repeat = async () => { await cycle(); setTimeout(repeat, 5 * 60_000); }; setTimeout(repeat, 5 * 60_000); }
   }

@@ -6,5 +6,6 @@ export type MagazineArticle = {
   keywords: string[]; publishedAt: string; modifiedAt: string; author: string; image: string; imageAlt: string;
   sections: MagazineSection[]; faqs: { question: string; answer: string }[]; sources: MagazineSource[];
   media: MagazineMedia[]; relatedSlugs: string[]; wordCount: number; readingMinutes: number;
+  libraryLinks?: { title: string; href: string }[];
 };
 export type MagazineIndex = { version: number; updatedAt: string; articles: MagazineArticle[] };

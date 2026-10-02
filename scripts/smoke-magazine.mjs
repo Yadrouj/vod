@@ -24,6 +24,9 @@ try {
         assert.ok(await page.locator('article section').count() >= 8);
         const schema = await page.locator('script[type="application/ld+json"]').allTextContents();
         assert.ok(schema.some(s => s.includes('BlogPosting')));
+        assert.ok(await page.locator('article p a[href="/browse?section=top-imdb"]').count() > 0, 'Contextual archive link');
+        assert.ok(await page.locator('article a[href="https://t.me/Sarvnema_bot"]').count() > 0, 'Real bot link');
+        assert.ok((await page.locator('figure img').getAttribute('src')).endsWith('-branded.webp'), 'Branded cover');
         await page.screenshot({ path: `.media-cache/magazine-smoke/article-${width}.png` });
       }
       if (route === '/music/collections') {

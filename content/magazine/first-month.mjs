@@ -40,6 +40,6 @@ export const firstMonth = rows.map(([slug, title, category, primaryKeyword, keyw
   sources: [{ title: 'آرشیو و امکانات سرونما', url: 'https://sarvnema.ir' }, ...sources.map(url => ({ title: new URL(url).hostname.replace(/^www\./, '') + ' · منبع مرجع', url }))],
   manuscript: `${String(i + 1).padStart(2, '0')}-${slug}.md`,
   relatedSlugs: rows.filter(row => row[2] === category && row[0] !== slug).slice(0, 4).map(row => row[0]),
-  image: `/media/magazine/${['music', 'festivals', 'together'].includes(category) ? category : 'editorial-cinema-music'}.webp`,
+  image: `/media/magazine/${['music', 'festivals', 'together'].includes(category) ? category : 'editorial-cinema-music'}-branded.webp`,
   imageAlt: category === 'music' ? 'تصویرسازی اختصاصی صفحهٔ موسیقی و هدفون در اتاق شنیدن' : category === 'festivals' ? 'تصویرسازی فرش قرمز در برابر یک سالن سینمای خیالی' : category === 'together' ? 'تصویرسازی یک قرار فیلم با دوستان و ارتباط تصویری' : 'تصویرسازی سینمایی پروژکتور فیلم و اتاق موسیقی برای مجله سرونما',
 }));
