@@ -122,7 +122,6 @@ services:
   telegram-channel:
     image: vod-app
     container_name: vod-telegram-channel
-    profiles: ["channel"]
     restart: unless-stopped
     depends_on:
       - app
@@ -139,11 +138,18 @@ services:
       TELEGRAM_CHANNEL_START_HOUR: ${TELEGRAM_CHANNEL_START_HOUR:-10}
       TELEGRAM_CHANNEL_END_HOUR: ${TELEGRAM_CHANNEL_END_HOUR:-22}
       TELEGRAM_CHANNEL_STATE_DIR: /app/.media-cache/telegram-channel
+      MELODIFY_LIBRARY_DIR: /music-library
     command: ["node", "scripts/telegram-channel.mjs", "--daemon"]
     init: true
     stop_grace_period: 60s
     mem_limit: 512m
     cpus: 0.5
+    healthcheck:
+      test: ["CMD", "node", "scripts/publisher-health.mjs", "/app/.media-cache/telegram-channel/status.json"]
+      interval: 5m
+      timeout: 10s
+      start_period: 10m
+      retries: 3
     logging:
       driver: json-file
       options:
@@ -152,6 +158,7 @@ services:
     volumes:
       - ./public/data:/app/public/data:ro
       - vod_telegram_channel:/app/.media-cache/telegram-channel
+      - ${MELODIFY_LIBRARY_HOST_PATH:-/home/ubuntu/Documents/projects/vahid/melodify2/library/tracks}:/music-library:ro
     networks:
       - edge
 

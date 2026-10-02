@@ -195,6 +195,13 @@ export function WatchTogetherLauncher({
   }, []);
 
   useEffect(() => {
+    if (!media || !['inline', 'player'].includes(placement) || new URLSearchParams(window.location.search).get('together') !== '1') return;
+    openLauncher();
+    // The landing link opens the invitation once; changing a source should not reopen it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     const normalized = query.trim();
     if (!open || selected || normalized.length < 2) return;
     const controller = new AbortController();

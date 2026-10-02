@@ -103,7 +103,6 @@ services:
 
   telegram-channel:
     image: sarvnema-app
-    profiles: ["channel"]
     restart: unless-stopped
     depends_on:
       app:

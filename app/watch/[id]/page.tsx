@@ -48,12 +48,15 @@ export default async function WatchPage({ params, searchParams }: Props) {
   const locale = await getLocale();
   const t = getDictionary(locale);
   const { id } = await params;
-  const resume = (await searchParams)?.resume;
+  const query = await searchParams;
+  const resume = query?.resume;
   const item = await findVodItem(id);
   if (!item) notFound();
 
   const isSeries = normalizeVodType(item.type) === "series";
   const links = playableLinks(item.links, { isSeries, title: item.title, includeAlternateFiles: true });
+  const requested = links.find(link => link.season === Number(query?.season) && link.episode === Number(query?.episode));
+  const initialSource = typeof resume === 'string' ? resume : requested?.url;
   const oldFilmMedia = getOldIranianFilmMedia(item.id) ?? getOldIranianFilmMedia(item.imdbCode);
   const youtubeSource = !links.length ? oldFilmMedia?.youtubeVideos[0] ?? getOldIranianYouTubeVideos(item.id)?.[0] ?? getOldIranianYouTubeVideos(item.imdbCode)?.[0] ?? item.youtubeVideos?.[0] ?? null : null;
   const publisher = !links.length && !youtubeSource ? validPublisherPlayer(item.publisherPlayer) : null;
@@ -69,11 +72,12 @@ export default async function WatchPage({ params, searchParams }: Props) {
   const displayTitle = locale === "fa" ? item.persianTitle || item.title : item.title;
   const displayOverview = locale === "fa" ? item.persianOverview || item.overview : item.overview;
   const displayGenres = locale === "fa" && item.persianGenres?.length ? item.persianGenres : item.genres;
-  const partyMedia = partySources[0] ? {
+  const partySource = partySources.find(source => source.url === initialSource) || partySources[0];
+  const partyMedia = partySource ? {
     itemId: item.imdbCode,
     title: item.title,
     posterUrl: heroImage,
-    source: partySources[0],
+    source: partySource,
     sources: partySources,
     details: watchPartyDetails(item),
   } : null;
@@ -88,7 +92,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
       </header>
       <div className={styles.layout}>
         <section className={styles.main}>
-          {publisher ? <PublisherFilmPlayer source={publisher} title={displayTitle} poster={heroImage} /> : youtubeSource ? <YouTubePlayer source={youtubeSource} title={displayTitle} /> : <VodPlayer itemId={item.imdbCode} initialSource={typeof resume === "string" ? resume : undefined} title={item.title} posterUrl={heroImage} links={links} isSeries={isSeries} locale={locale} />}
+          {publisher ? <PublisherFilmPlayer source={publisher} title={displayTitle} poster={heroImage} /> : youtubeSource ? <YouTubePlayer source={youtubeSource} title={displayTitle} /> : <VodPlayer itemId={item.imdbCode} initialSource={initialSource} title={item.title} posterUrl={heroImage} links={links} isSeries={isSeries} locale={locale} />}
           <div className={styles.titleRow}>
             <div><h1>{displayTitle}</h1><p>{item.year} · {isSeries ? t.common.series : t.common.films}{item.imdbRating ? ` · IMDb ${item.imdbRating.toFixed(1)}` : ""}</p></div>
             {partyMedia ? <WatchTogetherInvite locale={locale} placement="player" label={locale === "fa" ? "تماشای همزمان" : "Watch together"} media={partyMedia} /> : <WatchTogetherLauncher placement="inline" locale={locale} />}

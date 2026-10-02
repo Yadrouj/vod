@@ -1,7 +1,9 @@
 # Automatic posts for @sarvnema
 
 The publisher watches `public/data/vod-updates.json` and music catalog changes.
-It posts a 1280×720 artwork banner, informal Persian caption, and separate
+Film/episode posts use a 1280×720 artwork banner. Music posts upload an actual
+MP3/M4A with Telegram's native audio player, title, performer and cover thumbnail.
+Both include an informal Persian caption and separate
 quality/dub/sub download buttons. Buttons use the website's five-second download
 page. Episode posts only include files for the announced season/episode.
 
@@ -48,8 +50,8 @@ never advances delivery slots.
 
 ## Docker service
 
-Both Compose files now include a `telegram-channel` service behind the `channel`
-profile. It shares the live catalog read-only and keeps delivery checkpoints in
+Both Compose files include a `telegram-channel` service started by default.
+It shares the live catalog read-only and keeps delivery checkpoints in
 the `vod_telegram_channel` volume. It restarts with Docker and checks every five
 minutes. The ordinary bot remains a separate process. Start only one publisher.
 
@@ -72,6 +74,22 @@ Set `TELEGRAM_CHANNEL_ENABLED=1` in that environment file. Inside Docker, the st
 path is fixed to the persistent volume and the catalog API uses the internal app
 address. Do not run a second publisher on a laptop while the server is publishing.
 Preserve this volume during deployments and backups; do not use `down -v`.
+
+The production service also mounts the local tagged music library read-only.
+Audio uploads have a 50 MB limit, use bounded temporary disk, and try another
+quality if the preferred source fails. Album/video entries are excluded from
+audio posts. Online and together buttons lead to the website; episode links
+select the announced season/episode. No video files are sent into bot chats.
+
+Linux uses `flock` so process crashes automatically release the publisher lock.
+Only one send can run at a time. A delivery slot is reserved before sending;
+an ambiguous Telegram acknowledgement is quarantined rather than reposted.
+The service writes `status.json` each cycle and its Docker health check requires
+a heartbeat less than 20 minutes old. Inspect it using:
+
+```bash
+docker exec vod-telegram-channel cat /app/.media-cache/telegram-channel/status.json
+```
 
 ## Channel branding and discovery
 

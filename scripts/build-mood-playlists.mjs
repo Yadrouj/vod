@@ -51,6 +51,28 @@ export function buildMoodPlaylists(tracks, date = new Date(), libraryTracks = []
       selection: "library-tags",
       updatedAt: date.toISOString(),
     });
+    const byTag = new Map();
+    for (const track of taggedLibrary) {
+      for (const tag of new Set([track.category, ...(track.moods ?? [])].map(value => String(value ?? '').trim()).filter(Boolean))) {
+        if (!byTag.has(tag)) byTag.set(tag, []);
+        byTag.get(tag).push(track);
+      }
+    }
+    for (const [tag, tagged] of [...byTag].sort(([a], [b]) => a.localeCompare(b, 'fa'))) {
+      const slug = tag.normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '');
+      playlists.push({
+        id: `library-tag-${slug || hash(tag).slice(0, 12)}`,
+        title: tag,
+        scope: 'tags',
+        mood: tag,
+        description: `پلی‌لیست «${tag}» از تگ‌های واقعی آرشیو موسیقی؛ همهٔ ${tagged.length.toLocaleString('fa-IR')} آهنگ این دسته، با صفحهٔ خوانندگان و پخش پیوسته.`,
+        trackIds: tagged.map(track => track.id),
+        covers: [...new Set(tagged.map(track => track.coverUrl).filter(Boolean))].slice(0, 4),
+        artistCount: new Set(tagged.flatMap(track => (track.artists ?? [track.artist]).filter(Boolean).map(artist => artist.slug))).size,
+        selection: 'library-tags',
+        updatedAt: date.toISOString(),
+      });
+    }
   }
   const freshVideos = tracks
     .filter(t => t.kind === "video" && t.sources?.some(s => s.available !== false) && t.coverUrl)
