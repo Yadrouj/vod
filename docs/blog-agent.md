@@ -40,12 +40,16 @@ npm run blog-agent:validate
 docker compose -f docker-compose.prod.yml build app
 docker compose -f docker-compose.prod.yml build blog-agent telegram-channel
 docker compose -f docker-compose.prod.yml up -d app blog-agent telegram-channel
-docker compose -f docker-compose.prod.yml exec blog-agent node scripts/blog-agent.mjs --publish --bootstrap
+docker compose -f docker-compose.prod.yml stop blog-agent
+docker compose -f docker-compose.prod.yml run --rm --no-deps blog-agent node scripts/blog-agent.mjs --publish --bootstrap
+docker compose -f docker-compose.prod.yml start blog-agent
 docker compose -f docker-compose.prod.yml logs --tail=60 blog-agent
 docker compose -f docker-compose.prod.yml exec blog-agent node scripts/publisher-health.mjs /app/.media-cache/blog-agent/status.json
 ```
 
 Do **not** reset a server checkout with live scraper changes. Preserve/archive dirty data, apply scoped code changes, or deploy from a separate clean release directory while reusing the data mounts. Do not run a second publisher against a different private volume sharing the same public directory; the shared lock/state are part of the deployment contract. Do not use `down -v` during an upgrade.
+
+The daemon holds the kernel lock for its lifetime. For an explicit bootstrap/manual publication, stop just that daemon, use the one-shot `run --rm` command with the **same volume**, then start the daemon again. Do not attempt a second publishing process through `exec` while the daemon owns the lock. Read-only health/status checks through `exec` are fine.
 
 Environment:
 
@@ -74,6 +78,8 @@ The public key is not a password. The agent verifies the deployed key before sub
 Google Search Console and Bing Webmaster Tools need the site owner's account/verification. Submit the advertised sitemap parts there and inspect the first article after deployment. These account actions were not performed without credentials. Check crawler access, server errors, canonical consistency and useful original content; do not promise ranking or manufacture backlinks.
 
 Primary technical references: [Google helpful content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content), [Google AI features](https://developers.google.com/search/docs/appearance/ai-features), [Article structured data](https://developers.google.com/search/docs/appearance/structured-data/article), [IndexNow protocol](https://www.indexnow.org/documentation).
+
+Deployment observation: `npm ci` reported 11 existing dependency advisories (3 moderate, 7 high, 1 critical). The blog changes add no package dependency. Review the npm audit separately before broad package upgrades; this handoff is not a security audit and does not imply those advisories were fixed.
 
 ## Adding another month
 
