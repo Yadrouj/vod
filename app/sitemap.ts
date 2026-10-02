@@ -2,6 +2,10 @@ import type { MetadataRoute } from "next";
 import { loadMusicIndex } from "@/lib/music";
 import { SITE_URL } from "@/lib/seo";
 import { loadVodIndex } from "@/lib/vod-index";
+import { loadMagazine } from '@/lib/magazine';
+import { loadMoodPlaylists } from '@/lib/mood-playlists';
+
+export const revalidate = 300;
 
 // Stay below Google's 50,000-URL / 50MB sitemap limit while leaving room for
 // route growth. robots.txt advertises every generated part.
@@ -21,17 +25,17 @@ export default async function sitemap({ id }: { id: Promise<string> }): Promise<
 }
 
 export async function sitemapPartCount() {
-  const [vod, music] = await Promise.all([loadVodIndex(), loadMusicIndex()]);
+  const [vod, music, magazine, playlists] = await Promise.all([loadVodIndex(), loadMusicIndex(), loadMagazine(), loadMoodPlaylists()]);
   const staticCount = 10;
   const vodCount = vod.items.filter((item) => item.linksCount > 0 || Boolean(item.posterUrl) || Boolean(item.overview)).length;
   const trackCount = music.tracks.filter((track) => track.sources.some((source) => source.available !== false)).length;
   const artistCount = music.artists.filter((artist) => artist.trackIds.length > 0).length;
-  const count = staticCount + vodCount + trackCount + artistCount + 7;
+  const count = staticCount + vodCount + trackCount + artistCount + 7 + magazine.articles.length + playlists.playlists.length + 2 + new Set(magazine.articles.map(a => a.category)).size;
   return Math.max(1, Math.ceil(count / SITEMAP_LIMIT));
 }
 
 async function allEntries(): Promise<SitemapEntry[]> {
-  const [vod, music] = await Promise.all([loadVodIndex(), loadMusicIndex()]);
+  const [vod, music, magazine, playlists] = await Promise.all([loadVodIndex(), loadMusicIndex(), loadMagazine(), loadMoodPlaylists()]);
   const vodUpdatedAt = validDate(vod.generatedAt);
   const musicUpdatedAt = validDate(music.updatedAt);
   const entries: SitemapEntry[] = [
@@ -43,7 +47,9 @@ async function allEntries(): Promise<SitemapEntry[]> {
     entry("/music/artists", musicUpdatedAt, 0.85, "weekly"),
     entry("/music/playlists", musicUpdatedAt, 0.75, "daily"),
     entry("/updates", vodUpdatedAt, 0.8, "daily"),
-    entry("/mag", vodUpdatedAt, 0.8, "weekly"),
+    entry("/mag", validDate(magazine.updatedAt), 0.8, "daily"),
+    entry("/mag/about", validDate('2026-10-02'), 0.5, "monthly"),
+    entry("/music/collections", musicUpdatedAt, 0.75, "weekly"),
     entry("/people", vodUpdatedAt, 0.65, "weekly"),
   ];
 
@@ -80,6 +86,9 @@ async function allEntries(): Promise<SitemapEntry[]> {
   for (const slug of ["daily-cinema-updates", "best-sad-movies", "best-mini-series", "persian-movies-guide", "best-ebi-music", "watch-together-guide", "listen-together-guide"]) {
     entries.push(entry(`/mag/${slug}`, slug === "daily-cinema-updates" ? vodUpdatedAt : musicUpdatedAt, 0.65, slug === "daily-cinema-updates" ? "daily" : "monthly"));
   }
+  for (const article of magazine.articles) entries.push({ ...entry(`/mag/${article.slug}`, validDate(article.modifiedAt), 0.8, 'monthly'), images: [new URL(article.image, SITE_URL).href] });
+  for (const category of new Set(magazine.articles.map(a => a.category))) entries.push(entry(`/mag/topics/${category}`, validDate(magazine.updatedAt), 0.7, 'daily'));
+  for (const playlist of playlists.playlists) entries.push(entry(`/music/collections/${encodeURIComponent(playlist.id)}`, validDate(playlist.updatedAt), 0.65, 'weekly'));
   return [...new Map(entries.map((item) => [item.url, item])).values()];
 }
 

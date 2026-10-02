@@ -10,6 +10,8 @@ import { loadVodNews } from "@/lib/news";
 import { loadReleaseUpdates } from "@/lib/release-updates";
 import { absoluteUrl, breadcrumbJsonLd, titleMetadata } from "@/lib/seo";
 import { editorialFaqJsonLd, editorialMovies, editorialSeries, editorialTracks, getEditorial } from "@/lib/seo-editorial";
+import { findMagazineArticle, loadMagazine } from '@/lib/magazine';
+import { MagazineArticle } from '@/components/magazine-article';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -29,8 +31,10 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const article = await findMagazineArticle(slug);
+  if (article) return { ...titleMetadata({ title: article.title, description: article.description, pathname: `/mag/${article.slug}`, keywords: article.keywords, image: absoluteUrl(article.image), type: 'article' }), authors: [{ name: article.author, url: absoluteUrl('/mag/about') }], openGraph: { ...titleMetadata({ title: article.title, description: article.description, pathname: `/mag/${article.slug}`, image: absoluteUrl(article.image), type: 'article' }).openGraph, type: 'article', publishedTime: article.publishedAt, modifiedTime: article.modifiedAt, section: article.categoryLabel } };
   const definition = getEditorial(slug);
-  if (!definition) return { title: "Guide not found" };
+  if (!definition) return { title: "مطلب پیدا نشد", robots: { index: false, follow: true } };
   return titleMetadata({
     title: definition.title,
     description: definition.description,
@@ -42,6 +46,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function EditorialPage({ params }: Props) {
   const { slug } = await params;
+  const article = await findMagazineArticle(slug);
+  if (article) {
+    const published = (await loadMagazine()).articles;
+    const related = published.filter(a => a.slug !== slug && (article.relatedSlugs.includes(a.slug) || a.category === article.category)).slice(0, 3);
+    return <MagazineArticle article={article} related={related} />;
+  }
   const definition = getEditorial(slug);
   if (!definition) notFound();
 

@@ -16,6 +16,7 @@ services:
       WATCH_PARTY_MAX_CONNECTIONS: ${WATCH_PARTY_MAX_CONNECTIONS:-512}
       NODE_OPTIONS: --max-old-space-size=1536
       VOD_DATA_DIR: /app/public/data
+      BLOG_STATE_DIR: /app/.media-cache/blog-agent
       MELODIFY_LIBRARY_DIR: /music-library
       PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://sarvnema.ir}
       WATCH_PARTY_MAX_ROOMS: ${WATCH_PARTY_MAX_ROOMS:-500}
@@ -36,6 +37,7 @@ services:
       - ./data:/app/data
       # Mirrored TVMaze episode stills served by /api/episode-image.
       - vod_episode_images:/app/.media-cache/episode-images
+      - vod_blog_agent:/app/.media-cache/blog-agent
       # The music archive stays on the host; the app reads it read-only.
       - ${MELODIFY_LIBRARY_HOST_PATH:-/home/ubuntu/Documents/projects/vahid/melodify2/library/tracks}:/music-library:ro
     expose:
@@ -101,6 +103,39 @@ services:
       - vod_imdb_cache:/app/.media-cache
       - vod_episode_images:/app/.media-cache/episode-images
 
+  blog-agent:
+    image: sarvnema-app
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      VOD_DATA_DIR: /app/public/data
+      BLOG_STATE_DIR: /app/.media-cache/blog-agent
+      BLOG_ENABLED: ${BLOG_ENABLED:-1}
+      BLOG_PUBLISH_HOUR: ${BLOG_PUBLISH_HOUR:-9}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://sarvnema.ir}
+    command: ["node", "scripts/blog-agent.mjs", "--daemon"]
+    init: true
+    mem_limit: 768m
+    cpus: 0.5
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "node", "scripts/publisher-health.mjs", "/app/.media-cache/blog-agent/status.json"]
+      interval: 5m
+      timeout: 10s
+      start_period: 10m
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - ./public/data:/app/public/data
+      - vod_blog_agent:/app/.media-cache/blog-agent
+
   telegram-channel:
     image: sarvnema-app
     restart: unless-stopped
@@ -118,6 +153,7 @@ services:
       TELEGRAM_CHANNEL_START_HOUR: ${TELEGRAM_CHANNEL_START_HOUR:-10}
       TELEGRAM_CHANNEL_END_HOUR: ${TELEGRAM_CHANNEL_END_HOUR:-22}
       TELEGRAM_CHANNEL_STATE_DIR: /app/.media-cache/telegram-channel
+      MELODIFY_LIBRARY_DIR: /music-library
     command: ["node", "scripts/telegram-channel.mjs", "--daemon"]
     init: true
     stop_grace_period: 60s
@@ -131,6 +167,7 @@ services:
     volumes:
       - ./public/data:/app/public/data:ro
       - vod_telegram_channel:/app/.media-cache/telegram-channel
+      - ${MELODIFY_LIBRARY_HOST_PATH:-/home/ubuntu/Documents/projects/vahid/melodify2/library/tracks}:/music-library:ro
 
   nginx:
     image: nginx:1.28-alpine
@@ -151,3 +188,4 @@ volumes:
   vod_imdb_cache:
   vod_episode_images:
   vod_telegram_channel:
+  vod_blog_agent:

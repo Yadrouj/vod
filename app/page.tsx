@@ -7,6 +7,7 @@ import { FocusRail } from "@/components/focus-rail";
 import { GradientMenu, type MegaMenuItem } from "@/components/gradient-menu";
 import { LandingSeoContent } from "@/components/landing-seo-content";
 import { NewsRail } from "@/components/news-rail";
+import { MagazineRail } from '@/components/magazine-rail';
 import { MusicRail } from "@/components/music-rail";
 import { LandingPulse } from "@/components/landing-pulse";
 import { landingPulse } from "@/lib/landing-pulse";
@@ -118,6 +119,7 @@ export default async function HomePage() {
         <PeopleRail people={topPeople.people} locale={locale} />
         <LandingSeoContent content={FILM_LANDING_SEO} />
         <NewsRail items={news.items} locale={locale} />
+        <MagazineRail locale={locale} />
       </section>
     </main>
   );

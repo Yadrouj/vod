@@ -26,11 +26,13 @@ services:
       HOSTNAME: "0.0.0.0"
       VOD_DATA_DIR: /app/public/data
       MELODIFY_LIBRARY_DIR: /music-library
+      BLOG_STATE_DIR: /app/.media-cache/blog-agent
     volumes:
       - ./public/data:/app/public/data
       - ./data:/app/data
       # Mirrored TVMaze episode stills served by /api/episode-image.
       - vod_episode_images:/app/.media-cache/episode-images
+      - vod_blog_agent:/app/.media-cache/blog-agent
       # The music archive stays on the host; the app reads it read-only.
       - ${MELODIFY_LIBRARY_HOST_PATH:-/home/ubuntu/Documents/projects/vahid/melodify2/library/tracks}:/music-library:ro
     networks:
@@ -119,8 +121,52 @@ services:
     networks:
       - edge
 
+  blog-agent:
+    image: vod-publishers
+    build:
+      context: .
+      dockerfile: Dockerfile.publishers
+    container_name: vod-blog-agent
+    restart: unless-stopped
+    depends_on:
+      - app
+    env_file:
+      - path: .env.local
+        required: false
+    environment:
+      NODE_ENV: production
+      VOD_DATA_DIR: /app/public/data
+      BLOG_STATE_DIR: /app/.media-cache/blog-agent
+      BLOG_ENABLED: ${BLOG_ENABLED:-1}
+      BLOG_PUBLISH_HOUR: ${BLOG_PUBLISH_HOUR:-9}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://sarvnema.ir}
+    command: ["node", "scripts/blog-agent.mjs", "--daemon"]
+    init: true
+    stop_grace_period: 30s
+    mem_limit: 768m
+    cpus: 0.5
+    healthcheck:
+      test: ["CMD", "node", "scripts/publisher-health.mjs", "/app/.media-cache/blog-agent/status.json"]
+      interval: 5m
+      timeout: 10s
+      start_period: 10m
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - ./public/data:/app/public/data
+      - vod_blog_agent:/app/.media-cache/blog-agent
+    networks:
+      - edge
+
   telegram-channel:
-    image: vod-app
+    image: vod-publishers
+    build:
+      context: .
+      dockerfile: Dockerfile.publishers
     container_name: vod-telegram-channel
     restart: unless-stopped
     depends_on:
@@ -172,3 +218,4 @@ volumes:
   vod_imdb_cache:
   vod_episode_images:
   vod_telegram_channel:
+  vod_blog_agent:

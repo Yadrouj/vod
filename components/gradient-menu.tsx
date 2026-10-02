@@ -40,6 +40,7 @@ export function GradientMenu({
 }) {
   const t = getDictionary(locale);
   const menuItems = [
+    { href: "/mag", label: locale === "fa" ? "مجله" : "Magazine" },
     { href: "/kids", label: locale === "fa" ? "دنیای کودک" : "Kids" },
     { href: "/music", label: locale === "fa" ? "موسیقی" : "Music" },
     { href: "/browse?section=persian-movies", label: t.common.persianMovies },

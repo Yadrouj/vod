@@ -1,0 +1,6 @@
+# Update publication workers without restarting the application or catalog jobs.
+ARG APP_IMAGE=vod-app
+FROM ${APP_IMAGE}
+WORKDIR /app
+COPY scripts ./scripts
+COPY content ./content

@@ -29,7 +29,7 @@ export default async function MusicDetailPage({ params }: { params: Promise<{ id
       <div className="wrap">
         <nav className={styles.topbar} aria-label="مسیر موسیقی"><Link href="/music" className="music-back"><ArrowLeft size={16} /> بازگشت به موسیقی</Link><Link href="/music/playlists">پلی‌لیست‌های من</Link></nav>
         <h1 className={styles.screenReaderTitle}>{track.persianTitle || track.title}</h1>
-        <section className={styles.workspace} aria-label="آهنگ و کنترل‌های پخش">
+        <section id="downloads" className={styles.workspace} aria-label="آهنگ و کنترل‌های پخش">
           <MusicPlayer track={track} queue={more} />
         </section>
 
