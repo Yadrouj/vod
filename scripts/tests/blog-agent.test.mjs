@@ -32,6 +32,7 @@ test('all thirty complete original manuscripts have realistic article lengths an
   const drafts = await prepareQueue();
   assert.equal(drafts.length, 30);
   assert.equal(new Set(drafts.map(d => d.slug)).size, 30);
+  assert.equal(new Set(drafts.map(d => d.image)).size, 30, 'Every article has its own banner');
   for (const draft of drafts) {
     assert.ok(draft.wordCount >= 850 && draft.wordCount <= 1500, draft.slug);
     assert.equal(draft.publishedAt, '');
@@ -40,7 +41,7 @@ test('all thirty complete original manuscripts have realistic article lengths an
     assert.ok(draft.sources.every(s => s.url.startsWith('https://')));
     assert.match(draft.sections.at(-1).paragraphs.join(' '), /https:\/\/t\.me\/Sarvnema_bot/);
     assert.ok(draft.libraryLinks.every(l => l.href.startsWith('/') && !l.href.startsWith('//')));
-    assert.ok(draft.image.endsWith('-branded.webp'));
+    assert.equal(draft.image, `/media/magazine/articles/${draft.slug}.webp`);
   }
 });
 
@@ -67,7 +68,7 @@ test('explicit revisions preserve original dates, do not publish the next draft 
     assert.equal(revised.articles.length, 1);
     assert.equal(revised.articles[0].publishedAt, original.articles[0].publishedAt);
     assert.equal(revised.articles[0].modifiedAt, '2026-10-04T10:00:00.000Z');
-    assert.ok(revised.articles[0].image.endsWith('-branded.webp'));
+    assert.equal(revised.articles[0].image, `/media/magazine/articles/${revised.articles[0].slug}.webp`);
     const unchanged = await readFile(file, 'utf8');
     await runBlogAgent({ ...options, revisePublished: true, now: new Date('2026-10-04T11:00:00Z') });
     assert.equal(await readFile(file, 'utf8'), unchanged);

@@ -14,7 +14,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     ],
     // Do not block /_next/: Google needs the page's public CSS and scripts to
     // render the page accurately. Each part is declared for large catalogs.
-    sitemap: Array.from({ length: partCount }, (_, index) => `${SITE_URL}/sitemap/${index}.xml`),
+    sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/mag/sitemap.xml`, ...Array.from({ length: partCount }, (_, index) => `${SITE_URL}/sitemap/${index}.xml`)],
     host: SITE_URL,
   };
 }

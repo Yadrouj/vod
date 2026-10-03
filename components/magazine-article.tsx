@@ -4,6 +4,8 @@ import { absoluteUrl, breadcrumbJsonLd } from '@/lib/seo';
 import type { MagazineArticle as Article } from '@/lib/magazine-types';
 import styles from './magazine.module.css';
 import { MagazineInline } from './magazine-inline';
+import { Suspense } from 'react';
+import { MagazineMediaGallery } from './magazine-media-gallery';
 
 export function MagazineArticle({ article, related }: { article: Article; related: Article[] }) {
   const url = absoluteUrl(`/mag/${article.slug}`);
@@ -23,12 +25,13 @@ export function MagazineArticle({ article, related }: { article: Article; relate
         <p className={styles.deck}>{article.description}</p>
         <nav className={styles.articleActions} aria-label="دسترسی‌های مقاله"><a href="#section-1">شروع مطالعه ↓</a><a href={`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(article.title)}`} target="_blank" rel="noopener noreferrer">اشتراک در تلگرام ↗</a>{article.modifiedAt !== article.publishedAt && <span>به‌روزرسانی: <time dateTime={article.modifiedAt}>{date.format(new Date(article.modifiedAt))}</time></span>}</nav>
       </header>
-      <figure className={styles.cover}><img src={article.image} alt={article.imageAlt} width={1600} height={900} fetchPriority="high" decoding="async" /><figcaption>تصویرسازی اختصاصی مجله سرونما</figcaption></figure>
+      <figure className={styles.cover}><img src={article.image} alt={article.imageAlt} width={1600} height={900} fetchPriority="high" decoding="async" /><figcaption>طراحی اختصاصی مجله سرونما با کمک هوش مصنوعی؛ این بنر عکس مستند اثر نیست.</figcaption></figure>
       <div className={styles.articleLayout}>
         <aside className={styles.toc}><details open><summary>در این مطلب</summary><nav>{article.sections.map(s => <a key={s.id} href={`#${s.id}`}>{s.title}</a>)}{article.media.length > 0 && <a href="#related-media">پخش و دانلود آثار مرتبط</a>}<a href="#faq">پرسش‌های متداول</a><a href="#sources">منابع</a></nav></details>{article.libraryLinks?.length ? <nav className={styles.libraryNav} aria-label="فهرست‌های مرتبط"><strong>از اینجا ادامه بده</strong>{article.libraryLinks.map(item => <Link key={item.href} href={item.href}>{item.title} ←</Link>)}</nav> : null}</aside>
         <article className={styles.body}>
           <p className={styles.introduction}><MagazineInline text={article.intro} /></p>
           {article.sections.map((section, index) => <section id={section.id} key={section.id}><h2>{section.title}</h2>{section.paragraphs.map((p, i) => <p key={i}><MagazineInline text={p} /></p>)}{index === 1 && related.length > 0 && <aside className={styles.readAlso}><small>خواندنی‌های مرتبط</small>{related.slice(0, 2).map(a => <Link href={`/mag/${a.slug}`} key={a.slug}>{a.title} ←</Link>)}</aside>}</section>)}
+          <Suspense fallback={null}><MagazineMediaGallery media={article.media} /></Suspense>
           <aside className={styles.botNote} aria-label="بات سرونما"><img src="/brand/sarvnema-mark.svg" alt="" width={34} height={34} /><div><strong>آرشیو سرونما، در تلگرام هم کنار توست</strong><p>نام اثر را بفرست، دسته‌بندی‌ها را ببین و به نسخه‌های موجود و پخش آنلاین برس.</p><a href="https://t.me/Sarvnema_bot" target="_blank" rel="noopener noreferrer">بازکردن بات سرونما ↗</a></div></aside>
           {article.media.length > 0 && <section id="related-media"><h2>از خواندن به تماشا و شنیدن</h2><p>این آثار در آرشیو سرونما هستند. لینک دانلود، کیفیت‌ها و وضعیت منبع را در صفحهٔ هر اثر بررسی کنید.</p><div className={styles.mediaGrid}>{article.media.map(media => <div key={media.id} className={styles.mediaCard}>{media.image && <img src={media.image} alt="" width={180} height={240} loading="lazy" decoding="async" />}<div><h3><Link href={media.detail}>{media.title}</Link></h3><small>{media.year}{media.rating ? ` · IMDb ${media.rating}` : ''}</small><p>{media.description}</p><nav><Link href={media.play}>{media.kind === 'music' ? 'شنیدن آنلاین' : 'پخش آنلاین'}</Link><Link href={media.together}>{media.kind === 'music' ? 'شنیدن همزمان' : 'تماشای همزمان'}</Link><Link href={media.download}>دانلود و کیفیت‌ها</Link></nav></div></div>)}</div></section>}
           <section id="faq" className={styles.faq}><h2>پرسش‌های متداول</h2>{article.faqs.map(f => <details key={f.question}><summary>{f.question}</summary><p>{f.answer}</p></details>)}</section>

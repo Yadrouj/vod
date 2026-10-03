@@ -26,7 +26,9 @@ try {
         assert.ok(schema.some(s => s.includes('BlogPosting')));
         assert.ok(await page.locator('article p a[href="/browse?section=top-imdb"]').count() > 0, 'Contextual archive link');
         assert.ok(await page.locator('article a[href="https://t.me/Sarvnema_bot"]').count() > 0, 'Real bot link');
-        assert.ok((await page.locator('figure img').getAttribute('src')).endsWith('-branded.webp'), 'Branded cover');
+        const cover = page.locator('figure img').first();
+        assert.equal(await cover.getAttribute('src'), '/media/magazine/articles/imdb-trends-watch-guide.webp', 'Unique branded article cover');
+        await cover.evaluate(image => image.decode());
         await page.screenshot({ path: `.media-cache/magazine-smoke/article-${width}.png` });
       }
       if (route === '/music/collections') {
@@ -44,6 +46,10 @@ try {
     assert.ok(!body.includes('/mag/new-music-tags-playlists'), 'Unpublished article must not enter discovery feeds');
   }
   const robots = await (await fetch(origin + '/robots.txt')).text();
+  const indexXml = await (await fetch(origin + '/sitemap.xml')).text();
+  assert.ok(indexXml.includes('<sitemapindex') && indexXml.includes('/mag/sitemap.xml'));
+  const magazineXml = await (await fetch(origin + '/mag/sitemap.xml')).text();
+  assert.ok(magazineXml.includes('/mag/imdb-trends-watch-guide') && magazineXml.includes('/media/magazine/articles/imdb-trends-watch-guide.webp'));
   const parts = [...robots.matchAll(/^Sitemap:\s*(\S+)/gm)].map(match => new URL(match[1]).pathname);
   let sitemap = '';
   for (const part of parts) { const response = await fetch(origin + part); assert.equal(response.status, 200); sitemap += await response.text(); }
