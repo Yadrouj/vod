@@ -8,6 +8,7 @@ import { audioSources, prepareChannelAudio, channelMessageForm } from './lib/tel
 import { writeJsonAtomic } from './atomic-json.mjs';
 import {
   hasPublishedSlot,
+  hasRecentChannelDelivery,
   publishingWindow,
   recordPublishedSlot,
   scheduleConfig,
@@ -38,14 +39,32 @@ async function loadTrendRanks(now = Date.now()) {
 export function selectScheduledEntries(state, pending, now = Date.now(), trendRanks = new Map(), env = process.env) {
   const window = publishingWindow(new Date(now), scheduleConfig(env));
   const selected = [];
+  if (hasRecentChannelDelivery(state, now)) return { window, selected };
   const choose = (type, slot, candidates) => {
     if (!slot || hasPublishedSlot(state, type, slot) || !candidates.length) return;
-    selected.push({ entry: candidates[0], type, slot });
+    selected.push({ entry: candidates[0], alternatives: candidates.slice(1, 5), type, slot });
   };
   choose('vod', window.vod, sortVodEventsByTrend(pending.filter(({ event }) => event.type === 'vod'), trendRanks));
   choose('music', window.music, pending.filter(({ event }) => event.type === 'music')
     .sort((a, b) => String(b.event.eventAt ?? '').localeCompare(String(a.event.eventAt ?? ''))));
   return { window, selected };
+}
+
+/** Resolve season-less series updates to a real, downloadable episode. */
+export async function resolveChannelDetail(event, loadDetail) {
+  let detail = await loadDetail(event.imdbCode, event.season);
+  if (event.kind !== 'series' && event.kind !== 'episode' && detail?.item?.type !== 'series') return { event, detail };
+  let season = event.season;
+  if (season == null) {
+    season = Math.max(0, ...(detail.seasons ?? []).map(s => Number(s.season)).filter(Number.isInteger)) || detail.selectedSeason;
+    if (season != null && season !== detail.selectedSeason) detail = await loadDetail(event.imdbCode, season);
+  }
+  const episodes = (detail.episodes ?? []).filter(e =>
+    (season == null || e.season == null || Number(e.season) === Number(season)) &&
+    (event.episode == null || Number(e.episode) === Number(event.episode)) && e.files?.length)
+    .sort((a, b) => Number(b.episode) - Number(a.episode));
+  if (!episodes.length) throw new Error('No downloadable episode for this series update');
+  return { detail, event: { ...event, season: season ?? episodes[0].season, episode: event.episode ?? episodes[0].episode } };
 }
 
 export function musicFingerprint(track) {
@@ -92,7 +111,8 @@ export function composePost(event, detail, site) {
   const title = String(item.persianTitle || item.title || event.title).slice(0, 160);
   let files = music ? event.sources : detail?.movieFiles ?? [];
   if (!music && event.season != null) {
-    files = (detail?.episodes ?? []).filter(e => event.episode == null || e.episode === event.episode).flatMap(e => e.files ?? []);
+    files = (detail?.episodes ?? []).filter(e => (e.season == null || Number(e.season) === Number(event.season))
+      && (event.episode == null || Number(e.episode) === Number(event.episode))).flatMap(e => e.files ?? []);
   }
   const variants = new Map();
   for (const file of files) {
@@ -206,16 +226,20 @@ export async function runChannel({ publish = false, preview = false, kernelLocke
         .sort((a,b) => String(b.event.eventAt).localeCompare(String(a.event.eventAt)))
         .slice(0, Number(process.env.TELEGRAM_CHANNEL_BATCH_SIZE || 5))
         .map(entry => ({ entry, type: entry.event.type === 'music' ? 'music' : 'vod', slot: null })) };
-    for (const { entry, type, slot } of scheduled.selected) {
+    for (const selection of scheduled.selected) {
+      const { type, slot } = selection;
+      for (const entry of [selection.entry, ...(selection.alternatives ?? [])]) {
       try {
-        const event = entry.event;
+        let event = entry.event;
         let detail;
         if (event.type === 'vod') {
-          const url = new URL(`/api/bot/title/${encodeURIComponent(event.imdbCode)}`, api);
-          url.search = new URLSearchParams({ includeDownloads:'1',maxFiles:'80',...(event.season != null ? {season:String(event.season)} : {}) });
-          const response = await fetch(url, { headers: token ? {'x-bot-token':token} : {},signal:AbortSignal.timeout(30000) });
-          if (!response.ok) throw new Error(`Catalog returned ${response.status}`);
-          detail = await response.json();
+          ({ event, detail } = await resolveChannelDetail(event, async (id, season) => {
+            const url = new URL(`/api/bot/title/${encodeURIComponent(id)}`, api);
+            url.search = new URLSearchParams({ includeDownloads:'1',maxFiles:'80',...(season != null ? {season:String(season)} : {}) });
+            const response = await fetch(url, { headers: token ? {'x-bot-token':token} : {},signal:AbortSignal.timeout(30000) });
+            if (!response.ok) throw new Error(`Catalog returned ${response.status}`);
+            return response.json();
+          }));
         }
         const post = composePost(event, detail, site);
         const fileId = hash(event.key).slice(0,16);
@@ -229,6 +253,9 @@ export async function runChannel({ publish = false, preview = false, kernelLocke
         try {
         if (type === 'music') audio = await prepareChannelAudio(event);
         const thumbnail = audio ? await createRequire(import.meta.url)('sharp')(artwork).resize(320, 180).jpeg({ quality: 75 }).toBuffer() : null;
+        // Preparation may cross an hour/window boundary. Never spend an expired
+        // slot or post sooner than an hour after a previous delivery.
+        if (slot && (publishingWindow(new Date(), scheduleConfig())[type] !== slot || hasRecentChannelDelivery(state))) break;
         entry.status = 'sending';
         recordPublishedSlot(state, type, slot, { eventKey: event.key, status: 'sending', sentAt: new Date().toISOString() });
         await save();
@@ -238,6 +265,7 @@ export async function runChannel({ publish = false, preview = false, kernelLocke
         recordPublishedSlot(state, type, slot, { eventKey: event.key, messageId: sent.message_id, sentAt: entry.sentAt });
         await save();
         console.log(JSON.stringify({sent:entry.messageId,title:post.title,channel}));
+        break;
         } finally { await audio?.cleanup(); }
       } catch(error) {
         // A lost acknowledgement is ambiguous: do not duplicate the public post.
@@ -247,6 +275,7 @@ export async function runChannel({ publish = false, preview = false, kernelLocke
         if (publish) await save();
         console.error(JSON.stringify({key:entry.event.key,status:entry.status,error:entry.error}));
         if (error.uncertain || error.retryAfter) break;
+      }
       }
     }
     const summary = {

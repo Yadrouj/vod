@@ -46,18 +46,13 @@ export function publishingSlot(type, value = new Date(), config = scheduleConfig
   const clock = tehranClock(value, config.timeZone);
   const isMusic = type === "music";
   const inHourRange = clock.hour >= config.startHour && clock.hour <= config.endHour;
-  // The final half-hour is outside a 10:00–22:00 window. The final valid
-  // slot is therefore 22:00, with a small catch-up period until 22:29.
+  // Keep the final 22:00 catch-up window, but never publish after 22:29.
   const inFinalHour = clock.hour === config.endHour && clock.minute >= 30;
   if (!inHourRange || inFinalHour) return null;
-  // The hour mark belongs to film/series and the midpoint belongs to music,
-  // so the channel never receives two posts at the same time.
-  if (isMusic) return clock.minute >= 30
-    ? `${clock.dateKey}:${String(clock.hour).padStart(2, "0")}:30`
-    : null;
-  return clock.minute < 30
-    ? `${clock.dateKey}:${String(clock.hour).padStart(2, "0")}`
-    : null;
+  // Alternate whole hours, anchored to the configured opening hour.
+  const musicHour = (clock.hour - config.startHour) % 2 === 1;
+  if (isMusic !== musicHour) return null;
+  return `${clock.dateKey}:${String(clock.hour).padStart(2, "0")}`;
 }
 
 export function publishingWindow(value = new Date(), config = scheduleConfig()) {
@@ -73,7 +68,19 @@ export function publishingWindow(value = new Date(), config = scheduleConfig()) 
 }
 
 export function hasPublishedSlot(state, type, slot) {
-  return Boolean(slot && state?.publishedSlots?.[type]?.[slot]);
+  // Old music checkpoints used HH:30. Keep those deliveries when migrating:
+  // neither media type may spend an already occupied hour again.
+  return Boolean(slot && Object.values(state?.publishedSlots ?? {}).some(slots =>
+    Object.keys(slots).some(key => key === slot || key.startsWith(`${slot}:`))));
+}
+
+export function hasRecentChannelDelivery(state, now = Date.now()) {
+  const posts = Object.values(state?.posts ?? {}).filter(p => ['sent', 'sending', 'uncertain'].includes(p.status));
+  const reservations = Object.values(state?.publishedSlots ?? {}).flatMap(slots => Object.values(slots));
+  return [...posts, ...reservations].some(p => {
+    const time = Date.parse(p.sentAt ?? '');
+    return Number.isFinite(time) && now < time + 60 * 60 * 1000;
+  });
 }
 
 export function recordPublishedSlot(state, type, slot, entry) {

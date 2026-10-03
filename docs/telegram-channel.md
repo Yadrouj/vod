@@ -34,12 +34,23 @@ Keep the existing daily scraper schedule running to supply fresh catalog data.
 ## Publishing cadence
 
 The publisher uses Tehran time and persistent delivery slots. During the daily
-window it sends exactly one channel message per half-hour when content is
-available: film/series posts own `10:00`, `11:00`, …, `22:00`, while music owns
-the in-between slots `10:30`, `11:30`, …, `21:30`. This keeps the channel from
-receiving two messages at the same hour. The publisher does not send after
+window it sends at most one channel message per hour when content is
+available: film/series posts own `10:00`, `12:00`, …, `22:00`, while music owns
+`11:00`, `13:00`, …, `21:00`. This alternates whole hours rather than publishing
+every half-hour. Actual deliveries are at least sixty minutes apart, even after
+a late retry or a deployment. Old half-hour checkpoints are preserved and block
+a second delivery in the same hour. An empty film slot is not replaced by music.
+The publisher does not send after
 `22:29`, and a missed slot can still be delivered
-when the five-minute worker wakes up during that slot.
+when the five-minute worker wakes up during that hour (until `22:29` for the final slot).
+
+Series-level updates without a season/episode resolve to the latest catalog season
+and a downloadable episode; explicit episode updates retain their exact episode.
+If a candidate lacks files or its catalog request fails, it is deferred and up to
+four other candidates of the same media type can be tried in that cycle. One
+unusable trending title therefore cannot indefinitely block all films. Only a
+successful delivery spends the hour; ambiguous sends still reserve it to avoid
+duplicates. No catch-up burst is sent for earlier missed hours.
 
 Film and series candidates are ordered by the latest cached IMDb Movie Meter and
 TV Meter rank, then by IMDb rating and update time. Keep the daily IMDb refresh
