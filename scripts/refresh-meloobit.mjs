@@ -2,6 +2,11 @@ import { spawn } from 'node:child_process';
 import { scrapeMeloobit, cliOptions } from './scrape-meloobit.mjs';
 import { mkdir, open, unlink, stat } from 'node:fs/promises';
 
+// Let the crawler checkpoint and the wrapper release its shared publication
+// lock when a background import is stopped gracefully.
+const keepAlive = () => {};
+process.on('SIGTERM', keepAlive); process.on('SIGINT', keepAlive);
+
 await mkdir('data',{recursive:true});
 const file='data/daily-music-refresh.lock';
 let lock;
@@ -26,4 +31,4 @@ else {
   }
   if(status.state === 'failed') process.exitCode=1;
 }
-} finally {await lock.close();await unlink(file).catch(()=>{});}
+} finally {await lock.close();await unlink(file).catch(()=>{});process.removeListener('SIGTERM',keepAlive);process.removeListener('SIGINT',keepAlive);}

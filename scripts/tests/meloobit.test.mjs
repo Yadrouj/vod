@@ -10,6 +10,7 @@ import { DAILY_JOBS } from '../maintenance-policy.mjs';
 import { DEFAULT_SCRAPER_DASHBOARD_CONFIG } from '../scraper-dashboard-config.mjs';
 import { sanitizeScraperDashboardConfig } from '../scraper-dashboard-config.mjs';
 import { mergeMeloobitIndex } from '../merge-meloobit-source.mjs';
+import { backfillProgress } from '../backfill-meloobit.mjs';
 
 const root='http://sv2.mybia2music.com/s2/Music/1405/07/09/Amin%20Rostami/';
 const low=root+'Amin%20Rostami%20-%20Azizam%20Dir%20Oomadi%20%5B128%5D.mp3';
@@ -75,6 +76,12 @@ test('publishing Meloobit preserves unrelated tracks and original artist biograp
   const merged=mergeMeloobitIndex(index,{tracks:[incoming]});
   assert.equal(merged.tracks[0].id,old.id);assert.ok(merged.tracks[0].sources.some(s=>s.provider==='rozmusic'));
   assert.equal(merged.artists[0].bio,'Original biography');assert.equal(merged.artists[0].profileImageUrl,'https://example.com/artist.jpg');assert.equal(merged.scanned.full,true);
+});
+test('full backfill finishes only after every page and pending review, including rejected files, is audited',()=>{
+  const source={maxPage:2,completedPages:{1:true,2:true},tracks:[{reviewedAt:'today',sources:[{checkedAt:'today',available:true}]},{reviewedAt:'today',sources:[{checkedAt:'today',available:false}]}]};
+  assert.equal(backfillProgress(source).state,'completed');assert.equal(backfillProgress(source).verified,1);
+  assert.equal(backfillProgress({...source,completedPages:{1:true,3:true}}).state,'running');
+  assert.equal(backfillProgress({...source,tracks:[{sources:[{available:false}]}]}).pendingReviews,1);
 });
 test('resumable crawler verifies audio samples, rejects HTML downloads and never marks them available',async()=>{
   const directory=await mkdtemp(path.join(os.tmpdir(),'sarvnema-meloobit-'));

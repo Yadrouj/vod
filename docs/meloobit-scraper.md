@@ -34,6 +34,16 @@ node scripts/refresh-meloobit.mjs --recent-only --pages=1 --budget-ms=180000
 node --test scripts/tests/meloobit.test.mjs scripts/tests/music-tag-playlists.test.mjs
 ```
 
+For the first **complete** archive import, run the optional worker (the app and its image must already be built):
+
+```bash
+docker compose -f docker-compose.prod.yml -f docker-compose.meloobit.yml up -d --no-deps meloobit-backfill
+docker logs --tail 30 vod-meloobit-backfill
+docker compose -f docker-compose.prod.yml -f docker-compose.meloobit.yml stop meloobit-backfill
+```
+
+This initial user-requested import runs now, independently of the nightly window, with 0.5 CPU/1 GB memory and bounded log files. It publishes verified additions after each 15-minute batch and repeats until every discovered archive page and pending validation has been reviewed, then exits successfully. It honors the source's enabled toggle at batch boundaries and yields to other music publishers via their shared lock. It does not post to Telegram itself. Progress is in `data/meloobit-backfill-status.json`; failures and rejected files remain in the source report. Ordinary later updates still run only in the configured nightly schedule. Graceful shutdown checkpoints progress and releases the publication lock.
+
 Defaults: two newest pages plus two historical pages, 24 detail-page enrichments, seven-minute request budget. Calls are paced per host, with retries/backoff for transient failures. Checkpoint writes are throttled to ten seconds and forced at page/exit boundaries, avoiding rewriting the growing archive after every network response. Newest pages are always refreshed; completed historical pages and already validated links resume from checkpoints. Stale/unavailable link validation retries before fetching more history; newly failed checks propagate to existing source availability. A partial run publishes only verified successes and explicitly reports unfinished work; it is not a claim that every archive page is complete.
 
 Configuration: `MELOOBIT_RECENT_PAGES`, `MELOOBIT_BACKFILL_PAGES`, `MELOOBIT_DETAIL_LIMIT`, `MELOOBIT_BUDGET_MS`, `MELOOBIT_STATE_DIR`, `MELOOBIT_STATUS_FILE`, `MUSIC_REFRESH_REQUEST_GAP_MS`. CLI: `--pages=N`, `--backfill-pages=N`, `--detail-limit=N`, `--budget-ms=N`, `--delay-ms=N`, `--full`, `--recent-only`. `--pages=0 --full` resumes history without refetching front pages.

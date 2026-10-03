@@ -42,7 +42,7 @@ export async function scrapeMeloobit(options = cliOptions()) {
   const startedAt=new Date().toISOString(), deadline=Date.now()+options.budgetMs;
   await lock.writeFile(JSON.stringify({pid:process.pid,startedAt,expiresAt:deadline+3600000}));
   const tracks=new Map(source.tracks.map(t=>[t.id,t])), directories=new Map(), nextRequests=new Map();
-  const status={provider:'meloobit',state:'running',startedAt,updatedAt:startedAt,current:null,pages:{complete:Object.keys(source.completedPages ?? {}).length,total:source.maxPage || options.maxPage},
+  const status={provider:'meloobit',state:'running',phase:'بررسی آهنگ‌ها و لینک‌های مستقیم ملوبیت',startedAt,updatedAt:startedAt,current:null,pages:{complete:Object.keys(source.completedPages ?? {}).length,total:source.maxPage || options.maxPage},
     tracks:{discovered:tracks.size,new:0,complete:0,failures:0},links:{checked:0,available:0,unavailable:0},warnings:[]};
   source.completedPages ??= {};
   let interrupted=false, details=0, lastSaved=0;
@@ -143,6 +143,7 @@ export async function scrapeMeloobit(options = cliOptions()) {
     if(e.code!=='TIME_BUDGET')status.tracks.failures++;
   } finally {
     status.warnings=status.warnings.slice(-100);status.current=null;status.finishedAt=new Date().toISOString();
+    status.phase=status.state==='completed' ? 'بررسی این نوبت کامل شد' : status.state==='partial' ? 'آهنگ‌های تأییدشده ذخیره شدند؛ ادامهٔ آرشیو در صف است' : 'بررسی منبع نیاز به تلاش مجدد دارد';
     status.verifiedTracks=[...tracks.values()].filter(t=>t.sources.some(s=>s.available===true)).length;
     try {await checkpoint(true);} finally {await lock.close();await unlink(lockFile).catch(()=>{});process.removeListener('SIGTERM',interrupt);process.removeListener('SIGINT',interrupt);}
   }
