@@ -185,10 +185,11 @@ services:
       TELEGRAM_CHANNEL_END_HOUR: ${TELEGRAM_CHANNEL_END_HOUR:-22}
       TELEGRAM_CHANNEL_STATE_DIR: /app/.media-cache/telegram-channel
       MELODIFY_LIBRARY_DIR: /music-library
+      NODE_OPTIONS: --max-old-space-size=1024
     command: ["node", "scripts/telegram-channel.mjs", "--daemon"]
     init: true
     stop_grace_period: 60s
-    mem_limit: 512m
+    mem_limit: 1536m
     cpus: 0.5
     healthcheck:
       test: ["CMD", "node", "scripts/publisher-health.mjs", "/app/.media-cache/telegram-channel/status.json"]

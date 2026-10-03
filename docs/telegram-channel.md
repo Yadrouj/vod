@@ -87,6 +87,10 @@ address. Do not run a second publisher on a laptop while the server is publishin
 Preserve this volume during deployments and backups; do not use `down -v`.
 
 The production service also mounts the local tagged music library read-only.
+The channel worker has a 1 GiB JavaScript heap within a bounded 1.5 GiB container
+limit, allowing the full music catalog and delivery state to load without the
+default 256 MiB heap exhaustion seen with a 512 MiB container. Do not reduce it
+to the blog worker's smaller allocation; watch RSS as the archive grows.
 Audio uploads have a 50 MB limit, use bounded temporary disk, and try another
 quality if the preferred source fails. Album/video entries are excluded from
 audio posts. Online and together buttons lead to the website; episode links

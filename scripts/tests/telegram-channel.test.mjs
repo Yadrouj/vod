@@ -110,6 +110,14 @@ test('old half-hour slots survive migration and deliveries are at least sixty mi
  assert.equal(selectScheduledEntries({...state,posts:{old:{status:'uncertain',sentAt}},publishedSlots:{}},pending,Date.parse('2026-10-03T11:00:00+03:30')).selected.length,0);
 });
 
+test('both deployment stacks reserve enough heap and container headroom for the full archive',async()=>{
+ for(const file of ['docker-compose.prod.yml','docker-compose.production.yml']){
+  const text=await readFile(file,'utf8');const section=text.split(/\r?\n  telegram-channel:\r?\n/)[1]?.split(/\r?\n(?:  [\w-]+:|\w+:)/)[0];
+  assert.ok(section);assert.match(section,/NODE_OPTIONS: --max-old-space-size=1024/);
+  assert.match(section,/mem_limit: 1536m/);assert.match(section,/vod_telegram_channel:/);
+ }
+});
+
 test('series-level updates resolve the latest season and episode without mixing their files',async()=>{
  const loads=[];const file={quality:'1080p',group:'Dubbed',url:'https://sarvnema.ir/download/continue?u=abc'};
  const resolved=await resolveChannelDetail({type:'vod',kind:'series',imdbCode:'tt1',title:'Series'},async(id,season)=>{
