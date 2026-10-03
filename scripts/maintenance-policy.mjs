@@ -59,5 +59,6 @@ export const DAILY_JOBS = [
   { id: "episode-images-tmdb", script: "scripts/scrape-tmdb-episode-images.mjs", minutes: 20, args: ["--partial-only", "--limit=50"] },
   { id: "episode-image-cache", script: "scripts/cache-episode-images.mjs", minutes: 20, args: ["--concurrency=4", "--delay-ms=150"] },
   { id: "releases", script: "scripts/release-monitor.mjs", minutes: 5 },
-  { id: "music", script: "scripts/daily-music-refresh.mjs", minutes: 70 },
+  { id: "meloobit", script: "scripts/refresh-meloobit.mjs", minutes: 8 },
+  { id: "music", script: "scripts/daily-music-refresh.mjs", minutes: 62 },
 ];

@@ -31,6 +31,7 @@ export const DEFAULT_SCRAPER_DASHBOARD_CONFIG = {
     source("episode-image-cache", "Episode artwork local cache", "https://media.themoviedb.org/", "cache-episode-images.mjs"),
     source("releases", "پیگیری انتشارها", "https://www.imdb.com/calendar/", "release-monitor.mjs"),
     source("music", "موسیقی فارسی و خارجی", "https://rozmusic.com/", "daily-music-refresh.mjs"),
+    source("meloobit", "ملوبیت؛ موسیقی و پلی‌لیست", "https://meloobit.ir/", "refresh-meloobit.mjs"),
   ],
 };
 
@@ -93,7 +94,10 @@ export function sanitizeScraperDashboardConfig(value) {
     };
   });
   const unique = [...new Map(sources.map((item) => [item.id, item])).values()];
-  return { version: 1, schedule: normalizeSchedule(input.schedule, fallback.schedule), sources: unique };
+  const schedule = normalizeSchedule(input.schedule, fallback.schedule);
+  // Upgrade older saved settings without losing disabled sources or custom hours.
+  if (!unique.some(item => item.id === 'meloobit')) unique.push({ ...fallback.sources.find(item => item.id === 'meloobit'), startHour: schedule.startHour, endHour: schedule.endHour, days: [...schedule.days] });
+  return { version: 1, schedule, sources: unique };
 }
 
 export async function hasScraperDashboardConfig(file = SCRAPER_DASHBOARD_CONFIG_FILE) {

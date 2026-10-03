@@ -72,6 +72,8 @@
     "scrape-rozmusic": "node scripts/scrape-rozmusic.mjs --details",
     "scrape-rozmusic:full": "node scripts/scrape-rozmusic.mjs --full --no-details --concurrency=1 --delay-ms=1800",
     "scrape-worldofmusic": "node scripts/scrape-worldofmusic.mjs",
+    "scrape-meloobit": "node scripts/refresh-meloobit.mjs",
+    "scrape-meloobit:full": "node scripts/refresh-meloobit.mjs --full --budget-ms=7200000",
     "scrape-worldofmusic:full": "node scripts/scrape-worldofmusic.mjs --concurrency=2 --delay-ms=450 --include-sitemap --sitemap-albums=250",
     "rebuild-music-index": "node scripts/scrape-rozmusic.mjs --rebuild-only && node scripts/build-music-landing-index.mjs",
     "build-music-landing-index": "node scripts/build-music-landing-index.mjs",

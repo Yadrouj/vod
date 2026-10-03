@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { mergeMeloobitTracks } from './meloobit-source.mjs';
 import { buildArtists as buildCanonicalArtists, canonicalizeTrackArtists, cleanText as cleanCatalogText, normalizeComparable as normalizeCatalogText } from "./music-catalog.mjs";
 
 const ROOT = "https://rozmusic.com";
@@ -10,6 +11,7 @@ const CLASSICS_OUTPUT = path.join(".media-cache", "music", "persian-classics-sou
 const FOREIGN_OUTPUT = path.join(".media-cache", "music", "aftab-foreign-source.json");
 const REMIIXBAZ_OUTPUT = path.join(".media-cache", "music", "remiixbaz-source.json");
 const WORLDOFMUSIC_OUTPUT = path.join(".media-cache", "music", "worldofmusic-source.json");
+const MELOOBIT_OUTPUT = path.join(process.env.MELOOBIT_STATE_DIR || ".media-cache/music", "meloobit-source.json");
 const REPORT = path.join("data", "rozmusic-status.json");
 const CACHE = path.join(".media-cache", "rozmusic", "detail-cache.json");
 const LISTING_CACHE = path.join(".media-cache", "rozmusic", "catalog-checkpoint.json");
@@ -62,7 +64,7 @@ const refreshedTrackRanks = new Map();
 let refreshedTrackOrder = 0;
 
 async function main() {
-  const [previous, detailCache, musicsFaSource, classicsSource, foreignSource, remiixbazSource, worldofmusicSource, checkpoint] = await Promise.all([
+  const [previous, detailCache, musicsFaSource, classicsSource, foreignSource, remiixbazSource, worldofmusicSource, checkpoint, meloobitSource] = await Promise.all([
     readJson(OUTPUT, emptyIndex()),
     readJson(CACHE, {}),
     readJson(MUSICS_FA_OUTPUT, []),
@@ -71,6 +73,7 @@ async function main() {
     readJson(REMIIXBAZ_OUTPUT, { tracks: [], artistProfiles: [] }),
     readJson(WORLDOFMUSIC_OUTPUT, { tracks: [], artists: [] }),
     readJson(LISTING_CACHE, emptyCheckpoint()),
+    readJson(MELOOBIT_OUTPUT, { tracks: [] }),
   ]);
   const tracks = new Map(Object.entries(checkpoint.tracks ?? {}).map(([id, track]) => [id, track]));
   if (!tracks.size) {
@@ -160,7 +163,7 @@ async function main() {
     });
   }
 
-  const trackList = mergeProviderTracks([...tracks.values()], musicsFaSource, classicsSource.tracks ?? [], foreignSource.tracks ?? [], remiixbazSource.tracks ?? [], worldofmusicSource.tracks ?? [])
+  const trackList = mergeMeloobitTracks(mergeProviderTracks([...tracks.values()], musicsFaSource, classicsSource.tracks ?? [], foreignSource.tracks ?? [], remiixbazSource.tracks ?? [], worldofmusicSource.tracks ?? []), meloobitSource.tracks ?? [], previous.tracks ?? [])
     .map((track) => canonicalizeTrackArtists(track, track.sourceUrl))
     .sort((left, right) => (right.publishedAt ?? "").localeCompare(left.publishedAt ?? "") || right.id.localeCompare(left.id));
   const profileBySlug = new Map([

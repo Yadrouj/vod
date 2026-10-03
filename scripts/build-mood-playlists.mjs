@@ -1,6 +1,7 @@
 import { readFile, mkdir, writeFile, rename } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { pathToFileURL } from "node:url";
+import { meloobitPlaylists } from './meloobit-source.mjs';
 
 export const MOODS = [
   ["travel", "همسفر جاده", /road|travel|folk|world|سفر|جاده|مسافرت/i],
@@ -30,9 +31,10 @@ export const SCOPES = [
 const hash = value => createHash("sha256").update(value).digest("hex");
 const tags = t => [t.title, t.persianTitle, t.category, ...(t.moods ?? []), ...(t.album?.genres ?? [])].join(" ");
 
-export function buildMoodPlaylists(tracks, date = new Date(), libraryTracks = []) {
+export function buildMoodPlaylists(tracks, date = new Date(), libraryTracks = [], sourceCollections = []) {
   const week = Math.floor(date.getTime() / (7 * 86400_000));
   const playlists = [], gaps = [];
+  playlists.push(...meloobitPlaylists(tracks, sourceCollections, date));
   const taggedLibrary = libraryTracks
     .filter(t => t.kind === "track" && t.sources?.some(s => s.provider === "melodify" && s.available !== false))
     .sort((a, b) => String(b.addedAt ?? "").localeCompare(String(a.addedAt ?? "")) || String(a.id).localeCompare(String(b.id), "en", { numeric: true }));
@@ -119,7 +121,8 @@ export function buildMoodPlaylists(tracks, date = new Date(), libraryTracks = []
 async function main() {
   const index = JSON.parse(await readFile("public/data/music-index.json", "utf8"));
   const library = JSON.parse(await readFile("public/data/melodify-library.json", "utf8").catch(() => "{\"tracks\":[]}"));
-  const result = buildMoodPlaylists(index.tracks, new Date(), library.tracks ?? []);
+  const meloobit = JSON.parse(await readFile(`${process.env.MELOOBIT_STATE_DIR || '.media-cache/music'}/meloobit-source.json`, 'utf8').catch(() => '{"collections":[]}'));
+  const result = buildMoodPlaylists(index.tracks, new Date(), library.tracks ?? [], meloobit.collections ?? []);
   await mkdir("public/data", { recursive: true });
   const file = "public/data/music-mood-playlists.json";
   const ids = new Set(result.playlists.flatMap(p => p.trackIds));

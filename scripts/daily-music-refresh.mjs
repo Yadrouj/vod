@@ -1,6 +1,7 @@
 import { open, readFile, rename, stat, unlink, writeFile, mkdir } from "node:fs/promises";
 import { refreshStep } from "./refresh-step.mjs";
 import path from "node:path";
+import { readScraperDashboardConfig } from './scraper-dashboard-config.mjs';
 
 const ROOT = process.cwd();
 const DATA_DIR = path.join(ROOT, "data");
@@ -38,6 +39,11 @@ async function main() {
   try {
     await writeStatus({ state: "running", startedAt, updatedAt: startedAt, phase: "Preparing music source review", full: FULL, recentOnly: RECENT_ONLY, steps, error: null });
     if (!REBUILD_ONLY) {
+      const dashboard = await readScraperDashboardConfig();
+      if (dashboard.sources.find(s => s.id === 'meloobit')?.enabled !== false && (!process.env.MAINTENANCE_RUN_DAY || RECENT_ONLY)) {
+        await runStep('Review Meloobit music and verified directory links', 'scripts/scrape-meloobit.mjs',
+          RECENT_ONLY ? ['--recent-only', '--pages=1', '--budget-ms=180000'] : FULL ? ['--full'] : [], steps, startedAt);
+      }
       await runStep(
         "Review newest RozMusic tracks and music videos",
         "scripts/scrape-rozmusic.mjs",

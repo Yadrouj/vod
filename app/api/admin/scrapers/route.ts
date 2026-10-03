@@ -14,6 +14,7 @@ const statusFiles: Record<string, string[]> = {
   video: [path.join(PUBLIC_DATA, "vod-sync-status.json")],
   f2my: [path.join(DATA, "f2my-scrape-status.json"), path.join(DATA, "f2my-scrape-status", "slot-a.json"), path.join(DATA, "f2my-scrape-status", "slot-b.json")],
   music: [path.join(DATA, "daily-music-refresh-status.json")],
+  meloobit: [path.join(DATA, 'meloobit-status.json')],
   releases: [path.join(DATA, "release-monitor-status.json")],
   "imdb-trending": [path.join(DATA, "imdb-trending-status.json")],
   "curated-video": [path.join(DATA, "maintenance-scheduler-status.json")],
@@ -50,6 +51,10 @@ function counts(status: JsonRecord | null) {
   const tracks = record(value(status, "tracks"));
   const pages = record(value(status, "archivePages") || value(status, "pages"));
   const summary = record(value(status, "summary"));
+  if (value(status, 'provider') === 'meloobit') return {
+    received: number(value(tracks, 'discovered')), processed: number(value(status, 'verifiedTracks')) ?? number(value(tracks, 'complete')),
+    total: number(value(tracks, 'discovered')), failures: (number(value(tracks, 'failures')) || 0) + (number(value(record(value(status, 'links')), 'unavailable')) || 0),
+  };
   return {
     received: number(value(totals, "newTitles")) ?? number(value(totals, "discovered")) ?? number(value(tracks, "new")) ?? number(value(tracks, "discovered")) ?? number(value(summary, "catalogTitles")) ?? number(value(status, "catalogTitles")),
     processed: number(value(totals, "processed")) ?? number(value(tracks, "complete")) ?? number(value(pages, "complete")) ?? number(value(summary, "newEvents")),
