@@ -23,6 +23,8 @@ import { bestDownloadLink, detailHeroVideo, titleDownloadLinks } from "@/lib/tit
 import type { VodItem } from "@/lib/types";
 import styles from "./detail.module.css";
 import { validPublisherPlayer } from "@/lib/publisher-player";
+import { contentRestriction } from '@/lib/content-restrictions.mjs';
+import { RestrictedTitleActions } from '@/components/restricted-title-actions';
 
 type Props = { params: Promise<{ id: string }> };
 export const revalidate = 300;
@@ -61,6 +63,7 @@ export default async function DetailPage({ params }: Props) {
   const playHint = publisher ? (fa ? "پخش در پلیر رسمی ناشر" : "Official publisher player") : fa ? isSeries ? "انتخاب فصل، قسمت و کیفیت" : "انتخاب کیفیت و شروع تماشا" : isSeries ? "Choose season, episode & quality" : "Choose quality & start watching";
 
   return (
+    <RestrictedTitleActions restricted={Boolean(contentRestriction(item))} locale={locale}>
     <div className={`shell ${styles.page}`} data-media-theme="cinema" data-mobile-title="true" dir={fa ? "rtl" : "ltr"}>
       <StructuredData data={vodJsonLd(item)} />
       <section className={styles.hero} aria-labelledby="title-heading">
@@ -132,6 +135,7 @@ export default async function DetailPage({ params }: Props) {
         <Link className={styles.dockDownload} href="#downloads" aria-label={fa ? "فصل‌ها و دانلودها" : "Episodes & downloads"}><ArrowDown size={19} aria-hidden="true" /></Link>
       </nav>
     </div>
+    </RestrictedTitleActions>
   );
 }
 

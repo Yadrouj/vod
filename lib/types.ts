@@ -12,6 +12,7 @@ export type VodSubtitleLink = {
 };
 
 export type VodLink = {
+  sourceHost?: string;
   label: string;
   url: string;
   size: string | null;

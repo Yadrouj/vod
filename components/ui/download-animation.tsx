@@ -5,6 +5,7 @@ import { useCallback, useState, useSyncExternalStore } from "react";
 import { askAppConfirmation, showAppMessage } from "@/lib/app-messages";
 import { readDownloads as readHistory, saveHistoryValue, DOWNLOADS_KEY } from "@/lib/media-history";
 import { downloadGateUrl } from "@/lib/download-gate";
+import { contentRestriction, restrictionMessage, restrictionUrl } from '@/lib/content-restrictions.mjs';
 
 export function DownloadButton({ href, label, title = label, quality, itemId, posterUrl }: { href: string; label: string; title?: string; quality?: string; itemId?: string; posterUrl?: string | null }) {
   const [downloading, setDownloading] = useState(false);
@@ -14,7 +15,8 @@ export function DownloadButton({ href, label, title = label, quality, itemId, po
   }, []);
   const getSnapshot = useCallback(() => readHistory().some((item) => item.href === href), [href]);
   const visited = useSyncExternalStore(subscribe, getSnapshot, () => false);
-  const gateHref = downloadGateUrl({ url: href, title, quality: quality || label.split("·").slice(1).join("·").trim() });
+  const restricted = contentRestriction({ itemId, title, url: href });
+  const gateHref = restricted ? restrictionUrl() : downloadGateUrl({ url: href, title, quality: quality || label.split("·").slice(1).join("·").trim() });
 
   const markDownloaded = () => {
     const history = readHistory();
@@ -32,6 +34,11 @@ export function DownloadButton({ href, label, title = label, quality, itemId, po
       target="_blank"
       rel="noreferrer"
       onClick={async (event) => {
+        if (restricted) {
+          event.preventDefault();
+          showAppMessage({ title: 'دانلود و پخش غیرفعال است', message: restrictionMessage(document.documentElement.lang === 'en' ? 'en' : 'fa'), tone: 'warning', duration: 10000 });
+          return;
+        }
         if (visited) {
           event.preventDefault();
           const downloadAgain = await askAppConfirmation({

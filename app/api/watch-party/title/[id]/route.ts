@@ -2,6 +2,7 @@ import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { playbackSourceLabel, roomPlayableLinks } from "@/lib/link-labels";
 import { publicCacheHeaders } from "@/lib/runtime-cache";
 import { watchPartyDetails } from "@/lib/watch-party-media";
+import { contentRestriction, restrictionMessage } from '@/lib/content-restrictions.mjs';
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -9,6 +10,7 @@ export async function GET(_: Request, { params }: Props) {
   const { id } = await params;
   const item = await findVodItem(id);
   if (!item) return Response.json({ error: "Title not found" }, { status: 404 });
+  if (contentRestriction(item)) return Response.json({ error: restrictionMessage(), code: 'CONTENT_RESTRICTED' }, { status: 403, headers: { 'Cache-Control': 'no-store' } });
   const isSeries = normalizeVodType(item.type) === "series";
   const sources = roomPlayableLinks(item.links, { isSeries, title: item.title }).map((link, index) => ({
     url: link.url,

@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
+import { contentRestriction } from '../lib/content-restrictions.mjs';
 
 export function publicIPv4(address) {
   const parts = address.split(".").map(Number);
@@ -19,6 +20,7 @@ export function publicIPv4(address) {
 
 /** Resolve, validate AND pin each hop. No private-network targets or redirect bypass. */
 export async function openPublicMedia(value, signal, redirects = 0) {
+  if (contentRestriction(value)) throw new Error('content_restricted');
   const url = new URL(value);
   if (!/^https?:$/.test(url.protocol) || url.username || url.password || (url.port && !["80", "443"].includes(url.port)) || redirects > 4) throw new Error("source_unavailable");
   const addresses = await lookup(url.hostname, { family: 4, all: true });
@@ -49,6 +51,7 @@ export function telegramFileLimit(env = process.env) {
 
 /** Streams to bounded temporary disk, then uploads multipart; no movie-sized RAM buffer. */
 export async function sendDeliveryFile(job, { telegram, maxBytes, openSource = openPublicMedia, sendFetch = fetch }) {
+  if (contentRestriction(job)) throw new Error('content_restricted');
   const directory = await mkdtemp(path.join(tmpdir(), "sarvnema-telegram-"));
   const filename = path.join(directory, "media");
   let uploading = false;

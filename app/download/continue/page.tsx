@@ -4,6 +4,8 @@ import { decodeCompact, downloadGateUrl, isDownloadUrl } from "@/lib/download-ga
 import { resolveMusicDownload } from "@/lib/music-download";
 import { verifyDelivery } from "@/lib/telegram-delivery-token.mjs";
 import { getLocale } from "@/lib/server-locale";
+import { contentRestriction } from '@/lib/content-restrictions.mjs';
+import { ContentRestrictionNotice } from '@/components/content-restriction-notice';
 
 type Props = { searchParams?: Promise<Record<string, string | string[] | undefined>> };
 export const dynamic = "force-dynamic";
@@ -15,10 +17,12 @@ export default async function DownloadContinuePage({ searchParams }: Props) {
   const query = await searchParams;
   const url = first(query?.url) || decodeCompact(first(query?.u));
   const locale = await getLocale();
+  if (contentRestriction({ itemId: first(query?.restricted), title: first(query?.title), url })) return <ContentRestrictionNotice locale={locale} />;
   const delivery = first(query?.delivery);
   if (delivery) {
     const ticket = verifyDelivery(delivery, process.env.BOT_API_TOKEN);
     if (!ticket) return <main style={{ padding: 32 }}><p>{locale === "fa" ? "این لینک منقضی شده است؛ در بات دوباره کیفیت را انتخاب کنید." : "This link expired. Choose the quality again in the bot."}</p></main>;
+    if (contentRestriction(ticket)) return <ContentRestrictionNotice locale={locale} />;
     return <DownloadGate delivery={delivery} url={downloadGateUrl({ url: ticket.sourceUrl, title: ticket.title, quality: ticket.quality })} title={ticket.title} quality={ticket.quality} locale={locale} />;
   }
   if (!isDownloadUrl(url)) return <main dir={locale === "fa" ? "rtl" : "ltr"} style={{ minHeight: "100svh", display: "grid", placeItems: "center", padding: 24 }}><p>{locale === "fa" ? "لینک دانلود معتبر نیست." : "This download link is not valid."}</p></main>;

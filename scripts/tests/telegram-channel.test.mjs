@@ -6,6 +6,11 @@ import {mkdtemp, writeFile, readFile, readdir, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 const track={id:'song',title:'آهنگ',publishedAt:'2026-09-25',sources:[{url:'https://media.example/song.mp3',quality:'320kbps',kind:'stream'}]};
+test('a copyright-restricted title cannot be selected or composed for the channel',()=>{
+ const event={type:'vod',imdbCode:'tt33184638',title:'Paris Has Fallen'};
+ assert.equal(selectScheduledEntries({},[{event}],Date.parse('2026-10-09T10:00:00+03:30')).selected.length,0);
+ assert.throws(()=>composePost(event,{movieFiles:[]},'https://sarvnema.ir'),/CONTENT_RESTRICTED/);
+});
 test('music direct stream files are offered through the five-second website gate',()=>{
  const post=composePost({type:'music',musicId:'song',title:track.title,sources:track.sources},null,'https://sarvnema.ir');
  const link=new URL(post.reply_markup.inline_keyboard[0][0].url);

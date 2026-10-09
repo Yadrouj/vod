@@ -1,7 +1,9 @@
 import type { VodItem, VodLink, VodSubtitleLink } from "./types";
 import { episodeArtworkFallbackUrl, loadEpisodeMetadata, type EpisodeImageFit, type EpisodeImageSource } from "./episode-metadata";
+import { contentRestriction } from './content-restrictions.mjs';
 
 export type DownloadSource = {
+  sourceHost?: string;
   label: string;
   url: string;
   group: string;
@@ -24,6 +26,7 @@ export type SeasonSummary = {
 };
 
 export type EpisodeFile = {
+  sourceHost?: string;
   name: string;
   url: string;
   quality: string | null;
@@ -107,6 +110,7 @@ export function buildSeasonSummaries(links: VodLink[]): SeasonSummary[] {
 export function toDownloadSource(link: VodLink): DownloadSource {
   return {
     label: link.label,
+    sourceHost: link.sourceHost,
     url: link.url,
     group: link.group,
     quality: link.quality,
@@ -179,12 +183,13 @@ export async function expandSeasonDownloads(item: VodItem, season: number): Prom
 }
 
 async function expandSource(source: DownloadSource) {
-  if (VIDEO_EXTENSIONS.test(source.url) || ARCHIVE_EXTENSIONS.test(source.url)) {
+  if (contentRestriction(source.url) || VIDEO_EXTENSIONS.test(source.url) || ARCHIVE_EXTENSIONS.test(source.url)) {
     const parsed = source.season ? { season: source.season, episode: source.episode ?? null } : parseSeasonEpisode(`${source.label} ${source.url}`);
     return [
       {
         episode: parsed.episode,
         file: {
+          sourceHost: source.sourceHost,
           name: source.fileName ?? source.label,
           url: source.url,
           quality: source.quality,
@@ -213,6 +218,7 @@ function sourceAsFile(source: DownloadSource, season: number) {
   return {
     episode: parsed.episode,
     file: {
+      sourceHost: source.sourceHost,
       name: source.fileName ?? source.label,
       url: source.url,
       quality: source.quality,

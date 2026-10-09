@@ -20,6 +20,8 @@ import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import styles from "./watch.module.css";
 import { validPublisherPlayer } from "@/lib/publisher-player";
 import { PublisherFilmPlayer } from "@/components/publisher-film-player";
+import { contentRestriction } from '@/lib/content-restrictions.mjs';
+import { ContentRestrictionNotice } from '@/components/content-restriction-notice';
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -52,6 +54,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
   const resume = query?.resume;
   const item = await findVodItem(id);
   if (!item) notFound();
+  if (contentRestriction(item)) return <ContentRestrictionNotice locale={locale} />;
 
   const isSeries = normalizeVodType(item.type) === "series";
   const links = playableLinks(item.links, { isSeries, title: item.title, includeAlternateFiles: true });

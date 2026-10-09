@@ -6,6 +6,7 @@ import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import { audioSources, prepareChannelAudio, channelMessageForm } from './lib/telegram-channel-audio.mjs';
 import { writeJsonAtomic } from './atomic-json.mjs';
+import { contentRestriction } from '../lib/content-restrictions.mjs';
 import {
   hasPublishedSlot,
   hasRecentChannelDelivery,
@@ -44,7 +45,7 @@ export function selectScheduledEntries(state, pending, now = Date.now(), trendRa
     if (!slot || hasPublishedSlot(state, type, slot) || !candidates.length) return;
     selected.push({ entry: candidates[0], alternatives: candidates.slice(1, 5), type, slot });
   };
-  choose('vod', window.vod, sortVodEventsByTrend(pending.filter(({ event }) => event.type === 'vod'), trendRanks));
+  choose('vod', window.vod, sortVodEventsByTrend(pending.filter(({ event }) => event.type === 'vod' && !contentRestriction(event)), trendRanks));
   choose('music', window.music, pending.filter(({ event }) => event.type === 'music')
     .sort((a, b) => String(b.event.eventAt ?? '').localeCompare(String(a.event.eventAt ?? ''))));
   return { window, selected };
@@ -106,6 +107,7 @@ export function postHashtags(event, item = {}) {
 }
 
 export function composePost(event, detail, site) {
+  if (contentRestriction(event) || contentRestriction(detail?.item)) throw new Error('CONTENT_RESTRICTED: Copyright complaint forwarded by Cloudflare');
   const item = detail?.item ?? {};
   const music = event.type === 'music';
   const title = String(item.persianTitle || item.title || event.title).slice(0, 160);
@@ -218,7 +220,7 @@ export async function runChannel({ publish = false, preview = false, kernelLocke
       if (!(member.status === 'creator' || member.status === 'administrator' && member.can_post_messages)) throw new Error('Bot needs channel administrator permission to post');
       await save();
     }
-    const pending = Object.values(state.posts).filter(p => p.status === 'pending' && (!p.retryAt || p.retryAt <= now));
+  const pending = Object.values(state.posts).filter(p => p.status === 'pending' && !contentRestriction(p.event) && (!p.retryAt || p.retryAt <= now));
     const trendRanks = await loadTrendRanks(now);
     const scheduled = publish
       ? selectScheduledEntries(state, pending, now, trendRanks)

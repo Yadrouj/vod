@@ -6,6 +6,7 @@ import { Server } from "socket.io";
 import { loadVodHomeIndex, loadVodIndex } from "./lib/vod-index";
 import type { PartyCapability, PartyChatMessage, PartyLiveCaption, PartyMedia, PartyParticipant, PartyPermissions, PartyPlayback, PartyProfile, PartyPublicRoom, PartyQueueItem, PartyRoomVisibility, PartySharedAudio, PartySnapshot } from "./lib/watch-party-types";
 import { DEFAULT_PARTY_PERMISSIONS } from "./lib/watch-party-types";
+import { contentRestriction, restrictionMessage } from './lib/content-restrictions.mjs';
 import { AUTO_SUBTITLE_SELECTION, OFF_SUBTITLE_SELECTION, type SubtitleSelection } from "./lib/subtitle-types";
 import {
   externalPersonalMediaToPartyMedia,
@@ -392,6 +393,7 @@ const io = new Server(httpServer, {
 });
 
 function addPersonalMediaToRoom(room: Room, media: PartyMedia, mode: PersonalMediaMode, originUserId: string) {
+  if (contentRestriction(media)) return { ok: false as const, error: restrictionMessage() };
   if (isExpiredPartyMedia(media)) return { ok: false as const, error: "That temporary media has already expired." };
   const now = Date.now();
   if (mode === "queue") {
@@ -441,6 +443,7 @@ io.on("connection", (socket) => {
     if (rooms.size >= MAX_ACTIVE_ROOMS) return ack?.({ ok: false, error: "Room capacity is temporarily full." });
     const profile = cleanProfile(payload?.profile ?? {});
     if (!payload?.media?.source?.url) return ack?.({ ok: false, error: "A playable source is required." });
+    if (contentRestriction(payload.media)) return ack?.({ ok: false, error: restrictionMessage(), code: 'CONTENT_RESTRICTED' });
     const id = randomBytes(5).toString("base64url");
     const inviteToken = randomBytes(18).toString("base64url");
     const participant: PartyParticipant = { ...profile, role: "host", connected: true, mutedByHost: false, joinedAt: Date.now(), permissions: {} };
@@ -454,6 +457,7 @@ io.on("connection", (socket) => {
   socket.on("room:join", (payload: { roomId: string; inviteToken?: string; profile: PartyProfile }, ack) => {
     if (!allowSocketEvent(socket, "room:join", 10, 60_000)) return ack?.({ ok: false, error: "Too many join attempts." });
     const room = rooms.get(payload?.roomId);
+    if (room && contentRestriction(room.playback.media)) return ack?.({ ok: false, error: restrictionMessage(), code: 'CONTENT_RESTRICTED' });
     const profile = cleanProfile(payload?.profile ?? {});
     if (!room || (room.visibility !== "public" && room.inviteToken !== payload?.inviteToken)) return ack?.({ ok: false, error: "Room or invite link is invalid." });
     if (room.blocked.has(profile.id)) return ack?.({ ok: false, error: "You are blocked from this room." });
@@ -678,6 +682,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("playback:command", ({ roomId, action, time, rate, source, media }: { roomId: string; action: string; time?: number; rate?: number; source?: PartyMedia["source"]; media?: PartyMedia }, ack) => {
+    if ((action === 'source' && contentRestriction(source)) || (action === 'media' && contentRestriction(media))) return ack?.({ ok: false, error: restrictionMessage(), code: 'CONTENT_RESTRICTED' });
     if (!allowSocketEvent(socket, "playback:command", 40, 10_000)) return ack?.({ ok: false, error: "Playback commands are arriving too quickly." });
     const found = roomForSocket(roomId, socket.id); if (!found) return;
     const capability = capabilityForAction[action]; if (!capability || !permitted(found.room, found.userId, capability)) return ack?.({ ok: false, error: "Permission denied." });
@@ -703,7 +708,7 @@ io.on("connection", (socket) => {
     ack?.({ ok: true });
   });
 
-  socket.on("queue:add", ({ roomId, media }: { roomId: string; media: PartyMedia }, ack) => { const found = roomForSocket(roomId, socket.id); if (!found || !permitted(found.room, found.userId, "queue") || !media?.source?.url || isExpiredPartyMedia(media)) return ack?.({ ok: false, error: "Permission denied or temporary media expired." }); if (!allowSocketEvent(socket, "queue:add", 20, 60_000)) return ack?.({ ok: false, error: "Queue requests are arriving too quickly." }); if (found.room.queue.length >= MAX_QUEUE_ITEMS) return ack?.({ ok: false, error: "The room queue is full." }); const item: PartyQueueItem = { ...media, queueId: randomUUID(), addedBy: found.userId, addedAt: Date.now() }; found.room.queue.push(item); io.to(roomId).emit("queue:update", found.room.queue); ack?.({ ok: true }); });
+  socket.on("queue:add", ({ roomId, media }: { roomId: string; media: PartyMedia }, ack) => { if (contentRestriction(media)) return ack?.({ ok: false, error: restrictionMessage(), code: 'CONTENT_RESTRICTED' }); const found = roomForSocket(roomId, socket.id); if (!found || !permitted(found.room, found.userId, "queue") || !media?.source?.url || isExpiredPartyMedia(media)) return ack?.({ ok: false, error: "Permission denied or temporary media expired." }); if (!allowSocketEvent(socket, "queue:add", 20, 60_000)) return ack?.({ ok: false, error: "Queue requests are arriving too quickly." }); if (found.room.queue.length >= MAX_QUEUE_ITEMS) return ack?.({ ok: false, error: "The room queue is full." }); const item: PartyQueueItem = { ...media, queueId: randomUUID(), addedBy: found.userId, addedAt: Date.now() }; found.room.queue.push(item); io.to(roomId).emit("queue:update", found.room.queue); ack?.({ ok: true }); });
   socket.on("queue:remove", ({ roomId, queueId }: { roomId: string; queueId: string }) => { const found = roomForSocket(roomId, socket.id); if (!found || !permitted(found.room, found.userId, "queue")) return; found.room.queue = found.room.queue.filter((item) => item.queueId !== queueId); io.to(roomId).emit("queue:update", found.room.queue); });
   socket.on("queue:play", ({ roomId, queueId }: { roomId: string; queueId: string }) => { const found = roomForSocket(roomId, socket.id); if (!found || !permitted(found.room, found.userId, "changeMedia")) return; const item = found.room.queue.find((entry) => entry.queueId === queueId); if (!item || isExpiredPartyMedia(item)) return; const serverNow = Date.now(); found.room.playback = { media: item, currentTime: 0, paused: true, playbackRate: 1, updatedAt: serverNow, revision: found.room.playback.revision + 1 }; found.room.queue = found.room.queue.filter((entry) => entry.queueId !== queueId); io.to(roomId).emit("queue:update", found.room.queue); io.to(roomId).emit("playback:state", { ...found.room.playback, serverNow, action: "media", originUserId: found.userId }); });
 

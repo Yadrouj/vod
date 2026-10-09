@@ -10,6 +10,8 @@ import type { Locale } from "@/lib/i18n";
 import { newPartyProfile, readPartyProfile, savePartyProfile } from "@/lib/watch-party-profile";
 import type { PartyMedia, PartyProfile, PartyRoomVisibility } from "@/lib/watch-party-types";
 import { WatchTogetherMark } from "@/components/watch-together-mark";
+import { contentRestriction, restrictionMessage } from '@/lib/content-restrictions.mjs';
+import { showAppMessage } from '@/lib/app-messages';
 
 export type WatchTogetherPreset = {
   itemId: string;
@@ -229,6 +231,10 @@ export function WatchTogetherLauncher({
   if (placement === "floating" && pathname.startsWith("/watch-together/")) return null;
 
   function openLauncher() {
+    if (contentRestriction(media ?? preset)) {
+      showAppMessage({ title: locale === 'fa' ? 'دانلود و پخش غیرفعال است' : 'Downloads and playback disabled', message: restrictionMessage(locale), tone: 'warning', duration: 10000 });
+      return;
+    }
     const profile = readPartyProfile();
     const initial = media
       ? suggestionFromPreset({ itemId: media.itemId, title: media.title, posterUrl: media.posterUrl, type: media.artistName ?? (media.mediaKind === "audio" ? "Music track" : "") })

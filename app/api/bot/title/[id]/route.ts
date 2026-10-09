@@ -1,5 +1,7 @@
 import { botAuthError } from "@/lib/bot-auth";
 import { botOrigin, getBotTitleDetail } from "@/lib/bot-catalog";
+import { findVodItem } from '@/lib/catalog';
+import { contentRestriction, restrictionMessage } from '@/lib/content-restrictions.mjs';
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -12,6 +14,7 @@ export async function GET(request: Request, { params }: Props) {
   if (authError) return authError;
 
   const { id } = await params;
+  if (contentRestriction(await findVodItem(id))) return Response.json({ error: restrictionMessage(), code: 'CONTENT_RESTRICTED' }, { status: 403, headers: { 'Cache-Control': 'no-store' } });
   const { searchParams } = new URL(request.url);
   const season = Number(searchParams.get("season") ?? 0) || null;
   const includeDownloads =

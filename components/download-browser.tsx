@@ -8,6 +8,8 @@ import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 import { sourceHost } from "@/lib/title-presentation";
 import { sizedImageUrl } from "@/lib/image-url";
 import type { DownloadSource, EpisodeDownload, ExpandedSeasonDownloads, SeasonSummary } from "@/lib/downloads";
+import { contentRestriction, restrictionMessage } from '@/lib/content-restrictions.mjs';
+import { showAppMessage } from '@/lib/app-messages';
 
 type DownloadBrowserProps = {
   itemId: string; title: string; isSeries: boolean; seasons: SeasonSummary[];
@@ -103,8 +105,14 @@ function LinkBundle({ files, title, fileName, locale }: { files: BundleLink[]; t
   const quality = selectedQuality === "all" || qualities.includes(selectedQuality) ? selectedQuality : "all";
   const filtered = useMemo(() => files.filter(file => (group === "all" || file.group === group) && (quality === "all" || file.quality === quality)), [files, group, quality]);
   const urls = useMemo(() => Array.from(new Set(filtered.map(file => file.url))), [filtered]);
+  function blocked() {
+    if (!files.some(file => contentRestriction(file.url))) return false;
+    showAppMessage({ title: fa ? 'دانلود و پخش غیرفعال است' : 'Downloads and playback disabled', message: restrictionMessage(locale), tone: 'warning', duration: 10000 });
+    return true;
+  }
 
   async function copyLinks() {
+    if (blocked()) return;
     if (!urls.length) return;
     const value = `${urls.join("\n")}\n`;
     try {
@@ -119,6 +127,7 @@ function LinkBundle({ files, title, fileName, locale }: { files: BundleLink[]; t
   }
 
   function downloadLinks() {
+    if (blocked()) return;
     if (!urls.length) return;
     const blobUrl = URL.createObjectURL(new Blob([`${urls.join("\r\n")}\r\n`], { type: "text/plain;charset=utf-8" }));
     const anchor = document.createElement("a");
@@ -179,7 +188,7 @@ function FileRow({ file, itemId, title, posterUrl, canPlay, locale }: { file: Do
   const identity = [file.quality, group, file.release].filter(value => value && !/^(file|files|unknown)$/i.test(value)).join(" · ");
   return <div className="movie-file-row">
     <div className="file-info"><strong dir="auto">{identity || (fa ? "لینک منبع" : "Source link")}</strong>
-      <small dir="auto">{[file.size, sourceHost(file.url)].filter(Boolean).join(" · ")}</small>
+      <small dir="auto">{[file.size, file.sourceHost || sourceHost(file.url)].filter(Boolean).join(" · ")}</small>
       {!canPlay && <small>{fa ? "دانلود / باز کردن در پلیر دستگاه" : "Download / open in your device’s player"}</small>}
     </div>
     <div className="file-actions">
