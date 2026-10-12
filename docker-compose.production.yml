@@ -146,6 +146,8 @@ services:
       NODE_ENV: production
       BOT_API_TOKEN: ${BOT_API_TOKEN:-}
       BOT_SITE_URL: http://app:3004
+      # Set on hosts that cannot reach api.telegram.org directly (see docs/telegram-api-relay.md).
+      TELEGRAM_API_BASE_URL: ${TELEGRAM_API_BASE_URL:-}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://sarvnema.ir}
       TELEGRAM_CHANNEL_ID: ${TELEGRAM_CHANNEL_ID:-@sarvnema}
       TELEGRAM_CHANNEL_ENABLED: ${TELEGRAM_CHANNEL_ENABLED:-1}

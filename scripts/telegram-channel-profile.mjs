@@ -52,7 +52,7 @@ if (process.argv.includes('--apply')) {
   const api = async (method, body) => {
     let result;
     try {
-      const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+      const response = await fetch(`${(process.env.TELEGRAM_API_BASE_URL || 'https://api.telegram.org').replace(/\/$/, '')}/bot${token}/${method}`, {
         method: 'POST', headers: body instanceof FormData ? undefined : { 'content-type': 'application/json' },
         body: body instanceof FormData ? body : JSON.stringify(body), signal: AbortSignal.timeout(30000),
       });

@@ -176,7 +176,7 @@ async function banner(post) {
 
 async function telegram(token, method, body) {
   let response;
-  try { response = await fetch(`https://api.telegram.org/bot${token}/${method}`, { method:'POST', body: body instanceof FormData ? body : JSON.stringify(body), headers: body instanceof FormData ? undefined : {'content-type':'application/json'}, signal:AbortSignal.timeout(method === 'sendAudio' ? 180000 : 45000) }); }
+  try { response = await fetch(`${(process.env.TELEGRAM_API_BASE_URL || 'https://api.telegram.org').replace(/\/$/, '')}/bot${token}/${method}`, { method:'POST', body: body instanceof FormData ? body : JSON.stringify(body), headers: body instanceof FormData ? undefined : {'content-type':'application/json'}, signal:AbortSignal.timeout(method === 'sendAudio' ? 180000 : 45000) }); }
   catch { throw Object.assign(new Error('Telegram connection interrupted; delivery outcome is unknown'), { uncertain:true }); }
   let result;
   try { result = await response.json(); } catch { throw Object.assign(new Error('Telegram response unreadable; delivery outcome is unknown'), { uncertain:true }); }
