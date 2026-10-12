@@ -83,10 +83,13 @@ async function configureTelegramProfile() {
   await call("setMyCommands", { commands: profileCommands });
 }
 
+// A fresh connection per Telegram call: filtered networks (e.g. the Iranian
+// host behind the Cloudflare relay) silently kill reused keep-alive sockets,
+// which made about a quarter of calls hang until they timed out.
 async function call(method, body = {}) {
   const response = await fetch(`${telegram}/${method}`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", connection: "close" },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(method === "getUpdates" ? 40_000 : 15_000),
   });
@@ -96,7 +99,7 @@ async function call(method, body = {}) {
 }
 
 async function callForm(method, form) {
-  const response = await fetch(`${telegram}/${method}`, { method: "POST", body: form, signal: AbortSignal.timeout(30_000) });
+  const response = await fetch(`${telegram}/${method}`, { method: "POST", body: form, headers: { connection: "close" }, signal: AbortSignal.timeout(30_000) });
   const data = await response.json();
   if (!data.ok) throw new Error(data.description || method);
   return data.result;
