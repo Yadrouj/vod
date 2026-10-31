@@ -42,6 +42,7 @@ data/maintenance-scheduler.flock
 data/maintenance-scheduler-last-run.json
 data/refresh-checkpoints/
 data/telegram-deliveries/
+data/telegram-channel/
 .media-cache/
 data/discovery/
 public/data/vod-sync-status.json

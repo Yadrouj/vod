@@ -6,6 +6,7 @@ import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import { audioSources, prepareChannelAudio, channelMessageForm } from './lib/telegram-channel-audio.mjs';
 import { writeJsonAtomic } from './atomic-json.mjs';
+import { createRemoteChannelStore } from './lib/telegram-channel-remote.mjs';
 import { contentRestriction } from '../lib/content-restrictions.mjs';
 import {
   hasPublishedSlot,
@@ -21,8 +22,10 @@ const html = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '
 const read = async (file, fallback) => { try { return JSON.parse(await readFile(file, 'utf8')); } catch (error) { if (error.code === 'ENOENT') return fallback; throw error; } };
 const directFile = url => { try { return /^https?:$/.test(new URL(url).protocol) && /\.(mp3|m4a|flac|ogg|wav|mp4|mkv|webm|m4v)(?:[?#]|$)/i.test(url); } catch { return false; } };
 
-async function loadTrendRanks(now = Date.now()) {
-  const payload = await read('public/data/imdb-trending.json', null);
+async function loadTrendRanks(now = Date.now(), remote = null) {
+  const payload = remote
+    ? await remote.readData('imdb-trending').catch(error => { console.error(`Trend data skipped: ${error.message}`); return null; })
+    : await read('public/data/imdb-trending.json', null);
   const ranks = new Map();
   for (const chart of Object.values(payload?.charts ?? {})) {
     const age = now - Date.parse(chart?.observedAt ?? '');
@@ -197,9 +200,12 @@ export async function runChannel({ publish = false, preview = false, kernelLocke
   try {
     await lock?.writeFile(JSON.stringify({ pid:process.pid, startedAt:new Date().toISOString() }));
     const stateFile = path.join(dir, `${hash(channel).slice(0,12)}.json`);
-    const previous = await read(stateFile, null);
+    const remote = process.env.TELEGRAM_CHANNEL_REMOTE_DATA === '1' ? createRemoteChannelStore({ api, token, directory: dir }) : null;
+    const previous = remote ? await remote.loadState() : await read(stateFile, null);
     const dataDir = process.env.VOD_DATA_DIR || 'public/data';
-    const [updates, music, library] = await Promise.all([read(path.join(dataDir, 'vod-updates.json'), {items:[]}),read(path.join(dataDir, 'music-index.json'), {tracks:[]}),read(path.join(dataDir, 'melodify-library.json'), {tracks:[]})]);
+    const [updates, music, library] = remote
+      ? await Promise.all([remote.readData('vod-updates'), remote.readData('music-index'), remote.readData('melodify-library')])
+      : await Promise.all([read(path.join(dataDir, 'vod-updates.json'), {items:[]}),read(path.join(dataDir, 'music-index.json'), {tracks:[]}),read(path.join(dataDir, 'melodify-library.json'), {tracks:[]})]);
     music.tracks = [...new Map([...(music.tracks ?? []), ...(library.tracks ?? [])].map(t => [t.id, t])).values()];
     const discovered = discoverPosts(updates, music, preview && !publish ? { music:{} } : previous, now);
     const state = previous || { channel, posts:{}, music:{} };
@@ -210,7 +216,7 @@ export async function runChannel({ publish = false, preview = false, kernelLocke
     for (const entry of Object.values(state.posts)) if (entry.status === 'sending') entry.status = 'uncertain';
     for (const event of discovered.events) if (!state.posts[event.key]) state.posts[event.key] = { status:'pending', event };
     state.music = discovered.music;
-    const save = () => writeJsonAtomic(stateFile, state);
+    const save = () => remote ? remote.saveState(state) : writeJsonAtomic(stateFile, state);
     if (publish) {
       if (!token) throw new Error('BOT_API_TOKEN is required');
       const me = await telegram(token, 'getMe', {});
@@ -221,7 +227,7 @@ export async function runChannel({ publish = false, preview = false, kernelLocke
       await save();
     }
   const pending = Object.values(state.posts).filter(p => p.status === 'pending' && !contentRestriction(p.event) && (!p.retryAt || p.retryAt <= now));
-    const trendRanks = await loadTrendRanks(now);
+    const trendRanks = await loadTrendRanks(now, remote);
     const scheduled = publish
       ? selectScheduledEntries(state, pending, now, trendRanks)
       : { window: publishingWindow(new Date(now), scheduleConfig()), selected: pending
@@ -287,7 +293,10 @@ export async function runChannel({ publish = false, preview = false, kernelLocke
       trendCandidates: trendRanks.size,
       channel,
     };
-    if (publish) await writeJsonAtomic(path.join(dir, 'status.json'), { ...summary, checkedAt: new Date().toISOString(), sent: Object.values(state.posts).filter(p => p.status === 'sent').length, uncertain: Object.values(state.posts).filter(p => p.status === 'uncertain').length });
+    if (publish) {
+      const status = { ...summary, checkedAt: new Date().toISOString(), sent: Object.values(state.posts).filter(p => p.status === 'sent').length, uncertain: Object.values(state.posts).filter(p => p.status === 'uncertain').length };
+      await (remote ? remote.saveStatus(status) : writeJsonAtomic(path.join(dir, 'status.json'), status));
+    }
     return summary;
   } finally { if (lock) { await lock.close(); await unlink(lockPath); } }
 }

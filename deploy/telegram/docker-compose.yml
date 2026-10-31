@@ -1,0 +1,47 @@
+# Telegram services for a host outside Iran. See docs/telegram-remote-server.md.
+# All data stays on the site host and is reached over HTTPS through BOT_SITE_URL.
+name: vod-telegram
+
+x-telegram: &telegram
+  build: .
+  image: vod-telegram
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 20s
+  env_file: .env
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  telegram-bot:
+    <<: *telegram
+    container_name: vod-telegram-bot
+    command: ["node", "scripts/telegram-bot.mjs"]
+    mem_limit: 512m
+    cpus: 1.0
+    # Temporary download space for file delivery (50 MB Bot API limit).
+    tmpfs:
+      - /tmp:size=256m
+
+  telegram-channel:
+    <<: *telegram
+    container_name: vod-telegram-channel
+    command: ["node", "scripts/telegram-channel.mjs", "--daemon"]
+    environment:
+      NODE_ENV: production
+      NODE_OPTIONS: --max-old-space-size=1024
+      TELEGRAM_CHANNEL_REMOTE_DATA: "1"
+      TELEGRAM_CHANNEL_STATE_DIR: /state
+      MELODIFY_LIBRARY_DIR: /music-library
+    mem_limit: 1536m
+    cpus: 1.0
+    volumes:
+      # Local cache and unsynced-state journal only. The real state is on the site host.
+      - channel_state:/state
+      - ${MELODIFY_LIBRARY_HOST_PATH:-/home/ubuntu/Documents/projects/vahid/melodify2/library/tracks}:/music-library:ro
+
+volumes:
+  channel_state:
