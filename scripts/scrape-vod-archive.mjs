@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { pathToFileURL } from "node:url";
 
 const execFileP = promisify(execFile);
 
@@ -66,18 +67,23 @@ function inferRelease(label, href) {
   return match ? match[1] : null;
 }
 
-function parseArchive(html) {
+export function parseArchive(html) {
   const blocks = html.split(/<hr\s*\/?>/i);
   const items = [];
 
   for (const block of blocks) {
-    const heading = /<h3[^>]*>\s*(?:\d+\.\s*)?(.+?)\s+start_year\s*<\/h3>/is.exec(
+    const heading = /<h3[^>]*>\s*(?:\d+\.\s*)?(.+?)\s*<\/h3>/is.exec(
       block
     );
     if (!heading) continue;
 
-    const title = stripTags(heading[1]);
     const imdbCode = /<b>\s*IMDb Code:\s*<\/b>\s*([^<\s]+)/i.exec(block)?.[1] ?? "";
+    if (!/^tt\d{5,12}$/i.test(imdbCode)) continue;
+    // The upstream archive replaced its literal "start_year" placeholder
+    // with real years in October 2026. Accept both without changing identity.
+    const headingText = stripTags(heading[1]).replace(/\s+start_year\s*$/i, "");
+    const headingYear = /\s+((?:19|20)\d{2})$/.exec(headingText);
+    const title = headingYear ? headingText.slice(0, headingYear.index).trim() : headingText;
     const type = stripTags(
       /<b>\s*Title Type:\s*<\/b>\s*([^<]+)/i.exec(block)?.[1] ?? ""
     );
@@ -126,7 +132,7 @@ function parseArchive(html) {
       imdbCode,
       imdbUrl: imdbCode ? `https://www.imdb.com/title/${imdbCode}/` : null,
       type,
-      year: parseYear(block, title),
+      year: headingYear ? Number(headingYear[1]) : parseYear(block, title),
       imdbVotes: votesRaw ? Number(votesRaw.replace(/[^\d]/g, "")) : null,
       imdbRating: ratingRaw ? Number(ratingRaw) : null,
       groups,
@@ -235,8 +241,9 @@ function sourceCandidates(sourceUrl) {
   })]));
 }
 
-function looksLikeArchive(body) {
-  return body.length > 50_000 && /IMDb Code:/i.test(body) && /start_year/i.test(body) && /<a\s+href=/i.test(body);
+export function looksLikeArchive(body) {
+  return body.length > 50_000 && /IMDb Code:/i.test(body)
+    && /<h3[^>]*>/i.test(body) && /<a\s+href=/i.test(body);
 }
 
 function isIranIpBlock(body) {
@@ -275,7 +282,7 @@ async function safeReplaceJson(file, content) {
   }
 }
 
-main().catch((error) => {
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

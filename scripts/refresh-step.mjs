@@ -6,7 +6,7 @@ import path from "node:path";
 // Checkpoints belong to a scheduler day, not the lifetime of the image.
 // A failing source does not prevent other sources or index publication.
 export async function refreshStep(label, script, args = []) {
-  const publishes = script.includes("build-") || script.includes("release-monitor") || script.includes("scrape-curated-vod-sources") || args.includes("--rebuild-only");
+  const publishes = script.includes("build-") || script.includes("merge-") || script.includes("release-monitor") || script.includes("scrape-curated-vod-sources") || script.includes("scrape-public-vod-sources") || args.includes("--rebuild-only");
   const day = publishes ? null : process.env.MAINTENANCE_RUN_DAY;
   const file = path.join("data", "refresh-checkpoints", `${createHash("sha256").update(JSON.stringify([script, args])).digest("hex")}.json`);
   if (day) {

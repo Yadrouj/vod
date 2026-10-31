@@ -1,5 +1,7 @@
 public/data/vod-catalog.json filter=lfs diff=lfs merge=lfs -text
 public/data/vod-people.json filter=lfs diff=lfs merge=lfs -text
+public/data/music-index.json filter=lfs diff=lfs merge=lfs -text
+public/data/music-artists.json filter=lfs diff=lfs merge=lfs -text
 public/media/** filter=lfs diff=lfs merge=lfs -text
 deploy/*.sh text eol=lf
 scripts/tests/fixtures/*.sh text eol=lf

@@ -39,7 +39,7 @@ export function assessCapacity(ready, loadAverage, limits = {}) {
     // without queue telemetry retain the conservative fallback of 12 requests.
     ...(!hasLanes || limits.requests !== undefined ? [[Number(ready.recentRequests5m), limits.requests ?? 12, "Traffic"]] : []),
     [Number(ready.activeRooms ?? ready.rooms), limits.rooms ?? 1, "Active rooms"],
-    [Number(ready.memoryMb?.rss), limits.memory ?? 1350, "Application memory"],
+    [Number(ready.memoryMb?.rss), limits.memory ?? 2304, "Application memory"],
     [loadAverage, limits.load ?? 1.25, "Host load"],
   ];
   for (const [value, limit, name] of checks) {
@@ -51,13 +51,14 @@ export function assessCapacity(ready, loadAverage, limits = {}) {
 export const DAILY_JOBS = [
   { id: "news", script: "scripts/scrape-vod-news.mjs", minutes: 5 },
   { id: "imdb-trending", script: "scripts/refresh-imdb-trending.mjs", minutes: 8 },
-  { id: "video", script: "scripts/sync-vod-catalog.mjs", minutes: 40 },
+  { id: "video", script: "scripts/sync-vod-catalog.mjs", minutes: 35 },
   { id: "f2my", script: "scripts/scrape-f2my-catalog.mjs", minutes: 25, args: ["--skip-imdb-lookup", "--concurrency=1", "--archive-concurrency=1", "--limit=80"] },
   { id: "curated-video", script: "scripts/refresh-curated-vod.mjs", minutes: 15 },
+  { id: "public-video", script: "scripts/refresh-public-vod.mjs", minutes: 30 },
   { id: "public-archives", script: "scripts/refresh-public-archives.mjs", minutes: 8 },
-  { id: "episode-images", script: "scripts/audit-series-episode-images.mjs", minutes: 20, args: ["--all", "--resume", "--retry-incomplete", "--concurrency=2"] },
-  { id: "episode-images-tmdb", script: "scripts/scrape-tmdb-episode-images.mjs", minutes: 20, args: ["--partial-only", "--limit=50"] },
-  { id: "episode-image-cache", script: "scripts/cache-episode-images.mjs", minutes: 20, args: ["--concurrency=4", "--delay-ms=150"] },
+  { id: "episode-images", script: "scripts/audit-series-episode-images.mjs", minutes: 14, args: ["--all", "--resume", "--retry-incomplete", "--concurrency=2"] },
+  { id: "episode-images-tmdb", script: "scripts/scrape-tmdb-episode-images.mjs", minutes: 14, args: ["--partial-only", "--limit=50"] },
+  { id: "episode-image-cache", script: "scripts/cache-episode-images.mjs", minutes: 11, args: ["--concurrency=4", "--delay-ms=150"] },
   { id: "releases", script: "scripts/release-monitor.mjs", minutes: 5 },
   { id: "meloobit", script: "scripts/refresh-meloobit.mjs", minutes: 8 },
   { id: "music", script: "scripts/daily-music-refresh.mjs", minutes: 62 },

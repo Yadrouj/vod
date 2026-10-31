@@ -2,6 +2,23 @@ const VIDEO_EXTENSION = /\.(mkv|mp4|m4v|avi|webm|mov|wmv|ts)(?:$|[?#])/i;
 const SUBTITLE_EXTENSION = /\.(srt|vtt|ass|ssa)(?:$|[?#])/i;
 const QUALITY_TOKEN = /(?:^|[.\s_-])(2160p?|1440p?|1080p?|720p?|576p?|480p?|360p?|4k)(?=$|[.\s_-])/i;
 
+// An exact catalog identity is usable when a publisher removes IMDb anchors.
+// Ambiguous same-name/year records are deliberately not guessed.
+export function indexKnownSourceTitle(index, item) {
+  const id = item.imdbCode || item.id;
+  if (!/^tt\d{5,12}$/i.test(id || "")) return;
+  const kind = /series|episode|show/i.test(item.type || "") ? "series" : "movie";
+  const names = new Set([item.title, item.originalTitle, item.imdb?.primaryTitle, item.imdb?.originalTitle].filter(Boolean).map(normalizeTitle));
+  for (const name of names) {
+    const key = `${kind}:${name}:${kind === "series" ? "*" : item.year ?? ""}`;
+    if (!index.has(key)) index.set(key, id);
+    else if (index.get(key) !== id) index.set(key, null);
+  }
+}
+export function knownSourceTitle(index, { kind, title, year }) {
+  return index.get(`${kind}:${normalizeTitle(title)}:${kind === "series" ? "*" : year ?? ""}`) || null;
+}
+
 export function decodeHtmlEntities(value) {
   return String(value ?? "")
     .replace(/&amp;/gi, "&")
@@ -153,8 +170,12 @@ export function extractImdbIds(html) {
   const ids = new Set();
   for (const anchor of String(html ?? "").matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>/gi)) {
     const href = decodeHtmlEntities(anchor[1]).replace(/\\\//g, "/");
-    const id = /(?:^|\.)imdb\.com\/title\/(tt\d{5,12})/i.exec(href)?.[1];
-    if (id) ids.add(id.toLowerCase());
+    try {
+      const url = new URL(href, "https://www.moviesho.com/");
+      if (url.hostname.toLowerCase() !== "imdb.com" && !url.hostname.toLowerCase().endsWith(".imdb.com")) continue;
+      const id = /^\/title\/(tt\d{5,12})(?:\/|$)/i.exec(url.pathname)?.[1];
+      if (id) ids.add(id.toLowerCase());
+    } catch { /* Ignore non-URL anchors. */ }
   }
   return Array.from(ids);
 }
@@ -166,7 +187,7 @@ export function extractMovieshoSourcePaths(html) {
     const href = decodeHtmlEntities(anchor[1]);
     try {
       const url = new URL(href);
-      if (url.hostname.toLowerCase() !== "sr1.moviesho.com") continue;
+      if (!["sr1.moviesho.com", "sr1moviesho.musitraf.com"].includes(url.hostname.toLowerCase())) continue;
       paths.add(normalizeSourcePath(url.toString()));
     } catch {
       // Ignore malformed and unrelated page links.

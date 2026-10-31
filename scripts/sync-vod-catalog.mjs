@@ -130,7 +130,9 @@ async function main() {
         VOD_SERIES_EXPAND_CACHE_MAX_AGE_MS:
           process.env.VOD_SERIES_EXPAND_CACHE_MAX_AGE_MS || "21600000",
         VOD_SERIES_EXPAND_CONCURRENCY:
-          process.env.VOD_SERIES_EXPAND_CONCURRENCY || "1",
+          process.env.VOD_SERIES_EXPAND_CONCURRENCY || "2",
+        VOD_SERIES_FETCH_TIMEOUT_MS: process.env.VOD_SERIES_FETCH_TIMEOUT_MS || "6000",
+        VOD_SERIES_EXPAND_LIMIT: process.env.VOD_SERIES_EXPAND_LIMIT || "100",
       },
     );
     const expansion = await readJson(expansionReportFile);
@@ -143,6 +145,8 @@ async function main() {
       {
         MOVIESHO_MATCH_CACHE:
           process.env.MOVIESHO_MATCH_CACHE || path.join(WORK_DIR, "moviesho-match-cache.json"),
+        MOVIESHO_MOVIE_GROUP_LIMIT: process.env.MOVIESHO_MOVIE_GROUP_LIMIT || "120",
+        MOVIESHO_SERIES_LIMIT: process.env.MOVIESHO_SERIES_LIMIT || "40",
       },
     );
     const movieshoSource = await readJson(movieshoSourceFile);
@@ -253,7 +257,7 @@ async function main() {
     }
 
     const imdbAddedIds = changes.addedIds.filter((id) => /^tt\d{5,12}$/i.test(String(id)));
-    if (imdbAddedIds.length > 0) {
+    if (imdbAddedIds.length > 0 && process.env.VOD_SYNC_SKIP_API !== "1") {
       await writeFile(idsFile, JSON.stringify(imdbAddedIds));
       await run(
         "Fetch rich metadata for newly discovered titles",
@@ -261,7 +265,9 @@ async function main() {
         [finalCatalogFile, apiFile],
         {
           IMDB_API_IDS_FILE: idsFile,
-          IMDB_API_LIMIT: process.env.VOD_SYNC_API_LIMIT || "0",
+          // Large archive catch-ups can contain thousands of titles. Do not
+          // let an unavailable metadata API exhaust the nightly link budget.
+          IMDB_API_LIMIT: process.env.VOD_SYNC_API_LIMIT || "50",
           IMDB_API_RETRIES: process.env.IMDB_API_RETRIES || "1",
           IMDB_API_TIMEOUT_MS: process.env.IMDB_API_TIMEOUT_MS || "12000",
         },

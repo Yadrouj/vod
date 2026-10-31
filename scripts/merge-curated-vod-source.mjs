@@ -128,12 +128,12 @@ console.log(JSON.stringify({ ...report, addedIds: undefined, updatedIds: undefin
 
 function incomingFor(item) {
   const keyed = sourceByKey.get(keyOf(item));
-  const titled = sourceByTitle.get(titleKey(item)) ?? [];
+  const titled = (sourceByTitle.get(titleKey(item)) ?? []).filter(candidate => compatibleIdentity(item, candidate));
   return mergeIncomingItems(uniqueItems([keyed, ...titled]));
 }
 
 function incomingGroupFor(item) {
-  return mergeIncomingItems(sourceByTitle.get(titleKey(item)) ?? [item]);
+  return mergeIncomingItems((sourceByTitle.get(titleKey(item)) ?? [item]).filter(candidate => compatibleIdentity(item, candidate)));
 }
 
 function groupByTitle(items) {
@@ -261,7 +261,7 @@ function mergeImages(existing, incoming) {
 
 function subtitleSignature(values) { return (values ?? []).map((value) => canonicalUrl(value.url)).sort().join("|"); }
 function countRefreshed(existing, incoming) { const previous = new Map(existing.map((link) => [linkKey(link), link.url])); return incoming.filter((link) => previous.has(linkKey(link)) && previous.get(linkKey(link)) !== link.url).length; }
-function linkKey(link) { return `${String(link.sourceProvider ?? "").toLowerCase()}:${canonicalUrl(link.url)}`; }
+function linkKey(link) { return canonicalUrl(link.url); }
 function canonicalUrl(value) {
   try {
     const url = new URL(value);
@@ -275,7 +275,12 @@ function canonicalUrl(value) {
 function keyOf(item) { return String(item?.imdbCode || item?.id || "").trim().toLowerCase(); }
 function titleKey(item) {
   const title = String(item?.originalTitle || item?.title || "").normalize("NFKD").toLocaleLowerCase("en-US").replace(/[^\p{L}\p{N}]+/gu, " ").replace(/\s+/g, " ").trim();
-  return title ? `${title}:${item?.year ?? ""}` : "";
+  const type = /series|episode|show/i.test(String(item?.type ?? "")) ? "series" : "movie";
+  return title ? `${type}:${title}:${item?.year ?? ""}` : "";
+}
+function compatibleIdentity(a, b) {
+  const first = keyOf(a), second = keyOf(b);
+  return !(/^tt\d+$/.test(first) && /^tt\d+$/.test(second) && first !== second);
 }
 function unique(values) { return [...new Set(values.filter((value) => value != null && value !== ""))]; }
 function newestDate(a, b) { return Date.parse(a ?? "") >= Date.parse(b ?? "") ? a ?? b ?? null : b ?? a ?? null; }

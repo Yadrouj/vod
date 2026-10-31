@@ -53,7 +53,10 @@ function mergeF2myLinks(existingLinks, incomingLinks) {
         }
       : link;
   });
-  return dedupe([...unrelated, ...mergedIncoming]);
+  // A refreshed post can list only the newest episode/quality. Keep prior
+  // episodes and encodes that are absent from this snapshot, while preferring
+  // refreshed hosts for identities present in both versions.
+  return dedupe([...unrelated, ...mergedIncoming, ...priorF2my]);
 }
 
 function mergeItem(existing, incoming) {

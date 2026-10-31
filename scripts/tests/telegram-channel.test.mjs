@@ -118,8 +118,8 @@ test('old half-hour slots survive migration and deliveries are at least sixty mi
 test('both deployment stacks reserve enough heap and container headroom for the full archive',async()=>{
  for(const file of ['docker-compose.prod.yml','docker-compose.production.yml']){
   const text=await readFile(file,'utf8');const section=text.split(/\r?\n  telegram-channel:\r?\n/)[1]?.split(/\r?\n(?:  [\w-]+:|\w+:)/)[0];
-  assert.ok(section);assert.match(section,/NODE_OPTIONS: --max-old-space-size=1024/);
-  assert.match(section,/mem_limit: 1536m/);assert.match(section,/vod_telegram_channel:/);
+  assert.ok(section);assert.match(section,/NODE_OPTIONS: --max-old-space-size=\$\{TELEGRAM_CHANNEL_HEAP_MB:-2048\}/);
+  assert.match(section,/mem_limit: \$\{TELEGRAM_CHANNEL_MEMORY_LIMIT:-3g\}/);assert.match(section,/vod_telegram_channel:/);
  }
 });
 

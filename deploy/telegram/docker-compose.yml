@@ -32,11 +32,11 @@ services:
     command: ["node", "scripts/telegram-channel.mjs", "--daemon"]
     environment:
       NODE_ENV: production
-      NODE_OPTIONS: --max-old-space-size=1024
+      NODE_OPTIONS: --max-old-space-size=${TELEGRAM_CHANNEL_HEAP_MB:-2048}
       TELEGRAM_CHANNEL_REMOTE_DATA: "1"
       TELEGRAM_CHANNEL_STATE_DIR: /state
       MELODIFY_LIBRARY_DIR: /music-library
-    mem_limit: 1536m
+    mem_limit: ${TELEGRAM_CHANNEL_MEMORY_LIMIT:-3g}
     cpus: 1.0
     volumes:
       # Local cache and unsynced-state journal only. The real state is on the site host.

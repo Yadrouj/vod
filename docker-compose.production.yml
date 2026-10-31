@@ -14,7 +14,7 @@ services:
       HTTP_MEDIA_CONCURRENCY: ${HTTP_MEDIA_CONCURRENCY:-128}
       HTTP_QUEUE_LIMIT: ${HTTP_QUEUE_LIMIT:-128}
       WATCH_PARTY_MAX_CONNECTIONS: ${WATCH_PARTY_MAX_CONNECTIONS:-512}
-      NODE_OPTIONS: --max-old-space-size=1536
+      NODE_OPTIONS: --max-old-space-size=${APP_HEAP_MB:-2304}
       VOD_DATA_DIR: /app/public/data
       BLOG_STATE_DIR: /app/.media-cache/blog-agent
       MELODIFY_LIBRARY_DIR: /music-library
@@ -30,7 +30,7 @@ services:
       SARVNEMA_ADMIN_TOKEN: ${SARVNEMA_ADMIN_TOKEN:-}
     restart: unless-stopped
     stop_grace_period: 20s
-    mem_limit: 2g
+    mem_limit: ${APP_MEMORY_LIMIT:-3g}
     cpus: 2.0
     volumes:
       - ./public/data:/app/public/data
@@ -65,7 +65,7 @@ services:
       # Empty: use actual request queues; set a number only for a strict traffic cap.
       MAINTENANCE_MAX_RECENT_REQUESTS: ${MAINTENANCE_MAX_RECENT_REQUESTS:-}
       MAINTENANCE_MAX_ACTIVE_ROOMS: ${MAINTENANCE_MAX_ACTIVE_ROOMS:-1}
-      MAINTENANCE_MAX_MEMORY_MB: ${MAINTENANCE_MAX_MEMORY_MB:-1350}
+      MAINTENANCE_MAX_MEMORY_MB: ${MAINTENANCE_MAX_MEMORY_MB:-2304}
       MAINTENANCE_MAX_LOAD_AVG: ${MAINTENANCE_MAX_LOAD_AVG:-1.25}
       VOD_SOURCE_URL: ${VOD_SOURCE_URL:-https://dls2.aparatchi-dlcenter.top/DonyayeSerial/donyaye_serial_all_archive.html}
       MOVIESHO_DOWNLOAD_BASE: ${MOVIESHO_DOWNLOAD_BASE:-https://sr1.moviesho.com/}
@@ -155,12 +155,12 @@ services:
       TELEGRAM_CHANNEL_START_HOUR: ${TELEGRAM_CHANNEL_START_HOUR:-10}
       TELEGRAM_CHANNEL_END_HOUR: ${TELEGRAM_CHANNEL_END_HOUR:-22}
       TELEGRAM_CHANNEL_STATE_DIR: /app/.media-cache/telegram-channel
-      NODE_OPTIONS: --max-old-space-size=1024
+      NODE_OPTIONS: --max-old-space-size=${TELEGRAM_CHANNEL_HEAP_MB:-2048}
       MELODIFY_LIBRARY_DIR: /music-library
     command: ["node", "scripts/telegram-channel.mjs", "--daemon"]
     init: true
     stop_grace_period: 60s
-    mem_limit: 1536m
+    mem_limit: ${TELEGRAM_CHANNEL_MEMORY_LIMIT:-3g}
     cpus: 0.5
     logging:
       driver: json-file

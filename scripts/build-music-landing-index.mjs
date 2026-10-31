@@ -93,6 +93,7 @@ function compactTrack(track) {
   const stream = (track.sources ?? []).find((source) => source.kind === "stream" && source.available !== false) ?? (track.sources ?? [])[0];
   return {
     id: track.id,
+    ...(track.idAliases?.length ? { idAliases: track.idAliases } : {}),
     kind: track.kind,
     title: track.title,
     persianTitle: track.persianTitle || track.title,

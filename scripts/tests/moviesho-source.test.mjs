@@ -2,11 +2,29 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   extractImdbIds,
+  indexKnownSourceTitle,
+  knownSourceTitle,
   movieIdentityFromFile,
   parseDirectoryRows,
   parseSeasonEpisode,
   sourceEvidenceScore,
 } from "../moviesho-source-lib.mjs";
+
+test("bare IMDb hosts and the current download CDN retain exact source evidence", () => {
+  assert.deepEqual(extractImdbIds('<a href="https://imdb.com/title/tt1234567/">IMDb</a><a href="https://imdb.com.evil.test/title/tt9999999/">Fake</a>'), ["tt1234567"]);
+  const path = "/Movie/2026/10/Example.2026.1080p.mkv";
+  assert.equal(sourceEvidenceScore(`<a href="https://sr1moviesho.musitraf.com${path}">File</a>`, { exactPaths: [`https://sr1.moviesho.com${path}`] }).accepted, true);
+});
+test("known identities require exact full title, movie year and type, and reject remakes with ambiguous series names", () => {
+  const index = new Map();
+  indexKnownSourceTitle(index, { id: "tt1234567", title: "Example", type: "movie", year: 2026 });
+  assert.equal(knownSourceTitle(index, {kind:"movie",title:"Example",year:2026}), "tt1234567");
+  assert.equal(knownSourceTitle(index, {kind:"movie",title:"Example",year:2025}), null);
+  assert.equal(knownSourceTitle(index, {kind:"series",title:"Example",year:2026}), null);
+  indexKnownSourceTitle(index, { id: "tt1111111", title: "House", type: "tvSeries", year: 2004 });
+  indexKnownSourceTitle(index, { id: "tt2222222", title: "House", type: "tvSeries", year: 2026 });
+  assert.equal(knownSourceTitle(index, {kind:"series",title:"House"}), null);
+});
 
 test("parses Moviesho directory rows with exact file metadata", () => {
   const html = `

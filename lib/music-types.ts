@@ -24,6 +24,8 @@ export type MusicTrack = {
   /** Only populated from measured plays; missing is not an estimated count. */
   playCount?: number;
   id: string;
+  /** Older shared IDs retained after merging identical provider releases. */
+  idAliases?: string[];
   kind: MusicKind;
   title: string;
   persianTitle: string;

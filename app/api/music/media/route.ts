@@ -1,4 +1,4 @@
-import { loadMusicIndex } from "@/lib/music";
+import { findMusicTrack, loadMusicIndex } from "@/lib/music";
 import { fetchStreamHeaders } from "@/lib/upstream-stream";
 import { musicAttachment } from "@/lib/music-download";
 import { streamMelodifyFile } from "@/lib/melodify-library";
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     return Response.json({ error: "Invalid music source." }, { status: 400 });
   }
 
-  const track = (await loadMusicIndex()).tracks.find((item) => item.id === id);
+  const track = findMusicTrack(await loadMusicIndex(), id);
   const source = track?.sources.find((item) => item.url === sourceUrl);
   if (!source?.url || source.available === false) {
     return Response.json({ error: "Music source is not available." }, { status: 404 });

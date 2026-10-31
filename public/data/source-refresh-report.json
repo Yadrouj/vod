@@ -1,0 +1,233 @@
+{
+  "generatedAt": "2026-10-31T19:28:07.422Z",
+  "deploymentPerformed": false,
+  "catalog": {
+    "titles": 27944,
+    "links": 526330,
+    "movies": 22992,
+    "series": 4952,
+    "providerLinks": {
+      "f2my": 188563,
+      "donyayeserial": 30098,
+      "moviesho": 53466,
+      "legacy-or-unspecified": 207790,
+      "familymovie": 18865,
+      "zardfilm": 27548
+    },
+    "metadata": {
+      "updatedAt": "2026-10-31T19:16:01.539Z",
+      "totalTitles": 27944,
+      "totalLinks": 526330,
+      "imdbDatasetCacheOnly": true,
+      "imdbPreservedExistingValues": false
+    }
+  },
+  "sourceReview": {
+    "startedAt": "2026-10-31T18:17:56.504Z",
+    "full": true,
+    "state": "completed",
+    "sources": [
+      {
+        "id": "bamabin",
+        "requestedUrl": "https://bamabin.com/",
+        "url": "https://bamabin.com/",
+        "state": "unavailable",
+        "pages": 0,
+        "inspected": 0,
+        "titles": 0,
+        "links": 0,
+        "errors": [
+          "fetch failed"
+        ]
+      },
+      {
+        "id": "9movie",
+        "requestedUrl": "https://9movie.tv/",
+        "url": "https://9movie.info/",
+        "state": "no-public-downloads",
+        "pages": 1,
+        "inspected": 3,
+        "titles": 0,
+        "links": 0,
+        "errors": [],
+        "total": 21061,
+        "note": "Sampled public title pages have no eligible full-film links; no login, paid player or protected API was used."
+      },
+      {
+        "id": "seenta",
+        "requestedUrl": "https://seenta.watch/",
+        "url": "https://seenta.watch/",
+        "state": "app-or-search-only",
+        "pages": 1,
+        "inspected": 0,
+        "titles": 0,
+        "links": 0,
+        "errors": [],
+        "note": "Only publicly readable metadata and media URLs are eligible; no accounts or app-only APIs are accessed."
+      },
+      {
+        "id": "movie-chi",
+        "requestedUrl": "https://movie-chi.ir/",
+        "url": "https://movie-chi.ir/",
+        "state": "app-or-search-only",
+        "pages": 1,
+        "inspected": 0,
+        "titles": 0,
+        "links": 0,
+        "errors": [],
+        "note": "Only publicly readable metadata and media URLs are eligible; no accounts or app-only APIs are accessed."
+      },
+      {
+        "id": "familymovie",
+        "requestedUrl": "https://familymovie.tr/",
+        "url": "https://familymovie.tr/",
+        "state": "completed",
+        "pages": 3,
+        "inspected": 249,
+        "titles": 248,
+        "links": 5474,
+        "errors": [],
+        "total": 469
+      },
+      {
+        "id": "yekmoviez",
+        "requestedUrl": "https://yekmoviez.com/",
+        "url": "https://yekmoviez.com/",
+        "state": "unavailable",
+        "pages": 0,
+        "inspected": 0,
+        "titles": 0,
+        "links": 0,
+        "errors": [
+          "fetch failed"
+        ]
+      },
+      {
+        "id": "nightmovie",
+        "requestedUrl": "https://nightmovie.org/",
+        "url": "https://nightmovie.org/",
+        "state": "unavailable",
+        "pages": 0,
+        "inspected": 0,
+        "titles": 0,
+        "links": 0,
+        "errors": [
+          "fetch failed"
+        ]
+      }
+    ],
+    "titles": 455,
+    "links": 18448,
+    "partial": false,
+    "updatedAt": "2026-10-31T18:27:26.645Z",
+    "finishedAt": "2026-10-31T18:27:26.644Z",
+    "checkedTitles": 469,
+    "discoveredTitles": 469
+  },
+  "publicSourceMerge": {
+    "generatedAt": "2026-10-31T19:16:01.539Z",
+    "sourceTitles": 455,
+    "resultTitles": 27944,
+    "resultLinks": 526330,
+    "added": 199,
+    "updated": 311,
+    "unchanged": 0,
+    "existingTitlesEnriched": 311,
+    "newTitlesAdded": 199,
+    "downloadLinksAdded": 18865,
+    "downloadLinksRefreshed": 0,
+    "sourcePagesAdded": 510
+  },
+  "f2myMerge": {
+    "added": 122,
+    "updated": 7708,
+    "unchanged": 2585,
+    "newLinks": 3202,
+    "sourceItems": 10415,
+    "totalTitles": 27622,
+    "totalLinks": 501568,
+    "outFile": "public\\data\\vod-catalog.json",
+    "sourceFile": ".media-cache\\vod-sync\\f2my-source.json"
+  },
+  "curatedMerge": {
+    "generatedAt": "2026-10-31T19:09:31.577Z",
+    "sourceTitles": 144,
+    "resultTitles": 27745,
+    "resultLinks": 504499,
+    "added": 123,
+    "updated": 28,
+    "unchanged": 0,
+    "existingTitlesEnriched": 28,
+    "newTitlesAdded": 123,
+    "downloadLinksAdded": 2931,
+    "downloadLinksRefreshed": 0,
+    "sourcePagesAdded": 146
+  },
+  "legacyArchive": {
+    "sourceTitles": 22324,
+    "sourceLinks": 38611,
+    "recoveredFromVerifiedStaging": true,
+    "changes": {
+      "outFile": "C:\\Users\\yadro\\vod\\.media-cache\\vod-sync\\2026-10-31T18-11-49-001Z-41468\\catalog-merged.json",
+      "added": 5252,
+      "updated": 15378,
+      "unchanged": 1694,
+      "preserved": 5176,
+      "totalTitles": 27500,
+      "totalLinks": 496003
+    },
+    "expansion": {
+      "outFile": "C:\\Users\\yadro\\vod\\.media-cache\\vod-sync\\2026-10-31T18-11-49-001Z-41468\\catalog-expanded.json",
+      "processed": 60,
+      "expandedItems": 59,
+      "changedItems": 59,
+      "linksAdded": 2166,
+      "totalTitles": 27500,
+      "totalLinks": 498127,
+      "totalRequests": 2605
+    },
+    "moviesho": {
+      "movieGroups": 1464,
+      "seriesFolders": 369,
+      "exactMatches": 1368,
+      "existingRefreshed": 1368,
+      "unresolvedCount": 465
+    }
+  },
+  "music": {
+    "tracks": 139386,
+    "artists": 9187,
+    "retainedLegacyAliases": 334,
+    "updatedAt": "2026-10-31T19:14:23.497Z"
+  },
+  "verification": {
+    "checkedOn": "2026-10-31",
+    "method": "HEAD",
+    "publicMediaSamples": 12,
+    "successfulResponses": 12,
+    "httpStatus": 200,
+    "contentType": "video/x-matroska",
+    "sampledQualities": [
+      "480p",
+      "720p",
+      "1080p",
+      "2160p",
+      "4K"
+    ],
+    "sampledGroups": [
+      "SoftSub",
+      "Dubbed",
+      "Files"
+    ],
+    "all18448LinksChecked": false,
+    "fullPlaybackTested": false
+  },
+  "limitations": [
+    "No production deployment was performed; this report describes local archive updates.",
+    "Unavailable, app-only and sampled-without-public-download sources are explicitly identified, not claimed as fully imported.",
+    "FamilyMovie signed media links expire; refresh them again before deploying an older checkout.",
+    "The live DonyayeSerial series feed was unavailable; the full archive, selected episode directories and independent providers were used instead.",
+    "Rich IMDb API enrichment was skipped during this local catch-up because that service was unreachable; the official title dataset is still used.",
+    "The bulk IMDb dataset download stalled; a previously verified local dataset was used, preserving non-null current source ratings and votes."
+  ]
+}

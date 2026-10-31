@@ -60,7 +60,7 @@ services:
       # Empty: use actual request queues; set a number only for a strict traffic cap.
       MAINTENANCE_MAX_RECENT_REQUESTS: ${MAINTENANCE_MAX_RECENT_REQUESTS:-}
       MAINTENANCE_MAX_ACTIVE_ROOMS: ${MAINTENANCE_MAX_ACTIVE_ROOMS:-1}
-      MAINTENANCE_MAX_MEMORY_MB: ${MAINTENANCE_MAX_MEMORY_MB:-1350}
+      MAINTENANCE_MAX_MEMORY_MB: ${MAINTENANCE_MAX_MEMORY_MB:-2304}
       MAINTENANCE_MAX_LOAD_AVG: ${MAINTENANCE_MAX_LOAD_AVG:-1.25}
       MOVIESHO_DOWNLOAD_BASE: ${MOVIESHO_DOWNLOAD_BASE:-https://sr1.moviesho.com/}
       MOVIESHO_SITE_BASE: ${MOVIESHO_SITE_BASE:-https://www.moviesho.com/}
@@ -185,11 +185,11 @@ services:
       TELEGRAM_CHANNEL_END_HOUR: ${TELEGRAM_CHANNEL_END_HOUR:-22}
       TELEGRAM_CHANNEL_STATE_DIR: /app/.media-cache/telegram-channel
       MELODIFY_LIBRARY_DIR: /music-library
-      NODE_OPTIONS: --max-old-space-size=1024
+      NODE_OPTIONS: --max-old-space-size=${TELEGRAM_CHANNEL_HEAP_MB:-2048}
     command: ["node", "scripts/telegram-channel.mjs", "--daemon"]
     init: true
     stop_grace_period: 60s
-    mem_limit: 1536m
+    mem_limit: ${TELEGRAM_CHANNEL_MEMORY_LIMIT:-3g}
     cpus: 0.5
     healthcheck:
       test: ["CMD", "node", "scripts/publisher-health.mjs", "/app/.media-cache/telegram-channel/status.json"]

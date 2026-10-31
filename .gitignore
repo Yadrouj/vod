@@ -32,6 +32,7 @@ data/imdb-trending-status.json
 data/imdb-trending-status.json.*.tmp
 public/data/imdb-trending.json.*.tmp
 data/daily-music-refresh-status.json
+data/daily-music-refresh.lock
 data/music-artwork-journal.json
 data/music-artwork-journal.json.*.tmp
 data/music-artwork.lock

@@ -25,6 +25,7 @@ export const DEFAULT_SCRAPER_DASHBOARD_CONFIG = {
     source("video", "کاتالوگ فیلم و سریال", "https://dls2.aparatchi-dlcenter.top/DonyayeSerial/donyaye_serial_all_archive.html", "sync-vod-catalog.mjs"),
     source("f2my", "فیلم و سریال F2MY", "https://www.f2my.top/", "scrape-f2my-catalog.mjs"),
     source("curated-video", "منابع منتخب ویدیویی", "https://www.moviesho.com/", "refresh-curated-vod.mjs"),
+    source("public-video", "منابع جدید فیلم و سریال", "https://familymovie.tr/", "refresh-public-vod.mjs"),
     source("public-archives", "آرشیوهای عمومی فیلم", "https://archive.org/details/movies", "refresh-public-archives.mjs"),
     source("episode-images", "Episode artwork audit", "https://api.tvmaze.com/", "audit-series-episode-images.mjs"),
     source("episode-images-tmdb", "TMDB episode artwork gaps", "https://www.themoviedb.org/", "scrape-tmdb-episode-images.mjs"),
@@ -97,6 +98,7 @@ export function sanitizeScraperDashboardConfig(value) {
   const schedule = normalizeSchedule(input.schedule, fallback.schedule);
   // Upgrade older saved settings without losing disabled sources or custom hours.
   if (!unique.some(item => item.id === 'meloobit')) unique.push({ ...fallback.sources.find(item => item.id === 'meloobit'), startHour: schedule.startHour, endHour: schedule.endHour, days: [...schedule.days] });
+  if (!unique.some(item => item.id === 'public-video')) unique.push({ ...fallback.sources.find(item => item.id === 'public-video'), startHour: schedule.startHour, endHour: schedule.endHour, days: [...schedule.days] });
   return { version: 1, schedule, sources: unique };
 }
 

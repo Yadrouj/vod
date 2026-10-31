@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { mergeMeloobitTracks } from './meloobit-source.mjs';
+import { preserveMusicIdentities } from "./stable-music-identities.mjs";
 import { buildArtists as buildCanonicalArtists, canonicalizeTrackArtists, cleanText as cleanCatalogText, normalizeComparable as normalizeCatalogText } from "./music-catalog.mjs";
 
 const ROOT = "https://rozmusic.com";
@@ -163,7 +164,7 @@ async function main() {
     });
   }
 
-  const trackList = mergeMeloobitTracks(mergeProviderTracks([...tracks.values()], musicsFaSource, classicsSource.tracks ?? [], foreignSource.tracks ?? [], remiixbazSource.tracks ?? [], worldofmusicSource.tracks ?? []), meloobitSource.tracks ?? [], previous.tracks ?? [])
+  const trackList = preserveMusicIdentities(previous.tracks ?? [], mergeMeloobitTracks(mergeProviderTracks([...tracks.values()], musicsFaSource, classicsSource.tracks ?? [], foreignSource.tracks ?? [], remiixbazSource.tracks ?? [], worldofmusicSource.tracks ?? []), meloobitSource.tracks ?? [], previous.tracks ?? []))
     .map((track) => canonicalizeTrackArtists(track, track.sourceUrl))
     .sort((left, right) => (right.publishedAt ?? "").localeCompare(left.publishedAt ?? "") || right.id.localeCompare(left.id));
   const profileBySlug = new Map([
@@ -415,7 +416,9 @@ async function readJson(file, fallback) { try { return JSON.parse(await readFile
 async function writeJsonAtomic(file, value) {
   await mkdir(path.dirname(file), { recursive: true });
   const temporary = `${file}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
-  await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  // The full archive is read by the site and remote channel worker. Avoid
+  // retaining hundreds of MB of pretty-print whitespace in their JSON parse.
+  await writeFile(temporary, `${JSON.stringify(value, null, file === OUTPUT ? undefined : 2)}\n`, "utf8");
   try {
     await rename(temporary, file);
   } catch (error) {

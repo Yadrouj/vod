@@ -141,7 +141,7 @@ async function runCycle() {
 
 export async function runJob(job, deadline, day) {
   await new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [job.script, ...(job.args || []), ...(FULL && ["f2my", "music"].includes(job.id) ? ["--full"] : [])], {
+    const child = spawn(process.execPath, [job.script, ...(job.args || []), ...(FULL && ["f2my", "music", "public-video"].includes(job.id) ? ["--full"] : [])], {
       cwd: ROOT, windowsHide: true, detached: process.platform !== "win32", stdio: "inherit",
       env: { ...process.env, MAINTENANCE_RUN_DAY: FORCE ? "" : day, MAINTENANCE_DEADLINE: String(deadline), DAILY_RELEASE_SKIP_NEWS: "1", DAILY_RELEASE_SKIP_TRENDING: "1" },
     });
@@ -181,7 +181,7 @@ async function checkCapacity() {
     const ready = await response.json();
     return { ...assessCapacity(ready, os.loadavg()[0], {
       requests: number("MAINTENANCE_MAX_RECENT_REQUESTS", undefined), rooms: number("MAINTENANCE_MAX_ACTIVE_ROOMS", 1),
-      memory: number("MAINTENANCE_MAX_MEMORY_MB", 1350), load: number("MAINTENANCE_MAX_LOAD_AVG", 1.25),
+      memory: number("MAINTENANCE_MAX_MEMORY_MB", 2304), load: number("MAINTENANCE_MAX_LOAD_AVG", 1.25),
     }), ready };
   } catch (error) { return { idle: false, reason: error.message }; }
 }

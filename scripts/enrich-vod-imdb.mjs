@@ -6,6 +6,7 @@ import readline from "node:readline";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { once } from "node:events";
+import { pathToFileURL } from "node:url";
 import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 
 const DATASETS = {
@@ -19,6 +20,7 @@ const OUT_FILE =
 const CACHE_DIR = path.join(".media-cache", "imdb");
 const DATASET_MAX_AGE_MS =
   Math.max(1, Number(process.env.IMDB_DATASET_MAX_AGE_HOURS || 30)) * 60 * 60 * 1000;
+let preferExisting = false;
 
 function clean(value) {
   return value && value !== "\\N" ? value : null;
@@ -38,7 +40,7 @@ function toNumber(value) {
 
 async function download(url, dest) {
   await mkdir(path.dirname(dest), { recursive: true });
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(Math.max(1000, Number(process.env.IMDB_DATASET_TIMEOUT_MS || 300000))) });
   if (!res.ok || !res.body) {
     throw new Error(`Failed to download ${url}: ${res.status}`);
   }
@@ -50,6 +52,7 @@ async function ensureDataset(name, url) {
   let cached = null;
   try {
     cached = await stat(dest);
+    if (cached.size > 0 && process.env.IMDB_DATASET_CACHE_ONLY === "1") return dest;
     if (cached.size > 0 && Date.now() - cached.mtimeMs <= DATASET_MAX_AGE_MS) return dest;
   } catch {
     /* cache miss */
@@ -128,6 +131,7 @@ async function main() {
 
   const basicsFile = await ensureDataset("title.basics", DATASETS.basics);
   const ratingsFile = await ensureDataset("title.ratings", DATASETS.ratings);
+  preferExisting = Date.now() - (await stat(ratingsFile)).mtimeMs > DATASET_MAX_AGE_MS;
 
   console.log(`Matching ${wantedIds.size.toLocaleString()} IMDb ids...`);
   const [basics, ratings] = await Promise.all([
@@ -150,18 +154,18 @@ async function main() {
   );
 }
 
-function enrichItem(item, basics, ratings) {
+export function enrichItem(item, basics, ratings, preserveExisting = preferExisting) {
   const imdbBasics = basics.get(item.imdbCode) ?? null;
   const imdbRatings = ratings.get(item.imdbCode) ?? null;
   const imdb = imdbBasics || imdbRatings ? { ...imdbBasics, ...imdbRatings } : null;
   return {
     ...item,
-    title: imdbBasics?.primaryTitle ?? item.title,
-    type: imdbBasics?.titleType ?? item.type,
-    year: imdbBasics?.startYear ?? item.year,
-    imdbVotes: imdbRatings?.numVotes ?? item.imdbVotes,
-    imdbRating: imdbRatings?.averageRating ?? item.imdbRating,
-    imdb,
+    title: preserveExisting ? item.title || imdbBasics?.primaryTitle : imdbBasics?.primaryTitle ?? item.title,
+    type: preserveExisting ? item.type || imdbBasics?.titleType : imdbBasics?.titleType ?? item.type,
+    year: preserveExisting ? item.year ?? imdbBasics?.startYear : imdbBasics?.startYear ?? item.year,
+    imdbVotes: preserveExisting ? item.imdbVotes ?? imdbRatings?.numVotes : imdbRatings?.numVotes ?? item.imdbVotes,
+    imdbRating: preserveExisting ? item.imdbRating ?? imdbRatings?.averageRating : imdbRatings?.averageRating ?? item.imdbRating,
+    imdb: imdb && preserveExisting ? { ...imdb, averageRating: item.imdbRating ?? imdb.averageRating, numVotes: item.imdbVotes ?? imdb.numVotes } : imdb,
     genres: imdbBasics?.genres ?? item.genres ?? [],
     runtimeMinutes: imdbBasics?.runtimeMinutes ?? item.runtimeMinutes ?? null,
     originalTitle: imdbBasics?.originalTitle ?? item.originalTitle ?? null,
@@ -193,6 +197,8 @@ async function writeEnrichedArchive(basics, ratings) {
             imdbDatasetSource: "https://developer.imdb.com/non-commercial-datasets/",
             imdbMatchedTitles: basics.size,
             imdbMatchedRatings: ratings.size,
+            imdbDatasetCacheOnly: process.env.IMDB_DATASET_CACHE_ONLY === "1",
+            imdbPreservedExistingValues: preferExisting,
           });
           await write(`${header.slice(0, -1)},"items":[`);
         },
@@ -211,7 +217,7 @@ async function writeEnrichedArchive(basics, ratings) {
   }
 }
 
-main().catch((error) => {
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

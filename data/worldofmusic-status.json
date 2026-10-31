@@ -1,7 +1,7 @@
 {
   "state": "complete",
-  "startedAt": "2026-09-13T02:39:05.282Z",
-  "updatedAt": "2026-09-13T02:40:37.500Z",
+  "startedAt": "2026-10-31T18:00:05.182Z",
+  "updatedAt": "2026-10-31T18:10:52.771Z",
   "artists": {
     "discovered": 20,
     "complete": 20,
@@ -13,8 +13,8 @@
     "failures": 0
   },
   "tracks": {
-    "discovered": 9024,
-    "playable": 9024
+    "discovered": 125558,
+    "playable": 125558
   },
   "current": null,
   "warnings": []

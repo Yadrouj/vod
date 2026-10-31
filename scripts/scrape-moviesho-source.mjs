@@ -6,6 +6,8 @@ import {
   inferGroup,
   inferQuality,
   inferRelease,
+  indexKnownSourceTitle,
+  knownSourceTitle,
   isSubtitleFile,
   isVideoFile,
   movieIdentityFromFile,
@@ -57,10 +59,12 @@ const stats = {
   seriesFiles: 0,
   matched: 0,
   existingSkipped: 0,
+  existingRefreshed: 0,
   unresolved: [],
   warnings: [],
 };
 const directoryCache = new Map();
+const knownTitles = new Map();
 let nextSiteRequestAt = 0;
 
 async function main() {
@@ -71,6 +75,7 @@ async function main() {
   await streamVodArchiveItems(CATALOG_FILE, async (item) => {
     const id = item.imdbCode || item.id;
     if (id) existingIds.add(id);
+    indexKnownSourceTitle(knownTitles, item);
   });
   const cache = await readCache();
   const matcher = createMatcher(cache);
@@ -101,8 +106,7 @@ async function main() {
       return null;
     }
     if (existingIds.has(match.imdbCode)) {
-      stats.existingSkipped += 1;
-      return null;
+      stats.existingRefreshed += 1;
     }
     return movieItem(group, match);
   });
@@ -132,8 +136,7 @@ async function main() {
       return null;
     }
     if (existingIds.has(match.imdbCode)) {
-      stats.existingSkipped += 1;
-      return null;
+      stats.existingRefreshed += 1;
     }
 
     const files = await crawlFileTree(directory.url, MAX_TREE_DEPTH);
@@ -180,6 +183,7 @@ async function main() {
     cacheHits: stats.cacheHits,
     exactMatches: stats.matched,
     existingSkipped: stats.existingSkipped,
+    existingRefreshed: stats.existingRefreshed,
     addedCandidates: payload.totalTitles,
     addedLinks: payload.totalLinks,
     unresolvedCount: stats.unresolved.length,
@@ -382,7 +386,7 @@ function toSubtitleLink(entry) {
 }
 
 function baseItem({ imdbCode, title, year, type, links, pageUrl, sourceDirectory }) {
-  const uniqueLinks = deduplicateLinks(links).sort(sortVodLinks);
+  const uniqueLinks = deduplicateLinks(links).map(link => ({ ...link, sourceProvider: "moviesho" })).sort(sortVodLinks);
   return {
     id: imdbCode,
     title,
@@ -432,6 +436,15 @@ function createMatcher(cache) {
   cache.entries ??= {};
   return async ({ kind, title, year, cacheKey, exactPaths, sourcePrefix, sourceUrl }) => {
     const cached = cache.entries[cacheKey];
+    const knownId = knownSourceTitle(knownTitles, { kind, title, year });
+    if (knownId) {
+      // The listing supplies the real filename/year or series directory, and
+      // the existing official catalog supplies one unambiguous IMDb identity.
+      // This is exact matching, not a search-result or fuzzy-title guess.
+      stats.matched += 1;
+      return { imdbCode: knownId, pageUrl: cached?.imdbCode === knownId ? cached.pageUrl : sourceUrl,
+        evidence: { exactCatalogIdentity: true, filePaths: exactPaths?.length || 0, sourcePrefix } };
+    }
     const age = cached?.checkedAt ? Date.now() - Date.parse(cached.checkedAt) : Number.POSITIVE_INFINITY;
     if (cached?.imdbCode && age < MATCH_TTL_MS) {
       stats.cacheHits += 1;

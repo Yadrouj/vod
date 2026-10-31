@@ -57,7 +57,7 @@ export async function loadMusicIndex(): Promise<MusicIndex> {
 }
 
 export function findMusicTrack(index: MusicIndex, id: string): MusicTrack | null {
-  const track = index.tracks.find((item) => item.id === id);
+  const track = index.tracks.find((item) => item.id === id) || index.tracks.find(item => item.idAliases?.includes(id));
   return track ? normalizeMusicTrack(track) : null;
 }
 

@@ -18,6 +18,7 @@ const statusFiles: Record<string, string[]> = {
   releases: [path.join(DATA, "release-monitor-status.json")],
   "imdb-trending": [path.join(DATA, "imdb-trending-status.json")],
   "curated-video": [path.join(DATA, "maintenance-scheduler-status.json")],
+  "public-video": [path.join(ROOT, ".media-cache", "public-vod", "report.json")],
   "public-archives": [path.join(DATA, "public-film-archives-report.json")],
 };
 type JsonRecord = Record<string, unknown>;
@@ -47,6 +48,11 @@ function stringValue(valueToRead: unknown): string | null { return typeof valueT
 function number(value: unknown) { return typeof value === "number" && Number.isFinite(value) ? value : null; }
 
 function counts(status: JsonRecord | null) {
+  if (Array.isArray(value(status, "sources"))) return {
+    received: number(value(status, "titles")), processed: number(value(status, "checkedTitles")),
+    total: number(value(status, "discoveredTitles")),
+    failures: (value(status, "sources") as unknown[]).filter(source => value(record(source), "state") === "unavailable").length,
+  };
   const totals = record(value(status, "totals"));
   const tracks = record(value(status, "tracks"));
   const pages = record(value(status, "archivePages") || value(status, "pages"));

@@ -8,7 +8,7 @@ import path from "node:path";
 
 const execFileAsync = promisify(execFile);
 
-test("merges F2MY links without removing links from other providers", async () => {
+test("merges F2MY links without removing older versions or other providers", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "sarvnema-f2my-"));
   try {
     const existingPath = path.join(directory, "catalog.json");
@@ -22,6 +22,7 @@ test("merges F2MY links without removing links from other providers", async () =
         links: [
           { label: "Other", url: "https://other.test/example.mkv", size: null, group: "Files", quality: "720p", release: null },
           { label: "Old F2MY", url: "https://old.test/Film/Example.1080p.mkv", size: null, group: "Files", quality: "1080p", release: null, fileName: "Example.1080p.mkv", sourceProvider: "f2my", sourceBaseId: "f2my-old", sourceRelativePath: "Film/Example.1080p.mkv" },
+          { label: "Prior quality", url: "https://old.test/Film/Example.720p.mkv", size: null, group: "Files", quality: "720p", release: null, fileName: "Example.720p.mkv", sourceProvider: "f2my", sourceBaseId: "f2my-old", sourceRelativePath: "Film/Example.720p.mkv" },
         ],
       }],
     }));
@@ -41,9 +42,11 @@ test("merges F2MY links without removing links from other providers", async () =
     const catalog = JSON.parse(await readFile(existingPath, "utf8"));
     const report = JSON.parse(await readFile(reportPath, "utf8"));
     assert.equal(catalog.items.length, 1);
-    assert.equal(catalog.items[0].links.length, 3);
+    assert.equal(catalog.items[0].links.length, 4);
     assert.ok(catalog.items[0].links.some((link) => link.url === "https://other.test/example.mkv"));
     assert.ok(catalog.items[0].links.some((link) => link.url === "https://new.test/Film/Example.1080p.mkv"));
+    assert.ok(catalog.items[0].links.some((link) => link.url === "https://old.test/Film/Example.720p.mkv"));
+    assert.ok(!catalog.items[0].links.some((link) => link.url === "https://old.test/Film/Example.1080p.mkv"));
     assert.equal(report.newLinks, 1);
   } finally {
     assert.ok(path.resolve(directory).startsWith(path.join(path.resolve(os.tmpdir()), "sarvnema-f2my-")));

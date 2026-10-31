@@ -55,7 +55,8 @@ test("completed traffic does not starve a responsive app, but real pressure and 
   }
   assert.equal(assessCapacity({ ...ready, requests: {} }, .2).idle, false);
   assert.equal(assessCapacity({ ...ready, requests: { ...lanes(), pages: { active: null, queued: 0, capacity: 16 } } }, .2).idle, false);
-  assert.equal(assessCapacity({ ...ready, memoryMb: { rss: 2000 } }, .2).idle, false);
+  assert.equal(assessCapacity({ ...ready, memoryMb: { rss: 2000 } }, .2).idle, true);
+  assert.equal(assessCapacity({ ...ready, memoryMb: { rss: 2600 } }, .2).idle, false);
   assert.equal(assessCapacity({ ...ready, activeRooms: 5 }, .2).idle, false);
   assert.equal(assessCapacity(ready, 5).idle, false);
 });

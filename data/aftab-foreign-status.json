@@ -1,7 +1,7 @@
 {
   "state": "complete",
-  "startedAt": "2026-09-13T02:41:09.130Z",
-  "updatedAt": "2026-09-13T02:41:33.235Z",
+  "startedAt": "2026-10-31T18:11:23.710Z",
+  "updatedAt": "2026-10-31T18:11:49.195Z",
   "pages": {
     "total": 18,
     "complete": 18,
@@ -9,8 +9,8 @@
   },
   "tracks": {
     "discovered": 180,
-    "new": 179,
-    "duplicate": 1
+    "new": 173,
+    "duplicate": 7
   },
   "warnings": [],
   "current": null

@@ -1,7 +1,8 @@
 import { createWriteStream } from "node:fs";
 import { once } from "node:events";
-import { mkdir, readFile, rename, rm, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 
 const IN_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
@@ -115,12 +116,13 @@ function groupNameFromUrl(url) {
   }
 }
 
-function inferSeriesRoots(item) {
+export function inferSeriesRoots(item) {
   const roots = new Set();
 
   for (const link of [...(item.links ?? []), ...(item.sourceDirectoryLinks ?? [])]) {
     try {
       const url = new URL(link.url);
+      if (!/^https?:$/.test(url.protocol)) continue;
       const parts = url.pathname.split("/").filter(Boolean);
       const groupIndex = parts.findIndex(isGroupSegment);
       const seasonIndex = parts.findIndex((part) => SEASON_SEGMENT_RE.test(part));
@@ -130,7 +132,15 @@ function inferSeriesRoots(item) {
         const rootPath = `/${parts.slice(0, cutIndex).join("/")}/`;
         roots.add(`${url.origin}${rootPath}`);
       } else {
-        roots.add(ensureSlash(link.url));
+        // A flat directory may contain hundreds of S01E01-style files. A
+        // filename is not a directory: appending '/' to every video caused
+        // thousands of redundant requests (and could request media bodies).
+        const file = parts.at(-1) || "";
+        const isFile = VIDEO_EXTENSIONS.test(file) || ARCHIVE_EXTENSIONS.test(file);
+        if (/\.(?:srt|vtt|ass|ssa|jpg|png|webp)$/i.test(file)) continue;
+        const directory = isFile ? parts.slice(0, -1) : parts;
+        if (!directory.length) continue;
+        roots.add(`${url.origin}/${directory.length ? `${directory.join("/")}/` : ""}`);
       }
     } catch {
       // Keep bad URLs out of the crawler.
@@ -150,7 +160,7 @@ function isInsideRoot(url, rootUrl) {
   }
 }
 
-async function fetchText(url) {
+export async function fetchText(url) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
@@ -162,8 +172,24 @@ async function fetchText(url) {
       },
       redirect: "follow",
     });
-    if (!response.ok) return null;
-    return await response.text();
+    if (!response.ok || /^(?:video\/|audio\/|application\/(?:octet-stream|zip))/i.test(response.headers.get("content-type") || "")) {
+      await response.body?.cancel();
+      return null;
+    }
+    const reader = response.body?.getReader();
+    if (!reader) return null;
+    const chunks = [];
+    let bytes = 0;
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        bytes += value.byteLength;
+        if (bytes > 8 * 1024 * 1024) return null;
+        chunks.push(value);
+      }
+      return Buffer.concat(chunks).toString("utf8");
+    } finally { await reader.cancel().catch(() => {}); }
   } catch {
     return null;
   } finally {
@@ -467,7 +493,7 @@ async function main() {
     if (hasEpisodeFiles) expandedItems += 1;
     expandedLinks += links.length;
 
-    if (processed % 50 === 0 || processed === seriesItems.length) {
+    if (processed % 10 === 0 || processed === seriesItems.length) {
       cacheWrite = cacheWrite.then(() => writeCache(cache));
       await cacheWrite;
       console.log(
@@ -584,12 +610,11 @@ async function writeExpandedArchive({ metadata, totalTitles, totalLinks, updates
     output.once("error", reject);
     output.end(resolve);
   });
-  await rm(OUT_FILE, { force: true });
   await rename(temporary, OUT_FILE);
   return { totalTitles, totalLinks };
 }
 
-main().catch((error) => {
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
