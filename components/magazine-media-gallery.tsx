@@ -18,7 +18,7 @@ export async function MagazineMediaGallery({ media }: { media: MagazineMedia[] }
   if (!available.length) return null;
   return <section id="film-gallery" className={styles.filmGallery}>
     <h2>تصاویر و تریلر آثار این مطلب</h2>
-    <p>عکس‌های اصلی از گالری «دربارهٔ اثر» آمده‌اند و با بنر تصویرسازی‌شدهٔ مقاله متفاوت‌اند.</p>
+    <p>عکس‌ها و تریلرهای اصلی از همان گالری «دربارهٔ اثر» در سرونما خوانده می‌شوند. اگر لینک مستقیم تریلر منقضی شده باشد، پیوند منبع اصلی نمایش داده می‌شود.</p>
     {available.map(g => g && <div key={g.media.id}>
       <h3><Link href={g.media.detail}>{g.media.title}</Link></h3>
       <div className={styles.stills}>{g.images.map(image => <figure key={image.url}>

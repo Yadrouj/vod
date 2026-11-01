@@ -5,6 +5,8 @@ Music collections: https://sarvnema.ir/music/collections
 
 ## What ships
 
+The independent review/biography batch adds 60 published dossiers alongside this original queue. See [magazine-dossiers.md](magazine-dossiers.md) for its sources, spoiler controls, real media, validation and persistent-volume deployment. Its `magazine-dossiers.json` snapshot is not rewritten by the daily first-month agent.
+
 Thirty original Persian manuscripts live in `content/magazine/`. Their reviewed first-month plan is `first-month.mjs`; each assembled article is validated at 850–1,500 words. The initial batch is approximately 1,000–1,200 words per assembled article, with six sections, visible FAQs, references, illustrations and real archive links. Existing magazine guides remain available.
 
 This is a researched editorial queue and a publication agent, not an unconfigured model claiming to report live news. The initial queue covers 30 publication dates. When exhausted, `status.json` reports `exhausted: true`; prepare and review the next plan before the end of the queue. Never invent releases, cast announcements, festival winners, quotes or personal author credentials to fill a daily slot. There is no paid generative-text API secretly enabled.

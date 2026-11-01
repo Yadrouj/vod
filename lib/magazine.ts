@@ -5,12 +5,18 @@ import type { MagazineIndex } from './magazine-types';
 import { loadVodNews } from './news';
 
 const snapshot: FileSnapshot<MagazineIndex> = {};
+const dossiersSnapshot: FileSnapshot<MagazineIndex> = {};
 export const loadMagazine = cache(async (): Promise<MagazineIndex> => {
-  try {
-    const index = await readFileSnapshot(path.join(process.env.VOD_DATA_DIR || path.join(process.cwd(), 'public/data'), 'magazine.json'), snapshot);
-    const now = Date.now();
-    return { ...index, articles: index.articles.filter(a => Number.isFinite(Date.parse(a.publishedAt)) && Date.parse(a.publishedAt) <= now).sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)) };
-  } catch { return { version: 1, updatedAt: '', articles: [] }; }
+  const dir = process.env.VOD_DATA_DIR || path.join(process.cwd(), 'public/data');
+  // Independent snapshots: the daily publisher must not overwrite long-form dossiers,
+  // and a missing optional batch must not hide the original magazine.
+  const indexes = await Promise.all([
+    readFileSnapshot(path.join(dir, 'magazine.json'), snapshot).catch(() => null),
+    readFileSnapshot(path.join(dir, 'magazine-dossiers.json'), dossiersSnapshot).catch(() => null),
+  ]);
+  const now = Date.now();
+  const articles = [...new Map(indexes.flatMap(index => index?.articles ?? []).filter(a => Number.isFinite(Date.parse(a.publishedAt)) && Date.parse(a.publishedAt) <= now).map(a => [a.slug, a])).values()];
+  return { version: 1, updatedAt: indexes.map(i => i?.updatedAt || '').sort().at(-1) || '', articles: articles.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt) || a.slug.localeCompare(b.slug)) };
 });
 export async function findMagazineArticle(slug: string) { return (await loadMagazine()).articles.find(a => a.slug === slug); }
 export const loadFreshMagazineNews = cache(async () => {

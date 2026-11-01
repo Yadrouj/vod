@@ -22,3 +22,11 @@ test('raw HTML and malformed or redirect-like destinations stay inert text', () 
   assert.ok(!html.includes('<a '));
   assert.ok(html.includes('&lt;script&gt;'));
 });
+
+test('only explicitly listed safe HTTPS references can be linked in sourced dossiers', () => {
+  const text = '[منتقد](https://www.rogerebert.com/reviews/example) [other](https://evil.test) [bad](https://) [credentials](https://user:pass@example.test/)';
+  const html = renderToStaticMarkup(React.createElement(MagazineInline, { text, sourceUrls: ['https://www.rogerebert.com/reviews/example', 'https://', 'https://user:pass@example.test/'] }));
+  assert.equal((html.match(/<a /g) ?? []).length, 1);
+  assert.match(html, /href="https:\/\/www\.rogerebert\.com\/reviews\/example"/);
+  assert.match(html, /noopener noreferrer/);
+});
