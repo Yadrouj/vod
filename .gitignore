@@ -46,5 +46,6 @@ data/telegram-deliveries/
 data/telegram-channel/
 .media-cache/
 data/discovery/
+data/search-popularity/
 public/data/vod-sync-status.json
 public/data/episode-metadata/index.json

@@ -121,14 +121,14 @@ export function chooseDailyDraft(drafts, state, now, hour = 9) {
   return drafts.find(d => !state.publishedSlugs?.[d.slug]) || null;
 }
 
-export async function runBlogAgent({ publish = false, validate = false, revisePublished = false, kernelLocked = false, bootstrap = false, indexing = true, now = new Date(), stateDir = process.env.BLOG_STATE_DIR || '.media-cache/blog-agent', dataDir = process.env.VOD_DATA_DIR || 'public/data', contentDir = 'content/magazine' } = {}) {
+export async function runBlogAgent({ publish = false, publishAll = false, validate = false, revisePublished = false, kernelLocked = false, bootstrap = false, indexing = true, now = new Date(), stateDir = process.env.BLOG_STATE_DIR || '.media-cache/blog-agent', dataDir = process.env.VOD_DATA_DIR || 'public/data', contentDir = 'content/magazine' } = {}) {
   if (validate) publish = false;
+  if (publishAll && revisePublished) throw new Error('Bulk publication and revision are separate operations');
   const directory = path.resolve(stateDir);
   await mkdir(directory, { recursive: true });
   const lockPath = path.join(directory, 'agent.lock');
   const lock = kernelLocked ? null : await open(lockPath, 'wx');
   try {
-    const drafts = await prepareQueue({ dataDir, contentDir, now });
     const stateFile = path.join(directory, 'state.json');
     const state = await read(stateFile, { publishedDates: {}, publishedSlugs: {} });
     state.publishedDates ??= {}; state.publishedSlugs ??= {}; state.indexedSlugs ??= {};
@@ -139,6 +139,14 @@ export async function runBlogAgent({ publish = false, validate = false, revisePu
     const indexFile = path.join(dataDir, 'magazine.json');
     const index = await read(indexFile, { version: 1, articles: [], updatedAt: '' });
     for (const a of index.articles) { state.publishedSlugs[a.slug] = a.publishedAt; state.publishedDates[tehranClock(a.publishedAt).dateKey] = a.slug; }
+    // An exhausted queue needs a heartbeat/indexing retry, not a full parse of
+    // the hundreds-of-MB music archive every five minutes. Explicit validation
+    // and revision still rebuild from the manuscripts and current archive.
+    const cachedQueue = !validate && !revisePublished && firstMonth.every(seed => state.publishedSlugs[seed.slug])
+      ? await read(path.join(directory, 'queue.json'), null) : null;
+    const cachedDrafts = cachedQueue?.drafts;
+    const drafts = Array.isArray(cachedDrafts) && firstMonth.every(seed => cachedDrafts.some(d => d.slug === seed.slug))
+      ? cachedDrafts : await prepareQueue({ dataDir, contentDir, now });
     if (publish && revisePublished) {
       let revised = 0;
       index.articles = index.articles.map(previous => {
@@ -160,16 +168,17 @@ export async function runBlogAgent({ publish = false, validate = false, revisePu
     const hour = Number(process.env.BLOG_PUBLISH_HOUR || 9);
     if (!Number.isInteger(hour) || hour < 0 || hour > 23) throw new Error('BLOG_PUBLISH_HOUR must be an integer from 0 to 23');
     const draft = chooseDailyDraft(drafts, state, now, bootstrap && !index.articles.length ? 0 : hour);
-    if (publish && draft && !revisePublished) {
-      const article = publicArticle(draft, now.toISOString(), now.toISOString());
+    const selected = publishAll ? drafts.filter(d => !state.publishedSlugs[d.slug]) : draft ? [draft] : [];
+    if (publish && !revisePublished) for (const selectedDraft of selected) {
+      const article = publicArticle(selectedDraft, now.toISOString(), now.toISOString());
       index.articles.push(article); index.updatedAt = now.toISOString();
       await writeJsonAtomic(indexFile, index);
-      state.publishedSlugs[draft.slug] = article.publishedAt;
-      state.publishedDates[tehranClock(now).dateKey] = draft.slug;
+      state.publishedSlugs[selectedDraft.slug] = article.publishedAt;
+      state.publishedDates[tehranClock(now).dateKey] = selectedDraft.slug;
       await writeJsonAtomic(stateFile, state);
-      state.indexingPending = [...new Set([...(state.indexingPending ?? []), `/mag/${draft.slug}`, `/mag/topics/${draft.category}`, '/mag'])];
+      state.indexingPending = [...new Set([...(state.indexingPending ?? []), `/mag/${selectedDraft.slug}`, `/mag/topics/${selectedDraft.category}`, '/mag'])];
       await writeJsonAtomic(stateFile, state);
-      console.log(JSON.stringify({ published: draft.slug, words: draft.wordCount, url: `https://sarvnema.ir/mag/${draft.slug}` }));
+      console.log(JSON.stringify({ published: selectedDraft.slug, words: selectedDraft.wordCount, url: `https://sarvnema.ir/mag/${selectedDraft.slug}` }));
     }
     if (publish) {
       const unindexed = index.articles.filter(a => !state.indexedSlugs[a.slug] || Date.parse(a.modifiedAt) > Date.parse(state.indexedSlugs[a.slug]));
@@ -208,7 +217,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     const child = spawn('flock', ['--nonblock', '--conflict-exit-code', '75', '--no-fork', path.join(directory, 'agent.flock'), process.execPath, process.argv[1], ...process.argv.slice(2), '--lock-held'], { stdio: 'inherit' });
     child.on('exit', code => { process.exitCode = code ?? 1; }); child.on('error', () => { process.exitCode = 1; });
   } else {
-    const cycle = async () => { try { console.log(await runBlogAgent({ publish: !process.argv.includes('--validate') && (process.argv.includes('--publish') || process.env.BLOG_ENABLED === '1'), validate: process.argv.includes('--validate'), revisePublished: process.argv.includes('--revise-published'), kernelLocked: process.argv.includes('--lock-held'), bootstrap: process.argv.includes('--bootstrap'), indexing: !process.argv.includes('--no-indexing') })); } catch (error) { console.error(error.message); if (!process.argv.includes('--daemon')) process.exitCode = 1; } };
+    if (process.argv.includes('--publish-all') && process.argv.includes('--daemon')) throw new Error('--publish-all is an explicit one-time operation, not a daemon policy');
+    const cycle = async () => { try { console.log(await runBlogAgent({ publish: !process.argv.includes('--validate') && (process.argv.includes('--publish') || process.argv.includes('--publish-all') || process.env.BLOG_ENABLED === '1'), publishAll: process.argv.includes('--publish-all'), validate: process.argv.includes('--validate'), revisePublished: process.argv.includes('--revise-published'), kernelLocked: process.argv.includes('--lock-held'), bootstrap: process.argv.includes('--bootstrap'), indexing: !process.argv.includes('--no-indexing') })); } catch (error) { console.error(error.message); if (!process.argv.includes('--daemon')) process.exitCode = 1; } };
     await cycle();
     if (process.argv.includes('--daemon')) { const repeat = async () => { await cycle(); setTimeout(repeat, 5 * 60_000); }; setTimeout(repeat, 5 * 60_000); }
   }

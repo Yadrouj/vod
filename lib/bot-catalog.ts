@@ -14,7 +14,8 @@ import { loadOldIranianVodIndex, loadVodIndex, selectVodSection } from "./vod-in
 import { downloadGateUrl } from "./download-gate";
 import { matchVodSearch } from "./vod-search-match";
 import { searchText } from "./typo-search";
-import { compareSearchRank } from "./vod-search-order";
+import { compareSearchRank, type SearchRankingSignals } from "./vod-search-order";
+import { loadSearchRankingSignals } from "./search-popularity";
 
 export type BotSort = "relevance" | "rating" | "year" | "title";
 
@@ -77,16 +78,16 @@ export function parseBotSearchParams(searchParams: URLSearchParams): BotSearchPa
 
 export async function searchBotCatalog(params: BotSearchParams, origin: string) {
   const index = params.section === "old-iranian-films" ? await loadOldIranianVodIndex() : await loadVodIndex();
-  return searchBotItems(index.items, params, origin);
+  return searchBotItems(index.items, params, origin, params.q ? await loadSearchRankingSignals() : {});
 }
 
-export function searchBotItems(items: VodCard[], params: BotSearchParams, origin: string) {
+export function searchBotItems(items: VodCard[], params: BotSearchParams, origin: string, signals: SearchRankingSignals = {}) {
   const candidates = params.section
     ? selectVodSection(items, params.section)
     : items;
   const matches = params.q ? matchVodSearch(candidates, params.q)
     : { items: candidates, corrections: [], matchedQuery: "", mode: "exact" as const };
-  const relevanceOrder = params.q && params.sort === "relevance" ? compareSearchRank(matches.matchedQuery || params.q) : null;
+  const relevanceOrder = params.q && params.sort === "relevance" ? compareSearchRank(matches.matchedQuery || params.q, signals) : null;
   const scored = matches.items
     .map((item) => ({ item, ...scoreBotItem(item, matches.matchedQuery) }))
     .filter(({ item }) => matchesBotFilters(item, params))

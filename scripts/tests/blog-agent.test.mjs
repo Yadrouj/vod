@@ -109,3 +109,21 @@ test('bootstrap, restart and catch-up keep exactly one public article per Tehran
     assert.equal(result.published, 2, 'validate never publishes, even when publish was requested');
   } finally { await rm(root, { recursive: true, force: true }); }
 });
+
+test('explicit one-time bulk publication exposes all thirty drafts, preserves existing dates and is idempotent', async () => {
+  const root=await mkdtemp(path.join(os.tmpdir(),'sarvnema-blog-bulk-'));
+  const options={stateDir:path.join(root,'state'),dataDir:path.join(root,'data'),publish:true,indexing:false};
+  try {
+    await runBlogAgent({...options,bootstrap:true,now:new Date('2026-10-03T00:00:00Z')});
+    const original=JSON.parse(await readFile(path.join(options.dataDir,'magazine.json'),'utf8')).articles[0];
+    const now=new Date('2026-11-01T13:00:00Z');
+    const result=await runBlogAgent({...options,publishAll:true,now});
+    assert.equal(result.published,30);assert.equal(result.queued,0);
+    const before=await readFile(path.join(options.dataDir,'magazine.json'),'utf8');
+    const articles=JSON.parse(before).articles;
+    assert.equal(articles[0].publishedAt,original.publishedAt);
+    assert.ok(articles.slice(1).every(a=>a.publishedAt===now.toISOString()));
+    await runBlogAgent({...options,publishAll:true,now:new Date('2026-11-02T13:00:00Z')});
+    assert.equal(await readFile(path.join(options.dataDir,'magazine.json'),'utf8'),before);
+  } finally { await rm(root,{recursive:true,force:true}); }
+});

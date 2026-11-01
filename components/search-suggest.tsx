@@ -82,7 +82,7 @@ export function SearchSuggest({
         close: "بستن جستجو",
         clear: "پاک کردن",
         heading: "نتیجه‌های پیشنهادی",
-        order: cinemaSearch ? "نزدیک‌ترین نام · جدیدتر · امتیاز IMDb" : "خواننده‌ها و آثار · مرتبط‌ترین‌ها",
+        order: cinemaSearch ? "امتیاز IMDb · پرجست‌وجو · رأی و ترند IMDb" : "خواننده‌ها و آثار · مرتبط‌ترین‌ها",
         empty: "یک بخش دیگر از نام، نام انگلیسی یا کد IMDb را امتحان کن.",
         hint: "نام فیلم، سریال یا کد IMDb را بنویس",
         viewAll: "دیدن همه نتیجه‌ها",
@@ -91,7 +91,7 @@ export function SearchSuggest({
         close: "Close search",
         clear: "Clear",
         heading: "Best matches",
-        order: cinemaSearch ? "Closest title · newest · IMDb" : "Newest first",
+        order: cinemaSearch ? "IMDb rating · popular searches · IMDb votes & trends" : "Newest first",
         empty: "Try another part of the name, an English title or an IMDb ID.",
         hint: "Search by title, series or IMDb ID",
         viewAll: "View all results",
@@ -105,12 +105,12 @@ export function SearchSuggest({
       const params = new URLSearchParams({
         q: query.trim(),
         limit: String(maxItems),
-        suggest: "spelling-v2",
+        suggest: "spelling-v3",
       });
       if (cinemaSearch) {
         params.set("type", effectiveKind);
         // Keep old grouped responses in browser/edge caches off the new URL.
-        params.set("sort", "relevance-newest-imdb");
+        params.set("sort", "imdb-popular-trends-v1");
       }
       if (endpoint.split("?")[0] === "/api/music/search") params.set("includeArtists", "1");
       type SuggestResponse = { items?: Suggestion[]; artists?: Suggestion[]; corrections?: string[]; matchedQuery?: string };
@@ -283,6 +283,7 @@ export function SearchSuggest({
       setActiveIndex((current) => (current <= 0 ? visibleItems.length - 1 : current - 1));
     } else if (event.key === "Enter" && activeIndex >= 0) {
       event.preventDefault();
+      recordSelection(visibleItems[activeIndex]);
       router.push(suggestionHref(visibleItems[activeIndex]));
       onNavigate?.();
       closeSearch();
@@ -292,6 +293,10 @@ export function SearchSuggest({
   function suggestionHref(item: Suggestion) {
     if (includeMusic && (item.type === "Track" || item.type === "Music video")) return `/music/${item.imdbCode}`;
     return item.type === "artist" && item.href?.startsWith("/music/artists/") ? item.href : hrefForItem(item);
+  }
+  function recordSelection(item: Suggestion) {
+    if (!cinemaSearch || item.type === "artist" || item.type === "Track" || item.type === "Music video") return;
+    void fetch("/api/search/selection", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ itemId: item.imdbCode }) }).catch(() => {});
   }
 
   const menu = menuOpen ? (
@@ -327,7 +332,7 @@ export function SearchSuggest({
             role="option"
             aria-selected={activeIndex === index}
             onMouseEnter={() => setActiveIndex(index)}
-            onClick={() => { closeSearch(); onNavigate?.(); }}
+            onClick={() => { recordSelection(item); closeSearch(); onNavigate?.(); }}
           >
             {item.posterUrl ? (
               <img

@@ -118,7 +118,7 @@ export default async function HomePage() {
         ))}
         <PeopleRail people={topPeople.people} locale={locale} />
         <LandingSeoContent content={FILM_LANDING_SEO} />
-        <NewsRail items={news.items} locale={locale} />
+        <NewsRail items={news.items} boxOffice={news.boxOffice} locale={locale} />
         <MagazineRail locale={locale} />
       </section>
     </main>
@@ -339,8 +339,7 @@ function prioritizeNews<T extends { id: string; url: string; title: string; cate
       return true;
     })
     .sort((a, b) => {
-      const categoryRank = (category: string) => category === "release" ? 0 : category === "episodes" ? 1 : category === "imdb" ? 2 : 3;
-      return categoryRank(a.category) - categoryRank(b.category) || Date.parse(b.publishedAt) - Date.parse(a.publishedAt);
+      return Number(/[\u0600-\u06ff]/u.test(b.title)) - Number(/[\u0600-\u06ff]/u.test(a.title)) || Date.parse(b.publishedAt) - Date.parse(a.publishedAt);
     })
     .slice(0, 15);
 }

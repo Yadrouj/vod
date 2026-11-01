@@ -2,7 +2,7 @@ import { readFileSnapshot, type FileSnapshot } from "./file-snapshot";
 import path from "node:path";
 import { enrichOldIranianCard } from "./old-iranian-media";
 import type { VodCard, VodCatalogIndex } from "./types";
-import { compareSearchRank } from "./vod-search-order";
+import { compareSearchRank, type SearchRankingSignals } from "./vod-search-order";
 import { matchVodSearch } from "./vod-search-match";
 
 export const HOME_SECTIONS = [
@@ -87,7 +87,7 @@ export function pickHero(index: VodCatalogIndex): VodCard | null {
   );
 }
 
-export function browseVodIndex(index: VodCatalogIndex, params: BrowseParams, requestedPageSize = 30) {
+export function browseVodIndex(index: VodCatalogIndex, params: BrowseParams, requestedPageSize = 30, signals: SearchRankingSignals = {}) {
   const pageSize = Math.min(200, Math.max(1, Math.floor(requestedPageSize) || 30));
   const requestedPage = Number(params.page ?? "1");
   const currentPage = Number.isFinite(requestedPage) ? Math.max(1, Math.floor(requestedPage)) : 1;
@@ -119,7 +119,7 @@ export function browseVodIndex(index: VodCatalogIndex, params: BrowseParams, req
     );
   });
 
-  if (needle) filtered.sort(compareSearchRank(search?.matchedQuery || needle));
+  if (needle) filtered.sort(compareSearchRank(search?.matchedQuery || needle, signals));
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const page = Math.min(currentPage, totalPages);
   const start = (page - 1) * pageSize;

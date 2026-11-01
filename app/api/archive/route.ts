@@ -1,5 +1,6 @@
 import { archiveCard, ARCHIVE_BATCH_SIZE, ARCHIVE_PAGE_SIZE } from "@/lib/archive-cards";
 import { browseVodIndex, loadOldIranianVodIndex, loadVodIndex } from "@/lib/vod-index";
+import { loadSearchRankingSignals } from "@/lib/search-popularity";
 
 export async function GET(request: Request) {
   const params = Object.fromEntries(new URL(request.url).searchParams);
@@ -8,7 +9,7 @@ export async function GET(request: Request) {
     return Response.json({ error: "Invalid offset" }, { status: 400 });
   }
   const index = params.section === "old-iranian-films" ? await loadOldIranianVodIndex() : await loadVodIndex();
-  const result = browseVodIndex(index, params, ARCHIVE_PAGE_SIZE);
+  const result = browseVodIndex(index, params, ARCHIVE_PAGE_SIZE, params.q ? await loadSearchRankingSignals() : {});
   return Response.json({ items: result.items.slice(rawOffset, rawOffset + ARCHIVE_BATCH_SIZE).map(archiveCard), page: result.page }, {
     headers: { "Cache-Control": "public, max-age=30, s-maxage=60" },
   });

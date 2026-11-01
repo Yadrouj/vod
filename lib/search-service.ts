@@ -5,6 +5,7 @@ import { loadVodIndex } from "./vod-index";
 import { selectRankedSuggestions, type SearchKind } from "./vod-search-order";
 import { matchVodSearch } from "./vod-search-match";
 import type { SearchMatches } from "./typo-search";
+import { loadSearchRankingSignals } from "./search-popularity";
 
 type Suggestion = {
   title: string;
@@ -35,13 +36,14 @@ export async function searchSuggestions(query: string, limit = 8, kind: SearchKi
     suggestionItems = index.items;
     suggestionCache.clear(); aiResultCache.clear();
   }
-  const cacheKey = `${normalized}:${limit}:${kind}`;
+  const signals = await loadSearchRankingSignals();
+  const cacheKey = `${normalized}:${limit}:${kind}:${signals.revision}`;
   const cached = suggestionCache.get(cacheKey);
   if (cached) return { ...cached, cache: "HIT" as const };
   const matches = matchVodSearch(index.items, query);
 
   const currentYear = new Date().getUTCFullYear();
-  const items = selectRankedSuggestions(matches.items, limit, kind, matches.matchedQuery || query)
+  const items = selectRankedSuggestions(matches.items, limit, kind, matches.matchedQuery || query, signals)
     .map((item) => ({
       title: item.title,
       imdbCode: item.imdbCode,

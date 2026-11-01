@@ -5,6 +5,7 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { ArchiveForm, ArchiveResults } from "@/components/archive-results";
 import { archiveCard, ARCHIVE_PAGE_SIZE, ARCHIVE_BATCH_SIZE } from "@/lib/archive-cards";
 import styles from "./archive.module.css";
+import { loadSearchRankingSignals } from "@/lib/search-popularity";
 import { SearchSuggest } from "@/components/search-suggest";
 import { SearchCorrections } from "@/components/search-corrections";
 import { formatNumber, getDictionary, interpolate, type Locale } from "@/lib/i18n";
@@ -35,7 +36,7 @@ export default async function BrowsePage({ searchParams }: Props) {
   const t = getDictionary(locale);
   const params = normalizeParams(await searchParams);
   const index = params.section === "old-iranian-films" ? await loadOldIranianVodIndex() : await loadVodIndex();
-  const result = browseVodIndex(index, params, ARCHIVE_PAGE_SIZE);
+  const result = browseVodIndex(index, params, ARCHIVE_PAGE_SIZE, params.q ? await loadSearchRankingSignals() : {});
   const batch = Math.min(5, Math.max(1, Math.floor(Number(params.batch)) || 1));
   const archiveQuery = new URLSearchParams(Object.entries(params).filter(([key]) => key !== "batch")).toString();
   const sectionTitle = t.home.sections[result.section as keyof typeof t.home.sections]?.title;

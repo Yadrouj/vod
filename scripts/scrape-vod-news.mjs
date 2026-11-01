@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { parseBoxOfficeTable } from "./lib/box-office.mjs";
 
 const OUT_FILE = process.argv[2] || path.join(process.env.VOD_DATA_DIR || "public/data", "vod-news.json");
 const LIMIT = Number(process.env.VOD_NEWS_LIMIT || 18);
@@ -9,13 +10,22 @@ const USER_AGENT = "Mozilla/5.0 SarvNema News Browser";
 
 const releaseWindow = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date());
 const WEB_SEARCH_FEEDS = [
-  { category: "release", query: "سینما فیلم جدید when:7d", locale: "fa" },
-  { category: "episodes", query: "سریال قسمت جدید نمایش خانگی when:7d", locale: "fa" },
-  { category: "festival", query: "جشنواره سینمایی when:7d", locale: "fa" },
+  // Broad single-topic feeds recover when Google's narrower Persian queries
+  // return a valid but empty RSS document. Dates are checked independently.
+  { category: "release", query: "سینما", locale: "fa" },
+  { category: "industry", query: "گیشه", locale: "fa" },
+  { category: "release", query: "اکران", locale: "fa" },
+  { category: "episodes", query: "سریال", locale: "fa" },
   { category: "release", query: `latest film releases movie box office streaming ${releaseWindow}` },
   { category: "episodes", query: `latest series episodes release date streaming ${releaseWindow}` },
   { category: "animation", query: `latest animation movie series news ${releaseWindow}` },
   { category: "festival", query: `film festival awards event cinema news ${releaseWindow}` },
+];
+const PUBLISHER_FEEDS = [
+  { url: "https://www.khabarfoori.com/fa/feeds/?p=Y2F0ZWdvcmllcz0xNjk%2C", sourceName: "خبر فوری", category: "release" },
+  { url: "https://www.tasnimnews.ir/fa/rss/feeds/34/0/0/0", sourceName: "تسنیم", category: "release" },
+  { url: "https://flato.ir/feed/", sourceName: "فلاتو", category: "release" },
+  { url: "https://flato.ir/tag/گیشه-سینمای-ایران/feed/", sourceName: "فلاتو", category: "industry" },
 ];
 
 const IMDb_PAGES = [
@@ -27,6 +37,7 @@ async function main() {
   const items = [];
   const sources = [];
   const failures = [];
+  const feedStatus = [];
   let previous = { items: [] };
   try { previous = JSON.parse(await readFile(OUT_FILE, "utf8")); } catch { /* First run. */ }
 
@@ -36,6 +47,13 @@ async function main() {
     items.push(...monitoredUpdates.items.slice(0, 12).map(toMonitorNews));
   }
 
+  for (const publisher of PUBLISHER_FEEDS) {
+    sources.push(publisher.url);
+    try {
+      const found = parseGoogleNews(await fetchText(publisher.url), publisher.category, publisher.sourceName);
+      items.push(...found); feedStatus.push({ source: publisher.url, items: found.length, state: found.length ? "updated" : "empty" });
+    } catch (error) { failures.push({ source: publisher.url, error: error.message }); }
+  }
   for (const page of IMDb_PAGES) {
     sources.push(page.url);
     try {
@@ -52,7 +70,8 @@ async function main() {
     sources.push(url);
     try {
       const xml = await fetchText(url);
-      items.push(...parseGoogleNews(xml, feed.category));
+      const found = parseGoogleNews(xml, feed.category);
+      items.push(...found); feedStatus.push({ source: url, items: found.length, state: found.length ? "updated" : "empty" });
     } catch (error) {
       failures.push({ source: url, error: error.message });
       console.warn(`News search skipped: ${feed.query} (${error.message})`);
@@ -69,10 +88,18 @@ async function main() {
     enrichedItems.push({ ...item, imageUrl });
   }
 
+  let boxOffice = previous.boxOffice || null;
+  const boxOfficeCandidates = selectNews(items, [], 300).filter(item => item.url.startsWith("https://flato.ir/") && /آمار فروش سینما|جدول.*گیشه|گیشه.*هفت/u.test(item.title)).slice(0, 2);
+  for (const item of boxOfficeCandidates) {
+    try {
+      const found = parseBoxOfficeTable(await fetchText(item.url), item);
+      if (found && (!boxOffice || Date.parse(found.reportedAt) > Date.parse(boxOffice.reportedAt))) boxOffice = found;
+    } catch (error) { failures.push({ source: item.url, error: error.message }); }
+  }
   const payload = {
     generatedAt: new Date().toISOString(),
     sources,
-    failures,
+    failures, feedStatus, boxOffice,
     items: enrichedItems,
   };
 
@@ -143,10 +170,10 @@ async function findOpenGraphImage(url) {
   }
 }
 
-export function parseGoogleNews(xml, category) {
+export function parseGoogleNews(xml, category, sourceName = "Google News") {
   return Array.from(xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)).map(([, item]) => {
     const title = cleanXml(tag(item, "title"));
-    const source = cleanXml(item.match(/<source\b[^>]*>([\s\S]*?)<\/source>/i)?.[1] ?? "Google News");
+    const source = cleanXml(item.match(/<source\b[^>]*>([\s\S]*?)<\/source>/i)?.[1] ?? sourceName);
     const url = cleanXml(tag(item, "link"));
     const date = Date.parse(cleanXml(tag(item, "pubDate")));
     if (!Number.isFinite(date) || !/^https:\/\//i.test(url)) return null;
@@ -160,13 +187,14 @@ export function parseGoogleNews(xml, category) {
     return {
       id: `news-${createHash("sha256").update(url).digest("hex").slice(0, 20)}`,
       title: trimSourceSuffix(title),
-      summary: description || title,
+      // A headline card is an excerpt, never a republished full article.
+      summary: (description || title).split(/\s+/u).slice(0, Math.max(0, 25 - title.split(/\s+/u).length)).join(" "),
       source,
       url,
       publishedAt,
-      category,
+      category: /گیشه|فروش.*سینما|فروش.*فیلم/.test(title) ? "industry" : category,
       imageUrl,
-      tags: tagsFor(category, title),
+      tags: [...new Set([...tagsFor(category, title), ...(/گیشه|فروش.*سینما|فروش.*فیلم/.test(title) ? ["گیشه"] : []), ...(/اکران|روی پرده/.test(title) ? ["اکران"] : [])])],
     };
   }).filter(Boolean);
 }
@@ -251,7 +279,7 @@ export function selectNews(fresh, previous = [], limit = 18, now = Date.now()) {
       const time = Date.parse(item.publishedAt);
       return Number.isFinite(time) && time <= now + 300_000 && time >= now - 30 * 86_400_000;
     });
-  return uniqueBy(valid, item => item.url).sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
+  return uniqueBy(valid, item => item.url).sort((a, b) => Number(/[\u0600-\u06ff]/u.test(b.title || "")) - Number(/[\u0600-\u06ff]/u.test(a.title || "")) || Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
     .slice(0, limit);
 }
 

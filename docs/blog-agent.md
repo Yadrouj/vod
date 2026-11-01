@@ -81,7 +81,34 @@ Primary technical references: [Google helpful content](https://developers.google
 
 Deployment observation: `npm ci` reported 11 existing dependency advisories (3 moderate, 7 high, 1 critical). The blog changes add no package dependency. Review the npm audit separately before broad package upgrades; this handoff is not a security audit and does not imply those advisories were fixed.
 
-## Adding another month
+## Explicit publication of the prepared batch (November 1, 2026)
+
+The owner requested publishing the remaining prepared articles immediately. The
+local public index now contains all 30 first-month articles. The original
+article's publication date was retained; the other 29 use their actual publication
+time on November 1. No missed dates were fabricated. Each article keeps its
+individual banner, FAQ, references and links to real archive pages.
+
+For an explicitly authorized batch publication only:
+
+```sh
+node scripts/blog-agent.mjs --publish-all --no-indexing
+```
+
+This is idempotent and cannot be combined with `--daemon` or
+`--revise-published`. Ordinary operation remains one article per Tehran date at
+09:00. All 30 are now public, so the first queue is **exhausted**; add reviewed
+manuscripts to the plan before expecting another daily article. Exhausted workers
+reuse the prepared queue for status/indexing checks rather than reparsing the
+large music archive every five minutes. Validation and explicit revisions still
+rebuild current drafts.
+
+These are local public-data changes committed for deployment, not a claim that
+the production server has been updated. After deploying the commit, verify
+`/mag`, the new article routes and `/mag/sitemap.xml`. Do not submit IndexNow for
+URLs that are not yet live; local batch publication used `--no-indexing`.
+
+## Preparing the next month
 
 1. Research a balanced plan across releases, cinema, series, music, festivals and shared experiences. Record original source URLs and dated observations for news.
 2. Add complete UTF-8 manuscripts and unique stable slugs to the plan; never reuse an already published slug for a supposedly new article.

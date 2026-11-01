@@ -93,12 +93,22 @@ test("submitted browse and suggestions share typo matches, IMDb ordering and typ
   assert.deepEqual(matchVodSearch(items, "tt0412143").items, []);
 });
 
-test("equally close titles use newest year, then IMDb, consistently across suggestions and browse", () => {
+test("IMDb is first across film/series, ahead of recency or exact-name preference", () => {
   const old=card("House","old","series",9.1),fresh=card("House","fresh","movie",7.1),higher=card("House","higher","series",8.5),part=card("House of Dust","part","movie",9.9),substring=card("The Lighthouse","substring","movie",10);
   old.year=2004;fresh.year=higher.year=2026;part.year=2027;substring.year=2028;
   const items=[substring,part,old,fresh,higher];
-  const expected=["higher","fresh","old","part","substring"];
+  const expected=["substring","part","old","higher","fresh"];
   assert.deepEqual(selectRankedSuggestions(items,10,"all","House").map(i=>i.imdbCode),expected);
   assert.deepEqual(browseVodIndex({items} as VodCatalogIndex,{q:"hoise"}).items.map(i=>i.imdbCode),expected);
-  assert.deepEqual(selectRankedSuggestions(items,10,"series","House").map(i=>i.imdbCode),["higher","old"]);
+  assert.deepEqual(selectRankedSuggestions(items,10,"series","House").map(i=>i.imdbCode),["old","higher"]);
+});
+
+test("equal IMDb ratings use real search selections, vote count, and current trends in that order", () => {
+  const one=card("House","one","series",8),two=card("House of Dust","two","movie",8),three=card("House of Cards","three","series",8),four=card("House Again","four","movie",9);
+  one.imdbVotes=1000;two.imdbVotes=300;three.imdbVotes=300;
+  const items=[one,two,three,four];
+  const signals={searches:{two:10,three:10},trends:{three:1,two:2}};
+  assert.deepEqual(selectRankedSuggestions(items,10,"all","house",signals).map(i=>i.imdbCode),["four","three","two","one"]);
+  assert.deepEqual(browseVodIndex({items} as VodCatalogIndex,{q:"hoise"},30,signals).items.map(i=>i.imdbCode),["four","three","two","one"]);
+  assert.deepEqual(selectRankedSuggestions(items,10,"series","house",signals).map(i=>i.imdbCode),["three","one"]);
 });
