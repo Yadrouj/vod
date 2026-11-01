@@ -180,7 +180,10 @@ function mergeIncomingItems(items) {
 }
 
 function mergeExisting(existing, incoming, changed) {
-  const links = mergeLinks(existing.links ?? [], incoming.links ?? []);
+  // A source page can keep advertising a dead .mp4 URL that actually returns
+  // HTML. Do not resurrect explicitly verified failures on every nightly run.
+  const rejected = new Set((existing.unavailableDownloadLinks ?? []).filter(link => /html/i.test(link.verification?.contentType || "") || [404, 410].includes(link.verification?.status)).map(link => link.url));
+  const links = mergeLinks(existing.links ?? [], (incoming.links ?? []).filter(link => !rejected.has(link.url)));
   return {
     ...existing,
     // Preserve every existing provider and append/refresh the curated source
@@ -205,6 +208,8 @@ function mergeExisting(existing, incoming, changed) {
     persianCountries: unique([...(existing.persianCountries ?? []), ...(incoming.persianCountries ?? [])]),
     persianLanguages: unique([...(existing.persianLanguages ?? []), ...(incoming.persianLanguages ?? [])]),
     movieshoImages: mergeImages(existing.movieshoImages ?? [], incoming.movieshoImages ?? []),
+    ...(existing.youtubeVideos?.length || incoming.youtubeVideos?.length ? { youtubeVideos: [...new Map([...(existing.youtubeVideos ?? []), ...(incoming.youtubeVideos ?? [])].map(video=>[video.videoId,video])).values()] } : {}),
+    ...(existing.publisherPlayer || incoming.publisherPlayer ? { publisherPlayer: existing.publisherPlayer || incoming.publisherPlayer } : {}),
     curatedSourcePages: unique([...(existing.curatedSourcePages ?? []), ...(incoming.curatedSourcePages ?? []), incoming.sourcePageUrl].filter(Boolean)),
     sourceUpdatedAt: newestDate(existing.sourceUpdatedAt ?? existing.movieshoModifiedAt, incoming.sourceUpdatedAt),
     catalogUpdatedAt: changed ? now : existing.catalogUpdatedAt ?? null,

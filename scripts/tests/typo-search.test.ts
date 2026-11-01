@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { searchText, spellingDistance, TypoSearchIndex } from "../../lib/typo-search";
+import { keyboardSearchVariant, searchText, spellingDistance, TypoSearchIndex } from "../../lib/typo-search";
+import { selectRankedSuggestions } from "../../lib/vod-search-order";
 import { matchVodSearch } from "../../lib/vod-search-match";
 import { browseVodIndex } from "../../lib/vod-index";
 import type { VodCard, VodCatalogIndex } from "../../lib/types";
@@ -59,6 +60,20 @@ test("catalog candidates and caches are deterministic and never cross index inst
   assert.equal(other.search("hoise").matchedQuery, "Noise");
   assert.equal(index.search("hoise").matchedQuery, "House");
 });
+
+test("missing spaces plus multiple misspellings still recover a complete real title", () => {
+  for (const query of ["breakngbud", "brekingbad", "brekaingbad"]) assert.equal(index.search(query).matchedQuery,"Breaking Bad",query);
+  assert.equal(index.search("hauze").matchedQuery,"House");
+  assert.deepEqual(index.search("zzzzzzbud").items,[]);
+});
+
+test("wrong Persian keyboard layout recovers a catalog title without changing normal exact queries", () => {
+  assert.equal(keyboardSearchVariant("اخعسث"),"house");
+  const result=index.search("اخعسث");
+  assert.equal(result.mode,"similar");assert.equal(result.matchedQuery,"House");
+  assert.equal(index.search("house").mode,"exact");
+  assert.equal(keyboardSearchVariant("tt0412142"),"");
+});
 const card = (title: string, id: string, type: string, rating: number): VodCard => ({
   id, imdbCode: id, title, type, imdbRating: rating, imdbVotes: 100, year: 2004,
   posterUrl: null, backdropUrl: null, genres: ["Drama"], countries: [], languages: [], qualities: ["720p"],
@@ -76,4 +91,14 @@ test("submitted browse and suggestions share typo matches, IMDb ordering and typ
   assert.equal(browseVodIndex(catalog, { q: "hoise", quality: "1080p" }).total, 0);
   assert.deepEqual(matchVodSearch(items, "tt0412142").items.map(item => item.imdbCode), ["tt0412142"]);
   assert.deepEqual(matchVodSearch(items, "tt0412143").items, []);
+});
+
+test("equally close titles use newest year, then IMDb, consistently across suggestions and browse", () => {
+  const old=card("House","old","series",9.1),fresh=card("House","fresh","movie",7.1),higher=card("House","higher","series",8.5),part=card("House of Dust","part","movie",9.9),substring=card("The Lighthouse","substring","movie",10);
+  old.year=2004;fresh.year=higher.year=2026;part.year=2027;substring.year=2028;
+  const items=[substring,part,old,fresh,higher];
+  const expected=["higher","fresh","old","part","substring"];
+  assert.deepEqual(selectRankedSuggestions(items,10,"all","House").map(i=>i.imdbCode),expected);
+  assert.deepEqual(browseVodIndex({items} as VodCatalogIndex,{q:"hoise"}).items.map(i=>i.imdbCode),expected);
+  assert.deepEqual(selectRankedSuggestions(items,10,"series","House").map(i=>i.imdbCode),["higher","old"]);
 });

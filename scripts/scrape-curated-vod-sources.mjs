@@ -9,13 +9,14 @@ import {
   inferQuality,
   inferRelease,
   isSubtitleFile,
-  isVideoFile,
   parseSeasonEpisode,
   plainText,
   subtitleLanguage,
 } from "./moviesho-source-lib.mjs";
 import { decodePlayerPayload, derivePersianTitle } from "./moviesho-archive-lib.mjs";
 import { streamVodArchiveItems } from "./vod-json-stream.mjs";
+import { isDirectVideoCandidate } from "./video-source-validation.mjs";
+import { curatedSourceType } from "./curated-source-type.mjs";
 
 const ROOT = process.cwd();
 const OUTPUT = resolvePath(process.env.CURATED_VOD_OUTPUT, ".media-cache/vod-sync/curated-vod-source.json");
@@ -47,6 +48,7 @@ const ALL_SEEDS = [
   { id: "moviesho-mini-series", url: "https://www.moviesho.com/genre-series/tv-mini-series/", restPath: "wp/v2/genre-series/2144", provider: "moviesho", type: "series", label: "Moviesho / Mini series" },
   { id: "moviesho-indian", url: "https://www.moviesho.com/category/indian/", restPath: "wp/v2/categories/936", provider: "moviesho", type: "movie", label: "Moviesho / Indian" },
   { id: "moviesho-series", url: "https://www.moviesho.com/series/", provider: "moviesho", type: "series", restCollection: "series", label: "Moviesho / Series" },
+  { id: "moviesho-anime", url: "https://www.moviesho.com/anime/", provider: "moviesho", restCollection: "anime", label: "Moviesho / Anime" },
   { id: "moviesho-movies", url: "https://www.moviesho.com/category/movies/", restPath: "wp/v2/categories/1", provider: "moviesho", type: "movie", label: "Moviesho / Movies" },
   { id: "moviesho-korean", url: "https://www.moviesho.com/category/korean/", restPath: "wp/v2/categories/1306", provider: "moviesho", label: "Moviesho / Korean" },
   { id: "moviesho-iranian", url: "https://www.moviesho.com/category/iranian/", restPath: "wp/v2/categories/937", provider: "moviesho", label: "Moviesho / Iranian" },
@@ -265,7 +267,7 @@ function mapPost(post) {
     groups: unique(links.map((link) => link.group)),
     qualities: unique(links.map((link) => link.quality).filter(Boolean)),
     links,
-    genres: unique([...(terms["genre-movies"] ?? []), ...(terms["genre-series"] ?? []), ...(terms.category ?? [])]),
+    genres: unique([...(terms["genre-movies"] ?? []), ...(terms["genre-series"] ?? []), ...(terms.category ?? []), ...(post.type === "anime" || seed.restCollection === "anime" ? ["Animation", "Anime"] : [])]),
     runtimeMinutes: null,
     originalTitle: title,
     overview: plainText(post.excerpt?.rendered ?? post.yoast_head_json?.og_description ?? "") || null,
@@ -278,7 +280,7 @@ function mapPost(post) {
     persianTitle: derivePersianTitle(titleText, title, year) || null,
     persianOverview: plainText(post.excerpt?.rendered ?? post.yoast_head_json?.og_description ?? "") || null,
     persianDescription: plainText(content).slice(0, 3_000) || null,
-    persianGenres: unique([...(terms["genre-movies"] ?? []), ...(terms["genre-series"] ?? []), ...(terms.category ?? [])]),
+    persianGenres: unique([...(terms["genre-movies"] ?? []), ...(terms["genre-series"] ?? []), ...(terms.category ?? []), ...(post.type === "anime" || seed.restCollection === "anime" ? ["انیمه"] : [])]),
     persianCountries: terms.country ?? [],
     persianLanguages: terms.language ?? [],
     movieshoImages: seed.provider === "moviesho" ? images : [],
@@ -345,16 +347,7 @@ function normalizeMediaUrl(value, base) {
 }
 
 function isVideoMediaUrl(value) {
-  try {
-    const url = new URL(value);
-    const pathname = url.pathname;
-    if (/(?:^|[\/_. -])(?:trailer|teaser|promo|preview)(?:[\/_. -]|$)/i.test(decodeURIComponent(pathname))) return false;
-    return isVideoFile(pathname)
-      || /\.m3u8$/i.test(pathname)
-      || (/\/download\//i.test(pathname) && /^(?:mp4|mkv|webm|m3u8)$/i.test(url.searchParams.get("format") ?? ""));
-  } catch {
-    return false;
-  }
+  return isDirectVideoCandidate(value);
 }
 
 function isSubtitleMediaUrl(value) {
@@ -411,7 +404,7 @@ function taxonomyTerms(groups) {
 }
 
 function inferPostType(post) {
-  return /series|anime/i.test(`${post?.type ?? ""} ${post?.link ?? ""} ${post?.title?.rendered ?? ""}`) ? "tvSeries" : "movie";
+  return curatedSourceType({ type: post?.type, link: post?.link, title: plainText(post?.title?.rendered ?? "") });
 }
 
 function cleanTitle(value, year) {

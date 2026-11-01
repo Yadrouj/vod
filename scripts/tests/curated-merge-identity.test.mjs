@@ -34,3 +34,23 @@ test("version merges retain history, refresh signatures, and never confuse same-
     assert.equal(JSON.parse(await readFile(report, "utf8")).downloadLinksAdded, 1);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
+
+test("existing titles retain official player references and deduplicate YouTube videos", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "sarvnema-publisher-"));
+  try {
+    const file = path.join(root, "catalog.json"), source = path.join(root, "source.json"), report = path.join(root, "report.json");
+    const player = { provider: "nfb", embedUrl: "https://www.nfb.ca/film/example/embed/player/" };
+    const retained = { videoId: "abcdefghijk", title: "Official archive" };
+    const rejected = { url: "https://cdn.example/not-a-video.mp4", verification: { status: 200, contentType: "text/html" } };
+    const item = { id: "tt1234567", imdbCode: "tt1234567", title: "Archive Film", year: 1961, type: "movie", links: [], unavailableDownloadLinks: [rejected], youtubeVideos: [retained] };
+    await writeFile(file, JSON.stringify({ totalTitles: 1, totalLinks: 0, items: [item] }));
+    await writeFile(source, JSON.stringify({ items: [{ ...item, links: [{ url: rejected.url }], publisherPlayer: player, youtubeVideos: [retained, { videoId: "lmnopqrstuv", title: "Restored edition" }] }] }));
+    const merge = () => promisify(execFile)(process.execPath, [path.resolve("scripts/merge-curated-vod-source.mjs"), file, source, file, report]);
+    await merge(); await merge();
+    const output = JSON.parse(await readFile(file, "utf8")).items[0];
+    assert.deepEqual(output.publisherPlayer, player);
+    assert.deepEqual(output.youtubeVideos.map(video => video.videoId), ["abcdefghijk", "lmnopqrstuv"]);
+    assert.equal(output.links.length, 0, "publisher embeds must not become direct downloads");
+    assert.deepEqual(output.unavailableDownloadLinks, [rejected], "Nightly merges cannot resurrect a confirmed HTML response as video");
+  } finally { await rm(root, { recursive: true, force: true }); }
+});

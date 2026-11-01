@@ -1,4 +1,4 @@
-import { sitemapPartCount } from '@/app/sitemap';
+import { sitemapPartCount } from '@/lib/site-sitemap';
 import { SITE_URL } from '@/lib/seo';
 export const dynamic = 'force-dynamic';
 const escape = (text: string) => text.replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' })[c]!);

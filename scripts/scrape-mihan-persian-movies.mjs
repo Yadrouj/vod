@@ -1,16 +1,19 @@
-import { writeFile } from "node:fs/promises";
+import { writeFile, mkdir, rename } from "node:fs/promises";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { collectMihanFiles } from "./mihan-source.mjs";
 
-const SOURCE_URL = process.argv[2] || "https://dl.mihandownload.com/Movies/2026/04/28/";
+const SOURCE_URL = process.argv[2] || `https://dl.mihandownload.com/Movies/${new Date().getUTCFullYear()}/`;
 const OUT_FILE = process.argv[3] || "public/data/mihan-persian-movies.json";
 const DETAIL_ORIGIN = "https://mihandownload.com";
-const DOWNLOAD_ORIGIN = "https://dl.mihandownload.com";
 const MAX_ITEMS = Number(process.env.MIHAN_MAX_ITEMS || 0);
 const REQUEST_TIMEOUT_MS = Number(process.env.MIHAN_TIMEOUT_MS || 25000);
 const VIDEO_EXTENSIONS = /\.(mkv|mp4|m4v|avi|webm|mov|wmv)(?:$|[?#])/i;
 
 async function main() {
-  const html = await fetchText(SOURCE_URL);
-  const files = parseDirectory(html, SOURCE_URL);
+  const discovery = await collectMihanFiles(SOURCE_URL,fetchText,{maxDirectories:Number(process.env.MIHAN_DIRECTORY_LIMIT ?? 250),gapMs:Number(process.env.MIHAN_REQUEST_GAP_MS ?? 350)});
+  const files = discovery.files.map(file=>({...file,quality:inferQuality(file.name),release:inferRelease(file.name)}));
+  console.log(JSON.stringify({directoriesChecked:discovery.directoriesChecked,files:files.length,complete:discovery.complete}));
   const groups = groupFiles(files).slice(0, MAX_ITEMS || undefined);
   const items = [];
 
@@ -63,10 +66,13 @@ async function main() {
     scrapedAt: new Date().toISOString(),
     totalTitles: items.length,
     totalLinks: items.reduce((sum, item) => sum + item.links.length, 0),
+    discovery: { directoriesChecked: discovery.directoriesChecked, complete: discovery.complete, remainingDirectories: discovery.remainingDirectories },
     items,
   };
 
-  await writeFile(OUT_FILE, JSON.stringify(payload));
+  await mkdir(path.dirname(OUT_FILE),{recursive:true});
+  const temporary = `${OUT_FILE}.${process.pid}.tmp`;
+  await writeFile(temporary,JSON.stringify(payload)); await rename(temporary,OUT_FILE);
   console.log(
     JSON.stringify(
       {
@@ -74,37 +80,12 @@ async function main() {
         sourceUrl: SOURCE_URL,
         totalTitles: payload.totalTitles,
         totalLinks: payload.totalLinks,
-        titles: items.map((item) => ({ id: item.id, title: item.title, links: item.links.length, sourcePageUrl: item.sourcePageUrl })),
+        sampleTitles: items.slice(0,10).map((item) => ({ id: item.id, title: item.title, links: item.links.length, sourcePageUrl: item.sourcePageUrl })),
       },
       null,
       2
     )
   );
-}
-
-function parseDirectory(html, baseUrl) {
-  const rows = Array.from(html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi));
-  const files = [];
-
-  for (const [, row] of rows) {
-    const href = row.match(/<a\b[^>]*href=["']([^"']+)["'][^>]*>/i)?.[1];
-    const name = cleanHtml(row.match(/<a\b[^>]*>[\s\S]*?(?:alt=["']File["'][^>]*>)?([\s\S]*?)<\/a>/i)?.[1] ?? href ?? "");
-    if (!href || !name || /parent directory/i.test(name) || !VIDEO_EXTENSIONS.test(name)) continue;
-
-    const cells = Array.from(row.matchAll(/<td\b[^>]*data-sort=["']?([^"'>]+)["']?[^>]*>([\s\S]*?)<\/td>/gi));
-    const modified = cleanHtml(cells[1]?.[2] ?? "") || null;
-    const size = cleanHtml(cells[2]?.[2] ?? "") || null;
-    files.push({
-      name,
-      url: absolutizeUrl(href, baseUrl),
-      size,
-      modified,
-      quality: inferQuality(name),
-      release: inferRelease(name),
-    });
-  }
-
-  return files;
 }
 
 function groupFiles(files) {
@@ -397,10 +378,6 @@ function fileNameFromUrl(url) {
   return decodeURIComponent(url.split("/").pop() ?? url);
 }
 
-function absolutizeUrl(href, base) {
-  return new URL(decodeText(href), base).toString().replace(DOWNLOAD_ORIGIN.replace(/\/$/, ""), DOWNLOAD_ORIGIN);
-}
-
 function normalizeText(value) {
   return toEnglishDigits(decodeText(value)).toLowerCase().replace(/[^a-z0-9آ-ی]+/g, " ").replace(/\s+/g, " ").trim();
 }
@@ -450,7 +427,7 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-main().catch((error) => {
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

@@ -5,28 +5,20 @@ import { loadVodIndex } from "@/lib/vod-index";
 import { loadMagazine } from '@/lib/magazine';
 import { loadMoodPlaylists } from '@/lib/mood-playlists';
 
-export const revalidate = 300;
-
 // Stay below Google's 50,000-URL / 50MB sitemap limit while leaving room for
 // route growth. robots.txt advertises every generated part.
 export const SITEMAP_LIMIT = 45_000;
 
 type SitemapEntry = MetadataRoute.Sitemap[number];
 
-export async function generateSitemaps() {
-  const count = await sitemapPartCount();
-  return Array.from({ length: count }, (_, id) => ({ id }));
-}
-
-export default async function sitemap({ id }: { id: Promise<string> }): Promise<MetadataRoute.Sitemap> {
+export async function sitemapEntriesForPart(index: number): Promise<MetadataRoute.Sitemap> {
   const entries = await allEntries();
-  const index = Math.max(0, Number(await id) || 0);
   return entries.slice(index * SITEMAP_LIMIT, (index + 1) * SITEMAP_LIMIT);
 }
 
 export async function sitemapPartCount() {
   const [vod, music, magazine, playlists] = await Promise.all([loadVodIndex(), loadMusicIndex(), loadMagazine(), loadMoodPlaylists()]);
-  const staticCount = 10;
+  const staticCount = 12;
   const vodCount = vod.items.filter((item) => item.linksCount > 0 || Boolean(item.posterUrl) || Boolean(item.overview)).length;
   const trackCount = music.tracks.filter((track) => track.sources.some((source) => source.available !== false)).length;
   const artistCount = music.artists.filter((artist) => artist.trackIds.length > 0).length;

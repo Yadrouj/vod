@@ -1,31 +1,34 @@
 {
-  "generatedAt": "2026-10-31T19:28:07.422Z",
+  "generatedAt": "2026-11-01T05:05:32.638Z",
   "deploymentPerformed": false,
   "catalog": {
-    "titles": 27944,
-    "links": 526330,
-    "movies": 22992,
-    "series": 4952,
+    "titles": 29016,
+    "titlesWithDownloadLinks": 27734,
+    "links": 536529,
+    "externalDownloadPages": 27190,
+    "unavailableDownloadLinks": 252,
+    "movies": 23787,
+    "series": 5229,
     "providerLinks": {
-      "f2my": 188563,
       "donyayeserial": 30098,
-      "moviesho": 53466,
-      "legacy-or-unspecified": 207790,
-      "familymovie": 18865,
-      "zardfilm": 27548
+      "moviesho": 62594,
+      "f2my": 206378,
+      "legacy-or-unspecified": 208252,
+      "familymovie": 19508,
+      "zardfilm": 9699
     },
     "metadata": {
-      "updatedAt": "2026-10-31T19:16:01.539Z",
-      "totalTitles": 27944,
-      "totalLinks": 526330,
+      "updatedAt": "2026-11-01T03:46:19.753Z",
+      "totalTitles": 29016,
+      "totalLinks": 536529,
       "imdbDatasetCacheOnly": true,
       "imdbPreservedExistingValues": false
     }
   },
   "sourceReview": {
-    "startedAt": "2026-10-31T18:17:56.504Z",
+    "startedAt": "2026-11-01T03:28:13.928Z",
     "full": true,
-    "state": "completed",
+    "state": "partial",
     "sources": [
       {
         "id": "bamabin",
@@ -81,12 +84,201 @@
         "id": "familymovie",
         "requestedUrl": "https://familymovie.tr/",
         "url": "https://familymovie.tr/",
-        "state": "completed",
-        "pages": 3,
-        "inspected": 249,
-        "titles": 248,
-        "links": 5474,
-        "errors": [],
+        "state": "partial",
+        "pages": 1,
+        "inspected": 100,
+        "titles": 52,
+        "links": 5883,
+        "errors": [
+          {
+            "id": "auto_35050_mul8qbuv_1",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_35326_mvassbvi_0",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_34796_mtynvuqm_0",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_6ng9ve",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_5c1iwl",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_movie_1jpi5zl",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_1663ckt",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_mvfmyck4_fhf8",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_16985da",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_35260_muy5bja3_0",
+            "message": "fetch failed"
+          },
+          {
+            "id": "u_mvvrm2u6_fj6ec",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "u_mvvrlo74_my8pd",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_35291_mv0vwrjk_0",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_mvk3obtt_l9l9",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_mvl8eb7p_6oie",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_lvz6og",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_ilucll",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_i0kba",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_2mrg46",
+            "message": "fetch failed"
+          },
+          {
+            "id": "1786913401262",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_mvkqpt7r_jnmd",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_35037_muhkx39p_0",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_35219_muvk3cpf_0",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_35351_mva69dt6_0",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_movie_w8o702",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_35384_mva6933d_0",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_movie_16nz1eu",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_movie_10g15yr",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_movie_1hdrpu",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_movie_13g328t",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_movie_bxlw6v",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_1p6uewn",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_1yw1sr0",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_1u43aio",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_35344_mvaq3fk0_0",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_35224_muw2txoq_0",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_35004_mufs3j4p_1",
+            "message": "fetch failed"
+          },
+          {
+            "id": "slide_266717",
+            "message": "fetch failed"
+          },
+          {
+            "id": "auto_series_mvfnzd1c_mfms",
+            "message": "fetch failed"
+          },
+          {
+            "id": "slide_298998",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_35071_mukvc3hc_0",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_series_ziqct4",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_series_mvfmyh7j_873j",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_series_mvfmy8er_n3ze",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_35341_mvaq3qh0_1",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_movie_1lmcgfj",
+            "message": "The operation was aborted due to timeout"
+          },
+          {
+            "id": "auto_movie_ye7cfk",
+            "message": "The operation was aborted due to timeout"
+          }
+        ],
         "total": 469
       },
       {
@@ -116,38 +308,738 @@
         ]
       }
     ],
-    "titles": 455,
-    "links": 18448,
-    "partial": false,
-    "updatedAt": "2026-10-31T18:27:26.645Z",
-    "finishedAt": "2026-10-31T18:27:26.644Z",
+    "titles": 470,
+    "links": 18749,
+    "partial": true,
     "checkedTitles": 469,
-    "discoveredTitles": 469
+    "discoveredTitles": 469,
+    "phase": "بررسی و تازه‌سازی لینک‌های منابع عمومی",
+    "updatedAt": "2026-11-01T03:35:50.630Z",
+    "finishedAt": "2026-11-01T03:35:50.630Z"
+  },
+  "additionalSourceReview": {
+    "checkedAt": "2026-10-31T20:31:33.419Z",
+    "sources": [
+      {
+        "id": "bamabin",
+        "state": "unavailable-locally-and-subscription-gated-samples",
+        "url": "https://bamabin.com/",
+        "sampleUrl": "https://bamabin.com/movies/feel-my-voice-2026/",
+        "note": "Direct requests timed out. The publicly readable sample lists qualities but each download button requests a subscription. No gated link was fetched."
+      },
+      {
+        "id": "9movie",
+        "state": "sampled-no-public-downloads",
+        "url": "https://9movie.info/",
+        "note": "Public movies API lists 21061 titles. Three anonymous detail samples exposed no eligible full-film media, so full ingestion is not claimed."
+      },
+      {
+        "id": "seenta",
+        "state": "public-landing-api-disallowed",
+        "url": "https://seenta.watch/",
+        "robotsUrl": "https://seenta.watch/robots.txt",
+        "note": "Web landing and client inspected. robots.txt disallows /api/. No download catalog ingested."
+      },
+      {
+        "id": "movie-chi",
+        "state": "application-landing-only",
+        "url": "https://movie-chi.ir/",
+        "note": "Only application installers and support links found in the public website, not a public downloadable film catalog."
+      },
+      {
+        "id": "familymovie",
+        "state": "public-archive-imported",
+        "url": "https://familymovie.tr/",
+        "titles": 455,
+        "links": 18448,
+        "detailsChecked": 469,
+        "note": "Public paginated catalog and downloadable details collected, merged locally. Signed links have expiry times; only 12 samples were HEAD-tested, not every file played."
+      },
+      {
+        "id": "yekmoviez",
+        "state": "application-landing-locally-unavailable",
+        "url": "https://yekmoviez.com/",
+        "note": "Public search rendering shows app installers and Telegram bot, no public film catalog. Direct local requests timed out."
+      },
+      {
+        "id": "nightmovie",
+        "state": "locally-unavailable",
+        "url": "https://nightmovie.org/",
+        "note": "Public title metadata found through web search. Direct local requests timed out. No full media URLs imported."
+      }
+    ],
+    "allRequestedSourcesFullyImported": false
+  },
+  "followUp": {
+    "regionalReview": {
+      "categories": {
+        "checkedAt": "2026-11-01T02:48:17.112Z",
+        "requestedSeeds": 5,
+        "collections": 11,
+        "restPages": 77,
+        "postsReceived": 1737,
+        "postsWithFiles": 118,
+        "uniqueTitles": 118,
+        "links": 2874,
+        "subtitles": 3848,
+        "failures": [],
+        "sourceBreakdown": {
+          "moviesho-turkey": {
+            "provider": "moviesho",
+            "collections": [
+              "anime",
+              "series",
+              "post"
+            ],
+            "totalPosts": 114,
+            "postsRead": 114,
+            "pagesRead": 6
+          },
+          "moviesho-anime": {
+            "provider": "moviesho",
+            "collections": [
+              "anime"
+            ],
+            "totalPosts": 102,
+            "postsRead": 102,
+            "pagesRead": 5
+          },
+          "moviesho-korean": {
+            "provider": "moviesho",
+            "collections": [
+              "anime",
+              "post",
+              "series"
+            ],
+            "totalPosts": 526,
+            "postsRead": 526,
+            "pagesRead": 23
+          },
+          "moviesho-iranian": {
+            "provider": "moviesho",
+            "collections": [
+              "post",
+              "anime",
+              "series"
+            ],
+            "totalPosts": 7,
+            "postsRead": 7,
+            "pagesRead": 3
+          },
+          "moviesho-series": {
+            "provider": "moviesho",
+            "collections": [
+              "series"
+            ],
+            "totalPosts": 988,
+            "postsRead": 988,
+            "pagesRead": 40
+          }
+        },
+        "alreadyCurrent": 1291,
+        "itemsWithFiles": 118
+      },
+      "merge": {
+        "generatedAt": "2026-11-01T02:59:30.626Z",
+        "sourceTitles": 118,
+        "resultTitles": 28683,
+        "resultLinks": 535511,
+        "added": 93,
+        "updated": 31,
+        "unchanged": 0,
+        "existingTitlesEnriched": 31,
+        "newTitlesAdded": 93,
+        "downloadLinksAdded": 2653,
+        "downloadLinksRefreshed": 0,
+        "sourcePagesAdded": 105
+      },
+      "iranianDirectories": {
+        "sourceUrl": "https://dl.mihandownload.com/Movies/2026/",
+        "scrapedAt": "2026-11-01T03:02:00.506Z",
+        "titles": 338,
+        "links": 604,
+        "discovery": {
+          "directoriesChecked": 76,
+          "complete": true,
+          "remainingDirectories": 0
+        }
+      },
+      "iranianMerge": {
+        "generatedAt": "2026-11-01T03:17:59.579Z",
+        "sourceTitles": 338,
+        "resultTitles": 29016,
+        "resultLinks": 536104,
+        "added": 333,
+        "updated": 5,
+        "unchanged": 0,
+        "existingTitlesEnriched": 5,
+        "newTitlesAdded": 333,
+        "downloadLinksAdded": 593,
+        "downloadLinksRefreshed": 0,
+        "sourcePagesAdded": 299
+      },
+      "latestForeignEpisodes": {
+        "added": 0,
+        "updated": 1,
+        "unchanged": 143,
+        "newLinks": 3,
+        "sourceItems": 144,
+        "totalTitles": 29016,
+        "totalLinks": 536107,
+        "outFile": "public/data/vod-catalog.json",
+        "sourceFile": ".media-cache/vod-sync/f2my-source.json"
+      }
+    },
+    "retentionAudit": {
+      "checkedAt": "2026-11-01T04:26:47.717Z",
+      "baselineTitles": 27661,
+      "titles": 29016,
+      "uniqueTitles": 28686,
+      "links": 536529,
+      "newTitles": 1025,
+      "ratingsChanged": 122,
+      "votesChanged": 16471,
+      "preservedReferences": 21394,
+      "missingTitles": [],
+      "missingUrls": [],
+      "missingUrlCount": 0,
+      "metadataCountsMatch": true,
+      "verified": true
+    },
+    "regionalMediaAudit": {
+      "checkedAt": "2026-11-01T04:04:38.302Z",
+      "scope": "18 distributed HEAD checks, not full playback or every link",
+      "results": [
+        {
+          "source": ".media-cache/vod-sync/mihan-refreshed-source.json",
+          "id": "mihan-2-farar-az-camp",
+          "title": "فیلم فرار از کمپ 2",
+          "host": "dl.mihandownload.com",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "657561060"
+        },
+        {
+          "source": ".media-cache/vod-sync/mihan-refreshed-source.json",
+          "id": "mihan-fasle-anar",
+          "title": "فصل انار",
+          "host": "dl.mihandownload.com",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "643452447"
+        },
+        {
+          "source": ".media-cache/vod-sync/mihan-refreshed-source.json",
+          "id": "mihan-borje-aram",
+          "title": "برج آرام",
+          "host": "dl.mihandownload.com",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "736067086"
+        },
+        {
+          "source": ".media-cache/vod-sync/mihan-refreshed-source.json",
+          "id": "mihan-klop-hamsaran",
+          "title": "کلوپ همسران",
+          "host": "dl.mihandownload.com",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "1027595566"
+        },
+        {
+          "source": ".media-cache/vod-sync/mihan-refreshed-source.json",
+          "id": "mihan-sharlatan-nadan",
+          "title": "دو شارلاتان نادان",
+          "host": "dl.mihandownload.com",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "486540839"
+        },
+        {
+          "source": ".media-cache/vod-sync/mihan-refreshed-source.json",
+          "id": "mihan-parandeh-baz",
+          "title": "پرنده باز",
+          "host": "dl.mihandownload.com",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "777384186"
+        },
+        {
+          "source": ".media-cache/vod-sync/category-refresh-source.json",
+          "id": "moviesho-anime-31336",
+          "title": "The Legend of Aang: The Last Airbender",
+          "host": "sr1moviesho.musitraf.com",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "1764501685"
+        },
+        {
+          "source": ".media-cache/vod-sync/category-refresh-source.json",
+          "id": "moviesho-series-41019",
+          "title": "Dead-End Job",
+          "host": "sr1moviesho.musitraf.com",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "443296450"
+        },
+        {
+          "source": ".media-cache/vod-sync/category-refresh-source.json",
+          "id": "moviesho-anime-38335",
+          "title": "Virgin Punk: Clockwork Girl",
+          "host": "sr1moviesho.musitraf.com",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "722960083"
+        },
+        {
+          "source": ".media-cache/vod-sync/category-refresh-source.json",
+          "id": "moviesho-anime-27778",
+          "title": "100 Meters",
+          "host": "sr1moviesho.musitraf.com",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "2278598904"
+        },
+        {
+          "source": ".media-cache/vod-sync/category-refresh-source.json",
+          "id": "moviesho-anime-13233",
+          "title": "Lazarus",
+          "host": "traffic.upera.tv",
+          "status": 200,
+          "contentType": "video/mp4",
+          "bytes": "645748444"
+        },
+        {
+          "source": ".media-cache/vod-sync/category-refresh-source.json",
+          "id": "moviesho-anime-9369",
+          "title": "Ghost Cat Anzu",
+          "host": "traffic.upera.tv",
+          "status": 200,
+          "contentType": "text/html;charset=utf-8",
+          "bytes": null
+        },
+        {
+          "source": ".media-cache/public-vod/source.json",
+          "id": "familymovie-637ab1bb0e5e8369",
+          "title": "You, Me, Us",
+          "host": "sn2.zxupload6137hgv.fun",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "2121650403"
+        },
+        {
+          "source": ".media-cache/public-vod/source.json",
+          "id": "familymovie-1488d4fd8ca43b51",
+          "title": "Get Jiro!",
+          "host": "sn3.ymizban324qwe.top",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "511577497"
+        },
+        {
+          "source": ".media-cache/public-vod/source.json",
+          "id": "tt1057500",
+          "title": "Invictus",
+          "host": "sn2.zxupload6137hgv.fun",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "1880777027"
+        },
+        {
+          "source": ".media-cache/public-vod/source.json",
+          "id": "familymovie-b29caea3979e10d5",
+          "title": "Gohan",
+          "host": "sn1.yserver675mufdv.top",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "394720479"
+        },
+        {
+          "source": ".media-cache/public-vod/source.json",
+          "id": "familymovie-21390761fac8c381",
+          "title": "The Rivals of Amziah King",
+          "host": "sn1.yserver675mufdv.top",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "2552171623"
+        },
+        {
+          "source": ".media-cache/public-vod/source.json",
+          "id": "familymovie-fdd615fe27f6379b",
+          "title": "Neagley",
+          "host": "sn3.ymizban324qwe.top",
+          "status": 200,
+          "contentType": "video/x-matroska",
+          "bytes": "1265172572"
+        }
+      ]
+    },
+    "regionalOpaqueMedia": {
+      "separation": {
+        "checkedAt": "2026-11-01T04:21:53.817Z",
+        "titles": 29016,
+        "links": 536529,
+        "pagesSeparated": 0,
+        "unavailableSeparated": 221,
+        "affectedTitles": 8,
+        "retainedAsReferences": true
+      },
+      "checks": {
+        "checkedAt": "2026-11-01T04:18:06.099Z",
+        "completed": true,
+        "total": 2092,
+        "video": 1517,
+        "html": 252,
+        "networkErrors": 13
+      }
+    },
+    "imdbFreshAudit": {
+      "checkedAt": "2026-11-01T04:27:27.473Z",
+      "verified": true,
+      "datasets": [
+        {
+          "name": "title.basics",
+          "url": "https://datasets.imdbws.com/title.basics.tsv.gz",
+          "bytes": 229492964,
+          "validated": "Complete gzip stream and expected TSV header",
+          "downloadedOn": "2026-11-01"
+        },
+        {
+          "name": "title.ratings",
+          "url": "https://datasets.imdbws.com/title.ratings.tsv.gz",
+          "bytes": 8728224,
+          "validated": "Complete gzip stream and expected TSV header",
+          "downloadedOn": "2026-11-01"
+        }
+      ],
+      "wantedIds": 25637,
+      "matchedBasics": 25585,
+      "matchedRatings": 25566,
+      "note": "Fresh official datasets, not an updated popularity chart. Existing complete fields were preserved on source merges."
+    },
+    "imdbPopularityCharts": {
+      "attemptedAt": "2026-10-31T20:18:04.434Z",
+      "outcomes": {
+        "movie": {
+          "state": "retained",
+          "error": "IMDb movie: HTTP 202; previous chart retained"
+        },
+        "series": {
+          "state": "retained",
+          "error": "IMDb series: HTTP 202; previous chart retained"
+        }
+      }
+    },
+    "movieshoExactImdb": {
+      "checkedAt": "2026-10-31T20:27:46.842Z",
+      "movieGroups": 1464,
+      "seriesFolders": 369,
+      "exactMatches": 1655,
+      "unresolvedCount": 178
+    },
+    "curatedFull": {
+      "review": {
+        "checkedAt": "2026-10-31T20:10:27.280Z",
+        "requestedSeeds": 12,
+        "collections": 17,
+        "restPages": 77,
+        "postsReceived": 6683,
+        "postsWithFiles": 402,
+        "uniqueTitles": 402,
+        "links": 4673,
+        "subtitles": 7,
+        "failures": [
+          {
+            "seed": "zardfilm-animation",
+            "url": "https://zardfilm.in/wp-json/wp/v2/post",
+            "message": "The operation was aborted due to timeout"
+          }
+        ],
+        "sourceBreakdown": {
+          "moviesho-turkey": {
+            "provider": "moviesho",
+            "collections": [
+              "anime",
+              "series",
+              "post"
+            ],
+            "totalPosts": 114,
+            "postsRead": 114,
+            "pagesRead": 3
+          },
+          "moviesho-indian": {
+            "provider": "moviesho",
+            "collections": [
+              "series",
+              "post"
+            ],
+            "totalPosts": 591,
+            "postsRead": 591,
+            "pagesRead": 7
+          },
+          "moviesho-mini-series": {
+            "provider": "moviesho",
+            "collections": [
+              "series"
+            ],
+            "totalPosts": 285,
+            "postsRead": 285,
+            "pagesRead": 3
+          },
+          "moviesho-movies": {
+            "provider": "moviesho",
+            "collections": [
+              "series",
+              "post"
+            ],
+            "totalPosts": 3956,
+            "postsRead": 3956,
+            "pagesRead": 41
+          },
+          "moviesho-korean": {
+            "provider": "moviesho",
+            "collections": [
+              "anime",
+              "post",
+              "series"
+            ],
+            "totalPosts": 526,
+            "postsRead": 526,
+            "pagesRead": 7
+          },
+          "moviesho-series": {
+            "provider": "moviesho",
+            "collections": [
+              "series"
+            ],
+            "totalPosts": 988,
+            "postsRead": 988,
+            "pagesRead": 10
+          },
+          "moviesho-iranian": {
+            "provider": "moviesho",
+            "collections": [
+              "post",
+              "anime",
+              "series"
+            ],
+            "totalPosts": 7,
+            "postsRead": 7,
+            "pagesRead": 3
+          },
+          "moviesho-documentary": {
+            "provider": "moviesho",
+            "collections": [
+              "post"
+            ],
+            "totalPosts": 37,
+            "postsRead": 37,
+            "pagesRead": 1
+          },
+          "moviesho-war": {
+            "provider": "moviesho",
+            "collections": [
+              "post"
+            ],
+            "totalPosts": 179,
+            "postsRead": 179,
+            "pagesRead": 2
+          }
+        },
+        "alreadyCurrent": 4494,
+        "itemsWithFiles": 402
+      },
+      "merge": {
+        "generatedAt": "2026-10-31T20:18:34.953Z",
+        "sourceTitles": 402,
+        "resultTitles": 28106,
+        "resultLinks": 530647,
+        "added": 162,
+        "updated": 282,
+        "unchanged": 0,
+        "existingTitlesEnriched": 282,
+        "newTitlesAdded": 162,
+        "downloadLinksAdded": 4317,
+        "downloadLinksRefreshed": 0,
+        "sourcePagesAdded": 350
+      }
+    },
+    "zardfilmFull": {
+      "review": {
+        "checkedAt": "2026-10-31T20:34:30.546Z",
+        "requestedSeeds": 2,
+        "collections": 1,
+        "restPages": 33,
+        "postsReceived": 823,
+        "postsWithFiles": 704,
+        "uniqueTitles": 704,
+        "links": 28697,
+        "subtitles": 432,
+        "failures": [],
+        "sourceBreakdown": {
+          "zardfilm-animation": {
+            "provider": "zardfilm",
+            "collections": [
+              "post"
+            ],
+            "totalPosts": 823,
+            "postsRead": 823,
+            "pagesRead": 33
+          }
+        },
+        "alreadyCurrent": 62,
+        "itemsWithFiles": 704
+      },
+      "merge": {
+        "generatedAt": "2026-10-31T20:36:57.037Z",
+        "sourceTitles": 704,
+        "resultTitles": 28298,
+        "resultLinks": 542267,
+        "added": 118,
+        "updated": 612,
+        "unchanged": 0,
+        "existingTitlesEnriched": 612,
+        "newTitlesAdded": 118,
+        "downloadLinksAdded": 9368,
+        "downloadLinksRefreshed": 0,
+        "sourcePagesAdded": 178
+      }
+    },
+    "directMediaValidation": {
+      "externalPagesReport": {
+        "checkedAt": "2026-10-31T20:52:13.028Z",
+        "titles": 28298,
+        "links": 515077,
+        "pagesSeparated": 27190,
+        "affectedTitles": 422,
+        "retainedAsReferences": true
+      },
+      "unavailableMediaReport": {
+        "checkedAt": "2026-10-31T20:57:57.756Z",
+        "titles": 28298,
+        "links": 515046,
+        "pagesSeparated": 0,
+        "unavailableSeparated": 31,
+        "affectedTitles": 1,
+        "retainedAsReferences": true
+      },
+      "zardfilmEligibleTitles": 458,
+      "zardfilmEligibleLinks": 6684,
+      "newUperaChecks": {
+        "finished": true,
+        "checked": 544,
+        "videoResponses": 512,
+        "htmlResponses": 31,
+        "networkErrors": 1
+      }
+    },
+    "f2myCollection": {
+      "state": "completed",
+      "startedAt": "2026-11-01T03:20:21.439Z",
+      "updatedAt": "2026-11-01T03:20:35.562Z",
+      "finishedAt": "2026-11-01T03:20:35.562Z",
+      "totals": {
+        "discovered": 144,
+        "queued": 80,
+        "processed": 80,
+        "newTitles": 0,
+        "updatedTitles": 0,
+        "unchanged": 0,
+        "linksFound": 3021,
+        "newLinks": 0,
+        "baseMappings": 15,
+        "baseMappingsUpdated": 5,
+        "failures": 0
+      }
+    },
+    "musicRefresh": {
+      "state": "completed",
+      "startedAt": "2026-10-31T20:16:07.383Z",
+      "finishedAt": "2026-10-31T20:21:39.157Z",
+      "steps": [
+        {
+          "label": "Review Meloobit music and verified directory links",
+          "script": "scripts/scrape-meloobit.mjs",
+          "state": "completed",
+          "startedAt": "2026-10-31T20:16:07.417Z",
+          "finishedAt": "2026-10-31T20:16:42.882Z"
+        },
+        {
+          "label": "Review newest RozMusic tracks and music videos",
+          "script": "scripts/scrape-rozmusic.mjs",
+          "state": "completed",
+          "startedAt": "2026-10-31T20:16:42.882Z",
+          "finishedAt": "2026-10-31T20:17:47.178Z"
+        },
+        {
+          "label": "Review newest Musics-Fa tracks",
+          "script": "scripts/scrape-musics-fa.mjs",
+          "state": "completed",
+          "startedAt": "2026-10-31T20:17:47.178Z",
+          "finishedAt": "2026-10-31T20:18:13.931Z"
+        },
+        {
+          "label": "Review Musics-Fa remix releases",
+          "script": "scripts/scrape-musics-fa.mjs",
+          "state": "completed",
+          "startedAt": "2026-10-31T20:18:13.931Z",
+          "finishedAt": "2026-10-31T20:18:36.531Z"
+        },
+        {
+          "label": "Rebuild music landing and artist indexes",
+          "script": "scripts/scrape-rozmusic.mjs",
+          "state": "completed",
+          "startedAt": "2026-10-31T20:18:36.531Z",
+          "finishedAt": "2026-10-31T20:19:23.410Z"
+        },
+        {
+          "label": "Match track artwork against original source pages",
+          "script": "scripts/enrich-music-artwork.mjs",
+          "state": "completed",
+          "startedAt": "2026-10-31T20:19:23.410Z",
+          "finishedAt": "2026-10-31T20:20:48.015Z"
+        },
+        {
+          "label": "Rebuild compact music landing data",
+          "script": "scripts/build-music-landing-index.mjs",
+          "state": "completed",
+          "startedAt": "2026-10-31T20:20:48.015Z",
+          "finishedAt": "2026-10-31T20:21:04.750Z"
+        },
+        {
+          "label": "Rebuild diverse mood collections from published tracks",
+          "script": "scripts/build-mood-playlists.mjs",
+          "state": "completed",
+          "startedAt": "2026-10-31T20:21:04.750Z",
+          "finishedAt": "2026-10-31T20:21:39.157Z"
+        }
+      ]
+    }
   },
   "publicSourceMerge": {
-    "generatedAt": "2026-10-31T19:16:01.539Z",
-    "sourceTitles": 455,
-    "resultTitles": 27944,
-    "resultLinks": 526330,
-    "added": 199,
-    "updated": 311,
+    "generatedAt": "2026-11-01T03:40:03.397Z",
+    "sourceTitles": 470,
+    "resultTitles": 29016,
+    "resultLinks": 536750,
+    "added": 0,
+    "updated": 133,
     "unchanged": 0,
-    "existingTitlesEnriched": 311,
-    "newTitlesAdded": 199,
-    "downloadLinksAdded": 18865,
-    "downloadLinksRefreshed": 0,
-    "sourcePagesAdded": 510
+    "existingTitlesEnriched": 579,
+    "newTitlesAdded": 0,
+    "downloadLinksAdded": 643,
+    "downloadLinksRefreshed": 5582,
+    "sourcePagesAdded": 69
   },
   "f2myMerge": {
-    "added": 122,
-    "updated": 7708,
-    "unchanged": 2585,
-    "newLinks": 3202,
-    "sourceItems": 10415,
-    "totalTitles": 27622,
-    "totalLinks": 501568,
-    "outFile": "public\\data\\vod-catalog.json",
-    "sourceFile": ".media-cache\\vod-sync\\f2my-source.json"
+    "added": 292,
+    "updated": 4190,
+    "unchanged": 6243,
+    "newLinks": 17200,
+    "sourceItems": 10725,
+    "totalTitles": 28590,
+    "totalLinks": 532858,
+    "outFile": "public/data/vod-catalog.json",
+    "sourceFile": ".media-cache/vod-sync/f2my-source.json"
   },
   "curatedMerge": {
     "generatedAt": "2026-10-31T19:09:31.577Z",
@@ -195,10 +1087,10 @@
     }
   },
   "music": {
-    "tracks": 139386,
-    "artists": 9187,
-    "retainedLegacyAliases": 334,
-    "updatedAt": "2026-10-31T19:14:23.497Z"
+    "tracks": 139389,
+    "artists": 9189,
+    "retainedLegacyAliases": 335,
+    "updatedAt": "2026-10-31T20:19:14.845Z"
   },
   "verification": {
     "checkedOn": "2026-10-31",
@@ -226,8 +1118,9 @@
     "No production deployment was performed; this report describes local archive updates.",
     "Unavailable, app-only and sampled-without-public-download sources are explicitly identified, not claimed as fully imported.",
     "FamilyMovie signed media links expire; refresh them again before deploying an older checkout.",
+    "Extraction counts are not all confirmed direct files: HTML download applications and explicitly verified unavailable files are retained separately from playable download links.",
     "The live DonyayeSerial series feed was unavailable; the full archive, selected episode directories and independent providers were used instead.",
-    "Rich IMDb API enrichment was skipped during this local catch-up because that service was unreachable; the official title dataset is still used.",
-    "The bulk IMDb dataset download stalled; a previously verified local dataset was used, preserving non-null current source ratings and votes."
+    "The current official IMDb ratings/basics dataset and the popularity charts are separate: challenged or unavailable charts retain their previous capture, not a fabricated current trend list.",
+    "Rich IMDb API enrichment was skipped during this local catch-up because that service was unreachable; the official title dataset is still used."
   ]
 }

@@ -7,6 +7,19 @@ export function searchText(value: string) {
     .replace(/['’]/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }
 
+/** Recover a title typed with the other Persian/English keyboard selected. */
+export function keyboardSearchVariant(value: string) {
+  const latin = "qwertyuiop[]asdfghjkl;'zxcvbnm,";
+  const persian = "ضصثقفغعهخحجچشسیبلاتنمکگظطزرذدپو";
+  const source = value.trim().toLowerCase();
+  if (source.length < 3 || source.length > 80 || /\d|[۰-۹٠-٩]/u.test(source)) return "";
+  const toPersian = /^[a-z\s\[\];',]+$/.test(source);
+  const toEnglish = /^[\u0600-\u06ff\s]+$/.test(source);
+  if (!toPersian && !toEnglish) return "";
+  const from = toPersian ? latin : persian, to = toPersian ? persian : latin;
+  return searchText([...source].map(char => from.includes(char) ? to[from.indexOf(char)] : char).join(""));
+}
+
 /** Bounded edit distance, including an adjacent letter swap (huose → house). */
 export function spellingDistance(a: string, b: string, limit = 2) {
   if (Math.abs(a.length - b.length) > limit) return limit + 1;
@@ -35,6 +48,7 @@ export class TypoSearchIndex<T> {
   private readonly names = new Map<string, string>();
   private readonly wordNames = new Map<string, Set<string>>();
   private readonly compact = new Map<string, Set<string>>();
+  private readonly compactLengths = new Map<number, Set<string>>();
   private readonly cache = new Map<string, SearchMatches<T>>();
 
   constructor(documents: Document<T>[]) {
@@ -52,6 +66,8 @@ export class TypoSearchIndex<T> {
           const entries = this.compact.get(compact) ?? new Set<string>();
           if (entries.size < 8) entries.add(key);
           this.compact.set(compact, entries);
+          const bucket = this.compactLengths.get(compact.length) ?? new Set<string>();
+          bucket.add(compact); this.compactLengths.set(compact.length, bucket);
         }
         return key;
       });
@@ -70,10 +86,19 @@ export class TypoSearchIndex<T> {
   search(query: string): SearchMatches<T> {
     const key = searchText(query.slice(0, 160));
     if (!key && query.trim()) return { items: [], corrections: [], matchedQuery: key, mode: "none" };
-    const cached = this.cache.get(key);
-    if (cached) { this.cache.delete(key); this.cache.set(key, cached); return cached; }
-    const result = this.resolve(key);
-    this.cache.set(key, result);
+    const alternate = keyboardSearchVariant(query);
+    const cacheKey = `${key}\u0000${alternate}`;
+    const cached = this.cache.get(cacheKey);
+    if (cached) { this.cache.delete(cacheKey); this.cache.set(cacheKey, cached); return cached; }
+    let result = this.resolve(key);
+    if (result.mode === "none" && alternate && alternate !== key) {
+      const corrected = this.resolve(alternate);
+      if (corrected.items.length) {
+        const display = this.names.get(alternate) ?? corrected.matchedQuery;
+        result = { ...corrected, mode: "similar", matchedQuery: display, corrections: [...new Set([display, ...corrected.corrections])].slice(0, 5) };
+      }
+    }
+    this.cache.set(cacheKey, result);
     if (this.cache.size > 64) this.cache.delete(this.cache.keys().next().value!);
     return result;
   }
@@ -95,7 +120,7 @@ export class TypoSearchIndex<T> {
     for (const token of tokens) {
       const options = [{ text: token, cost: 0, frequency: this.words.get(token.length)?.get(token) ?? 0 }];
       if (token.length >= 3 && token.length <= 32 && /^\p{L}+$/u.test(token)) {
-        const limit = token.length >= 6 ? 2 : 1;
+        const limit = token.length >= 5 ? 2 : 1;
         for (let length = token.length - limit; length <= token.length + limit; length++) {
           for (const [word, frequency] of this.words.get(length) ?? []) {
             if (word === token) continue;
@@ -111,6 +136,18 @@ export class TypoSearchIndex<T> {
     }
     for (const text of this.compact.get(key.replace(/ /g, "")) ?? []) {
       if (text !== key) beam.push({ text, cost: .25, frequency: 0 });
+    }
+    // Missing spaces and spelling mistakes often occur together (breakngbud).
+    // Search only nearby-length complete catalog names; never drop a word.
+    if (key.length >= 7 && /^\p{L}+$/u.test(key)) {
+      const limit = key.length >= 10 ? 3 : 2;
+      for (let length = key.length - limit; length <= key.length + limit; length++) {
+        for (const compact of this.compactLengths.get(length) ?? []) {
+          const cost = spellingDistance(key, compact, limit);
+          if (cost > limit) continue;
+          for (const text of this.compact.get(compact) ?? []) beam.push({ text, cost: cost + .25, frequency: 0 });
+        }
+      }
     }
     const candidates = [...new Map(beam.filter(candidate => candidate.text !== key).map(candidate => [candidate.text, candidate])).values()]
       .map(candidate => ({ ...candidate, hits: this.documents.filter(document => document.names.some(name => name.includes(candidate.text))) }))
@@ -131,7 +168,7 @@ export class TypoSearchIndex<T> {
     const anchor = tokens.filter(token => token.length >= 3 && /^\p{L}+$/u.test(token)).sort((a, b) => b.length - a.length)[0];
     if (!anchor) return empty;
     const names = new Set<string>();
-    const anchorLimit = anchor.length >= 6 ? 2 : 1;
+    const anchorLimit = anchor.length >= 5 ? 2 : 1;
     for (let length = anchor.length - anchorLimit; length <= anchor.length + anchorLimit; length++) {
       for (const word of this.words.get(length)?.keys() ?? []) {
         if (spellingDistance(anchor, word, anchorLimit) <= anchorLimit) {
@@ -148,12 +185,12 @@ export class TypoSearchIndex<T> {
           const token = tokens[index], word = words[start + index];
           if (token === word) continue;
           if (index === tokens.length - 1 && token.length >= 2 && word.startsWith(token)) { cost += .25; continue; }
-          const limit = token.length >= 6 ? 2 : token.length >= 3 ? 1 : 0;
+          const limit = token.length >= 5 ? 2 : token.length >= 3 ? 1 : 0;
           const distance = /^\p{L}+$/u.test(token) ? spellingDistance(token, word, limit) : limit + 1;
           if (distance > limit) { cost = Infinity; break; }
           cost += distance;
         }
-        if (!Number.isFinite(cost)) continue;
+        if (!Number.isFinite(cost) || cost > Math.min(4, Math.max(2, Math.ceil(tokens.join("").length / 4)))) continue;
         const phrase = words.slice(start, start + tokens.length).join(" ");
         phrases.set(phrase, Math.min(phrases.get(phrase) ?? Infinity, cost));
       }

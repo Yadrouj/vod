@@ -82,7 +82,7 @@ export function SearchSuggest({
         close: "بستن جستجو",
         clear: "پاک کردن",
         heading: "نتیجه‌های پیشنهادی",
-        order: cinemaSearch ? "امتیاز IMDb: بیشتر به کمتر" : "خواننده‌ها و آثار · مرتبط‌ترین‌ها",
+        order: cinemaSearch ? "نزدیک‌ترین نام · جدیدتر · امتیاز IMDb" : "خواننده‌ها و آثار · مرتبط‌ترین‌ها",
         empty: "یک بخش دیگر از نام، نام انگلیسی یا کد IMDb را امتحان کن.",
         hint: "نام فیلم، سریال یا کد IMDb را بنویس",
         viewAll: "دیدن همه نتیجه‌ها",
@@ -91,7 +91,7 @@ export function SearchSuggest({
         close: "Close search",
         clear: "Clear",
         heading: "Best matches",
-        order: cinemaSearch ? "IMDb rating: highest first" : "Newest first",
+        order: cinemaSearch ? "Closest title · newest · IMDb" : "Newest first",
         empty: "Try another part of the name, an English title or an IMDb ID.",
         hint: "Search by title, series or IMDb ID",
         viewAll: "View all results",
@@ -105,12 +105,12 @@ export function SearchSuggest({
       const params = new URLSearchParams({
         q: query.trim(),
         limit: String(maxItems),
-        suggest: "spelling-v1",
+        suggest: "spelling-v2",
       });
       if (cinemaSearch) {
         params.set("type", effectiveKind);
         // Keep old grouped responses in browser/edge caches off the new URL.
-        params.set("sort", "imdb-desc");
+        params.set("sort", "relevance-newest-imdb");
       }
       if (endpoint.split("?")[0] === "/api/music/search") params.set("includeArtists", "1");
       type SuggestResponse = { items?: Suggestion[]; artists?: Suggestion[]; corrections?: string[]; matchedQuery?: string };
@@ -119,23 +119,16 @@ export function SearchSuggest({
           return res.json() as Promise<SuggestResponse>;
       });
       const mainRequest = request(`${endpoint}${endpoint.includes("?") ? "&" : "?"}${params.toString()}`);
-      const results = includeMusic ? Promise.allSettled([mainRequest, request(`/api/music/search?q=${encodeURIComponent(query.trim())}&limit=6&includeArtists=1`)]).then(([cinema, music]) => {
-        if (cinema.status === "rejected" && music.status === "rejected") throw cinema.reason;
-        const data = cinema.status === "fulfilled" ? cinema.value : {};
-        const more = music.status === "fulfilled" ? music.value : {};
-        return { ...data, items: [...(data.items ?? []).slice(0, 10), ...(more.artists ?? []).slice(0, 1), ...(more.items ?? []).slice(0, 4)], corrections: [...new Set([...(data.corrections ?? []), ...(more.corrections ?? [])])].slice(0, 5) };
-      }) : mainRequest;
-      results
-        .then((data) => {
+      const show = (data: SuggestResponse, pending = false, resetSelection = true) => {
           if (controller.signal.aborted) return;
           setFailure("");
           setCorrections(data.corrections ?? []); setMatchedQuery(data.matchedQuery ?? "");
           setItems([...(data.artists ?? []), ...(data.items ?? [])]);
-          setActiveIndex(-1);
-          setLoading(false);
+          if (resetSelection) setActiveIndex(-1);
+          setLoading(pending && !(data.items?.length || data.artists?.length));
           setOpen(true);
-        })
-        .catch((error: unknown) => {
+      };
+      const fail = (error: unknown) => {
           if (controller.signal.aborted) return;
           setFailure(error instanceof Error && /429|503/.test(error.message)
             ? (locale === "fa" ? "درخواست‌ها زیاد است؛ چند لحظه دیگر جستجو کنید." : "Search is busy. Please try again shortly.")
@@ -144,7 +137,26 @@ export function SearchSuggest({
           setCorrections([]); setMatchedQuery("");
           setLoading(false);
           setOpen(true);
+      };
+      if (includeMusic) {
+        let cinema: SuggestResponse | null = null, music: SuggestResponse | null = null, settled = 0;
+        const publish = (resetSelection = true) => {
+          if (!cinema && !music) return;
+          show({ ...cinema, matchedQuery: cinema?.matchedQuery || music?.matchedQuery,
+            items: [...(cinema?.items ?? []).slice(0, 10), ...(music?.artists ?? []).slice(0, 1), ...(music?.items ?? []).slice(0, 4)],
+            corrections: [...new Set([...(cinema?.corrections ?? []), ...(music?.corrections ?? [])])].slice(0, 5),
+          }, settled < 2, resetSelection);
+        };
+        // Film results never wait for a slower, optional music lookup.
+        const cinemaRequest = mainRequest.then(data => { cinema = data; settled++; publish(); }, error => { settled++; publish(); throw error; });
+        const musicRequest = request(`/api/music/search?q=${encodeURIComponent(query.trim())}&limit=6&includeArtists=1`)
+          .then(data => { music = data; settled++; publish(!cinema); }, error => { settled++; publish(false); throw error; });
+        void Promise.allSettled([cinemaRequest, musicRequest]).then(results => {
+          if (results[0].status === "rejected" && results[1].status === "rejected") fail(results[0].reason);
         });
+      } else {
+        void mainRequest.then(data => show(data)).catch(fail);
+      }
     }, 160);
 
     return () => {
@@ -303,6 +315,7 @@ export function SearchSuggest({
       </div>}
       {!loading && <SearchCorrections corrections={corrections} matchedQuery={matchedQuery} locale={locale} onSelect={value => { updateQuery(value); inputRef.current?.focus(); }} />}
       <div id={listId} className="suggest-results" role="listbox" aria-label={copy.heading} aria-busy={loading}>
+        {loading && visibleItems.length === 0 && <p className="suggest-empty" role="status">{locale === "fa" ? "داریم نزدیک‌ترین اسم‌ها رو پیدا می‌کنیم…" : "Finding the closest titles…"}</p>}
         {visibleItems.map((item, index) => (
           <Fragment key={item.imdbCode}>
           {!cinemaSearch && (index === 0 || (visibleItems[index - 1].type === "artist") !== (item.type === "artist")) && <div className="suggest-type-heading" role="presentation">{item.type === "artist" ? (locale === "fa" ? "خواننده‌ها" : "Artists") : (locale === "fa" ? "آثار" : "Tracks")}</div>}

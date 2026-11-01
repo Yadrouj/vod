@@ -47,6 +47,7 @@ test("merges F2MY links without removing older versions or other providers", asy
     assert.ok(catalog.items[0].links.some((link) => link.url === "https://new.test/Film/Example.1080p.mkv"));
     assert.ok(catalog.items[0].links.some((link) => link.url === "https://old.test/Film/Example.720p.mkv"));
     assert.ok(!catalog.items[0].links.some((link) => link.url === "https://old.test/Film/Example.1080p.mkv"));
+    assert.ok(catalog.items[0].sourceLinkHistory.some(link => link.url === "https://old.test/Film/Example.1080p.mkv"), "Replaced hosts remain in provenance, not active downloads");
     assert.equal(report.newLinks, 1);
   } finally {
     assert.ok(path.resolve(directory).startsWith(path.join(path.resolve(os.tmpdir()), "sarvnema-f2my-")));

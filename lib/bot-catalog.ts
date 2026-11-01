@@ -14,6 +14,7 @@ import { loadOldIranianVodIndex, loadVodIndex, selectVodSection } from "./vod-in
 import { downloadGateUrl } from "./download-gate";
 import { matchVodSearch } from "./vod-search-match";
 import { searchText } from "./typo-search";
+import { compareSearchRank } from "./vod-search-order";
 
 export type BotSort = "relevance" | "rating" | "year" | "title";
 
@@ -85,10 +86,11 @@ export function searchBotItems(items: VodCard[], params: BotSearchParams, origin
     : items;
   const matches = params.q ? matchVodSearch(candidates, params.q)
     : { items: candidates, corrections: [], matchedQuery: "", mode: "exact" as const };
+  const relevanceOrder = params.q && params.sort === "relevance" ? compareSearchRank(matches.matchedQuery || params.q) : null;
   const scored = matches.items
     .map((item) => ({ item, ...scoreBotItem(item, matches.matchedQuery) }))
     .filter(({ item }) => matchesBotFilters(item, params))
-    .sort((a, b) => sortBotResults(a, b, params.sort, Boolean(params.q)));
+    .sort((a, b) => relevanceOrder ? relevanceOrder(a.item, b.item) : sortBotResults(a, b, params.sort, Boolean(params.q)));
 
   const total = scored.length;
   const totalPages = Math.max(1, Math.ceil(total / params.limit));

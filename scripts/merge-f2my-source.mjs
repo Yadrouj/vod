@@ -62,6 +62,12 @@ function mergeF2myLinks(existingLinks, incomingLinks) {
 function mergeItem(existing, incoming) {
   if (!existing) return normalizeItem(incoming);
   const links = mergeF2myLinks(existing.links ?? [], incoming.links ?? []);
+  const activeUrls = new Set(links.map(link => link.url));
+  const sourceLinkHistory = [...new Map([
+    ...(existing.sourceLinkHistory ?? []), ...(incoming.sourceLinkHistory ?? []),
+    ...(existing.links ?? []).filter(link => isF2myLink(link) && !activeUrls.has(link.url))
+      .map(link => ({ ...link, retainedAt: new Date().toISOString(), historyReason: "Source URL replaced by a refreshed version; old URL not independently reverified" })),
+  ].map(link => [link.url, link])).values()];
   const f2myExtraLinks = incoming.f2myExtraLinks?.length ? incoming.f2myExtraLinks : existing.f2myExtraLinks ?? [];
   return normalizeItem({
     ...existing,
@@ -87,6 +93,7 @@ function mergeItem(existing, incoming) {
     f2myPostId: incoming.f2myPostId ?? existing.f2myPostId ?? null,
     f2myModifiedAt: incoming.f2myModifiedAt || existing.f2myModifiedAt || null,
     f2myExtraLinks,
+    ...(sourceLinkHistory.length ? { sourceLinkHistory } : {}),
     links,
   });
 }

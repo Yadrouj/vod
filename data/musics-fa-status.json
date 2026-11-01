@@ -1,20 +1,20 @@
 {
   "state": "complete",
-  "startedAt": "2026-10-31T17:59:35.007Z",
-  "updatedAt": "2026-10-31T18:00:04.986Z",
+  "startedAt": "2026-10-31T20:18:14.036Z",
+  "updatedAt": "2026-10-31T20:18:36.482Z",
   "pages": {
-    "total": 4,
-    "complete": 4
+    "total": 1,
+    "complete": 1
   },
   "tracks": {
-    "discovered": 80,
-    "new": 16,
-    "updated": 64,
+    "discovered": 20,
+    "new": 0,
+    "updated": 20,
     "failures": 0
   },
   "details": {
-    "requested": 18,
-    "complete": 18
+    "requested": 12,
+    "complete": 12
   },
   "current": null,
   "warnings": []

@@ -41,7 +41,7 @@ export async function searchSuggestions(query: string, limit = 8, kind: SearchKi
   const matches = matchVodSearch(index.items, query);
 
   const currentYear = new Date().getUTCFullYear();
-  const items = selectRankedSuggestions(matches.items, limit, kind)
+  const items = selectRankedSuggestions(matches.items, limit, kind, matches.matchedQuery || query)
     .map((item) => ({
       title: item.title,
       imdbCode: item.imdbCode,

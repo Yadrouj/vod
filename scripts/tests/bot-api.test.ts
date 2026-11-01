@@ -44,3 +44,13 @@ test("facet years are numeric descending, independent of counts, and scoped to t
   assert.deepEqual(botFilterFacets(items, { ...scope, year: "2024" }).years.map(item => item.value), ["2026", "2024"]);
   assert.deepEqual(botFilterFacets(items, { ...scope, country: "Iran" }).years.map(item => item.value), ["2023"]);
 });
+
+test("default bot relevance matches site recency/IMDb ordering without overriding explicit rating sort", () => {
+  const older = { ...card("House", "series", 2004), imdbCode: "old", imdbRating: 9.5 };
+  const newer = { ...card("House", "movie", 2026), imdbCode: "new", imdbRating: 7 };
+  const newerHigher = { ...card("House", "series", 2026), imdbCode: "high", imdbRating: 8 };
+  const items = [older, newer, newerHigher];
+  const query = (sort: string) => searchBotItems(items, parseBotSearchParams(new URLSearchParams({ q: "hoise", sort })), "https://sarvnema.ir").items.map(item => item.imdbCode);
+  assert.deepEqual(query("relevance"), ["high", "new", "old"]);
+  assert.deepEqual(query("rating"), ["old", "high", "new"]);
+});

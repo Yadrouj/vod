@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Loopback aliases used by local browser tests; never allow arbitrary origins.
+  allowedDevOrigins: ["localhost", "127.0.0.1"],
   poweredByHeader: false,
   compress: true,
   async headers() {

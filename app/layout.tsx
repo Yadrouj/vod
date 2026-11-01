@@ -20,6 +20,7 @@ import "./cinema-discovery.css";
 import "./mobile-app.css";
 import "./soft-surfaces.css";
 import "./mobile-player.css";
+import "./product-polish.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

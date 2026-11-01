@@ -2,7 +2,7 @@ import { readFileSnapshot, type FileSnapshot } from "./file-snapshot";
 import path from "node:path";
 import { enrichOldIranianCard } from "./old-iranian-media";
 import type { VodCard, VodCatalogIndex } from "./types";
-import { compareImdbRank } from "./vod-search-order";
+import { compareSearchRank } from "./vod-search-order";
 import { matchVodSearch } from "./vod-search-match";
 
 export const HOME_SECTIONS = [
@@ -119,7 +119,7 @@ export function browseVodIndex(index: VodCatalogIndex, params: BrowseParams, req
     );
   });
 
-  if (needle) filtered.sort(compareImdbRank);
+  if (needle) filtered.sort(compareSearchRank(search?.matchedQuery || needle));
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const page = Math.min(currentPage, totalPages);
   const start = (page - 1) * pageSize;

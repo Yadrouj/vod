@@ -77,6 +77,15 @@ async function main() {
     if (id) existingIds.add(id);
     indexKnownSourceTitle(knownTitles, item);
   });
+  if (process.env.MOVIESHO_IMDB_IDENTITIES) {
+    const supplemental = JSON.parse(await readFile(process.env.MOVIESHO_IMDB_IDENTITIES, "utf8"));
+    if (supplemental.source !== "https://datasets.imdbws.com/title.basics.tsv.gz") throw new Error("Supplemental identities must come from the official IMDb dataset");
+    for (const item of supplemental.identities || []) {
+      indexKnownSourceTitle(knownTitles, item);
+      for (const title of item.sourceTitleAliases || []) indexKnownSourceTitle(knownTitles, { ...item, title });
+    }
+    console.log(`Loaded ${supplemental.identities?.length || 0} exact official IMDb identities.`);
+  }
   const cache = await readCache();
   const matcher = createMatcher(cache);
 

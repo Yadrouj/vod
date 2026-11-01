@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { sitemapPartCount } from "@/app/sitemap";
+import { sitemapPartCount } from "@/lib/site-sitemap";
 import { SITE_URL } from "@/lib/seo";
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
