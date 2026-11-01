@@ -5,7 +5,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 COMPOSE_FILE="${1:-docker-compose.prod.yml}"
 NAME="sarvnema-maintenance-scheduled"
 case "$COMPOSE_FILE" in
-  docker-compose.prod.yml|docker-compose.production.yml) ;;
+  docker-compose.prod.yml|docker-compose.production.yml|deploy/host/docker-compose.host.yml) ;;
   *) echo "Unsupported Compose file: $COMPOSE_FILE" >&2; exit 1 ;;
 esac
 

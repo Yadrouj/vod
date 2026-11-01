@@ -5,8 +5,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 COMPOSE_FILE="${1:-docker-compose.prod.yml}"
 case "$COMPOSE_FILE" in
-  docker-compose.prod.yml|docker-compose.production.yml) ;;
-  *) echo "Use docker-compose.prod.yml or docker-compose.production.yml" >&2; exit 1 ;;
+  docker-compose.prod.yml|docker-compose.production.yml|deploy/host/docker-compose.host.yml) ;;
+  *) echo "Use docker-compose.prod.yml, docker-compose.production.yml or deploy/host/docker-compose.host.yml" >&2; exit 1 ;;
 esac
 if [[ "$EUID" != 0 ]]; then
   echo "Run: sudo bash deploy/install-maintenance-timer.sh $COMPOSE_FILE" >&2

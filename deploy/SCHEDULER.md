@@ -18,6 +18,11 @@ For the alternative, self-contained nginx stack, pass
 `docker-compose.production.yml` as the final argument. Do not switch a running
 site between the two Compose projects.
 
+On `ubuntu-one`, where neither file fits, pass
+`deploy/host/docker-compose.host.yml`. Its `maintenance` service has `scale: 0`,
+so `up -d` does not start it and only the timer runs it. The Telegram services
+run on `62.83.32.47` and read the refreshed catalogue over HTTPS.
+
 The installer builds the worker image and runs a read-only diagnostic first.
 Only after these succeed does it stop the old maintenance daemon, disable that
 container's Docker restart policy, install/enable the timer, and request the
