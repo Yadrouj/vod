@@ -7,6 +7,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX_BYTES = 64 * 1024 * 1024;
+// State holds every pending post, so it grows with the music archive and compresses about 10:1.
+const MAX_INFLATED_BYTES = 256 * 1024 * 1024;
 const headers = { "Cache-Control": "no-store" };
 const inflate = promisify(gunzip);
 const documentName = (request: Request) => new URL(request.url).searchParams.get("document") ?? "state";
@@ -29,7 +31,7 @@ export async function PUT(request: Request) {
   try {
     let body = Buffer.from(await request.arrayBuffer());
     if (body.length > MAX_BYTES) return Response.json({ error: "Too large" }, { status: 413, headers });
-    if (request.headers.get("content-encoding") === "gzip") body = await inflate(body, { maxOutputLength: MAX_BYTES });
+    if (request.headers.get("content-encoding") === "gzip") body = await inflate(body, { maxOutputLength: MAX_INFLATED_BYTES });
     const json = body.toString("utf8");
     const parsed: unknown = JSON.parse(json);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Not an object");
