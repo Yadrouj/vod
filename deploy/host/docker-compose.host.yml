@@ -30,6 +30,8 @@ services:
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
       VOD_DATA_DIR: /app/public/data
+      # Without this Node caps the heap at half of mem_limit, and the catalogue outgrew that.
+      NODE_OPTIONS: --max-old-space-size=${APP_HEAP_MB:-2304}
     # Loopback only: the host nginx is the single public entry point.
     ports:
       - "127.0.0.1:3000:3000"
@@ -46,7 +48,7 @@ services:
     init: true
     stop_grace_period: 20s
     # Leaves room for the co-tenant sites on this 2-core box.
-    mem_limit: 2g
+    mem_limit: ${APP_MEMORY_LIMIT:-3g}
     cpus: 1.5
     logging:
       driver: json-file
@@ -73,8 +75,8 @@ services:
       # Empty: use actual request queues; set a number only for a strict traffic cap.
       MAINTENANCE_MAX_RECENT_REQUESTS: ${MAINTENANCE_MAX_RECENT_REQUESTS:-}
       MAINTENANCE_MAX_ACTIVE_ROOMS: ${MAINTENANCE_MAX_ACTIVE_ROOMS:-1}
-      # The app is limited to 2 GB here and sits near 1.2 GB when idle.
-      MAINTENANCE_MAX_MEMORY_MB: ${MAINTENANCE_MAX_MEMORY_MB:-1800}
+      # Matches the app's heap limit above.
+      MAINTENANCE_MAX_MEMORY_MB: ${MAINTENANCE_MAX_MEMORY_MB:-2304}
       MAINTENANCE_MAX_LOAD_AVG: ${MAINTENANCE_MAX_LOAD_AVG:-1.25}
       VOD_SOURCE_URL: ${VOD_SOURCE_URL:-https://dls2.aparatchi-dlcenter.top/DonyayeSerial/donyaye_serial_all_archive.html}
       MOVIESHO_DOWNLOAD_BASE: ${MOVIESHO_DOWNLOAD_BASE:-https://sr1.moviesho.com/}
