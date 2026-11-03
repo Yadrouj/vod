@@ -93,7 +93,7 @@ export function BaseUrlAdmin({ initialBaseUrl, initialArchiveUrl, updatedAt, sam
         <Info label={t.admin.activeBase} value={currentBaseUrl} />
         <Info label={t.admin.updated} value={updatedAt ? new Date(updatedAt).toLocaleString() : t.admin.defaultValue} />
         <Info label={t.admin.originalSample} value={sampleBefore} />
-        <Info label={t.admin.afterRewrite} value={sampleAfter.replace(initialBaseUrl, currentBaseUrl)} />
+        <Info label={t.admin.afterRewrite} value={sampleAfter === sampleBefore ? sampleAfter : sampleAfter.replace(initialBaseUrl, currentBaseUrl)} />
       </div>
     </section>
   );
