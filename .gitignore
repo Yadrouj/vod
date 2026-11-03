@@ -41,6 +41,12 @@ data/maintenance-scheduler-state.json
 data/maintenance-scheduler.lock
 data/maintenance-scheduler.flock
 data/maintenance-scheduler-last-run.json
+public/data/.vod-news.lock
+public/data/vod-news.json.*.tmp
+public/data/iran-box-office.lock
+public/data/iran-box-office.json.*.tmp
+data/*.lock.kernel
+public/data/*.lock.kernel
 data/refresh-checkpoints/
 data/telegram-deliveries/
 data/telegram-channel/

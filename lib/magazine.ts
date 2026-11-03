@@ -22,5 +22,5 @@ export async function findMagazineArticle(slug: string) { return (await loadMaga
 export const loadFreshMagazineNews = cache(async () => {
   const news = await loadVodNews();
   const now = Date.now();
-  return news.items.filter(item => /^https:\/\//.test(item.url) && Date.parse(item.publishedAt) <= now && now - Date.parse(item.publishedAt) <= 7 * 86400000).sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)).slice(0, 6);
+  return news.items.filter(item => /^https:\/\//.test(item.url) && Date.parse(item.publishedAt) <= now && now - Date.parse(item.publishedAt) <= 7 * 86400000).slice(0, 10);
 });

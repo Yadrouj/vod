@@ -135,13 +135,13 @@ export default async function MusicPage({ searchParams }: Props) {
             </div>
           </header>
           <MusicLandingHero tracks={heroTracks} archiveStats={archiveStats} initialQuery={q} initialKind={kind} />
-          <MusicCategoryNav categories={index.categories} categoryCounts={index.categoryCounts} libraryCategoryCounts={index.libraryCategoryCounts} activeCategory={category} libraryOnly={libraryOnly} />
+          {hasFilter && <MusicCategoryNav categories={index.categories} categoryCounts={index.categoryCounts} libraryCategoryCounts={index.libraryCategoryCounts} activeCategory={category} libraryOnly={libraryOnly} />}
           <LandingPulse initial={{ version: index.updatedAt, updatedAt: Date.parse(index.updatedAt) > 0 ? index.updatedAt : null, recentCount: 0 }} locale={locale} endpoint="/api/music/pulse" updatesHref="/music?fresh=week" />
         </div>
       </section>
 
       <section className="wrap music-content music-landing-content">
-        {moodIndex && moodIndex.playlists.length > 0 && <MoodCollections playlists={moodIndex.playlists} preview />}
+        {!hasFilter && moodIndex && moodIndex.playlists.length > 0 && <MoodCollections playlists={moodIndex.playlists} preview />}
         {hasFilter ? (
           <>
             {q && matchingMusicArtists(index.artists, q).length > 0 && <section><h2>خواننده‌ها</h2><MusicHorizontalRail label="خواننده‌های مرتبط">{matchingMusicArtists(index.artists, q).slice(0, 12).map(artist => <MusicArtistCard key={artist.slug} artist={artist} />)}</MusicHorizontalRail></section>}
@@ -194,6 +194,7 @@ export default async function MusicPage({ searchParams }: Props) {
           ))}
         </MusicHorizontalRail>
         <LandingSeoContent content={MUSIC_LANDING_SEO} />
+        {!hasFilter && <MusicCategoryNav categories={index.categories} categoryCounts={index.categoryCounts} libraryCategoryCounts={index.libraryCategoryCounts} />}
       </section>
     </main>
   );

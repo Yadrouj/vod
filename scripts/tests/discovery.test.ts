@@ -84,3 +84,10 @@ test("hero rejects old, future and malformed charts without losing a valid other
   assert.deepEqual(selectTrendingTitles({ movie: chart("movie", "direct", "2027-01-01T00:00:00Z") }, now), []);
   assert.equal(selectTrendingTitles({ movie: { ...chart("movie"), sourceUrl: "broken" }, series: chart("series") }, now).length, 2);
 });
+
+test("only today's Tehran source observations can claim Trending today", () => {
+  const result = selectTrendingTitles({ movie: chart("movie", "direct", "2026-09-06T20:29:00Z") }, Date.parse("2026-09-06T20:31:00Z"));
+  assert.equal(result.length, 2);
+  assert.ok(result.every(item => !item.popularity.current));
+  assert.equal(selectTrendingTitles({ movie: chart("movie", "direct", "2026-09-06T20:30:00Z") }, Date.parse("2026-09-06T20:31:00Z"))[0].popularity.current, true);
+});

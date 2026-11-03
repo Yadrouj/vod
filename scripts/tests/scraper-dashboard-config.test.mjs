@@ -9,6 +9,17 @@ test("scraper dashboard defaults contain the daily Tehran schedule and known sou
   const config = sanitizeScraperDashboardConfig(DEFAULT_SCRAPER_DASHBOARD_CONFIG);
   assert.deepEqual(config.schedule, { timeZone: "Asia/Tehran", startHour: 3, endHour: 7, days: [0, 1, 2, 3, 4, 5, 6] });
   assert.ok(config.sources.some((source) => source.id === "f2my" && source.siteUrl.includes("f2my.top")));
+  assert.ok(config.sources.some((source) => source.id === "iran-box-office" && source.enabled));
+});
+
+test('older saved dashboards gain daily editorial sources without changing existing toggles', () => {
+  const old = { schedule: { startHour: 4, endHour: 6, days: [0, 2] }, sources: [{ id: 'news', enabled: false }, { id: 'imdb-trending', enabled: false }] };
+  const config = sanitizeScraperDashboardConfig(old);
+  assert.equal(config.sources.find(source => source.id === 'news').enabled, false);
+  assert.equal(config.sources.find(source => source.id === 'imdb-trending').enabled, false);
+  assert.deepEqual(config.sources.find(source => source.id === 'iran-box-office').days, [0, 2]);
+  assert.equal(config.sources.find(source => source.id === 'iran-box-office').startHour, 4);
+  assert.equal(sanitizeScraperDashboardConfig(config).sources.filter(source => source.id === 'iran-box-office').length, 1);
 });
 
 test("dashboard config is sanitized and atomically roundtrips", async () => {

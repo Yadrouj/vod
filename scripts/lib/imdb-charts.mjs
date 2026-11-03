@@ -5,8 +5,8 @@ export const CHART_URLS = {
 };
 export function parseImdbChart(html, kind) {
   if (!CHART_URLS[kind] || !/most\s+popular|chartTitles/i.test(html)) throw new Error('Not an IMDb popularity chart');
-  const candidates = [];
-  const add = (node, position) => {
+  const nextCandidates = []; const ldCandidates = [];
+  const add = (node, position, candidates) => {
     const imdbCode = String(node.id ?? node.url ?? node['@id'] ?? '').match(/tt\d{5,12}/)?.[0];
     const rank = Number(node.chartMeterRanking?.currentRank ?? node.meterRanking?.currentRank ?? position);
     const title = node.titleText?.text ?? node.name;
@@ -17,32 +17,39 @@ export function parseImdbChart(html, kind) {
     const ratings = Number.isFinite(rating) && rating > 0 && rating <= 10 && Number.isInteger(votes) && votes > 0 ? { imdbRating: rating, imdbVotes: votes } : {};
     candidates.push({ imdbCode, title, year, rank, kind, ...ratings });
   };
-  const visit = (value) => {
+  const visit = (value, source) => {
     if (!value || typeof value !== 'object') return;
-    if (value['@type'] === 'ItemList' && Array.isArray(value.itemListElement)) {
-      for (const entry of value.itemListElement) add(entry.item ?? entry, entry.position);
+    if (source === 'ld' && value['@type'] === 'ItemList' && Array.isArray(value.itemListElement)) {
+      for (const entry of value.itemListElement) add(entry.item ?? entry, entry.position, ldCandidates);
       return;
     }
-    if (value.chartTitles?.edges) {
-      value.chartTitles.edges.forEach((edge, i) => add(edge.node ?? {}, edge.currentRank ?? i + 1));
+    if (source === 'next' && Array.isArray(value.chartTitles?.edges)) {
+      value.chartTitles.edges.forEach((edge, i) => add(edge.node ?? {}, edge.currentRank ?? i + 1, nextCandidates));
       return;
     }
-    for (const child of Object.values(value)) if (child && typeof child === 'object') visit(child);
+    for (const child of Object.values(value)) if (child && typeof child === 'object') visit(child, source);
   };
   for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
     if (!/application\/ld\+json|__NEXT_DATA__/.test(match[1])) continue;
-    try { visit(JSON.parse(match[2])); } catch { /* Ignore unrelated invalid scripts. */ }
+    try { visit(JSON.parse(match[2]), /__NEXT_DATA__/.test(match[1]) ? 'next' : 'ld'); } catch { /* Ignore unrelated invalid scripts. */ }
   }
   const byId = new Map();
-  for (const entry of candidates) if (!byId.has(entry.imdbCode)) byId.set(entry.imdbCode, entry);
+  // Chart-specific application data takes precedence over other JSON-LD lists.
+  for (const entry of nextCandidates.length ? nextCandidates : ldCandidates) {
+    const previous = byId.get(entry.imdbCode);
+    if (previous && previous.rank !== entry.rank) throw new Error('Conflicting IMDb title ranks');
+    if (!previous || (!previous.imdbVotes && entry.imdbVotes)) byId.set(entry.imdbCode, entry);
+  }
   const entries = [...byId.values()].sort((a, b) => a.rank - b.rank);
   if (entries.length < 5 || new Set(entries.map((entry) => entry.rank)).size !== entries.length) throw new Error('Incomplete or conflicting IMDb chart');
   return entries;
 }
 
-export async function fetchImdbChart(kind, fetcher = fetch) {
+export async function fetchImdbChartSnapshot(kind, fetcher = fetch, now = Date.now) {
+  if (!CHART_URLS[kind]) throw new Error('Unknown IMDb chart kind');
   const response = await fetcher(CHART_URLS[kind], {
     headers: { 'User-Agent': 'SarvNema/1.0 (public chart metadata)', Accept: 'text/html', 'Accept-Language': 'en-US,en;q=0.9' },
+    redirect: 'error',
     signal: AbortSignal.timeout(12_000),
   });
   // IMDb can return 202 with an empty challenge body. It is NOT a new chart.
@@ -60,7 +67,20 @@ export async function fetchImdbChart(kind, fetcher = fetch) {
     if (bytes > 4_000_000) { await reader.cancel(); throw new Error('IMDb chart exceeds response budget'); }
     chunks.push(value);
   }
-  return parseImdbChart(Buffer.concat(chunks).toString('utf8'), kind);
+  const entries = parseImdbChart(Buffer.concat(chunks).toString('utf8'), kind);
+  // A CDN cache hit is not a new source observation. Date/Age are HTTP cache
+  // evidence, not an invented IMDb publication date.
+  const receivedAt = now();
+  const age = Number(response.headers.get('age') ?? 0);
+  if (!Number.isFinite(age) || age < 0) throw new Error('Invalid IMDb cache age');
+  const serverDate = Date.parse(response.headers.get('date') ?? '');
+  const observedAt = Math.min(receivedAt - age * 1000, Number.isFinite(serverDate) ? serverDate : receivedAt);
+  if (!Number.isFinite(observedAt) || observedAt <= 0) throw new Error('Invalid IMDb observation date');
+  return { entries, sourceUrl: CHART_URLS[kind], observedAt: new Date(observedAt).toISOString(), capture: 'direct' };
+}
+
+export async function fetchImdbChart(kind, fetcher = fetch) {
+  return (await fetchImdbChartSnapshot(kind, fetcher)).entries;
 }
 
 export function matchChartToCatalog(entries, cards) {
@@ -68,7 +88,8 @@ export function matchChartToCatalog(entries, cards) {
   return entries.map((entry) => {
     let card = entry.imdbCode ? cards.find((item) => item.imdbCode === entry.imdbCode && item.type === entry.kind) : null;
     if (!card) {
-      const matches = cards.filter((item) => item.type === entry.kind && item.year === entry.year && normalize(item.title) === normalize(entry.title));
+      const matches = cards.filter((item) => item.type === entry.kind && Number.isInteger(entry.year) && item.year === entry.year &&
+        (!entry.imdbCode || !/^tt\d+$/.test(item.imdbCode) || item.imdbCode === entry.imdbCode) && normalize(item.title) === normalize(entry.title));
       const imdbMatches = matches.filter((item) => /^tt\d+$/.test(item.imdbCode));
       if (imdbMatches.length === 1) card = imdbMatches[0];
       else if (matches.length === 1) card = matches[0];

@@ -6,7 +6,7 @@ import type { MagazineIndex } from '@/lib/magazine-types';
 import { absoluteUrl } from '@/lib/seo';
 import styles from './magazine.module.css';
 
-export function MagazineCollection({ index, category, news }: { index: MagazineIndex; category?: string; news?: React.ReactNode }) {
+export function MagazineCollection({ index, category, news, boxOffice }: { index: MagazineIndex; category?: string; news?: React.ReactNode; boxOffice?: React.ReactNode }) {
   const topic = category ? MAGAZINE_TOPICS[category] : undefined;
   const articles = index.articles.filter(a => !category || a.category === category);
   const featured = articles[0];
@@ -19,6 +19,7 @@ export function MagazineCollection({ index, category, news }: { index: MagazineI
         <p>{topic?.description || 'انتشارهای تازه، راهنمای انتخاب فیلم و موسیقی، چهره‌ها و جشنواره‌ها؛ با مسیر کوتاه تا پخش، دانلود و تجربهٔ همزمان با دوستان.'}</p>
         <Link href="/mag/feed.xml">دنبال‌کردن مجله با RSS ↗</Link>
       </header>
+      {boxOffice}
       {!category && <section className={styles.dossierCollections} aria-label="پرونده‌های ویژهٔ مجله">{[
         { key: 'reviews', title: 'چه ببینیم، دقیق‌تر ببینیم', note: 'نقدِ تازه‌ها، نگاهِ منتقدان و تحلیلِ اختیاریِ داستان' },
         { key: 'legends', title: 'آدم‌های پشتِ تصویر', note: 'زندگینامه، مسیرِ حرفه‌ای و فیلم‌شناسیِ متصل به آرشیو' },

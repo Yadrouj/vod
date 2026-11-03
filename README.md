@@ -2,6 +2,8 @@
 
 Standalone Next.js VOD catalog running at the site root.
 
+Daily news, Iranian box office/tickets, music playlists and hero refresh: [operations guide](docs/daily-editorial-updates.md).
+
 ## Run
 
 ```bash

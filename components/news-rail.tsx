@@ -3,7 +3,7 @@ import { DEFAULT_LOCALE, getDictionary, type Locale } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
 import type { VodNewsItem, VodNewsPayload } from "@/lib/news";
 
-export function NewsRail({ items, boxOffice, locale = DEFAULT_LOCALE }: { items: VodNewsItem[]; boxOffice?: VodNewsPayload["boxOffice"]; locale?: Locale }) {
+export function NewsRail({ items, daily, locale = DEFAULT_LOCALE }: { items: VodNewsItem[]; daily?: VodNewsPayload["daily"]; locale?: Locale }) {
   if (!items.length) return null;
   const t = getDictionary(locale);
 
@@ -14,19 +14,16 @@ export function NewsRail({ items, boxOffice, locale = DEFAULT_LOCALE }: { items:
           <p className="label">{t.common.featured}</p>
           <h2>{t.home.newsTitle}</h2>
           <p className="muted">{locale === "fa" ? "تازه‌های سینمای ایران، گیشه و اکران؛ با تاریخ و لینک منبع" : "Iranian cinema, box office and releases — dated and sourced"}</p>
+          {daily && <small className="muted">{locale === "fa" ? `انتخاب روزانه: ${daily.count.toLocaleString('fa-IR')} از ۱۰ خبر · آخرین بررسی ${formatDate(daily.checkedAt, locale)}` : `Daily selection: ${daily.count}/10 · Last checked ${formatDate(daily.checkedAt, locale)}`}</small>}
         </div>
-        <Link className="view-all" href="/updates">
+        <Link className="view-all" href="/mag#daily-news">
           {t.common.viewAll}
         </Link>
       </div>
 
-      {boxOffice && <div className="news-box-office" data-box-office>
-        <div><h3>{locale === "fa" ? "پرفروش‌های هفتهٔ سینمای ایران" : "Iranian weekly box office"}</h3><p>{boxOffice.periodLabel}</p><small>{locale === "fa" ? "تاریخ گزارش: " : "Reported: "}{formatDate(boxOffice.reportedAt, locale)} · {locale === "fa" ? "فروش هفتگی، نه کل فروش از آغاز اکران" : "Weekly revenue, not lifetime gross"}</small></div>
-        <table><caption className="sr-only">{boxOffice.periodLabel}</caption><thead><tr><th>{locale === "fa" ? "فیلم" : "Film"}</th><th>{locale === "fa" ? "فروش (تومان)" : "Revenue (toman)"}</th><th>{locale === "fa" ? "تماشاگر" : "Admissions"}</th></tr></thead><tbody>{boxOffice.rows.map(row => <tr key={row.rank}><td>{row.rank.toLocaleString(locale)}. {row.title}</td><td>{row.salesToman.toLocaleString(locale)}</td><td>{row.audience.toLocaleString(locale)}</td></tr>)}</tbody></table>
-        <a href={boxOffice.sourceUrl} target="_blank" rel="noreferrer">{locale === "fa" ? "منبع و جدول کامل: " : "Source and full report: "}{boxOffice.sourceName}</a>
-      </div>}
+      <Link className="view-all" href="/mag#iran-box-office">{locale === "fa" ? "جدول گیشه، تغییر فروش روزانه و قیمت بلیت در مجله ←" : "Box office, daily changes and ticket prices in the magazine →"}</Link>
       <div className="news-rail">
-        {items.slice(0, 9).map((item, index) => {
+        {items.slice(0, 10).map((item, index) => {
           const content = <>
             {item.imageUrl && (
               <img

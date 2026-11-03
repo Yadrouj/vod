@@ -37,6 +37,8 @@ test("busy, missing telemetry, and unhealthy app defer crawling", () => {
 });
 test("news, video source groups and music have independent bounded jobs", () => {
   assert.equal(DAILY_JOBS[0].id, "news");
+  assert.equal(DAILY_JOBS[1].id, "iran-box-office");
+  assert.ok(DAILY_JOBS.findIndex(job => job.id === 'imdb-trending') < DAILY_JOBS.findIndex(job => job.id === 'video'));
   assert.ok(DAILY_JOBS.some(job => job.id === "curated-video"));
   assert.ok(DAILY_JOBS.some(job => job.id === "f2my"));
   assert.ok(DAILY_JOBS.some(job => job.id === "episode-images"));

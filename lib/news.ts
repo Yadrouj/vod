@@ -17,6 +17,7 @@ export type VodNewsPayload = {
   generatedAt: string;
   sources: string[];
   items: VodNewsItem[];
+  daily?: { day: string; goal: number; count: number; state: "complete" | "partial"; checkedAt: string };
   boxOffice?: { reportedAt: string; periodLabel: string; metric: "weekly-sales"; unit: string; sourceUrl: string; sourceName: string; rows: { rank: number; title: string; salesToman: number; audience: number }[] } | null;
 };
 

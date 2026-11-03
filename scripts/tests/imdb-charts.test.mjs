@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fetchImdbChart, parseImdbChart, matchChartToCatalog } from '../lib/imdb-charts.mjs';
+import { fetchImdbChart, fetchImdbChartSnapshot, parseImdbChart, matchChartToCatalog } from '../lib/imdb-charts.mjs';
 const entries = Array.from({ length: 5 }, (_, i) => ({ position: i + 1, item: { url: `https://www.imdb.com/title/tt123456${i}/`, name: `Title ${i}`, datePublished: '2026-01-01' } }));
 const html = `<title>Most popular movies</title><script type="application/ld+json">${JSON.stringify({ '@type': 'ItemList', itemListElement: entries })}</script>`;
 test('JSON-LD chart extracts IDs, explicit ranks, years, and media kind', () => {
@@ -41,4 +41,32 @@ test('catalog matching uses identity or exact title + year + type, never fuzzy r
   assert.equal(matchChartToCatalog(ranked, cards)[0].card.imdbCode, 'tt1234567');
   assert.equal(matchChartToCatalog(ranked, [...cards, { ...base, imdbCode: 'tt3333333' }]).length, 0);
   assert.equal(matchChartToCatalog([{ ...ranked[0], title: 'Absent' }], cards).length, 0);
+});
+
+test('explicit IMDb identity cannot fall back to a conflicting title/year match', () => {
+  const base = { title: 'The Odyssey', year: 2026, type: 'movie', posterUrl: '/poster.jpg', imdbCode: 'tt1234567' };
+  assert.equal(matchChartToCatalog([{ title: base.title, year: 2026, kind: 'movie', rank: 1, imdbCode: 'tt9999999' }], [base]).length, 0);
+  assert.equal(matchChartToCatalog([{ title: base.title, year: null, kind: 'movie', rank: 1 }], [{ ...base, year: null }]).length, 0);
+});
+
+test('conflicting ranks for the same IMDb identity cannot silently pick the first entry', () => {
+  const conflict = { '@type': 'ItemList', itemListElement: [...entries, { ...entries[0], position: 6 }] };
+  assert.throws(() => parseImdbChart(`<title>Most popular movies</title><script type="application/ld+json">${JSON.stringify(conflict)}</script>`, 'movie'), /Conflicting/);
+});
+
+test('chart-specific Next data outranks unrelated JSON-LD recommendations', () => {
+  const chartTitles = { edges: entries.map((entry, i) => ({ node: { id: `tt223456${i}`, titleText: { text: `Chart ${i}` } } })) };
+  const result = parseImdbChart(`${html}<script id="__NEXT_DATA__">${JSON.stringify({ props: { pageProps: { chartTitles } } })}</script>`, 'movie');
+  assert.ok(result.every(entry => entry.imdbCode.startsWith('tt2')));
+});
+
+test('HTTP cache age and server Date constrain true observation time', async () => {
+  const now = () => Date.parse('2026-11-03T01:00:00Z');
+  const snapshot = await fetchImdbChartSnapshot('movie', async (_, options) => {
+    assert.equal(options.redirect, 'error');
+    return new Response(html, { headers: { 'content-type': 'text/html', date: 'Tue, 03 Nov 2026 00:30:00 GMT', age: '600' } });
+  }, now);
+  assert.equal(snapshot.observedAt, '2026-11-03T00:30:00.000Z');
+  const cached = await fetchImdbChartSnapshot('movie', async () => new Response(html, { headers: { 'content-type': 'text/html', age: '7200' } }), now);
+  assert.equal(cached.observedAt, '2026-11-02T23:00:00.000Z');
 });

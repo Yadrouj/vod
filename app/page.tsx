@@ -28,7 +28,7 @@ import { loadMusicHomeIndex } from "@/lib/music";
 import { FILM_LANDING_SEO, landingJsonLd } from "@/lib/landing-seo";
 import { titleMetadata } from "@/lib/seo";
 import { loadVodHomeIndex } from "@/lib/vod-index";
-import { loadImdbTrending } from "@/lib/imdb-trending";
+import { loadImdbTrending, loadHeroArtwork } from "@/lib/imdb-trending";
 import { rankDiscovery } from "@/lib/discovery-ranking";
 import { loadAudienceSignals } from "@/lib/discovery-feedback";
 import { heroBackdropUrl, isHeroReady } from "@/lib/hero-art";
@@ -118,7 +118,7 @@ export default async function HomePage() {
         ))}
         <PeopleRail people={topPeople.people} locale={locale} />
         <LandingSeoContent content={FILM_LANDING_SEO} />
-        <NewsRail items={news.items} boxOffice={news.boxOffice} locale={locale} />
+        <NewsRail items={news.items} daily={news.daily} locale={locale} />
         <MagazineRail locale={locale} />
       </section>
     </main>
@@ -141,7 +141,7 @@ async function buildHomePageData(locale: Locale) {
 }
 
 async function computeHomePageData(locale: Locale) {
-  const [index, rawNews, topPeople, rawUpdates, music, trending, audience] = await Promise.all([
+  const [index, news, topPeople, rawUpdates, music, trending, audience, artwork] = await Promise.all([
     loadVodHomeIndex(),
     loadVodNews(),
     loadTopPeople(),
@@ -149,8 +149,8 @@ async function computeHomePageData(locale: Locale) {
     loadMusicHomeIndex(),
     loadImdbTrending(100),
     loadAudienceSignals(),
+    loadHeroArtwork(),
   ]);
-  const news = { ...rawNews, items: prioritizeNews(rawNews.items) };
   const verifiedUpdates = selectFreshReleaseUpdates(rawUpdates.items);
   const newEpisodes = prioritizeReleaseUpdates(verifiedUpdates.filter((item) => item.status === "available" && item.kind === "episode" && item.changeType === "new-episode"));
   const episodeIds = new Set(newEpisodes.map((item) => item.imdbCode));
@@ -163,8 +163,12 @@ async function computeHomePageData(locale: Locale) {
   // The lead frame is deliberately separate from personalised discovery: it
   // follows the rank order in IMDb's MOVIEmeter and TVmeter charts. This keeps
   // an all-time high rating from displacing what people are actually watching.
-  const heroPool = trending.filter(item => isLandingReady(item) && isHeroReady(item));
-  const heroBanners = takeFreshHeroVisual(heroPool.length ? heroPool : discovery, seen, 8)
+  const heroPool = trending.filter(item => item.popularity.current && isLandingReady(item) && isHeroReady(item));
+  // Even during an IMDb outage the full-width desktop hero must not silently
+  // revert to soft posters. Verified artwork does not imply a current chart rank.
+  const fallbackHero = rankDiscovery(index.items.filter(item => isLandingReady(item) && artwork[item.imdbCode]), signals, 8)
+    .map(item => ({ ...item, heroArt: artwork[item.imdbCode] }));
+  const heroBanners = takeFreshHeroVisual(heroPool.length ? heroPool : fallbackHero, seen, 8)
     .map(item => ({ ...item, popularity: trendMap.get(item.imdbCode) }));
   heroBanners.forEach((item) => seen.add(item.imdbCode));
   const midBanners = takeFreshVisual([
@@ -327,21 +331,6 @@ function rotateDaily<T>(items: T[]) {
   const day = Math.floor(Date.now() / 86_400_000);
   const offset = day % items.length;
   return items.slice(offset).concat(items.slice(0, offset));
-}
-
-function prioritizeNews<T extends { id: string; url: string; title: string; category: string; publishedAt: string }>(items: T[]) {
-  const seen = new Set<string>();
-  return [...items]
-    .filter((item) => {
-      const key = `${item.url}|${item.title}`.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .sort((a, b) => {
-      return Number(/[\u0600-\u06ff]/u.test(b.title)) - Number(/[\u0600-\u06ff]/u.test(a.title)) || Date.parse(b.publishedAt) - Date.parse(a.publishedAt);
-    })
-    .slice(0, 15);
 }
 
 function prioritizeReleaseUpdates(items: ReleaseUpdate[]) {

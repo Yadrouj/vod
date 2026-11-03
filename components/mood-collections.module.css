@@ -3,6 +3,9 @@
 .section header small, .section header a { color: #a5edc2; font-size: 12px; }
 .section header a { display: inline-flex; align-items: center; gap: 8px; }
 .section h2 { font-size: clamp(24px, 4vw, 38px); margin: 8px 0; }
+.group { margin-top: 28px; }
+.group h3 { font-size: clamp(18px, 2.5vw, 24px); margin: 0 0 8px; }
+.description { max-width: 75ch; color: #aec6b6; font-size: 13px; line-height: 1.9; margin: 0 0 18px; }
 .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
 .card { min-width: 0; padding: 12px; border: 1px solid var(--surface-edge); border-radius: 22px !important; background: #0e1b13; transition: transform .2s, background .2s; }
 .card:hover { transform: translateY(-4px); background: #162d1e; }
@@ -12,6 +15,7 @@
 .card strong, .card > small { display: block; margin: 12px 0 0; }
 .card strong { font-size: 16px; line-height: 1.6; }
 .card > small { font-size: 11px; color: #aec6b6; }
+.badge { display: inline-block; margin-top: 12px; padding: 4px 8px; border-radius: 8px; background: #1c3325; color: #a5edc2; font-size: 10px; }
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 20px; }
 .filters input { background: #122019; border: 1px solid var(--surface-edge); border-radius: 14px !important; color: #f4fff8; padding: 12px; min-width: 0; }
 .filters > div { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -20,5 +24,5 @@
 .more { display: block; margin: 24px auto; }
 .section :focus-visible { outline: 2px solid #a5edc2; outline-offset: 4px; }
 @media(max-width: 800px) { .grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; } }
-@media(max-width: 400px) { .card { padding: 8px; } .card strong { font-size: 13px; } }
+@media(max-width: 400px) { .card { padding: 8px; } .card strong { font-size: 13px; } .section header { flex-wrap: wrap; } }
 @media(prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }

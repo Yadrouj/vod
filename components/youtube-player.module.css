@@ -1,0 +1,101 @@
+.guidance {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  border: 1px solid #e66f6f;
+  border-radius: 10px;
+  background: #231719;
+  color: #f5eff0;
+}
+
+.downloadCta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 14px 16px;
+  border-radius: 9px;
+  background: #a52338;
+  color: #fff;
+  cursor: pointer;
+  list-style: none;
+}
+
+.downloadCta::-webkit-details-marker { display: none; }
+.downloadCta:hover { background: #8c1c2e; }
+.downloadCta > svg { flex-shrink: 0; }
+.downloadCta > span { display: grid; gap: 5px; min-width: 0; }
+.downloadCta strong { font-size: 16px; line-height: 1.5; }
+.downloadCta small { font-size: 12px; line-height: 1.8; }
+.chevron { margin-inline-start: auto; }
+.guidance[open] .chevron { transform: rotate(180deg); }
+
+.body {
+  display: grid;
+  gap: 14px;
+  padding: clamp(14px, 2vw, 20px);
+  font-size: 13px;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+}
+
+.body p, .body ol { margin: 0; }
+.body ol { padding-inline-start: 22px; }
+.body li + li { margin-top: 7px; }
+.body a { color: #ffc2cc; text-decoration: underline; text-underline-offset: 3px; }
+.body code { unicode-bidi: isolate; }
+.body label { font-weight: 700; }
+
+.commandRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.command {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 88px;
+  padding: 12px;
+  border: 1px solid #80636b;
+  border-radius: 6px;
+  background: #0e0b0c;
+  color: #fff;
+  font: 13px/1.8 ui-monospace, monospace;
+  resize: vertical;
+  overflow-wrap: anywhere;
+}
+
+.copyButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #ffc2cc;
+  border-radius: 6px;
+  background: #44242c;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.copyButton:hover { background: #65303d; }
+.copyStatus { min-height: 25px; color: #f4dce2; }
+.testResult { padding: 12px; border-inline-start: 3px solid #ffc26f; background: #35291a; color: #ffe0b1; }
+.unavailable { position: relative; z-index: 1; margin: 0; color: #f4dce2; font-size: 13px; line-height: 1.8; }
+
+.downloadCta:focus-visible, .copyButton:focus-visible, .command:focus-visible, .body a:focus-visible {
+  outline: 3px solid #ffd08a;
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .commandRow { grid-template-columns: minmax(0, 1fr); }
+  .copyButton { width: 100%; }
+  .downloadCta { padding: 12px; gap: 9px; }
+}

@@ -50,11 +50,12 @@ export function assessCapacity(ready, loadAverage, limits = {}) {
 
 export const DAILY_JOBS = [
   { id: "news", script: "scripts/scrape-vod-news.mjs", minutes: 5 },
+  { id: "iran-box-office", script: "scripts/refresh-iran-box-office.mjs", minutes: 4 },
   { id: "imdb-trending", script: "scripts/refresh-imdb-trending.mjs", minutes: 8 },
   { id: "video", script: "scripts/sync-vod-catalog.mjs", minutes: 35 },
   { id: "f2my", script: "scripts/scrape-f2my-catalog.mjs", minutes: 25, args: ["--skip-imdb-lookup", "--concurrency=1", "--archive-concurrency=1", "--limit=80"] },
   { id: "curated-video", script: "scripts/refresh-curated-vod.mjs", minutes: 15 },
-  { id: "public-video", script: "scripts/refresh-public-vod.mjs", minutes: 30 },
+  { id: "public-video", script: "scripts/refresh-public-vod.mjs", minutes: 26 },
   { id: "public-archives", script: "scripts/refresh-public-archives.mjs", minutes: 8 },
   { id: "episode-images", script: "scripts/audit-series-episode-images.mjs", minutes: 14, args: ["--all", "--resume", "--retry-incomplete", "--concurrency=2"] },
   { id: "episode-images-tmdb", script: "scripts/scrape-tmdb-episode-images.mjs", minutes: 14, args: ["--partial-only", "--limit=50"] },

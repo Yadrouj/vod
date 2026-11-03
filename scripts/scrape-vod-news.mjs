@@ -3,9 +3,10 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseBoxOfficeTable } from "./lib/box-office.mjs";
+import { buildDailyNews } from "./lib/daily-news.mjs";
+import { acquireWorkerLock, runWorkerCli } from "./lib/worker-lock.mjs";
 
-const OUT_FILE = process.argv[2] || path.join(process.env.VOD_DATA_DIR || "public/data", "vod-news.json");
-const LIMIT = Number(process.env.VOD_NEWS_LIMIT || 18);
+const OUT_FILE = process.argv.slice(2).find(arg => !arg.startsWith('--')) || path.join(process.env.VOD_DATA_DIR || "public/data", "vod-news.json");
 const USER_AGENT = "Mozilla/5.0 SarvNema News Browser";
 
 const releaseWindow = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date());
@@ -33,7 +34,7 @@ const IMDb_PAGES = [
   { category: "imdb", url: "https://www.imdb.com/news/tv/" },
 ];
 
-async function main() {
+async function refreshNews() {
   const items = [];
   const sources = [];
   const failures = [];
@@ -79,12 +80,13 @@ async function main() {
   }
 
   const previousItems = (previous.items || []).filter(item => process.env.VOD_NEWS_INCLUDE_ARCHIVE_UPDATES === "1" || item.source !== "SarvNema monitor");
-  const selectedItems = selectNews(items, previousItems, LIMIT);
   if (!selectNews(items).length) throw new Error("No dated news was retrieved; preserving the previous news file.");
+  const daily = buildDailyNews(items, { ...previous, items: previousItems });
+  const selectedItems = daily.items;
   const enrichedItems = [];
   for (const item of selectedItems) {
     // Feed images are enough; avoid fetching each publisher twice or crawling 18 sites concurrently.
-    const imageUrl = item.imageUrl || (/^https:\/\//i.test(item.url) && !item.url.includes("news.google.com") ? await findOpenGraphImage(item.url) : null);
+    const imageUrl = item.imageUrl || (enrichedItems.length < 10 && /^https:\/\//i.test(item.url) && !item.url.includes("news.google.com") ? await findOpenGraphImage(item.url) : null);
     enrichedItems.push({ ...item, imageUrl });
   }
 
@@ -100,6 +102,8 @@ async function main() {
     generatedAt: new Date().toISOString(),
     sources,
     failures, feedStatus, boxOffice,
+    daily: daily.daily,
+    history: daily.history.map(batch => ({ ...batch, items: batch.items.map(item => enrichedItems.find(enriched => enriched.url === item.url) ?? item) })),
     items: enrichedItems,
   };
 
@@ -107,7 +111,19 @@ async function main() {
   const temporary = `${OUT_FILE}.${process.pid}.tmp`;
   await writeFile(temporary, JSON.stringify(payload));
   await rename(temporary, OUT_FILE);
-  console.log(JSON.stringify({ outFile: OUT_FILE, items: payload.items.length, sources: payload.sources.length }, null, 2));
+  console.log(JSON.stringify({ outFile: OUT_FILE, items: payload.items.length, sources: payload.sources.length, daily: payload.daily }, null, 2));
+  // Retry short batches on the next scheduled check, never manufacture headlines.
+  if (daily.daily.state !== 'complete') process.exitCode = 1;
+}
+
+async function main() {
+  const lockPath = path.join(path.dirname(OUT_FILE), '.vod-news.lock');
+  await mkdir(path.dirname(lockPath), { recursive: true });
+  const lock = await acquireWorkerLock(lockPath);
+  if (!lock) throw new Error('A news refresh is already running (or its lock cannot be verified).');
+  try {
+    await refreshNews();
+  } finally { await lock.release(); }
 }
 
 async function loadReleaseUpdates() {
@@ -284,5 +300,5 @@ export function selectNews(fresh, previous = [], limit = 18, now = Date.now()) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  main().catch((error) => { console.error(error); process.exitCode = 1; });
+  runWorkerCli(path.join(path.dirname(OUT_FILE), '.vod-news.lock'), main).catch((error) => { console.error(error); process.exitCode = 1; });
 }
