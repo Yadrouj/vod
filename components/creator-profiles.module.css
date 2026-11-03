@@ -1,0 +1,52 @@
+.page { --creator-accent: #e8ca77; padding: 28px 0 120px; overflow-wrap: anywhere; }
+.music { --creator-accent: #a5edc2; }
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 28px; }
+.top a, .links a, .tabs a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 16px; border-radius: 999px !important; color: var(--creator-accent); background: #ffffff08; border: 1px solid #ffffff15; text-decoration: none; }
+.intro { max-width: 780px; margin: 36px 0; }
+.eyebrow { color: var(--creator-accent); font-size: 13px; }
+.intro h1 { font-size: clamp(28px, 5vw, 56px); line-height: 1.4; margin: 12px 0; }
+.intro p, .note { color: #b7b9b3; line-height: 1.9; font-size: 14px; }
+.search { display: flex; gap: 8px; padding: 8px; border: 1px solid #ffffff22; border-radius: 22px !important; background: #ffffff05; max-width: 700px; margin: 24px 0; }
+.search input { min-width: 0; flex: 1; width: 100%; background: transparent; border: 0; color: #fff; font: inherit; padding: 8px 12px; border-radius: 14px !important; }
+.search button { flex: 0 0 auto; min-height: 44px; background: var(--creator-accent); border: 0; color: #151913; font: inherit; padding: 8px 18px; border-radius: 16px !important; cursor: pointer; }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 32px; }
+.tabs [aria-current=page] { color: #141711; background: var(--creator-accent); }
+.grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; }
+.card { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 0; padding: 20px 14px; border: 1px solid #ffffff12; border-radius: 24px !important; background: linear-gradient(145deg,#ffffff08,#ffffff02); text-decoration: none; color: #fff; text-align: center; }
+.card strong { font-size: 17px; line-height: 1.6; }
+.card small { color: #b7b9b3; line-height: 1.7; }
+.card :global(.creator-portrait) { width: min(100%, 150px); aspect-ratio: 1; }
+.page :global(.creator-portrait), .portrait :global(.creator-portrait) { display: grid; position: relative; overflow: hidden; flex: 0 0 auto; border-radius: 50% !important; background: #26312b; place-items: center; }
+.page :global(.creator-portrait img), .portrait :global(.creator-portrait img) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.page :global(.creator-portrait > span), .portrait :global(.creator-portrait > span) { font-size: 46px; color: #e6dbc3; }
+.hero { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 32px; align-items: center; padding: 32px; border-radius: 28px !important; border: 1px solid #ffffff12; background: radial-gradient(ellipse at 0 0,#77705e22,transparent 80%),#121611; }
+.hero :global(.creator-portrait) { width: 180px; height: 180px; }
+.hero h1 { font-size: clamp(28px,4vw,50px); margin: 8px 0; line-height: 1.4; }
+.hero p { color: #bdc1b7; line-height: 1.8; }
+.links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+.bio { margin: 28px 0; padding: 24px; border: 1px solid #ffffff12; border-radius: 22px !important; background: #ffffff03; }
+.bio p { line-height: 2; color: #c4c8bf; }
+.bio summary { cursor: pointer; color: var(--creator-accent, #a5edc2); min-height: 44px; padding: 10px 0; }
+.bio h2, .section h2 { font-size: clamp(20px,3vw,28px); line-height: 1.6; }
+.section { margin-top: 40px; scroll-margin-top: 30px; }
+.works { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 16px; }
+.work { display: flex; flex-direction: column; gap: 8px; min-width: 0; text-decoration: none; color: #fff; padding: 10px; border: 1px solid #ffffff12; border-radius: 18px !important; background: #ffffff04; }
+.work img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 12px !important; background: #222; }
+.work strong { line-height: 1.7; font-size: 14px; }
+.work small { color: #b7b9b3; line-height: 1.7; }
+.records { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
+.record { min-width: 0; padding: 14px; border-radius: 18px !important; border: 1px solid #ffffff12; background: #ffffff04; }
+.record img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px !important; background: #20251f; }
+.record strong { display: block; line-height: 1.6; margin: 12px 0 6px; }
+.record small { display: block; color: #b7b9b3; font-size: 12px; line-height: 1.8; }
+.record a { display: inline-flex; align-items: center; min-height: 44px; color: var(--creator-accent, #a5edc2); margin-top: 8px; }
+.record mark { display: inline-block; background: #ffffff0b; color: #d4c7a1; padding: 5px 9px; border-radius: 8px !important; font-size: 11px; }
+.record img.storeBadge { width: 130px; max-width: 100%; height: 44px; aspect-ratio: auto; object-fit: contain; background: transparent; border-radius: 0 !important; }
+.portrait { --creator-accent: #a5edc2; }
+.portrait :global(.music-artist-hero > .creator-portrait) { width: 160px; height: 160px; }
+.page :focus-visible, .portrait :focus-visible { outline: 2px solid var(--creator-accent); outline-offset: 4px; }
+@media (hover:hover) { .card:hover, .work:hover { border-color: var(--creator-accent); background: #ffffff0c; } }
+@media(max-width:1050px) { .grid,.works { grid-template-columns: repeat(4,minmax(0,1fr)); } .records { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media(max-width:700px) { .page { padding-top: 16px; } .grid,.works,.records { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; } .card { padding: 16px 10px; } .card strong { font-size: 15px; } .card small { font-size: 11px; } .intro { margin-top: 22px; } .hero { grid-template-columns: 80px minmax(0,1fr); padding: 18px; gap: 16px; } .hero :global(.creator-portrait) { width: 80px; height: 80px; } .bio { padding: 18px; } .record { padding: 10px; } .search button { padding: 8px 12px; } .work { padding: 8px; } }
+@media(prefers-reduced-motion:no-preference) { .card,.work { transition: border-color .15s, background .15s; } }
+@media(max-width:700px) { .portrait :global(.music-artist-hero > .creator-portrait) { width: 80px; height: 80px; } }

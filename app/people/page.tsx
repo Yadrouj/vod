@@ -39,6 +39,7 @@ export default async function PeoplePage() {
               <span>{formatNumber(topPeople.totalPeople, locale)} {t.people.people}</span>
             </div>
             <h1>{t.people.pageTitle}</h1>
+            <Link className="pill" href="/people/directors">۱۰۰ کارگردان برجسته؛ معرفی و تمام آثار مرتبط ←</Link>
           </div>
         </div>
       </section>

@@ -4,6 +4,7 @@ import { SITE_URL } from "@/lib/seo";
 import { loadVodIndex } from "@/lib/vod-index";
 import { loadMagazine } from '@/lib/magazine';
 import { loadMoodPlaylists } from '@/lib/mood-playlists';
+import { loadCreatorProfiles } from '@/lib/creator-profiles';
 
 // Stay below Google's 50,000-URL / 50MB sitemap limit while leaving room for
 // route growth. robots.txt advertises every generated part.
@@ -17,17 +18,17 @@ export async function sitemapEntriesForPart(index: number): Promise<MetadataRout
 }
 
 export async function sitemapPartCount() {
-  const [vod, music, magazine, playlists] = await Promise.all([loadVodIndex(), loadMusicIndex(), loadMagazine(), loadMoodPlaylists()]);
-  const staticCount = 12;
+  const [vod, music, magazine, playlists, creators] = await Promise.all([loadVodIndex(), loadMusicIndex(), loadMagazine(), loadMoodPlaylists(), loadCreatorProfiles()]);
+  const staticCount = 14;
   const vodCount = vod.items.filter((item) => item.linksCount > 0 || Boolean(item.posterUrl) || Boolean(item.overview)).length;
   const trackCount = music.tracks.filter((track) => track.sources.some((source) => source.available !== false)).length;
-  const artistCount = music.artists.filter((artist) => artist.trackIds.length > 0).length;
-  const count = staticCount + vodCount + trackCount + artistCount + 7 + magazine.articles.length + playlists.playlists.length + 2 + new Set(magazine.articles.map(a => a.category)).size;
+  const artistCount = new Set([...music.artists.filter((artist) => artist.trackIds.length > 0).map(artist => artist.slug), ...creators.singers.map(profile => profile.slug)]).size;
+  const count = staticCount + vodCount + trackCount + artistCount + creators.directors.length + 7 + magazine.articles.length + playlists.playlists.length + 2 + new Set(magazine.articles.map(a => a.category)).size;
   return Math.max(1, Math.ceil(count / SITEMAP_LIMIT));
 }
 
 async function allEntries(): Promise<SitemapEntry[]> {
-  const [vod, music, magazine, playlists] = await Promise.all([loadVodIndex(), loadMusicIndex(), loadMagazine(), loadMoodPlaylists()]);
+  const [vod, music, magazine, playlists, creators] = await Promise.all([loadVodIndex(), loadMusicIndex(), loadMagazine(), loadMoodPlaylists(), loadCreatorProfiles()]);
   const vodUpdatedAt = validDate(vod.generatedAt);
   const musicUpdatedAt = validDate(music.updatedAt);
   const entries: SitemapEntry[] = [
@@ -43,6 +44,8 @@ async function allEntries(): Promise<SitemapEntry[]> {
     entry("/mag/about", validDate('2026-10-02'), 0.5, "monthly"),
     entry("/music/collections", musicUpdatedAt, 0.75, "weekly"),
     entry("/people", vodUpdatedAt, 0.65, "weekly"),
+    entry('/people/directors', validDate(creators.researchedAt), 0.8, 'monthly'),
+    entry('/music/artists/top-100', validDate(creators.researchedAt), 0.8, 'monthly'),
   ];
 
   for (const item of vod.items) {
@@ -81,6 +84,8 @@ async function allEntries(): Promise<SitemapEntry[]> {
   for (const article of magazine.articles) entries.push({ ...entry(`/mag/${article.slug}`, validDate(article.modifiedAt), 0.8, 'monthly'), images: [new URL(article.image, SITE_URL).href] });
   for (const category of new Set(magazine.articles.map(a => a.category))) entries.push(entry(`/mag/topics/${category}`, validDate(magazine.updatedAt), 0.7, 'daily'));
   for (const playlist of playlists.playlists) entries.push(entry(`/music/collections/${encodeURIComponent(playlist.id)}`, validDate(playlist.updatedAt), 0.65, 'weekly'));
+  for (const profile of creators.directors) entries.push({...entry(`/person/${profile.id}`, validDate(profile.researchedAt),0.7,'monthly'),images:profile.imageUrl?[profile.imageUrl]:undefined});
+  for (const profile of creators.singers) entries.push({...entry(`/music/artists/${encodeURIComponent(profile.slug)}`, validDate(profile.researchedAt),0.7,'monthly'),images:profile.imageUrl?[profile.imageUrl]:undefined});
   return [...new Map(entries.map((item) => [item.url, item])).values()];
 }
 

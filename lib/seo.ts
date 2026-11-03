@@ -125,6 +125,7 @@ export function musicMetadata(track: MusicTrack): Metadata {
 
 export function artistMetadata(artist: MusicArtist, trackCount: number): Metadata {
   const name = artist.name;
+  if (trackCount === 0) return titleMetadata({title:`${name}؛ معرفی و آثار`,description:artist.bio || `معرفی ${name} و انتشارهای مرتبط؛ هنوز فایل قابل‌پخشی از این هنرمند در آرشیو سرونما نداریم.`,pathname:`/music/artists/${encodeURIComponent(artist.slug)}`,image:artist.profileImageUrl || artist.coverUrl,keywords:[name,'معرفی خواننده','آثار هنرمند']});
   const description = `${P.songs} ${name}; پخش آنلاین و ${P.downloadSong}، ${P.albums}، ${P.musicVideo}ها و پلی‌لیست‌های مرتبط در ${BRAND_NAME}. ${trackCount.toLocaleString("fa-IR")} اثر از آرشیو موسیقی.`;
   const keywords = uniqueSeoValues([
     `${P.songs} ${name}`,
@@ -187,7 +188,7 @@ export function musicJsonLd(track: MusicTrack) {
   return { "@context": "https://schema.org", "@graph": [entity, breadcrumbJsonLd([{ name: P.music, pathname: "/music" }, { name: P.artists, pathname: "/music/artists" }, { name: track.persianTitle || track.title, pathname: `/music/${track.id}` }])] };
 }
 
-export function artistJsonLd(artist: MusicArtist, trackCount: number) {
+export function artistJsonLd(artist: MusicArtist, trackCount: number, isPerson = false) {
   const entity = {
     "@type": "ProfilePage",
     "@id": absoluteUrl(`/music/artists/${encodeURIComponent(artist.slug)}#profile`),
@@ -195,7 +196,7 @@ export function artistJsonLd(artist: MusicArtist, trackCount: number) {
     name: `${P.songs} ${artist.name}`,
     description: cleanSeoText(artist.bio, 500) || `${P.home} ${P.artists} ${artist.name} با ${trackCount.toLocaleString("fa-IR")} ${P.song} و ${P.musicVideo}.`,
     image: uniqueSeoValues([artist.profileImageUrl, artist.coverUrl]),
-    mainEntity: { "@type": "MusicGroup", name: artist.name, url: absoluteUrl(`/music/artists/${encodeURIComponent(artist.slug)}`), sameAs: uniqueSeoValues([artist.profileSourceUrl, artist.sourceUrl]) },
+    mainEntity: { "@type": isPerson ? "Person" : "MusicGroup", name: artist.name, url: absoluteUrl(`/music/artists/${encodeURIComponent(artist.slug)}`), sameAs: uniqueSeoValues([artist.profileSourceUrl, artist.sourceUrl]) },
   };
   return { "@context": "https://schema.org", "@graph": [entity, breadcrumbJsonLd([{ name: P.music, pathname: "/music" }, { name: P.artists, pathname: "/music/artists" }, { name: artist.name, pathname: `/music/artists/${encodeURIComponent(artist.slug)}` }])] };
 }
