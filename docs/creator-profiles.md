@@ -108,4 +108,8 @@ For the public static gaps download, also ship `public/data/creator-music-gaps.j
 with the web artifact. Rebuild/restart normally, then verify both collection pages,
 sample profiles, zero-track cases and the main sitemap parts. The sitemap includes
 the two hubs and all 200 canonical profiles, including metadata-only singers.
+Both `watch-party-server.ts` and `infra/nginx.conf` make an **exact-path exception**
+for the small metadata-only gaps download. All other `/data/` catalogs remain
+blocked. Ship both changes together when using the bundled Nginx configuration;
+validate `nginx -t` in that deployment environment before reloading it.
 **This task does not deploy to the production server or post to Telegram.**

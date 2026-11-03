@@ -358,7 +358,9 @@ const httpServer = createServer((request, response) => admission.run(request, re
     response.end(JSON.stringify({ rooms: roomsForDirectory, serverNow: Date.now() }));
     return;
   }
-  if (!dev && pathname?.startsWith("/data/")) {
+  // This explicitly public metadata-only report is linked from the singer hub.
+  // Keep full catalogs and every other /data/ file protected in production.
+  if (!dev && pathname?.startsWith("/data/") && pathname !== "/data/creator-music-gaps.json") {
     response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
     response.end("Not found");
     return;
