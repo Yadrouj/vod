@@ -1,5 +1,5 @@
 import type { VodLink } from "./types";
-import { isDonyayeSerial } from "./playback-help";
+import { isDonyayeSerial, playbackCodecRisk } from "./playback-help";
 import { sourceLinkExpiry } from "./alternative-source-links.mjs";
 
 export type PlaybackLinkOptions = {
@@ -39,6 +39,8 @@ export function playableLinks(
 }
 
 function selectPlaybackVersions(mediaLinks: VodLink[], options: PlaybackLinkOptions): VodLink[] {
+  // Stable within each provider tier; keep risky releases selectable manually.
+  mediaLinks = [...mediaLinks].sort((a, b) => playbackCodecRisk(a) - playbackCodecRisk(b));
   if (options.includeAlternateFiles) {
     const preferred = selectPlaybackVersions(mediaLinks, { ...options, includeAlternateFiles: false });
     const seen = new Set(preferred.map(link => link.url));

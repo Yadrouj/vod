@@ -9,6 +9,12 @@ export function samePlaybackEpisode(a: Partial<VodLink>, b: Partial<VodLink>) {
   return (a.season ?? null) === (b.season ?? null) && (a.episode ?? null) === (b.episode ?? null);
 }
 
+/** Filename hints, not a codec guarantee. Prefer conventional releases for auto-play. */
+export function playbackCodecRisk(link: Partial<VodLink>) {
+  const text = [link.url?.split(/[?#]/)[0], link.fileName, link.release].join(" ");
+  return Number(/(?:^|[\W_])(?:6CH|8CH|AC3|EAC3|DTS|TrueHD|Atmos|x265|HEVC|10bit)(?:[\W_]|$)/i.test(text));
+}
+
 /** Keep explicit episode selections and resume progress after a verified CDN move. */
 export function matchesPlaybackSource(link: Partial<VodLink>, url?: string) {
   return Boolean(url && (link.url === url || link.sourceOriginalUrl === url));
@@ -29,7 +35,11 @@ export function preferredPlaybackIndex(sources: VodLink[], requested?: string, r
   if (explicit >= 0) return explicit;
   const previous = sources.findIndex(link => matchesPlaybackSource(link, remembered));
   if (previous < 0) return sources.length ? 0 : -1;
-  if (!isDonyayeSerial(sources[previous])) return previous;
+  if (!isDonyayeSerial(sources[previous])) {
+    const safer = sources.findIndex(link => !isDonyayeSerial(link) && samePlaybackEpisode(link, sources[previous])
+      && playbackCodecRisk(link) < playbackCodecRisk(sources[previous]));
+    return safer >= 0 ? safer : previous;
+  }
   const alternative = sources.findIndex(link => !isDonyayeSerial(link) && samePlaybackEpisode(link, sources[previous]));
   return alternative >= 0 ? alternative : previous;
 }

@@ -8,6 +8,19 @@ const link = (url: string, extra: Partial<VodLink> = {}) => ({ url, label: "Sour
 const regional = link("https://dls3.aparatchi-dlcenter.top/DonyayeSerial/Film.1080p.mp4", { sourceProvider: "donyayeserial" });
 const alternative = link("https://sr.moviesho.com/Film.720p.mkv", { sourceProvider: "moviesho" });
 
+test("auto-play prefers conventional audio within provider and episode, without removing 6CH", () => {
+  const surround = link('https://cdn.example/Friends.S01E01.1080p.6CH.mkv', { season: 1, episode: 1 });
+  const stereo = link('https://cdn.example/Friends.S01E01.720p.mkv', { season: 1, episode: 1 });
+  const nextEpisode = link('https://cdn.example/Friends.S01E02.720p.mkv', { season: 1, episode: 2 });
+  for (const select of [playableLinks, roomPlayableLinks]) {
+    assert.deepEqual(select([surround, nextEpisode, stereo], { isSeries: true }), [stereo, surround, nextEpisode]);
+  }
+  assert.equal(preferredPlaybackIndex([stereo, surround], undefined, surround.url), 0);
+  assert.equal(preferredPlaybackIndex([stereo, surround], surround.url), 1);
+  assert.equal(preferredPlaybackIndex([nextEpisode, surround], undefined, surround.url), 1);
+  assert.deepEqual(playableLinks([regional, surround]), [surround, regional]);
+});
+
 test("alternative providers win even when DonyayeSerial has the native MP4 or higher quality", () => {
   for (const includeAlternateFiles of [false, true]) {
     assert.deepEqual(playableLinks([regional, alternative], { includeAlternateFiles }), [alternative, regional]);
