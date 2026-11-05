@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import test from "node:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { YouTubeSource } from "../../lib/old-iranian-media";
-import { youtubeDownloadGuide } from "../../components/youtube-download-guide";
+import { canonicalYouTubeUrl, youtubeDownloadGuide } from "../../components/youtube-download-guide";
 
 const require = createRequire(import.meta.url);
 require.extensions[".css"] = module => { module.exports = {}; };
@@ -48,7 +48,9 @@ test("player renders a native disclosure, labeled read-only command and honest l
   assert.match(markup, /دانلود مستقیم در مرورگر نیست/);
   assert.match(markup, /موفقیت دانلود تضمین نمی‌شود/);
   assert.match(markup, /هیچ دانلود موفقی تأیید نشده/);
-  assert.match(markup, /Failed to extract any player response/);
+  assert.match(markup, /عدم اتصال این شبکه/);
+  assert.match(markup, /۲۲ یا بالاتر/);
+  assert.match(markup, /کپی لینک یوتیوب/);
   assert.match(markup, /دور نمی‌زنند/);
   assert.match(markup, /مجوز نگهداری/);
   assert.match(markup, /role="status" aria-live="polite" aria-atomic="true"/);
@@ -59,6 +61,16 @@ test("player renders a native disclosure, labeled read-only command and honest l
   assert.match(markup, /npx yoinks@0\.3\.1 &quot;https:\/\/www\.youtube\.com\/watch\?v=YE7VzlLtp-4&quot;/);
   assert.match(markup, /aria-label="کپی دستور دانلود Big Buck Bunny"/);
   assert.doesNotMatch(markup, /<iframe|download="|\/api\//);
+});
+
+test("all YouTube actions use the canonical video URL, never a search or injected source link", () => {
+  const markup = renderToStaticMarkup(<YouTubePlayer source={{ ...source, sourceUrl: "https://example.test/search?query=film" }} title={source.title} />);
+  assert.doesNotMatch(markup, /example\.test/);
+  assert.match(markup, /https:\/\/www\.youtube\.com\/watch\?v=YE7VzlLtp-4/);
+  assert.equal(canonicalYouTubeUrl("YE7VzlLtp-4\n"), null);
+  const invalid = renderToStaticMarkup(<YouTubePlayer source={{ ...source, videoId: "invalid" }} title={source.title} />);
+  assert.match(invalid, /شناسهٔ این ویدیوی YouTube معتبر نیست/);
+  assert.doesNotMatch(invalid, /<a |<iframe|npx yoinks|<textarea/);
 });
 
 test("original source, channel and identification evidence remain attributed", () => {

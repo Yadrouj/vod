@@ -77,7 +77,7 @@ test("YouTube guidance: responsive keyboard UI, safe clipboard fallback and offi
           page.on("download", item => downloads.push(item.url()));
           await page.goto(origin, { waitUntil: "networkidle" });
           const guidance = page.locator("[data-youtube-download-guidance]");
-          const summary = guidance.locator("summary");
+          const summary = guidance.locator(":scope > summary");
           await summary.waitFor();
           assert.equal(await page.locator("iframe").count(), 0, "embed remains click-to-load");
           assert.equal(externalRequests.length, 0);
@@ -102,8 +102,9 @@ test("YouTube guidance: responsive keyboard UI, safe clipboard fallback and offi
           assert.equal(await page.locator("iframe").count(), 0, "copy never starts playback");
           assert.equal(downloads.length, 0, "copy never starts a browser download");
           assert.equal(externalRequests.length, 0, "opening/copying guidance never contacts a downloader or YouTube");
+          await guidance.getByText("وضعیت بررسی ابزار دانلود", { exact: true }).click();
           assert.match(await guidance.innerText(), /هیچ دانلود موفقی تأیید نشده/);
-          assert.match(await guidance.innerText(), /Failed to extract any player response/);
+          assert.match(await guidance.innerText(), /عدم اتصال این شبکه/);
           assert.match(await guidance.innerText(), /دور نمی‌زنند/);
           assert.equal(await guidance.getByRole("link", { name: "ویدیوی اصلی در YouTube" }).getAttribute("href"), source.sourceUrl);
           await page.screenshot({ path: `.media-cache/youtube-ui-tests/guidance-${width}.png`, fullPage: true });
@@ -113,6 +114,16 @@ test("YouTube guidance: responsive keyboard UI, safe clipboard fallback and offi
             await page.getByRole("status").filter({ hasText: "کپی خودکار ممکن نشد" }).waitFor();
             assert.equal(await field.evaluate(node => document.activeElement === node && node.selectionStart === 0 && node.selectionEnd === node.value.length), true, mode);
           }
+          await page.evaluate(() => { window.clipboardMode = "success"; });
+          const copyLink = page.getByRole("button", { name: "کپی لینک یوتیوب Big Buck Bunny", exact: true });
+          await copyLink.click();
+          assert.equal(await page.evaluate(() => window.copiedCommand), source.sourceUrl);
+          await page.getByRole("status").filter({ hasText: "لینک کپی شد" }).waitFor();
+          await page.evaluate(() => { window.clipboardMode = "reject"; });
+          await copyLink.click();
+          const sourceField = page.getByLabel("لینک مستقیم همین ویدیو در YouTube", { exact: true });
+          assert.equal(await sourceField.inputValue(), source.sourceUrl);
+          assert.equal(await sourceField.evaluate(node => document.activeElement === node && node.selectionStart === 0 && node.selectionEnd === node.value.length), true);
           await page.getByRole("button", { name: "Play Big Buck Bunny on YouTube", exact: true }).click();
           await page.locator("iframe").waitFor();
           assert.equal(await page.locator("iframe").getAttribute("src"), "https://www.youtube-nocookie.com/embed/YE7VzlLtp-4?rel=0&playsinline=1&autoplay=1");
@@ -120,7 +131,7 @@ test("YouTube guidance: responsive keyboard UI, safe clipboard fallback and offi
           await page.evaluate(() => window.renderSource({ ...window.fixtureSource, videoId: "aqz-KE-bpKQ" }, "Blender alternate version"));
           await page.waitForFunction(() => document.querySelector("textarea")?.value.includes("aqz-KE-bpKQ"));
           // A new video's keyed guidance intentionally starts collapsed.
-          await page.locator("[data-youtube-download-guidance] summary").click();
+          await page.locator("[data-youtube-download-guidance] > summary").click();
           assert.doesNotMatch(await page.getByRole("status").textContent(), /دستور کپی شد|کپی خودکار ممکن نشد/, "copy status resets for a new video");
           await page.evaluate(() => window.renderSource(window.fixtureSource, "Paris Has Fallen"));
           await page.getByText(/گزارش نقض حق نشر/).waitFor();

@@ -93,6 +93,7 @@
     "sync-music-catalog": "npm run scrape-musics-fa && npm run scrape-persian-classics && npm run scrape-aftab-foreign && npm run scrape-rozmusic && npm run clean-music-catalog && npm run audit-music-video-links",
     "audit-vod-links": "node scripts/audit-vod-links.mjs",
     "audit-playback-sources": "node --import tsx scripts/audit-playback-sources.ts",
+    "audit-youtube-sources": "node --import tsx scripts/audit-youtube-sources.ts",
     "enrich-vod-imdb": "node scripts/enrich-vod-imdb.mjs",
     "enrich-vod-images": "node scripts/enrich-vod-images.mjs"
   },

@@ -1,11 +1,49 @@
 # YouTube login and Yoinks investigation
 
-Latest local retest, November 3, 2026: the pinned repository's actual
-`download()` helper was run again on the same authorized Blender video.
-It failed while contacting YouTube (10-second connection timeout); no MP4
-was produced or verified. The evidence is in ignored
-`.media-cache/yoinks-tests/authorized-O63hfL/report.json`. This independent
-retest does not establish a working browser download or a login bypass.
+Latest local retest, November 5, 2026:
+
+- The published npm package `yoinks@0.3.1` was confirmed to identify the same
+  upstream repository. Its actual CLI help executed successfully on Node
+  `24.15.0`, in an isolated npm cache with installation scripts disabled:
+  `npm exec --yes --ignore-scripts --cache .media-cache/npm-yoinks --package=yoinks@0.3.1 -- yoinks --help`.
+  This verifies CLI startup/help, **not an interactive or successful download**.
+- The README and Yoinks package declare Node `>=18`, but the current direct
+  dependency `ink@7.1.0` (and resolved `7.1.1`) declares Node `>=22`. The UI
+  therefore explains the discrepancy and requires Node 22+ for this version.
+  Official npm metadata: <https://registry.npmjs.org/yoinks/0.3.1> and
+  <https://registry.npmjs.org/ink/7.1.0>.
+- The pinned repository's actual `download()` helper was rerun on the authorized
+  Blender clip. It failed with connection refused and produced no verified MP4.
+  DNS for YouTube, youtube-nocookie and ytimg resolved to a private network
+  address on this connection. Neither DNS nor system proxy settings were changed.
+  Raw ignored evidence: `.media-cache/yoinks-tests/authorized-qjq2c0/report.json`.
+  There is **no verified download success or working browser download service**.
+- The catalog-wide structural recheck found 827 YouTube references on 825 titles
+  (825 distinct IDs), with no invalid IDs, noncanonical stored links or known
+  under-one-hour references for feature-length titles. All 28,695 split title
+  files were inspected. Duration findings use existing metadata, not a fresh
+  extraction. Remote metadata checks were skipped when private DNS was detected;
+  existing references were not removed, replaced or marked available/deleted.
+- The player now provides an independent copyable canonical video link as well
+  as the pinned per-video Yoinks command, with mobile-safe fields and separate
+  clipboard feedback. An invalid ID exposes neither embed nor source action.
+  The current test status is in an optional nested disclosure, not an always-open
+  failure banner. Existing access/copyright restrictions remain unchanged.
+
+To repeat/export the read-only audit:
+
+```sh
+npm run audit-youtube-sources -- --remote --limit=50
+```
+
+Ignored outputs: `.media-cache/youtube-audit/report.json` and
+`.media-cache/youtube-audit/catalog-links.txt`. These are existing catalog
+references, not a claim that all uploads still play or can be downloaded.
+Public oEmbed metadata, if accessible, is also not proof of full runtime,
+movie identity, embed availability or download permission. The audit refuses
+private DNS and arbitrary video hosts, never follows metadata redirects, and
+does not change the catalog. New upload replacements require an independent
+identity/runtime review rather than guessing an ID.
 
 ## Implemented integration
 
@@ -170,7 +208,7 @@ node --import tsx --test scripts/tests/yoinks-authorized-smoke.test.mjs scripts/
 npx eslint scripts/yoinks-authorized-smoke.mjs scripts/tests/yoinks-authorized-smoke.test.mjs
 ```
 
-## UI regression verification
+## Historical UI regression verification (November 3)
 
 ```powershell
 node --import tsx --test scripts/tests/youtube-player.test.tsx scripts/tests/yoinks-authorized-smoke.test.mjs scripts/tests/old-iranian-youtube.test.ts scripts/tests/content-restrictions.test.ts
