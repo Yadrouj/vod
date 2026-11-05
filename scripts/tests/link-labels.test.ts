@@ -25,6 +25,16 @@ test("trailer-only titles do not enter the full online player", () => {
   assert.deepEqual(playableLinks([trailer]), []);
 });
 
+test("legacy trailer folders and source-specific preview names cannot masquerade as full releases", () => {
+  for (const asset of ["pnot/Trailers/tt0063227.mp4", "Barbie.Main.Trailer1.mp4", "Baska.Bir.Sen.Fragman.mp4", "The.Ex-Wife.First.Look..mp4", "Fay_et_Alexandre_Bande-annonce.mp4"]) {
+    const preview = link({ url: `https://cdn.example.test/${asset}`, mediaKind: "video" });
+    assert.deepEqual(playableLinks([preview], { includeAlternateFiles: true }), [], asset);
+    assert.deepEqual(roomPlayableLinks([preview]), [], asset);
+  }
+  const release = link({ url: "https://cdn.example.test/TrailerParkBoys.2006.1080p.mkv", quality: "1080p" });
+  assert.deepEqual(playableLinks([release]), [release]);
+});
+
 test("non-trailer stream URLs remain playable", () => {
   const stream = link({ url: "https://cdn.example.test/live/master.m3u8", mediaKind: "stream" });
 

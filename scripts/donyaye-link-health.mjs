@@ -9,7 +9,8 @@ export async function probeDonyayeMedia(source, { fetchImpl = fetch, timeoutMs =
     for (let redirect = 0; redirect < 5; redirect++) {
       const url = new URL(current);
       const approved = /^dls\d*\.(?:aparatchi-dlcenter|varzeshha3-uploader)\.top$/i.test(url.hostname)
-        || /^st\d+\.cartoonet\.ir$/i.test(url.hostname);
+        || /^st\d+\.cartoonet\.ir$/i.test(url.hostname)
+        || /^stream100[78]\.hashureplus\.com$/i.test(url.hostname);
       if (!approved || !/^https?:$/.test(url.protocol) || url.username || url.password) return { state: 'unapproved-redirect' };
       const response = await fetchImpl(current, { redirect: 'manual', signal: controller.signal,
         headers: { Range: 'bytes=0-1023', 'user-agent': 'SarvNema-Link-Refresh/1.0' } });

@@ -45,3 +45,31 @@ test("delivery alternatives are bounded to observed endpoints of the identical f
   }
   assert.deepEqual(mediaDeliveryRoutes(null), []);
 });
+
+test("every verified archive branch preserves the exact file, query and bounded delivery routes", async () => {
+  const bundle = JSON.parse(await readFile("lib/data/verified-source-bases.json", "utf8"));
+  const registry = applyVerifiedSourceBases({ version: 1, updatedAt: null, bases: {} });
+  const roots = new Set<string>();
+  for (const [id, value] of Object.entries(bundle.bases)) {
+    const base = value as { baseUrl: string; replaces: string[] };
+    roots.add(new URL(base.baseUrl).pathname);
+    const original = new URL("Series/Example/S02/Example.S02E03.720p.mkv?keep=signature", base.replaces[0]).href;
+    for (const relative of ["Series/Example/S02/Example.S02E03.720p.mkv?keep=signature", new URL(original).pathname.slice(1) + "?keep=signature"]) {
+      const link = { url: original, sourceOriginalUrl: original, sourceProvider: "f2my", sourceBaseId: id, sourceRelativePath: relative, season: 2, episode: 3 } as VodLink;
+      const result = rewriteSourceLink(link, registry);
+      const expected = new URL("Series/Example/S02/Example.S02E03.720p.mkv?keep=signature", base.baseUrl).href;
+      assert.equal(result.url, expected, `${id} must not double its rotating path`);
+      assert.equal(result.sourceOriginalUrl, original);
+      assert.equal(result.season, 2); assert.equal(result.episode, 3);
+      const routes = mediaDeliveryRoutes(result);
+      assert.equal(routes.length, 3); assert.equal(new Set(routes).size, 3);
+      for (const route of routes) {
+        assert.equal(new URL(route).pathname, new URL(expected).pathname);
+        assert.equal(new URL(route).search, "?keep=signature");
+      }
+      const manual = { ...registry, bases: { ...registry.bases, [id]: { ...registry.bases[id], baseUrl: "https://admin.example/custom/", manual: true } } };
+      assert.equal(rewriteSourceLink(link, manual).url, new URL(relative, "https://admin.example/custom/").href);
+    }
+  }
+  assert.equal(roots.size, 8);
+});

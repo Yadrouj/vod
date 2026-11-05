@@ -126,3 +126,7 @@ and expandable diagnostic text, with source URLs stripped from that text.
 Independent source review did not produce a verified public MP4 alternative:
 FamilyMovie's public search returned no Friends entry, and MiaMovies' online
 player required login. No protected downloads were extracted or imported.
+
+The subsequent [catalog-wide source audit](playback-source-audit.md) extends the
+verified delivery mapping to eight existing Film2Media branches and documents
+the check commands, exact scope and remaining unverified providers.

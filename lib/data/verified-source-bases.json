@@ -5,9 +5,189 @@
       "provider": "f2my",
       "label": "Film2Media direct CDN (pnot)",
       "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/pnot/",
-      "fallbackBases": ["https://edge07.tmk51.ir.cdn.ir/pnot/", "https://edge08.tmk51.ir.cdn.ir/pnot/"],
-      "replaces": ["https://bnrhd3fvb374s4bkwzxm54xf.abrtech.top/pnot/"],
-      "verifiedAt": "2026-11-05T15:40:44.494Z"
+      "fallbackBases": [
+        "https://edge07.tmk51.ir.cdn.ir/pnot/",
+        "https://edge08.tmk51.ir.cdn.ir/pnot/"
+      ],
+      "replaces": [
+        "https://bnrhd3fvb374s4bkwzxm54xf.abrtech.top/pnot/"
+      ],
+      "verifiedAt": "2026-11-05T17:32:49.151Z"
+    },
+    "f2my-1568e7c42348": {
+      "provider": "f2my",
+      "label": "Film2Media direct CDN (pnot)",
+      "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/pnot/",
+      "fallbackBases": [
+        "https://edge07.tmk51.ir.cdn.ir/pnot/",
+        "https://edge08.tmk51.ir.cdn.ir/pnot/"
+      ],
+      "replaces": [
+        "https://bnrhd3fvb374s4bkwzxm54xf.abrtech.top/pnot/",
+        "https://bnrhd3fvb374s4bkwzxm54xf.abrtech.top/"
+      ],
+      "verifiedAt": "2026-11-05T17:32:49.165Z"
+    },
+    "f2my-068bff17028c": {
+      "provider": "f2my",
+      "label": "Film2Media direct CDN (yA3f)",
+      "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/yA3f/",
+      "fallbackBases": [
+        "https://edge07.tmk51.ir.cdn.ir/yA3f/",
+        "https://edge08.tmk51.ir.cdn.ir/yA3f/"
+      ],
+      "replaces": [
+        "https://bvxbbajdhgxd9g87jwb463wx.abrtech.top/yA3f/"
+      ],
+      "verifiedAt": "2026-11-05T17:32:49.165Z"
+    },
+    "f2my-dc5e324d38e2": {
+      "provider": "f2my",
+      "label": "Film2Media direct CDN (yA3f)",
+      "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/yA3f/",
+      "fallbackBases": [
+        "https://edge07.tmk51.ir.cdn.ir/yA3f/",
+        "https://edge08.tmk51.ir.cdn.ir/yA3f/"
+      ],
+      "replaces": [
+        "https://bvxbbajdhgxd9g87jwb463wx.abrtech.top/yA3f/",
+        "https://bvxbbajdhgxd9g87jwb463wx.abrtech.top/"
+      ],
+      "verifiedAt": "2026-11-05T17:32:49.165Z"
+    },
+    "f2my-1524ad107bf1": {
+      "provider": "f2my",
+      "label": "Film2Media direct CDN (aG5p)",
+      "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/aG5p/",
+      "fallbackBases": [
+        "https://edge07.tmk51.ir.cdn.ir/aG5p/",
+        "https://edge08.tmk51.ir.cdn.ir/aG5p/"
+      ],
+      "replaces": [
+        "https://gnjx4q9pgkzymnchqbc3fy74.abrtech.top/aG5p/"
+      ],
+      "verifiedAt": "2026-11-05T17:32:49.165Z"
+    },
+    "f2my-0392af2c894c": {
+      "provider": "f2my",
+      "label": "Film2Media direct CDN (nP6z)",
+      "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/nP6z/",
+      "fallbackBases": [
+        "https://edge07.tmk51.ir.cdn.ir/nP6z/",
+        "https://edge08.tmk51.ir.cdn.ir/nP6z/"
+      ],
+      "replaces": [
+        "https://8u2b7r5zyxq4ng4dcg3bgh4q.abrtech.top/nP6z/"
+      ],
+      "verifiedAt": "2026-11-05T17:32:49.165Z"
+    },
+    "f2my-d41dde490207": {
+      "provider": "f2my",
+      "label": "Film2Media direct CDN (nP6z)",
+      "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/nP6z/",
+      "fallbackBases": [
+        "https://edge07.tmk51.ir.cdn.ir/nP6z/",
+        "https://edge08.tmk51.ir.cdn.ir/nP6z/"
+      ],
+      "replaces": [
+        "https://8u2b7r5zyxq4ng4dcg3bgh4q.abrtech.top/nP6z/",
+        "https://8u2b7r5zyxq4ng4dcg3bgh4q.abrtech.top/"
+      ],
+      "verifiedAt": "2026-11-05T17:32:49.165Z"
+    },
+    "f2my-3536855aac55": {
+      "provider": "f2my",
+      "label": "Film2Media direct CDN (oG4i)",
+      "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/oG4i/",
+      "fallbackBases": [
+        "https://edge07.tmk51.ir.cdn.ir/oG4i/",
+        "https://edge08.tmk51.ir.cdn.ir/oG4i/"
+      ],
+      "replaces": [
+        "https://zz6rb5sa7t84cqpedeeqwjw5.abrtech.top/oG4i/"
+      ],
+      "verifiedAt": "2026-11-05T17:32:49.165Z"
+    },
+    "f2my-ec686431f643": {
+      "provider": "f2my",
+      "label": "Film2Media direct CDN (oG4i)",
+      "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/oG4i/",
+      "fallbackBases": [
+        "https://edge07.tmk51.ir.cdn.ir/oG4i/",
+        "https://edge08.tmk51.ir.cdn.ir/oG4i/"
+      ],
+      "replaces": [
+        "https://zz6rb5sa7t84cqpedeeqwjw5.abrtech.top/oG4i/",
+        "https://zz6rb5sa7t84cqpedeeqwjw5.abrtech.top/"
+      ],
+      "verifiedAt": "2026-11-05T17:32:49.168Z"
+    },
+    "f2my-2649a6dc013e": {
+      "provider": "f2my",
+      "label": "Film2Media direct CDN (rD7g)",
+      "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/rD7g/",
+      "fallbackBases": [
+        "https://edge07.tmk51.ir.cdn.ir/rD7g/",
+        "https://edge08.tmk51.ir.cdn.ir/rD7g/"
+      ],
+      "replaces": [
+        "https://ymnyrfzzs84wqjrdxmmh85rn.abrtech.top/rD7g/"
+      ],
+      "verifiedAt": "2026-11-05T17:32:49.169Z"
+    },
+    "f2my-635fac545da2": {
+      "provider": "f2my",
+      "label": "Film2Media direct CDN (rD7g)",
+      "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/rD7g/",
+      "fallbackBases": [
+        "https://edge07.tmk51.ir.cdn.ir/rD7g/",
+        "https://edge08.tmk51.ir.cdn.ir/rD7g/"
+      ],
+      "replaces": [
+        "https://ymnyrfzzs84wqjrdxmmh85rn.abrtech.top/rD7g/",
+        "https://ymnyrfzzs84wqjrdxmmh85rn.abrtech.top/"
+      ],
+      "verifiedAt": "2026-11-05T17:32:49.170Z"
+    },
+    "f2my-e0764353040f": {
+      "provider": "f2my",
+      "label": "Film2Media direct CDN (hZ9r)",
+      "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/hZ9r/",
+      "fallbackBases": [
+        "https://edge07.tmk51.ir.cdn.ir/hZ9r/",
+        "https://edge08.tmk51.ir.cdn.ir/hZ9r/"
+      ],
+      "replaces": [
+        "https://hg4qjjmsn69twmtjk8va28kd.abrtech.top/hZ9r/"
+      ],
+      "verifiedAt": "2026-11-05T17:32:49.170Z"
+    },
+    "f2my-6d175c2c621d": {
+      "provider": "f2my",
+      "label": "Film2Media direct CDN (hZ9r)",
+      "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/hZ9r/",
+      "fallbackBases": [
+        "https://edge07.tmk51.ir.cdn.ir/hZ9r/",
+        "https://edge08.tmk51.ir.cdn.ir/hZ9r/"
+      ],
+      "replaces": [
+        "https://hg4qjjmsn69twmtjk8va28kd.abrtech.top/hZ9r/",
+        "https://hg4qjjmsn69twmtjk8va28kd.abrtech.top/"
+      ],
+      "verifiedAt": "2026-11-05T17:32:49.170Z"
+    },
+    "f2my-406a5747acba": {
+      "provider": "f2my",
+      "label": "Film2Media direct CDN (xG3m)",
+      "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/xG3m/",
+      "fallbackBases": [
+        "https://edge07.tmk51.ir.cdn.ir/xG3m/",
+        "https://edge08.tmk51.ir.cdn.ir/xG3m/"
+      ],
+      "replaces": [
+        "https://qpd2b8fxntfab8d5s3n9qtnc.abrtech.top/xG3m/"
+      ],
+      "verifiedAt": "2026-11-05T17:32:49.170Z"
     }
   }
 }

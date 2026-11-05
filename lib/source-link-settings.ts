@@ -126,7 +126,21 @@ function resolveSourceUrl(
   const sourceBase = configuredBase ?? equivalent?.base;
   if (!sourceBase?.baseUrl) return link.url;
   try {
-    const relativePath = equivalent?.relativePath ?? link.sourceRelativePath;
+    let relativePath = equivalent?.relativePath ?? link.sourceRelativePath;
+    // Legacy scraper IDs sometimes stored the rotating prefix twice (e.g.
+    // base=/pnot/, relative=pnot/Series/...). Only a bundled, verified mapping
+    // may recover the relative path from the unchanged original URL. Explicit
+    // admin destinations outside that mapping keep their existing semantics.
+    const repair = verifiedSourceBases.bases[link.sourceBaseId as keyof typeof verifiedSourceBases.bases];
+    if (repair && sourceBase.baseUrl === repair.baseUrl && link.sourceProvider === "f2my") {
+      try {
+        const original = new URL(link.sourceOriginalUrl || link.url);
+        const alias = repair.replaces.map(value => new URL(value))
+          .sort((a, b) => b.pathname.length - a.pathname.length)
+          .find(base => base.origin === original.origin && original.pathname.startsWith(base.pathname));
+        if (alias) relativePath = original.pathname.slice(alias.pathname.length).replace(/^\/+/, "") + original.search;
+      } catch { /* Preserve malformed/unregistered historical records. */ }
+    }
     return new URL(relativePath.replace(/^\/+/, ""), sourceBase.baseUrl).toString();
   } catch {
     return link.url;

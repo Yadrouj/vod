@@ -73,6 +73,20 @@ try {
       await page.waitForFunction(() => [...document.querySelectorAll("main video.player")].some(el => el.readyState >= 3 && !el.dataset.oldElement));
       assert.equal(await panel.count(), 0, "Retry creates a clean element and removes the previous codec failure");
       assert.deepEqual(errors, []);
+      // Receiving metadata is not enough while the user's play() is pending.
+      // A slow source must retain its watchdog and move to a bounded fallback,
+      // rather than silently waiting forever at 0:00 with no recovery controls.
+      await video.evaluate(el => {
+        el.pause(); el.dataset.pendingPlayback = "true";
+        Object.defineProperty(el, "readyState", { configurable: true, value: 1 });
+        el.play = () => new Promise(() => {});
+      });
+      await page.locator("main .pro-player:visible > button[data-player-ui]").click();
+      await video.evaluate(el => el.dispatchEvent(new Event("loadedmetadata")));
+      await page.locator("main .player-loading:visible").waitFor();
+      await page.clock.fastForward(9000);
+      await page.waitForFunction(() => [...document.querySelectorAll("main video.player")].some(el => !el.dataset.pendingPlayback && el.currentSrc.includes("edge07") && el.readyState >= 2));
+      assert.equal(await panel.count(), 0, "Pending playback survives metadata and recovers on another delivery route");
       // A room participant's local transport fallback must not change the
       // authoritative shared source, time, permissions, or episode.
       const host = io(origin, { transports: ["websocket"], autoConnect: false });
@@ -94,7 +108,7 @@ try {
         await page.waitForFunction(() => Math.abs((document.querySelector(".party-player-stage > video")?.currentTime ?? 0) - 17) < 1);
         assert.match(await page.locator(".party-player-stage > video").getAttribute("src"), /edge07/, "Shared seek still reaches the local alternate transport");
       } finally { host.disconnect(); }
-      console.log(JSON.stringify({ width, directCdn: true, automaticDeliveryFallback: true, boundedAttempts: true, differentServerRecovery: true, sameEpisode: true, noFalseStall: true, details: true, cleanRetry: true, roomLocalFallback: true }));
+      console.log(JSON.stringify({ width, directCdn: true, automaticDeliveryFallback: true, boundedAttempts: true, differentServerRecovery: true, sameEpisode: true, noFalseStall: true, details: true, cleanRetry: true, pendingPlayRecovery: true, roomLocalFallback: true }));
     } finally { await context.close(); }
   }
 } finally { await browser.close(); }

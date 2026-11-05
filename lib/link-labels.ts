@@ -236,7 +236,7 @@ function genericSeriesFileKey(link: VodLink) {
 
 function isTrailerLink(link: VodLink) {
   if (link.mediaKind === "trailer") return true;
-  return /(?:^|[._/\s-])(?:trailer|teaser|preview|promo|clip)(?:[._/\s-]|$)/i.test(
+  return /(?:^|[._/\s-])(?:trailers?|trailer\d+|teasers?|previews?|promos?|clips?|fragman|bande[._\s-]annonce|first[._\s-]look)(?:[._/\s-]|$)/i.test(
     `${link.label} ${link.fileName ?? ""} ${link.url}`,
   );
 }

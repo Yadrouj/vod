@@ -41,6 +41,7 @@ export function VodPlayer({
   const playerFrameRef = useRef<HTMLDivElement>(null);
   const bufferedRef = useRef(0);
   const playAfterSourceReadyRef = useRef(false);
+  const pendingPlayRef = useRef(false);
   const pendingSeekRef = useRef<number | null>(null);
   const [choiceIndex, setChoiceIndex] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -88,7 +89,7 @@ export function VodPlayer({
     if (code === 3 || !logicalUrl || deliveryIndex >= deliveryCount - 1) return false;
     handledDeliveryFailure.current = video;
     pendingSeekRef.current = pendingSeekRef.current ?? video.currentTime ?? 0;
-    playAfterSourceReadyRef.current = playAfterSourceReadyRef.current || !video.paused || !paused;
+    playAfterSourceReadyRef.current = playAfterSourceReadyRef.current || pendingPlayRef.current || !video.paused || !paused;
     setDelivery({ url: logicalUrl, index: deliveryIndex + 1 });
     setMediaError(0); setMediaErrorDetail(""); setMessage(""); setBuffering(true); setPaused(true);
     return true;
@@ -98,7 +99,7 @@ export function VodPlayer({
     if (!buffering || !sourceReady || !active?.url) return;
     const timer = setTimeout(() => {
       setBuffering(false);
-      if (!needsPlaybackBuffer(videoRef.current, playAfterSourceReadyRef.current)) return;
+      if (!needsPlaybackBuffer(videoRef.current, pendingPlayRef.current || playAfterSourceReadyRef.current)) return;
       if (tryDeliveryFallback(videoRef.current, 2)) return;
       setFailedSourceUrls(previous => new Set(previous).add(active.url));
       setMediaError(2);
@@ -113,7 +114,7 @@ export function VodPlayer({
     queueMicrotask(() => {
       if (!current) return;
       setMediaError(0); setMediaErrorDetail(""); setMessage(""); setBuffered(0); setDuration(0); setTime(0);
-      pendingSeekRef.current = null; playAfterSourceReadyRef.current = false;
+      pendingSeekRef.current = null; playAfterSourceReadyRef.current = false; pendingPlayRef.current = false;
       setFailedSourceUrls(new Set());
       if (!playableSources.length) {
         setSourceReady(false);
@@ -203,22 +204,31 @@ export function VodPlayer({
       if (mediaError || video.error) { retrySource(); return; }
       attemptPlay(video);
     } else {
+      pendingPlayRef.current = false; playAfterSourceReadyRef.current = false;
       video.pause();
     }
   }
 
   function attemptPlay(video: HTMLVideoElement) {
-    void video.play().catch((error: unknown) => {
+    pendingPlayRef.current = true;
+    setBuffering(needsPlaybackBuffer(video, true));
+    void video.play().then(() => {
+      if (videoRef.current !== video) return;
+      pendingPlayRef.current = false;
+      setBuffering(needsPlaybackBuffer(video));
+    }).catch((error: unknown) => {
       // A promise from a detached, failed source must not poison its replacement.
       if (videoRef.current !== video || (error as { name?: string })?.name === "AbortError") return;
       setBuffering(false);
       if (video.error || (error as { name?: string })?.name !== "NotAllowedError") {
         if (tryDeliveryFallback(video, video.error?.code ?? 2)) return;
+        pendingPlayRef.current = false;
         if (active?.url) setFailedSourceUrls(previous => new Set(previous).add(active.url));
         setMediaError(video.error?.code ?? 2);
         setMediaErrorDetail(video.error?.message || (error instanceof Error ? `${error.name}: ${error.message}` : "Playback failed"));
         setMessage(isDonyayeSerial(active) ? regionalPlaybackHint(locale === "fa") : t.player.sourceError);
       } else {
+        pendingPlayRef.current = false;
         setPaused(true);
         setMessage(locale === "fa" ? "برای شروع پخش، دکمهٔ پخش را بزن." : "Tap Play to start this source.");
       }
@@ -230,6 +240,7 @@ export function VodPlayer({
     if (active?.url) setFailedSourceUrls(previous => { const next = new Set(previous); next.delete(active.url); return next; });
     pendingSeekRef.current = videoRef.current?.currentTime || time || null;
     playAfterSourceReadyRef.current = true;
+    pendingPlayRef.current = false;
     setMediaError(0); setMediaErrorDetail(""); setMessage(""); setBuffering(true); setPaused(true);
     setSourceReady(true); setSourceRevision(value => value + 1);
   }
@@ -260,7 +271,8 @@ export function VodPlayer({
     setMediaError(0);
     setMediaErrorDetail("");
     setMessage("");
-    const wasPlaying = Boolean(mediaError || (videoRef.current && !videoRef.current.paused));
+    const wasPlaying = Boolean(mediaError || pendingPlayRef.current || playAfterSourceReadyRef.current || (videoRef.current && !videoRef.current.paused));
+    pendingPlayRef.current = false;
     videoRef.current?.pause();
     setActiveIndex(nextIndex);
     setPaused(true);
@@ -345,7 +357,7 @@ export function VodPlayer({
               setTime(restoredTime);
               if (!switchingQuality) setMessage(locale === "fa" ? `ادامه پخش از ${formatTime(restoredTime)}` : `Resuming from ${formatTime(restoredTime)}`);
             }
-            setBuffering(false);
+            setBuffering(needsPlaybackBuffer(event.currentTarget, pendingPlayRef.current || playAfterSourceReadyRef.current));
             bufferedRef.current = 0;
             setBuffered(0);
           }}
@@ -357,7 +369,7 @@ export function VodPlayer({
             }
           }}
           onWaiting={() => setBuffering(true)}
-          onStalled={event => { if (needsPlaybackBuffer(event.currentTarget, playAfterSourceReadyRef.current)) setBuffering(true); }}
+          onStalled={event => { if (needsPlaybackBuffer(event.currentTarget, pendingPlayRef.current || playAfterSourceReadyRef.current)) setBuffering(true); }}
           onTimeUpdate={(event) => {
             const current = event.currentTarget.currentTime;
             setTime(current);
@@ -373,8 +385,8 @@ export function VodPlayer({
               }
             }
           }}
-          onEnded={() => { setPaused(true); if (active?.url) { const progress = readProgress(); delete progress[active.url]; saveHistoryValue(PROGRESS_KEY, progress, "sarvnema-progress"); } }}
-          onPlaying={() => { if (active?.url) setFailedSourceUrls(previous => { const next = new Set(previous); next.delete(active.url); return next; }); setBuffering(false); setMediaError(0); setMessage(""); }}
+          onEnded={() => { pendingPlayRef.current = false; playAfterSourceReadyRef.current = false; setPaused(true); if (active?.url) { const progress = readProgress(); delete progress[active.url]; saveHistoryValue(PROGRESS_KEY, progress, "sarvnema-progress"); } }}
+          onPlaying={() => { pendingPlayRef.current = false; if (active?.url) setFailedSourceUrls(previous => { const next = new Set(previous); next.delete(active.url); return next; }); setBuffering(false); setMediaError(0); setMessage(""); }}
           onPlay={() => { setPaused(false); setControlsVisible(true); }}
           onPause={() => { setPaused(true); setControlsVisible(true); }}
           onVolumeChange={(event) => { setMuted(event.currentTarget.muted); setVolume(String(event.currentTarget.volume)); }}
