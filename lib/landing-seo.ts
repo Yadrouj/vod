@@ -61,7 +61,7 @@ export const FILM_LANDING_SEO: LandingSeoContent = {
       answer: "در صفحه پخش، زیرنویس‌های موجود را انتخاب کنید یا فایل زیرنویس خودتان را به پلیر اضافه کنید.",
     },
   ],
-  about: ["Movie", "TVSeries", "VideoObject"],
+  about: ["Movies", "TV series", "Online video"],
 };
 
 export const MUSIC_LANDING_SEO: LandingSeoContent = {
@@ -106,7 +106,7 @@ export const MUSIC_LANDING_SEO: LandingSeoContent = {
       answer: "از گزینه شنیدن هم‌زمان یک اتاق بسازید، آهنگ یا پلی‌لیست را انتخاب کنید و دوستانتان را با لینک دعوت وارد اتاق کنید.",
     },
   ],
-  about: ["MusicRecording", "MusicGroup", "MusicAlbum"],
+  about: ["Music", "Musicians", "Albums"],
 };
 
 export function siteJsonLd() {
@@ -154,7 +154,8 @@ export function landingJsonLd(content: LandingSeoContent, pathname: string) {
         description: content.description,
         inLanguage: "fa-IR",
         isPartOf: { "@id": `${SITE_URL}/#website` },
-        about: content.about.map((type) => ({ "@type": type })),
+        // These are topics, not actual media items with rich-result fields.
+        about: content.about.map((name) => ({ "@type": "Thing", name })),
       },
       {
         "@type": "FAQPage",

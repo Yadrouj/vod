@@ -54,6 +54,32 @@ export function uniqueSeoValues(values: (string | null | undefined)[]) {
   return [...new Set(values.map((value) => value?.trim()).filter((value): value is string => Boolean(value)))];
 }
 
+function schemaMediaUrl(value: string | null | undefined) {
+  const input = value?.trim();
+  if (!input) return undefined;
+  try {
+    const url = input.startsWith("/") ? new URL(input, SITE_URL) : new URL(input);
+    if (!/^https?:$/u.test(url.protocol) || url.username || url.password) return undefined;
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+function videoThumbnailUrls(values: (string | null | undefined)[]) {
+  return uniqueSeoValues(values.map(schemaMediaUrl));
+}
+
+function videoUploadDate(value: string | null | undefined) {
+  const input = value?.trim();
+  // A release year or an archive-refresh timestamp is not a publication date.
+  if (!input || !/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?$/u.test(input)) return undefined;
+  const day = input.slice(0, 10);
+  const date = Date.parse(`${day}T00:00:00Z`);
+  if (!Number.isFinite(date) || new Date(date).toISOString().slice(0, 10) !== day || !Number.isFinite(Date.parse(input))) return undefined;
+  return input;
+}
+
 export function titleMetadata({
   title,
   description,
@@ -169,22 +195,28 @@ export function vodJsonLd(item: VodItem) {
 
 export function musicJsonLd(track: MusicTrack) {
   const artistNames = track.artists.map((artist) => ({ "@type": "MusicGroup", name: artist.name, url: absoluteUrl(`/music/artists/${encodeURIComponent(artist.slug)}`) }));
-  const source = track.sources.find((item) => item.kind === "stream") || track.sources[0];
+  const availableSources = track.sources.filter((item) => item.available !== false && schemaMediaUrl(item.url));
+  const source = availableSources.find((item) => item.kind === "stream") || availableSources[0];
+  const isVideo = track.kind === "video";
+  const thumbnails = videoThumbnailUrls([track.coverUrl, track.album?.coverUrl]);
+  const uploadDate = videoUploadDate(track.publishedAt);
+  // Keep the page discoverable when source metadata is incomplete, but never
+  // advertise an invalid VideoObject or substitute a logo/fabricated date.
+  const completeVideo = isVideo && thumbnails.length > 0 && Boolean(uploadDate && source && (track.persianTitle || track.title).trim());
   const entity: Record<string, unknown> = {
-    "@type": track.kind === "video" ? "VideoObject" : "MusicRecording",
+    "@type": isVideo ? (completeVideo ? "VideoObject" : "WebPage") : "MusicRecording",
     "@id": absoluteUrl(`/music/${track.id}#music`),
     url: absoluteUrl(`/music/${track.id}`),
     name: track.persianTitle || track.title,
     alternateName: track.title,
     description: cleanSeoText(track.description, 500) || `${track.title} از ${track.artists.map((artist) => artist.name).join(", ")}`,
-    image: track.coverUrl || undefined,
-    uploadDate: track.publishedAt || undefined,
-    byArtist: artistNames,
+    image: thumbnails[0],
     genre: uniqueSeoValues([track.category, ...(track.moods || [])]),
-    contentUrl: source?.url,
-    potentialAction: { "@type": "ListenAction", target: absoluteUrl(`/music/${track.id}`) },
+    potentialAction: { "@type": isVideo ? "WatchAction" : "ListenAction", target: absoluteUrl(`/music/${track.id}`) },
   };
-  if (track.album) entity.inAlbum = { "@type": "MusicAlbum", name: track.album.title, url: track.album.sourceUrl, image: track.album.coverUrl || undefined };
+  if (completeVideo) Object.assign(entity, { thumbnailUrl: thumbnails, uploadDate, creator: artistNames, contentUrl: schemaMediaUrl(source?.url) });
+  if (!isVideo) Object.assign(entity, { byArtist: artistNames, uploadDate: track.publishedAt || undefined, contentUrl: schemaMediaUrl(source?.url) });
+  if (track.album && (!isVideo || completeVideo)) entity[isVideo ? "isPartOf" : "inAlbum"] = { "@type": "MusicAlbum", name: track.album.title, url: track.album.sourceUrl, image: track.album.coverUrl || undefined };
   return { "@context": "https://schema.org", "@graph": [entity, breadcrumbJsonLd([{ name: P.music, pathname: "/music" }, { name: P.artists, pathname: "/music/artists" }, { name: track.persianTitle || track.title, pathname: `/music/${track.id}` }])] };
 }
 
@@ -202,15 +234,18 @@ export function artistJsonLd(artist: MusicArtist, trackCount: number, isPerson =
 }
 
 export function videoJsonLd(item: VodItem, videoUrl: string | null) {
-  if (!videoUrl) return null;
+  const contentUrl = schemaMediaUrl(videoUrl);
+  const thumbnails = videoThumbnailUrls([item.backdropUrl, item.posterUrl]);
+  const uploadDate = videoUploadDate(item.releaseDate);
+  if (!contentUrl || !thumbnails.length || !uploadDate || !item.title.trim()) return null;
   return {
     "@context": "https://schema.org",
     "@type": "VideoObject",
     name: item.title,
     description: cleanSeoText(item.persianOverview || item.overview, 500) || `${P.online} ${item.title}`,
-    thumbnailUrl: uniqueSeoValues([item.backdropUrl, item.posterUrl]),
-    uploadDate: item.releaseDate || (item.year ? String(item.year) : undefined),
-    contentUrl: videoUrl,
+    thumbnailUrl: thumbnails,
+    uploadDate,
+    contentUrl,
     embedUrl: absoluteUrl(`/watch/${item.imdbCode}`),
     duration: item.runtimeMinutes ? `PT${item.runtimeMinutes}M` : undefined,
     isFamilyFriendly: false,
