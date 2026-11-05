@@ -73,9 +73,12 @@ proxy or CDN cached title/download/watch-room responses, purge those paths
 or allow their cache lifetime to expire (currently up to 15 minutes for
 the affected APIs).
 
-Already copied download-gate URLs contain their old target. This change
-does not guess a different server for those URLs: reopen the title page
-after the deployment/cache refresh and copy a newly generated link. Old
-Telegram posts similarly retain their embedded target until regenerated.
-The five-second download page and existing content restrictions are
-unchanged.
+Previously copied download gates now resolve exact, verified URL repairs
+through the server-side repair layer, including the two observed wrong
+`dls3` URLs for `tt1155056`. No server or quality is guessed for an unknown
+old URL; reopen the title page to obtain a current link instead. Confirmed
+missing sources receive an unavailable notice with a source-selection link,
+not an automatic redirect to a known 404. The five-second countdown and
+content restrictions remain in place. See
+[verified link refresh](donyaye-verified-link-refresh.md) for the November 5
+data update and nightly verification procedure.

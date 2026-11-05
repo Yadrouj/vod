@@ -69,6 +69,11 @@ async function main() {
 
     const source = await readCatalogHeader(sourceFile);
     validateCoverage(source, previousStatus);
+    await run("Verify changed DonyayeSerial media before updating live links", "scripts/refresh-donyaye-links.mjs", [
+      sourceFile,
+      path.join(DRY_RUN ? runDir : DATA_DIR, "donyaye-link-updates.json"),
+      path.join(runDir, "donyaye-link-refresh-report.json"),
+    ]);
     const mergedFile = path.join(runDir, "catalog-merged.json");
     await run("Merge fresh links without deleting archive history", "scripts/merge-vod-source-stream.mjs", [
       CATALOG_FILE,
@@ -93,6 +98,11 @@ async function main() {
     let catalogWithFeedsFile = mergedFile;
     let seriesChanges = emptyChanges(movieChanges);
     if ((seriesSource?.items?.length ?? 0) > 0) {
+      if (!seriesSource.feedWarning) await run("Verify newly discovered series episode links", "scripts/refresh-donyaye-links.mjs", [
+        seriesSourceFile,
+        path.join(DRY_RUN ? runDir : DATA_DIR, "donyaye-link-updates.json"),
+        path.join(runDir, "donyaye-series-link-refresh-report.json"),
+      ]);
       const seriesMergedFile = path.join(runDir, "catalog-series-merged.json");
       await run(
         "Merge recent series without deleting historical episodes",
@@ -323,6 +333,14 @@ async function main() {
       sourceLinks: source.totalLinks,
       seriesFeedTitles: seriesSource?.totalTitles ?? 0,
       seriesFeedLinks: seriesSource?.totalLinks ?? 0,
+      seriesFeed: {
+        sourceUrl: seriesSource?.sourceUrl ?? null,
+        checkedAt: seriesSource?.feedCheckAt ?? seriesSource?.scrapedAt ?? null,
+        sourceSnapshotAt: seriesSource?.scrapedAt ?? null,
+        fallback: Boolean(seriesSource?.feedFallback),
+        warning: seriesSource?.feedWarning ?? null,
+      },
+      partial: Boolean(seriesSource?.feedWarning),
       moviesho,
       movieshoChanges,
       curated,

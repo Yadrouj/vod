@@ -1,5 +1,7 @@
 import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { donyayeLinkKey } from "../lib/donyaye-link-updates.mjs";
 
 const BASE_URL = process.env.DONYAYE_SERIES_URL || "https://donyayeserial.com/series/";
 const OUT_FILE = process.argv[2] || path.join(".media-cache", "vod-sync", "series-feed.json");
@@ -29,51 +31,81 @@ function plainText(value) {
     .trim();
 }
 
-async function fetchText(url) {
+export async function fetchSeriesHtml(url, { fetchImpl = fetch, timeoutMs = TIMEOUT_MS, maxBytes = 4 * 1024 * 1024 } = {}) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      redirect: "follow",
-      headers: {
-        "user-agent": USER_AGENT,
-        accept: "text/html,application/xhtml+xml",
-        "accept-language": "fa,en;q=0.8",
-      },
-    });
-    if (!response.ok) return null;
-    return await response.text();
+    let current = url;
+    const origins = new Set([new URL(url).origin, "https://donyayeserial.com", "https://donyayeserial-new1.top"]);
+    for (let redirects = 0; redirects < 5; redirects++) {
+      const parsed = new URL(current);
+      if (!/^https?:$/.test(parsed.protocol) || parsed.username || parsed.password || !origins.has(parsed.origin)) return null;
+      const response = await fetchImpl(current, {
+        signal: controller.signal,
+        redirect: "manual",
+        headers: {
+          "user-agent": USER_AGENT,
+          accept: "text/html,application/xhtml+xml",
+          "accept-language": "fa,en;q=0.8",
+        },
+      });
+      const location = response.headers.get("location");
+      if (response.status >= 300 && response.status < 400 && location) {
+        await response.body?.cancel(); current = new URL(location, current).href; continue;
+      }
+      if (!response.ok || !/text\/html|application\/xhtml\+xml/i.test(response.headers.get("content-type") || "")) {
+        await response.body?.cancel(); return null;
+      }
+      const reader = response.body?.getReader();
+      if (!reader) return null;
+      const chunks = []; let bytes = 0;
+      try {
+        for (;;) {
+          const chunk = await reader.read(); if (chunk.done) break;
+          bytes += chunk.value.byteLength; if (bytes > maxBytes) return null;
+          chunks.push(chunk.value);
+        }
+      } finally { await reader.cancel(); }
+      return { html: Buffer.concat(chunks).toString("utf8"), url: current };
+    }
+    return null;
   } catch {
     return null;
   } finally {
     clearTimeout(timeout);
+    controller.abort();
   }
 }
 
-function feedPageUrl(index) {
-  if (index === 1) return BASE_URL;
-  return new URL(`page/${index}/`, ensureSlash(BASE_URL)).toString();
+function feedPageUrl(index, base = BASE_URL) {
+  if (index === 1) return base;
+  return new URL(`page/${index}/`, ensureSlash(base)).toString();
 }
 
 function ensureSlash(value) {
   return value.endsWith("/") ? value : `${value}/`;
 }
 
-function extractDetailUrls(html) {
+export function extractDetailUrls(html, resolvedUrl = BASE_URL) {
   const urls = new Set();
-  const base = new URL(BASE_URL);
+  const base = new URL(resolvedUrl);
   for (const match of html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>/gi)) {
     try {
-      const url = new URL(decodeEntities(match[1]), BASE_URL);
-      if (url.hostname !== base.hostname) continue;
+      const url = new URL(decodeEntities(match[1]), base);
+      if (url.origin !== base.origin || url.username || url.password) continue;
       if (!/^\/series\/(?!page\/)[^/?#]+\/?$/i.test(url.pathname)) continue;
+      url.search = ""; url.hash = "";
       urls.add(ensureSlash(url.toString()));
     } catch {
       // Ignore malformed links from widgets and ad markup.
     }
   }
   return Array.from(urls);
+}
+
+export function seriesFeedCandidates(base = BASE_URL) {
+  return Array.from(new Set([base, ...(new URL(base).hostname === "donyayeserial.com"
+    ? ["https://donyayeserial-new1.top/series/"] : [])]));
 }
 
 function metaContent(html, property) {
@@ -128,9 +160,11 @@ function extractDownloadLinks(html, sourcePageUrl) {
     } catch {
       continue;
     }
-    if (!/\/DonyayeSerial\//i.test(url) || !VIDEO_RE.test(url)) continue;
+    if (!donyayeLinkKey(url) || !VIDEO_RE.test(url)) continue;
     const labelText = plainText(match[2]);
-    const fileName = decodeURIComponent(new URL(url).pathname.split("/").pop() ?? "");
+    let fileName;
+    try { fileName = decodeURIComponent(new URL(url).pathname.split("/").pop() ?? ""); }
+    catch { continue; }
     const parsed = parseSeasonEpisode(`${labelText} ${fileName} ${url}`);
     const quality = inferQuality(`${labelText} ${fileName} ${url}`);
     const release = inferRelease(`${labelText} ${fileName} ${url}`);
@@ -169,12 +203,15 @@ function cleanTitle(rawTitle) {
     .trim();
 }
 
-function parseDetail(html, sourcePageUrl) {
-  const links = extractDownloadLinks(html, sourcePageUrl);
+export function parseDetail(html, sourcePageUrl) {
   const imdbCode =
     /imdb\.com\/title\/(tt\d+)/i.exec(html)?.[1] ??
     /\/(tt\d{5,12})(?:\/|["'])/i.exec(html)?.[1] ??
     "";
+  const links = extractDownloadLinks(html, sourcePageUrl).filter(link => {
+    const pathId = /\/(tt\d{5,12})\//i.exec(new URL(link.url).pathname)?.[1];
+    return !pathId || pathId === imdbCode;
+  });
   if (!imdbCode || links.length === 0) return null;
 
   const heading = /<h1\b[^>]*>([\s\S]*?)<\/h1>/i.exec(html)?.[1];
@@ -242,17 +279,26 @@ async function writeAtomic(file, content) {
 }
 
 async function main() {
+  const attempts = [];
+  let first = null;
+  const candidates = seriesFeedCandidates();
+  for (const candidate of candidates) {
+    const page = await fetchSeriesHtml(candidate);
+    attempts.push({ url: candidate, resolvedUrl: page?.url || null, available: Boolean(page) });
+    if (page && extractDetailUrls(page.html, page.url).length) { first = page; break; }
+  }
+  const resolvedBase = first?.url || BASE_URL;
   const pageHtml = await mapLimit(
-    Array.from({ length: PAGE_COUNT }, (_, index) => feedPageUrl(index + 1)),
+    Array.from({ length: Math.max(0, PAGE_COUNT - 1) }, (_, index) => feedPageUrl(index + 2, resolvedBase)),
     Math.min(3, CONCURRENCY),
-    fetchText,
+    first ? fetchSeriesHtml : async () => null,
   );
   const detailUrls = Array.from(
-    new Set(pageHtml.filter(Boolean).flatMap((html) => extractDetailUrls(html))),
+    new Set([first, ...pageHtml].filter(Boolean).flatMap((page) => extractDetailUrls(page.html, page.url))),
   );
   const details = await mapLimit(detailUrls, CONCURRENCY, async (url) => {
-    const html = await fetchText(url);
-    return html ? parseDetail(html, url) : null;
+    const page = await fetchSeriesHtml(url);
+    return page ? parseDetail(page.html, page.url) : null;
   });
   const items = details.filter(Boolean);
 
@@ -270,6 +316,7 @@ async function main() {
       feedCheckAt: new Date().toISOString(),
       feedFallback: Boolean(cached),
       feedWarning: "The live series feed was unavailable; existing catalog data was preserved.",
+      feedAttempts: attempts,
     };
     await writeAtomic(OUT_FILE, JSON.stringify(payload));
     console.log(
@@ -289,7 +336,7 @@ async function main() {
   }
 
   const payload = {
-    sourceUrl: BASE_URL,
+    sourceUrl: resolvedBase,
     scrapedAt: new Date().toISOString(),
     totalTitles: items.length,
     totalLinks: items.reduce((sum, item) => sum + item.links.length, 0),
@@ -313,7 +360,7 @@ async function main() {
   );
 }
 
-main().catch((error) => {
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

@@ -2,6 +2,7 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { cache } from "react";
 import { applyDownloadBaseToItem } from "./download-settings";
+import { applyVerifiedDonyayeLinks } from "./donyaye-link-update-store";
 import { enrichOldIranianFilm } from "./old-iranian-media";
 import type { VodArchive, VodItem } from "./types";
 import { restrictCatalogItem } from './restricted-catalog';
@@ -29,7 +30,9 @@ async function loadArchiveFile(): Promise<VodArchive> {
 
 export const findVodItem = cache(async (id: string): Promise<VodItem | null> => {
   const item = await findVodTitleFile(id);
-  return item ? restrictCatalogItem(await applyDownloadBaseToItem(enrichOldIranianFilm(item))) : null;
+  if (!item) return null;
+  const mapped = await applyDownloadBaseToItem(enrichOldIranianFilm(item));
+  return restrictCatalogItem(await applyVerifiedDonyayeLinks(mapped));
 });
 
 export function normalizeVodType(type: string): "movie" | "series" {

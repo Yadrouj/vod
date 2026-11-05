@@ -3,6 +3,8 @@ import { mkdir, readFile, rename } from "node:fs/promises";
 import { once } from "node:events";
 import { createHash } from "node:crypto";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { donyayeLinkKey } from "../lib/donyaye-link-updates.mjs";
 import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 
 const EXISTING_FILE = process.argv[2] || "public/data/vod-catalog.json";
@@ -144,7 +146,7 @@ function keyOf(item) {
   return String(item?.imdbCode || item?.id || "").trim();
 }
 
-function mergeItem(existing, source) {
+export function mergeItem(existing, source) {
   if (!existing) {
     return {
       ...source,
@@ -202,6 +204,7 @@ function mergeSeriesLinks(existingLinks, sourceLinks) {
     if (!isDirectEpisodeLink(sourceLink)) continue;
     const key = linkIdentity(sourceLink);
     const previous = byPath.get(key);
+    if (previous && previous.url !== sourceLink.url && donyayeLinkKey(sourceLink.url) && !sourceLink.verifiedAt) continue;
     byPath.set(key, previous ? {
       ...previous,
       ...sourceLink,
@@ -222,6 +225,9 @@ function mergeDownloadLinks(existingLinks, sourceLinks) {
   for (const sourceLink of sourceLinks) {
     const key = linkIdentity(sourceLink);
     const previous = byIdentity.get(key);
+    // Host rotations are applied by the health-checked repair layer. An old
+    // snapshot must not undo a working host with an unverified alternate.
+    if (previous && previous.url !== sourceLink.url && donyayeLinkKey(sourceLink.url) && !sourceLink.verifiedAt) continue;
     byIdentity.set(key, previous ? {
       ...previous,
       ...sourceLink,
@@ -247,10 +253,10 @@ function linkIdentity(link) {
   const rawUrl = String(link?.url ?? "");
   try {
     const parsed = new URL(rawUrl);
-    const marker = parsed.pathname.toLowerCase().indexOf("/donyayeserial/");
+    const donyayeKey = donyayeLinkKey(rawUrl);
     // DonyayeSerial changes the delivery host occasionally. Its stable archive
     // path is the identity, so a fresh host replaces the old dead link.
-    if (marker >= 0) return `donyayeserial:${parsed.pathname.slice(marker).toLowerCase()}`;
+    if (donyayeKey) return `donyayeserial:${donyayeKey}`;
     return `url:${parsed.origin.toLowerCase()}${parsed.pathname}${parsed.search}`;
   } catch {
     return rawUrl;
@@ -283,7 +289,7 @@ function linkSignature(item) {
   return JSON.stringify((item.links ?? []).map((link) => [link.url, link.label ?? null, link.size ?? null, link.group ?? null, link.quality ?? null, link.release ?? null]));
 }
 
-main().catch((error) => {
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
