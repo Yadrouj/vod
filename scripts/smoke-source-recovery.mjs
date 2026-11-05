@@ -30,7 +30,7 @@ async function context(width, profile) {
   const page = await context.newPage(); page.on('pageerror', error => errors.push(error.message));
   return { context, page, controls };
 }
-const ready = page => page.waitForFunction(() => document.querySelector('video')?.readyState >= 2, null, { timeout: 15000 });
+const ready = page => page.waitForFunction(() => (document.querySelector('main video.player') || document.querySelector('.party-player-stage > video'))?.readyState >= 2, null, { timeout: 15000 });
 try {
   for (const width of [320, 390, 1440]) {
     const { context: ctx, page, controls } = await context(width);
@@ -40,20 +40,20 @@ try {
     await page.goto(`${origin}/watch/tt0230600?resume=${encodeURIComponent(ds.url)}`, { waitUntil: 'domcontentloaded' });
     const panel = page.locator('[data-player-recovery]'); await panel.waitFor();
     assert.ok(await panel.getByText(/VPN/).count());
-    const video = page.locator('video.player'); await video.evaluate(el => el.dataset.originalElement = 'true');
+    const video = page.locator('main video.player'); await video.evaluate(el => el.dataset.originalElement = 'true');
     await panel.getByRole('button', { name: 'تازه‌سازی پخش', exact: true }).click();
     await panel.waitFor(); assert.equal(await video.getAttribute('data-original-element'), null, 'Retry remounts the failed element');
     controls.blockRegional = false;
     await panel.getByRole('button', { name: 'تازه‌سازی پخش', exact: true }).click(); await ready(page);
     await video.evaluate(el => { el.currentTime = 17; el.pause(); });
-    await page.waitForFunction(() => !document.querySelector('video.player')?.seeking && Math.abs((document.querySelector('video.player')?.currentTime ?? 0) - 17) < 1, null, { timeout: 5000 });
+    await page.waitForFunction(() => !document.querySelector('main video.player')?.seeking && Math.abs((document.querySelector('main video.player')?.currentTime ?? 0) - 17) < 1, null, { timeout: 5000 });
     await video.evaluate(el => el.dispatchEvent(new Event('error')));
     await panel.waitFor();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'No horizontal overflow');
     await panel.getByRole('button', { name: 'منبع بعدی', exact: true }).click(); await ready(page);
     assert.equal(regional(await video.getAttribute('src')), false, 'Next source selects an alternative');
-    await page.waitForFunction(() => Math.abs((document.querySelector('video.player')?.currentTime ?? 0) - 17) < 2, null, { timeout: 5000 });
-    await page.locator('.pro-player').evaluate(el => el.requestFullscreen());
+    await page.waitForFunction(() => Math.abs((document.querySelector('main video.player')?.currentTime ?? 0) - 17) < 2, null, { timeout: 5000 });
+    await page.locator('main .pro-player').evaluate(el => el.requestFullscreen());
     await video.evaluate(el => { el.pause(); el.dispatchEvent(new Event('error')); }); await panel.waitFor();
     assert.ok(await panel.evaluate(el => document.fullscreenElement?.contains(el)), 'Recovery stays in fullscreen');
     await panel.getByRole('button', { name: 'تازه‌سازی پخش', exact: true }).click(); await ready(page);

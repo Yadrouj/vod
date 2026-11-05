@@ -1,6 +1,6 @@
 "use client";
 
-import { Captions, Download, Heart, ListMusic, Pause, Play, Repeat2, Settings, Shuffle, SkipBack, SkipForward, Volume2, VolumeX, X } from "lucide-react";
+import { Captions, Download, Heart, ListMusic, Pause, Play, Repeat2, RotateCw, Settings, Shuffle, SkipBack, SkipForward, Volume2, VolumeX, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type RefObject } from "react";
 import type { MusicSource, MusicTrack } from "@/lib/music-types";
 import { ResponsiveDialog, useMobilePlayer } from "@/components/responsive-dialog";
@@ -9,6 +9,7 @@ import Link from "next/link";
 import { WatchTogetherLauncher } from "./watch-together-launcher";
 import { musicPartyMedia } from "@/lib/watch-party-music";
 import { downloadGateUrl } from "@/lib/download-gate";
+import { compatibleMediaIndex, nextUntriedMusicSource } from "@/lib/media-compatibility";
 
 const PLAYBACK_KEY = "sarvnema-music-playback";
 const LIKES_KEY = "sarvnema-music-likes";
@@ -69,9 +70,45 @@ export function MusicPlayerEngine({
   const liked = useSyncExternalStore(subscribeLikes, () => readLiked(activeTrack.id), () => false);
   const [sourceIssue, setSourceIssue] = useState("");
   const [useDirectSource, setUseDirectSource] = useState(false);
+  const [sourceRevision, setSourceRevision] = useState(0);
+  const [terminalError, setTerminalError] = useState(false);
+  const failedSources = useRef(new Set<string>());
+  const compatibilityChecked = useRef("");
+  const pendingSeek = useRef<number | null>(null);
   const [lyricsOpen, setLyricsOpen] = useState(lyricsAutoOpen);
   const hasVideo = activeTrack.kind === "video" || /\.(?:mp4|mkv|webm)(?:$|\?)/i.test(source?.url ?? "");
   const playbackUrl = source ? (useDirectSource ? source.url : musicPlaybackUrl(activeTrack.id, source.url)) : "";
+  const mediaKey = `${playbackUrl}:${sourceRevision}`;
+  const failureHandler = useRef<(player: HTMLMediaElement) => void>(() => {});
+
+  useLayoutEffect(() => { failureHandler.current = handleMediaError; });
+  useLayoutEffect(() => {
+    const player = media.current;
+    if (preview || !player) return;
+    let active = true, notified = false;
+    const failed = () => { if (active && !notified) { notified = true; failureHandler.current(player); } };
+    player.addEventListener("error", failed);
+    // A persistent portal can attach after a fast 404/503 has already fired.
+    // Native media state must still surface recovery in that case.
+    if (player.error) queueMicrotask(failed);
+    return () => { active = false; player.removeEventListener("error", failed); };
+  }, [mediaKey, preview]);
+
+  useLayoutEffect(() => {
+    failedSources.current.clear(); pendingSeek.current = null;
+  }, [activeTrack.id]);
+
+  useEffect(() => {
+    if (preview || compatibilityChecked.current === activeTrack.id) return;
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      compatibilityChecked.current = activeTrack.id;
+      const next = compatibleMediaIndex(streams, sourceIndex, media.current, navigator.userAgent, !hasVideo);
+      if (next !== sourceIndex) { setSourceIndex(next); setUseDirectSource(false); }
+    });
+    return () => { active = false; };
+  }, [activeTrack.id, streams, sourceIndex, hasVideo, preview]);
 
   const [requestedId, setRequestedId] = useState(track.id);
   if (requestedId !== track.id) {
@@ -88,6 +125,8 @@ export function MusicPlayerEngine({
     setBuffered(0);
     setPlaying(false);
     setUseDirectSource(false);
+    setTerminalError(false);
+    setSourceIssue("");
   }
 
   const [appliedSettings, setAppliedSettings] = useState(settings);
@@ -120,7 +159,7 @@ export function MusicPlayerEngine({
     if (player.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) start();
     else player.addEventListener("canplay", start, { once: true });
     return () => player.removeEventListener("canplay", start);
-  }, [activeTrack.id, playbackUrl]);
+  }, [activeTrack.id, mediaKey]);
 
   useEffect(() => {
     if (!playRequest || playRequest === handledPlayRequest.current) return;
@@ -143,7 +182,7 @@ export function MusicPlayerEngine({
     }
 
     return () => player.removeEventListener("canplay", start);
-  }, [activeTrack.id, playRequest, playbackUrl]);
+  }, [activeTrack.id, playRequest, mediaKey]);
 
   useEffect(() => {
     let saved: string | null = null;
@@ -165,7 +204,7 @@ export function MusicPlayerEngine({
     player.volume = volume;
     player.muted = muted;
     player.playbackRate = rate;
-  }, [activeTrack.id, muted, playbackUrl, rate, volume]);
+  }, [activeTrack.id, muted, mediaKey, rate, volume]);
 
   useEffect(() => {
     const player = media.current;
@@ -211,13 +250,15 @@ export function MusicPlayerEngine({
     }
     const player = media.current;
     if (!player) return;
+    if (terminalError || player.error) { retrySource(); return; }
     if (player.paused) {
-      try { await player.play(); } catch { setPlaying(false); }
+      try { await player.play(); } catch (error) { setPlaying(false); if ((error as { name?: string }).name === "NotAllowedError") setSourceIssue("برای شروع پخش، یک بار دیگر دکمهٔ پخش را بزن."); }
     } else player.pause();
   }
 
   function handlePlay() {
     setPlaying(true);
+    setSourceIssue(""); setTerminalError(false);
     onTrackPlay?.(activeTrack);
   }
 
@@ -277,10 +318,13 @@ export function MusicPlayerEngine({
     next(true);
   }
 
-  function handleMediaError() {
+  function handleMediaError(player: HTMLMediaElement) {
+    if (player !== media.current) return;
     const resume = playing || autoplayTrackId.current === activeTrack.id;
-    if (!useDirectSource && source?.url) {
-      setSourceIssue("Trying the original source…");
+    pendingSeek.current = media.current?.currentTime || currentTime || null;
+    const directAllowed = source?.provider !== "melodify" && source?.url && (source.url.startsWith("https:") || window.location.protocol !== "https:");
+    if (!useDirectSource && directAllowed) {
+      setSourceIssue("در حال امتحان منبع اصلی…");
       setUseDirectSource(true);
       window.setTimeout(() => {
         const player = media.current;
@@ -290,16 +334,34 @@ export function MusicPlayerEngine({
       }, 0);
       return;
     }
-    const nextIndex = nextSourceIndex(streams, sourceIndex);
+    if (source?.url) failedSources.current.add(source.url);
+    const nextIndex = nextUntriedMusicSource(streams, sourceIndex, failedSources.current);
     if (nextIndex >= 0) {
-      setSourceIssue("This quality is unavailable. Trying another source…");
+      setSourceIssue("این نسخه در دسترس نیست؛ منبع دیگری را امتحان می‌کنیم…");
       setSourceIndex(nextIndex);
       setUseDirectSource(false);
       if (resume) window.setTimeout(() => void media.current?.play().catch(() => undefined), 80);
       return;
     }
-    setSourceIssue("This source cannot be played in this browser. Use Download to open the original file.");
+    setTerminalError(true);
+    setSourceIssue(source?.provider === "melodify" ? "نسخهٔ آرشیو این آهنگ فعلاً در دسترس نیست. پخش را تازه کن یا منبع دیگری انتخاب کن." : "این نسخه پخش نشد؛ مشکل می‌تواند از منبع یا قالب فایل باشد. دوباره تلاش کن یا نسخهٔ دیگری انتخاب کن.");
     setPlaying(false);
+  }
+
+  function retrySource() {
+    failedSources.current.clear();
+    pendingSeek.current = media.current?.currentTime || currentTime || null;
+    autoplayTrackId.current = activeTrack.id;
+    setTerminalError(false); setSourceIssue(""); setUseDirectSource(false);
+    setSourceRevision(value => value + 1);
+  }
+
+  function handleLoadedMetadata() {
+    const player = media.current;
+    if (player && pendingSeek.current != null && Number.isFinite(player.duration)) {
+      player.currentTime = Math.min(pendingSeek.current, Math.max(0, player.duration - .1)); pendingSeek.current = null;
+    }
+    syncProgress();
   }
 
   function toggleLiked() {
@@ -317,12 +379,12 @@ export function MusicPlayerEngine({
     <section className={`music-player music-player-pro ${hasVideo ? "music-player-video" : "music-player-audio"}`} dir="auto">
       {hasVideo ? (
         <div className="music-player-video-stage">
-          {preview ? <div className="music-player-video-frame" style={{ background: `#020203 url(${JSON.stringify(activeTrack.coverUrl ?? "")}) center / contain no-repeat` }} /> : <video ref={media as RefObject<HTMLVideoElement>} className="music-player-video-frame" poster={activeTrack.coverUrl ?? undefined} preload="metadata" playsInline src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={syncProgress} onCanPlay={() => setSourceIssue("")} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} onError={handleMediaError} />}
+          {preview ? <div className="music-player-video-frame" style={{ background: `#020203 url(${JSON.stringify(activeTrack.coverUrl ?? "")}) center / contain no-repeat` }} /> : <video key={mediaKey} ref={media as RefObject<HTMLVideoElement>} className="music-player-video-frame" poster={activeTrack.coverUrl ?? undefined} preload="metadata" playsInline src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={handleLoadedMetadata} onCanPlay={() => { setSourceIssue(""); setTerminalError(false); }} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} />}
           <button className={`music-video-play-overlay ${playing ? "is-playing" : ""}`} type="button" onClick={togglePlayback} aria-label={playing ? "Pause video" : "Play video"}>{playing ? <Pause size={23} fill="currentColor" /> : <Play size={25} fill="currentColor" />}</button>
           <span className="music-video-quality">{source.quality || "Video"}</span>
         </div>
       ) : !preview ? (
-        <audio ref={media as RefObject<HTMLAudioElement>} preload="metadata" src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={syncProgress} onCanPlay={() => setSourceIssue("")} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} onError={handleMediaError} />
+        <audio key={mediaKey} ref={media as RefObject<HTMLAudioElement>} preload="metadata" src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={handleLoadedMetadata} onCanPlay={() => { setSourceIssue(""); setTerminalError(false); }} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} />
       ) : null}
 
       <div className="music-player-shell">
@@ -332,7 +394,7 @@ export function MusicPlayerEngine({
         {(() => { const downloadSource = activeTrack.sources.find((item) => item.kind === "download") ?? source; return <a className="music-download" href={downloadGateUrl({ url: downloadSource.url, musicId: activeTrack.id, title: activeTrack.title, quality: downloadSource.quality || downloadSource.label })} target="_blank" rel="noreferrer"><Download size={16} /> دانلود</a>; })()}
       </div>
 
-      {sourceIssue && <p className="music-player-source-issue" role="status">{sourceIssue}</p>}
+      {sourceIssue && <div className="music-player-source-issue" role="status"><p>{sourceIssue}</p>{terminalError && <div className="playback-help-actions"><button type="button" onClick={retrySource}><RotateCw size={16} /> تازه‌سازی پخش</button><button type="button" onClick={() => setSettingsOpen(true)}>انتخاب منبع</button></div>}</div>}
 
       <MusicLyrics key={activeTrack.id} trackId={activeTrack.id} title={activeTrack.persianTitle || activeTrack.title} artist={activeTrack.artists.map((item) => item.name).join(" · ")} currentTime={currentTime} duration={duration} open={lyricsOpen || (immersive && !mobile)} immersive={immersive} onSeek={seek} onClose={() => setLyricsOpen(false)} />
 
@@ -358,7 +420,7 @@ export function MusicPlayerEngine({
 
       <ResponsiveDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} title="تنظیمات پخش موسیقی" description={activeTrack.persianTitle || activeTrack.title} theme="music" closeLabel="بستن تنظیمات موسیقی">
         <div className="media-settings-form">
-          <label>کیفیت پخش<select value={source.url} onChange={event => { setSourceIssue(""); setUseDirectSource(false); setSourceIndex(Math.max(0, streams.findIndex(item => item.url === event.target.value))); }}>{streams.map(item => <option value={item.url} key={item.url}>{item.quality || item.label}</option>)}</select></label>
+          <label>کیفیت پخش<select value={source.url} onChange={event => { failedSources.current.delete(event.target.value); setTerminalError(false); setSourceIssue(""); setUseDirectSource(false); setSourceIndex(Math.max(0, streams.findIndex(item => item.url === event.target.value))); setSourceRevision(value => value + 1); }}>{streams.map(item => <option value={item.url} key={item.url}>{item.quality || item.label}</option>)}</select></label>
           <label>سرعت پخش<select value={rate} onChange={event => setRate(Number(event.target.value))}>{[0.75, 1, 1.25, 1.5, 2].map(value => <option key={value} value={value}>{value}×</option>)}</select></label>
           <label>بلندی صدا<input aria-label="بلندی صدا" type="range" min="0" max="1" step="0.05" value={volume} onChange={event => setVolume(Number(event.target.value))} /></label>
           <button type="button" onClick={() => setMuted(value => !value)}>{muted ? "وصل‌کردن صدا" : "بی‌صدا کردن"}</button>
@@ -371,7 +433,7 @@ export function MusicPlayerEngine({
 
 function uniqueSources(sources: MusicSource[]) {
   const seen = new Set<string>();
-  return sources.filter((source) => source.url && !seen.has(source.url) && Boolean(seen.add(source.url)));
+  return sources.filter((source) => source.available !== false && source.url && !seen.has(source.url) && Boolean(seen.add(source.url)));
 }
 
 function musicPlaybackUrl(trackId: string, sourceUrl: string) {
@@ -392,14 +454,6 @@ function preferredSourceIndex(sources: MusicSource[], kind: MusicTrack["kind"]) 
   let winner = 0;
   for (let index = 1; index < sources.length; index += 1) if (rank(sources[index]) > rank(sources[winner])) winner = index;
   return winner;
-}
-
-function nextSourceIndex(sources: MusicSource[], currentIndex: number) {
-  for (let offset = 1; offset < sources.length; offset += 1) {
-    const index = (currentIndex + offset) % sources.length;
-    if (sources[index].available !== false) return index;
-  }
-  return -1;
 }
 
 function uniqueTracks(tracks: MusicTrack[]) {

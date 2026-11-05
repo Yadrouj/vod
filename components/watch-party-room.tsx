@@ -2,6 +2,7 @@
 
 import { MediaPlayerControls } from "./media-player-controls";
 import { PlayerRecovery } from "./player-recovery";
+import { compatibleMediaIndex } from "@/lib/media-compatibility";
 import roomStyles from "./watch-party-room.module.css";
 import { enterPlayerFullscreen } from "@/lib/player-fullscreen";
 
@@ -294,7 +295,9 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     const media = snapshot?.playback.media;
     if (!media || !can("changeSource")) return;
     const candidates = recoverySources(media.source, media.sources).map(row => row.link);
-    const source = candidates.find(candidate => !failedSourceUrlsRef.current.has(candidate.url)) ?? candidates[0];
+    const untried = candidates.filter(candidate => !failedSourceUrlsRef.current.has(candidate.url));
+    const available = untried.length ? untried : candidates;
+    const source = available[compatibleMediaIndex(available, 0, isListeningRoom ? audioRef.current : videoRef.current, navigator.userAgent, isListeningRoom)];
     if (source) { setMediaIssue(""); command("source", { source, time: Math.max(0, expectedPosition()) }); }
   }
   function handleMediaError(event: React.SyntheticEvent<HTMLMediaElement>) {

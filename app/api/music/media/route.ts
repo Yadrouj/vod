@@ -2,6 +2,7 @@ import { findMusicTrack, loadMusicIndex } from "@/lib/music";
 import { fetchStreamHeaders } from "@/lib/upstream-stream";
 import { musicAttachment } from "@/lib/music-download";
 import { streamMelodifyFile } from "@/lib/melodify-library";
+import { musicRelayHeaders } from "@/lib/music-media-response";
 
 const MAX_ID_LENGTH = 180;
 const MAX_URL_LENGTH = 4096;
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
   }
 
   if (source.provider === "melodify") {
-    return (await streamMelodifyFile(request, track!, source, download)) ?? Response.json({ error: "The Melodify library is not mounted." }, { status: 503 });
+    return (await streamMelodifyFile(request, track!, source, download)) ?? Response.json({ error: "The music archive file is not available on this server.", code: "MUSIC_LIBRARY_UNAVAILABLE" }, { status: 503, headers: { "Cache-Control": "no-store", "X-Sarvnema-Media-Error": "library-unavailable" } });
   }
   if (!isHttpUrl(source.url)) return Response.json({ error: "Music source is not available." }, { status: 404 });
 
@@ -39,6 +40,7 @@ export async function GET(request: Request) {
   const upstreamHeaders = new Headers({
     Accept: "audio/*,video/*;q=0.8,*/*;q=0.1",
     "User-Agent": "SarvNema media relay/1.0",
+    "Accept-Encoding": "identity",
   });
   if (range) upstreamHeaders.set("Range", range);
 
@@ -63,22 +65,12 @@ export async function GET(request: Request) {
     return Response.json({ error: "The music source rejected playback." }, { status: upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502 });
   }
 
-  const headers = new Headers();
   const upstreamContentType = upstream.headers.get("content-type")?.split(";")[0].trim().toLocaleLowerCase() ?? "";
-  if (download && /(?:text\/|json|html|xml)/i.test(upstreamContentType)) {
+  if (/(?:text\/|json|html|xml)/i.test(upstreamContentType)) {
     await upstream.body?.cancel();
     return Response.json({ error: "The source returned a page instead of a media file. Please try another quality." }, { status: 502 });
   }
-  const contentType = isGenericContentType(upstreamContentType)
-    ? inferMediaContentType(resolvedSourceUrl, track?.kind === "video")
-    : upstreamContentType || inferMediaContentType(resolvedSourceUrl, track?.kind === "video");
-  if (contentType) headers.set("Content-Type", contentType.split(";")[0]);
-  for (const name of ["content-length", "content-range", "accept-ranges", "etag", "last-modified"]) {
-    const value = upstream.headers.get(name);
-    if (value) headers.set(name, value);
-  }
-  headers.set("Cache-Control", "public, max-age=300, s-maxage=900");
-  headers.set("X-Content-Type-Options", "nosniff");
+  const headers = musicRelayHeaders(upstream, resolvedSourceUrl, track?.kind === "video", range);
   if (download) headers.set("Content-Disposition", musicAttachment(track?.persianTitle || track?.title || "SarvNema", source.url));
   if (resolvedSourceUrl !== source.url) headers.set("X-Sarvnema-Source-Fallback", "http");
 
@@ -105,19 +97,17 @@ function isHttpUrl(value: string) {
   }
 }
 
-function inferMediaContentType(value: string, video: boolean) {
-  const pathname = new URL(value).pathname.toLocaleLowerCase();
-  if (pathname.endsWith(".mp3")) return "audio/mpeg";
-  if (pathname.endsWith(".m4a")) return "audio/mp4";
-  if (pathname.endsWith(".mp4")) return video ? "video/mp4" : "audio/mp4";
-  if (pathname.endsWith(".aac")) return "audio/aac";
-  if (pathname.endsWith(".ogg") || pathname.endsWith(".oga") || pathname.endsWith(".opus")) return "audio/ogg";
-  if (pathname.endsWith(".wav")) return "audio/wav";
-  if (pathname.endsWith(".webm")) return video ? "video/webm" : "audio/webm";
-  if (pathname.endsWith(".mkv")) return "video/x-matroska";
-  return "application/octet-stream";
-}
-
-function isGenericContentType(value: string) {
-  return !value || value === "application/octet-stream" || value === "binary/octet-stream" || value === "application/download";
+export async function HEAD(request: Request) {
+  const headers = new Headers(request.headers);
+  const requestedRange = headers.has("range");
+  if (!requestedRange) headers.set("Range", "bytes=0-1");
+  const response = await GET(new Request(request.url, { headers, signal: request.signal }));
+  await response.body?.cancel();
+  const resultHeaders = new Headers(response.headers);
+  const total = /\/(\d+)$/.exec(resultHeaders.get("content-range") || "")?.[1];
+  if (!requestedRange && response.status === 206 && total) {
+    resultHeaders.delete("content-range"); resultHeaders.set("Content-Length", total);
+    return new Response(null, { status: 200, headers: resultHeaders });
+  }
+  return new Response(null, { status: response.status, headers: resultHeaders });
 }

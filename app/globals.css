@@ -9471,6 +9471,8 @@ html[dir="rtl"] .suggest-item img { order: initial; }
 .music-player-video .music-player-controls { grid-area: controls; min-width: 0; padding-top: 0; background: #171719; }
 .music-player-video .music-player-source-issue { grid-column: 1 / -1; margin: 0; padding: 8px 12px; background: rgba(122,54,38,.28); color: #ffd0be; font-size: 11px; }
 .music-player-source-issue { position: relative; z-index: 4; margin: 0; padding: 8px 14px; background: rgba(122,54,38,.25); color: #ffd0be; font-size: 11px; }
+.music-player-source-issue .playback-help-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.music-player-source-issue .playback-help-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-height: 44px; padding: 8px 12px; border: 1px solid #ffffff30; border-radius: 10px !important; background: #ffffff12; color: inherit; font: inherit; cursor: pointer; }
 
 @media (max-width: 900px) {
   .music-directory-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }

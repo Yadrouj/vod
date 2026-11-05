@@ -17,6 +17,7 @@ import { PlaybackHelp } from "@/components/playback-help";
 import { PlayerRecovery } from "@/components/player-recovery";
 import { isDonyayeSerial, preferredPlaybackIndex, regionalPlaybackHint, recoverySources, sourceHost } from "@/lib/playback-help";
 import styles from "./vod-player.module.css";
+import { compatibleMediaIndex } from "@/lib/media-compatibility";
 
 export function VodPlayer({
   title,
@@ -101,7 +102,8 @@ export function VodPlayer({
         const saved = readProgress();
         const latest = Object.entries(saved).sort((a, b) => (typeof b[1] === "number" ? 0 : b[1].at) - (typeof a[1] === "number" ? 0 : a[1].at))
           .find(([url]) => playableSources.some((link) => link.url === url))?.[0];
-        const match = preferredPlaybackIndex(playableSources, initialSource, latest);
+        const preferred = preferredPlaybackIndex(playableSources, initialSource, latest);
+        const match = compatibleMediaIndex(playableSources, preferred, videoRef.current, navigator.userAgent);
         if (match >= 0) {
           if (latest && playableSources[match].url !== latest && !initialSource) {
             const entry = saved[latest];
