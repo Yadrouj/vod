@@ -6,7 +6,7 @@
 .spotlightKicker { color: var(--panel-accent); display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 800; letter-spacing: .02em; }
 .spotlight strong { color: #fff; font-size: clamp(19px, 3vw, 27px); line-height: 1.45; letter-spacing: -.03em; }
 .spotlight > span:last-child { color: rgba(255,255,255,.6); font-size: 12px; line-height: 1.8; }
-.categories { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.categories { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
 .categories button { min-height: 72px; padding: 8px 4px; font: inherit; font-size: 13px; border: 1px solid #ffffff18; border-radius: 16px !important; background: linear-gradient(145deg, #ffffff0a, #ffffff03); color: #bfc3bf; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: border-color 160ms ease, background 160ms ease, transform 160ms ease, color 160ms ease; }
 .categories button:hover { border-color: color-mix(in srgb, var(--panel-accent) 60%, transparent); color: #fff; transform: translateY(-1px); }
 .categories button[aria-pressed=true] { color: #141610; border-color: var(--panel-accent); background: var(--panel-accent); box-shadow: 0 10px 24px color-mix(in srgb, var(--panel-accent) 18%, transparent); }
@@ -47,4 +47,37 @@
   .categories button { min-height: 64px; font-size: 11px; border-radius: 13px !important; }
   .search :global(.suggest-input-shell) { min-height: 62px; border-radius: 16px !important; }
   .search :global(input.search) { min-height: 50px; height: 50px; font-size: 16px; }
+}
+
+/* The dialog already follows visualViewport. Only the results scroll: the
+   input, content chips and close button must stay above the phone keyboard. */
+@media (max-width: 760px), (pointer: coarse) and (max-height: 600px) {
+  .dialog > header { padding: max(6px, env(safe-area-inset-top)) 12px 6px; gap: 8px; }
+  .dialog > header h2 { font-size: 16px; }
+  .dialog > header p { display: none; }
+  .dialog > div { display: flex; flex-direction: column; padding: 8px max(12px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); overflow: hidden; }
+  .search, .search form { display: flex; flex: 1; flex-direction: column; min-height: 0; gap: 8px; }
+  .spotlight { display: none; }
+  .categories { flex: 0 0 auto; gap: 4px; margin: 0; }
+  .categories button { flex-direction: row; gap: 5px; min-height: 44px; padding: 6px 4px; border-radius: 12px !important; font-size: 12px; box-shadow: none; }
+  .categories svg { width: 16px; height: 16px; }
+  .search :global(.suggest-box), .search :global(.suggest-box.is-open) { display: flex !important; flex: 1; flex-direction: column; gap: 8px; min-height: 0; overflow: hidden; }
+  .search :global(.suggest-input-shell) { flex: 0 0 auto; min-height: 54px; padding: 2px; }
+  .search :global(input.search), .search :global(.suggest-box.is-open .suggest-input-shell input.search) { height: 48px; min-height: 48px; font-size: 16px; }
+  .search :global(.suggest-box .suggest-menu), .search :global(.suggest-box.is-open .suggest-menu) { display: flex; flex: 1; flex-direction: column; min-height: 0; margin: 0; overflow: hidden; background: transparent; backdrop-filter: none; }
+  .search :global(.suggest-menu-head) { flex: 0 0 auto; min-height: 28px; padding: 2px 4px; gap: 6px; }
+  .search :global(.suggest-menu-order) { display: none; }
+  .search :global(.suggest-box.is-open .suggest-results) { flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; scroll-padding-block: 4px; }
+  .search :global(.suggest-box.is-open .suggest-item) { min-height: 68px; padding: 6px 4px; gap: 10px; }
+  .search :global(.suggest-box.is-open .suggest-item img), .search :global(.suggest-box.is-open .suggest-poster-fallback) { width: 38px; height: 52px; }
+  .search :global(.suggest-view-all) { display: flex; flex: 0 0 auto; min-height: 44px; padding: 8px 4px; font-size: 12px; }
+  .search[data-searching="true"] :is(.submit, .musicLink) { display: none; }
+  .search :global([data-search-corrections]) { flex: 0 0 auto; padding: 4px; }
+  .search :global([data-search-corrections] > p), .search :global([data-search-corrections] > div > span) { display: none; }
+  .search :global([data-search-corrections] > div) { flex-wrap: nowrap; overflow-x: auto; }
+  .search :global([data-search-corrections] button) { flex-shrink: 0; min-height: 44px; }
+  .empty { min-height: 0; overflow-y: auto; padding: 16px 8px; gap: 8px; }
+  .empty > svg, .empty p { display: none; }
+  .empty strong { font-size: 13px; }
+  .submit { min-height: 44px; flex-shrink: 0; font-size: 13px; }
 }

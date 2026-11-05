@@ -4,12 +4,13 @@ import { ArrowUpRight, LoaderCircle, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
-import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { DEFAULT_LOCALE, getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
 import type { SearchKind } from "@/lib/vod-search-order";
 import { VoiceSearch } from "./voice-search";
 import { SearchCorrections } from "./search-corrections";
+import styles from "./search-suggest.module.css";
 
 type Suggestion = {
   href?: string;
@@ -40,6 +41,7 @@ export function SearchSuggest({
   includeMusic = false,
   onQueryChange,
   onNavigate,
+  filters,
 }: {
   name?: string;
   defaultValue?: string;
@@ -55,6 +57,7 @@ export function SearchSuggest({
   includeMusic?: boolean;
   onQueryChange?: (query: string) => void;
   onNavigate?: () => void;
+  filters?: ReactNode;
 }) {
   const [query, setQuery] = useState(defaultValue);
   const [items, setItems] = useState<Suggestion[]>([]);
@@ -184,6 +187,27 @@ export function SearchSuggest({
     if (!menuOpen || portal || contained) return;
     document.documentElement.classList.add("mobile-search-open");
     return () => document.documentElement.classList.remove("mobile-search-open");
+  }, [menuOpen, portal, contained]);
+
+  useLayoutEffect(() => {
+    if (!menuOpen || portal || contained) return;
+    const viewport = window.visualViewport;
+    const place = () => {
+      const box = boxRef.current;
+      box?.style.setProperty("--search-height", `${viewport?.height ?? innerHeight}px`);
+      box?.style.setProperty("--search-top", `${viewport?.offsetTop ?? 0}px`);
+      box?.style.setProperty("--search-left", `${viewport?.offsetLeft ?? 0}px`);
+      box?.style.setProperty("--search-width", `${viewport?.width ?? innerWidth}px`);
+    };
+    place();
+    viewport?.addEventListener("resize", place);
+    viewport?.addEventListener("scroll", place);
+    window.addEventListener("resize", place);
+    return () => {
+      viewport?.removeEventListener("resize", place);
+      viewport?.removeEventListener("scroll", place);
+      window.removeEventListener("resize", place);
+    };
   }, [menuOpen, portal, contained]);
 
   useLayoutEffect(() => {
@@ -370,7 +394,7 @@ export function SearchSuggest({
   ) : null;
 
   return (
-    <div ref={boxRef} className={`suggest-box ${menuOpen ? "is-open" : ""}`} data-search-portal={portal ? "true" : "false"}>
+    <div ref={boxRef} className={`suggest-box ${menuOpen ? "is-open" : ""} ${!portal && !contained ? styles.mobileSearch : ""}`} data-search-portal={portal ? "true" : "false"}>
       <div className="suggest-mobile-head">
         <div>
           <span className="label">{t.common.search}</span>
@@ -398,6 +422,10 @@ export function SearchSuggest({
           placeholder={placeholder}
           aria-label={placeholder}
           autoComplete="off"
+          enterKeyHint="search"
+          autoCapitalize="none"
+          spellCheck={false}
+          autoFocus={contained}
           role="combobox"
           aria-autocomplete="list"
           aria-expanded={menuOpen}
@@ -414,6 +442,7 @@ export function SearchSuggest({
         <VoiceSearch locale={locale} onAccept={value => { updateQuery(value); inputRef.current?.focus(); }} />
       </div>
 
+      {filters}
       {!portal && menu}
       {portal && portalPosition && typeof document !== "undefined" ? createPortal(menu, document.body) : null}
     </div>

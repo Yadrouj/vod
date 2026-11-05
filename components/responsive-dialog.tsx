@@ -30,6 +30,7 @@ type Props = {
   children: ReactNode; footer?: ReactNode; mobileOnly?: boolean;
   theme?: "cinema" | "music"; closeLabel?: string; dir?: "rtl" | "ltr";
   initialFocus?: string;
+  className?: string;
 };
 
 /** Only panels move into the top layer. The media engine never changes parents. */
@@ -40,7 +41,7 @@ export function ResponsiveDialog(props: Props) {
   return <DialogSurface {...props} />;
 }
 
-function DialogSurface({ onClose, title, description, children, footer, theme = "cinema", closeLabel = "بستن", dir = "rtl", initialFocus }: Props) {
+function DialogSurface({ onClose, title, description, children, footer, theme = "cinema", closeLabel = "بستن", dir = "rtl", initialFocus, className }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const close = useRef(onClose);
   const id = useId();
@@ -78,7 +79,7 @@ function DialogSurface({ onClose, title, description, children, footer, theme = 
     };
   }, [initialFocus]);
   if (typeof document === "undefined") return null;
-  return createPortal(<dialog ref={ref} className={styles.dialog} data-responsive-dialog data-player-ui="true" data-media-theme={theme}
+  return createPortal(<dialog ref={ref} className={`${styles.dialog} ${className ?? ""}`} data-responsive-dialog data-player-ui="true" data-media-theme={theme}
     dir={dir} aria-labelledby={`${id}-title`} aria-describedby={description ? `${id}-description` : undefined}
     onCancel={event => { event.preventDefault(); event.stopPropagation(); onClose(); }}
     onKeyDown={event => event.stopPropagation()} onPointerDown={event => event.stopPropagation()}
