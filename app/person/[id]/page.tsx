@@ -1,3 +1,4 @@
+import { decodedParams } from "@/lib/route-params";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
@@ -16,7 +17,7 @@ type Props = {
 };
 
 export async function generateMetadata({params}:Props):Promise<Metadata> {
-  const [{id},data]=await Promise.all([params,loadCreatorProfiles()]);
+  const [{id},data]=await Promise.all([decodedParams(params),loadCreatorProfiles()]);
   const profile=data.directors.find(person=>person.personIds.includes(id));
   if(profile) return titleMetadata({title:`${profile.nameFa} | ${profile.name}؛ معرفی و فیلم‌ها`,description:profile.focusFa,pathname:`/person/${profile.id}`,image:profile.imageUrl});
   const person=await findPerson(id);
@@ -26,7 +27,7 @@ export async function generateMetadata({params}:Props):Promise<Metadata> {
 export default async function PersonPage({ params }: Props) {
   const locale = await getLocale();
   const t = getDictionary(locale);
-  const { id } = await params;
+  const { id } = await decodedParams(params);
   const creators = await loadCreatorProfiles();
   const director = creators.directors.find(profile => profile.personIds.includes(id));
   if (director) return <DirectorProfileView profile={director} />;

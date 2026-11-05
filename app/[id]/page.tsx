@@ -1,3 +1,4 @@
+import { decodedParams } from "@/lib/route-params";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -30,7 +31,7 @@ type Props = { params: Promise<{ id: string }> };
 export const revalidate = 300;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const item = await findVodItem((await params).id);
+  const item = await findVodItem((await decodedParams(params)).id);
   return item ? vodMetadata(item) : { title: "Title not found" };
 }
 
@@ -38,7 +39,7 @@ export default async function DetailPage({ params }: Props) {
   const locale = await getLocale();
   const fa = locale === "fa";
   const t = getDictionary(locale);
-  const item = await findVodItem((await params).id);
+  const item = await findVodItem((await decodedParams(params)).id);
   if (!item) notFound();
 
   const isSeries = normalizeVodType(item.type) === "series";

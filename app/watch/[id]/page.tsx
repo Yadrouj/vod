@@ -1,3 +1,4 @@
+import { decodedParams } from "@/lib/route-params";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -31,7 +32,7 @@ type Props = {
 export const revalidate = 300;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
+  const { id } = await decodedParams(params);
   const item = await findVodItem(id);
   if (!item) return { title: "Watch page not found" };
   return {
@@ -49,7 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function WatchPage({ params, searchParams }: Props) {
   const locale = await getLocale();
   const t = getDictionary(locale);
-  const { id } = await params;
+  const { id } = await decodedParams(params);
   const query = await searchParams;
   const resume = query?.resume;
   const item = await findVodItem(id);

@@ -1,3 +1,4 @@
+import { decodedParams } from "@/lib/route-params";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -30,7 +31,7 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug } = await decodedParams(params);
   const article = await findMagazineArticle(slug);
   if (article) return { ...titleMetadata({ title: article.title, description: article.description, pathname: `/mag/${article.slug}`, keywords: article.keywords, image: absoluteUrl(article.image), type: 'article' }), authors: [{ name: article.author, url: absoluteUrl('/mag/about') }], openGraph: { ...titleMetadata({ title: article.title, description: article.description, pathname: `/mag/${article.slug}`, image: absoluteUrl(article.image), type: 'article' }).openGraph, type: 'article', publishedTime: article.publishedAt, modifiedTime: article.modifiedAt, section: article.categoryLabel } };
   const definition = getEditorial(slug);
@@ -45,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function EditorialPage({ params }: Props) {
-  const { slug } = await params;
+  const { slug } = await decodedParams(params);
   const article = await findMagazineArticle(slug);
   if (article) {
     const published = (await loadMagazine()).articles;

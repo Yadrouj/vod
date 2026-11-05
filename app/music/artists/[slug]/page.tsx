@@ -1,3 +1,4 @@
+import { decodedParams } from "@/lib/route-params";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -19,7 +20,7 @@ import creatorStyles from '@/components/creator-profiles.module.css';
 export const revalidate = 300;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const [{ slug }, index, creators] = await Promise.all([params, loadMusicArtistIndex(), loadCreatorProfiles()]);
+  const [{ slug }, index, creators] = await Promise.all([decodedParams(params), loadMusicArtistIndex(), loadCreatorProfiles()]);
   const profile = findSingerProfile(creators, slug);
   const artist = profile ? singerAsArtist(profile, tracksForSinger(index, profile)) : findMusicArtist(index, slug);
   if (!artist) return { title: "Artist not found" };
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function MusicArtistPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ page?: string; category?: string }> }) {
-  const [{ slug }, index, creators] = await Promise.all([params, loadMusicArtistIndex(), loadCreatorProfiles()]);
+  const [{ slug }, index, creators] = await Promise.all([decodedParams(params), loadMusicArtistIndex(), loadCreatorProfiles()]);
   const profile = findSingerProfile(creators, slug);
   const profileTracks = profile ? tracksForSinger(index, profile) : null;
   const artist = profile ? singerAsArtist(profile, profileTracks!) : findMusicArtist(index, slug);

@@ -1,3 +1,4 @@
+import { decodedParams } from "@/lib/route-params";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MusicArtistPlaylist } from "@/components/music-artist-playlist";
@@ -8,12 +9,12 @@ import styles from "@/components/music-refresh.module.css";
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ page?: string }> };
 export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: Props) {
-  const { id } = await params;
+  const { id } = await decodedParams(params);
   const playlist = (await loadMoodPlaylists()).playlists.find(p => p.id === id);
   return titleMetadata({ title: playlist?.title || "پلی‌لیست موسیقی", description: playlist?.description || "گلچین موسیقی سرونما", pathname: `/music/collections/${id}` });
 }
 export default async function CollectionPage({ params, searchParams }: Props) {
-  const { id } = await params;
+  const { id } = await decodedParams(params);
   const playlist = (await loadMoodPlaylists()).playlists.find(p => p.id === id);
   if (!playlist) notFound();
   const ids = new Set(playlist.trackIds);

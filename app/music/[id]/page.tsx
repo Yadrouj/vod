@@ -1,3 +1,4 @@
+import { decodedParams } from "@/lib/route-params";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
@@ -11,13 +12,13 @@ import styles from "./music-detail.module.css";
 export const revalidate = 300;
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const [{ id }, index] = await Promise.all([params, loadMusicIndex()]);
+  const [{ id }, index] = await Promise.all([decodedParams(params), loadMusicIndex()]);
   const track = findMusicTrack(index, id);
   return track ? musicMetadata(track) : { title: "Music track not found" };
 }
 
 export default async function MusicDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const [{ id }, index] = await Promise.all([params, loadMusicIndex()]);
+  const [{ id }, index] = await Promise.all([decodedParams(params), loadMusicIndex()]);
   const track = findMusicTrack(index, id);
   if (!track) notFound();
 
