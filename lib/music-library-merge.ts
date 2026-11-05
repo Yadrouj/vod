@@ -1,4 +1,16 @@
 import type { MusicArtist, MusicArtistIndex, MusicIndex, MusicLandingIndex, MusicTrack } from "./music-types";
+import replacementBundle from "./data/melodify-source-replacements.json";
+import type { MusicSource } from "./music-types";
+
+/** Preserve imported IDs/artists/tags while adding verified exact-track sources. */
+export function withRecoveredMusicSources(track: MusicTrack): MusicTrack {
+  const replacements = (replacementBundle as Record<string, MusicSource[]>)[track.id];
+  if (!replacements?.length) return track;
+  // A verified MP3 can stream even if its provider catalog called it a download.
+  const sources: MusicSource[] = [...replacements.map(source => ({ ...source, kind: "stream" as const })), ...track.sources];
+  const seen = new Set<string>();
+  return { ...track, sources: sources.filter(source => !seen.has(source.url) && Boolean(seen.add(source.url))) };
+}
 
 const key = (value: string) => value.normalize("NFKD").replace(/[\u0300-\u036f]/gu, "")
   .replace(/[\u064a\u0649]/gu, "ی").replace(/\u0643/gu, "ک").toLowerCase()
@@ -26,7 +38,8 @@ export function mergeMelodifyCatalog<T extends MusicIndex>(base: T, library: Mus
     ? Object.fromEntries(Object.entries(indexedBase.artistTrackIds).map(([slug, ids]) => [slug, new Set(ids)])) : null;
   // Every track updates the artist directory; compact landings only carry a
   // bounded selection of songs, not the entire 5k-track library.
-  for (const track of library.tracks) {
+  for (const rawTrack of library.tracks) {
+    const track = withRecoveredMusicSources(rawTrack);
     const refs = track.artists.map(ref => {
       const candidates = [ref.slug, ref.name, ...(ref.aliases ?? [])].flatMap(identityKeys);
       // New exports resolve names against the FULL artist directory. Resolving
