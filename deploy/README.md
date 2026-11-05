@@ -1,5 +1,7 @@
 # VOD (sarvnema) — server deploy runbook
 
+> **Outdated host info below.** The current production deploy (server, rules, reverse-proxy build) is in [DEPLOY-SARVNEMA.md](DEPLOY-SARVNEMA.md).
+
 Target host: `ssh ubuntu@185.203.118.87` · Path: `/home/ubuntu/vod` · Domain: `sarvnema.ir`
 
 The edge proxy is the **dockerised** nginx container `mn2-nginx` (network
