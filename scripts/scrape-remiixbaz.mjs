@@ -16,6 +16,30 @@ const PLAYLISTS = [
   { slug: "mahasti", label: "Mahasti" },
 ];
 
+/** Discover whole public collections from the site's own paginated directory. */
+async function discoverPlaylists() {
+  const queue = [`${ROOT}/playlist/`, `${ROOT}/`], visited = new Set(), found = new Map();
+  while (queue.length && visited.size < 14) {
+    const url = queue.shift(); if (visited.has(url)) continue; visited.add(url);
+    try {
+      const html = await fetchText(url);
+      for (const match of html.matchAll(/href=["']([^"']+)["']/gi)) {
+        let link; try { link = new URL(match[1], ROOT); } catch { continue; }
+        if (link.origin !== ROOT || link.search) continue;
+        if (/^\/playlist\/page\/\d+\/$/.test(link.pathname)) {
+          if (!visited.has(link.href) && !queue.includes(link.href)) queue.push(link.href);
+        } else {
+          const slug = link.pathname.match(/^\/playlist\/([^/]+)\/$/)?.[1];
+          if (slug && slug !== 'page') found.set(slug, { slug, label: slug });
+        }
+      }
+    } catch (error) { console.warn(`Directory unavailable: ${url}: ${message(error)}`); }
+    await sleep(delayMs);
+  }
+  console.log(JSON.stringify({ directoryPages: visited.size, discoveredPlaylists: found.size }));
+  return [...found.values()];
+}
+
 async function main() {
   const previous = await readJson(OUTPUT, { tracks: [], artistProfiles: [], playlists: [] });
   const tracks = new Map((previous.tracks ?? []).map((track) => [track.id, track]));
@@ -23,7 +47,9 @@ async function main() {
   const playlists = [];
   const status = [];
 
-  for (const playlist of PLAYLISTS) {
+  const selected = process.argv.includes('--discover')
+    ? [...new Map([...PLAYLISTS, ...await discoverPlaylists()].map(p => [p.slug, p])).values()] : PLAYLISTS;
+  for (const playlist of selected) {
     const sourceUrl = `${ROOT}/playlist/${playlist.slug}/`;
     try {
       const html = await fetchText(sourceUrl);
@@ -32,6 +58,7 @@ async function main() {
       for (const track of parsed.tracks) tracks.set(track.id, track);
       for (const profile of parsed.artistProfiles) profiles.set(profile.slug, { ...profiles.get(profile.slug), ...profile });
       status.push({ slug: playlist.slug, tracks: parsed.tracks.length, artists: parsed.artistProfiles.length, status: "ok" });
+      if (process.argv.includes('--discover')) console.log(JSON.stringify(status.at(-1)));
     } catch (error) {
       status.push({ slug: playlist.slug, tracks: 0, artists: 0, status: "failed", error: message(error) });
     }

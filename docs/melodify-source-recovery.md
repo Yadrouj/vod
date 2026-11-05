@@ -1,11 +1,51 @@
 # Missing imported music files: exact-track recovery
 
-Current batch result (November 6, 2026): 4,990 imported tracks inventoried;
+Initial batch result (November 6, 2026): 4,990 imported tracks inventoried;
 1,746 identities had candidates; 1,744 have a verified MP3 replacement in the
 shipped bundle. The remaining 3,246 have no verified replacement from this
 batch, including Moein's `melodify-6381` (Maandegar). The first pass checked
 1,744 unique URLs; the continuation retried three unresolved identities and
 recovered one more. These are bounded range checks, not 1,744 full-song plays.
+
+## Extended list recovery (November 6, 2026)
+
+The continuation has **1,993** imported songs with verified alternatives, a net
+increase of **249** over the initial bundle. **2,997** remain without a verified
+replacement; `melodify-6381` (Moein — Maandegar) is still among them.
+
+- Paginated public RemiixBaz directory discovery found 56 playlist tables;
+  3,978 unique source tracks were retained. All 56 playlist fetches succeeded.
+- Singer archives at RozMusic and Musics-Fa were read as complete list pages,
+  not individual song searches: 632 page records yielded 7,509 source tracks.
+  All discovered pagination chains were exhausted except one archive that
+  redirected outside the allowed archive path and was deliberately skipped.
+- The first singer-archive pass was capped at eight pages per archive and a
+  six-minute run budget. A checkpointed continuation with a 32-page cap
+  completed the remaining list traversal; failed redirects are not completion.
+- Existing alternatives were reviewed for explicit version markers. Nineteen
+  source entries needed review: suitable replacements were recovered where
+  possible, while one unsupported identity was removed from the generated
+  alternative bundle. No original catalog song or local-file source was deleted.
+- Bounded Chrome source tests played approximately three seconds of the newly
+  recovered `melodify-4089` and `melodify-1330`, with nonzero playback time and
+  valid duration. This is not a claim that every recovered song was played.
+
+```sh
+node scripts/scrape-remiixbaz.mjs --discover --delay-ms=1000
+node scripts/recover-music-archive-lists.mjs
+# For deeper checkpointed traversal, set ARCHIVE_RECOVERY_MAX_PAGES=32.
+node scripts/melodify-source-recovery.mjs \
+  --source-index=.media-cache/music/artist-archive-source.json \
+  --source-index=.media-cache/music/remiixbaz-source.json \
+  --continue-verified --revalidate-identities --write-verified
+```
+
+The identity review only touches the generated alternative-source bundle, never
+the imported catalog. Include all contributing source snapshots when using
+`--revalidate-identities`; otherwise a source missing from that input snapshot
+could be excluded unnecessarily. `identity-review.json` records review entries,
+and `unresolved.txt` lists the remaining imported identities. Probes still check
+MP3 bytes and HTTP response, not acoustic fingerprints or complete-song decoding.
 
 The 4,990-track library catalog is preserved, including IDs, artist references,
 tags and original local-file sources. Missing file mounts are not fixed by
