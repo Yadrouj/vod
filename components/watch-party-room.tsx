@@ -3,12 +3,13 @@
 import { MediaPlayerControls } from "./media-player-controls";
 import { PlayerRecovery } from "./player-recovery";
 import { compatibleMediaIndex } from "@/lib/media-compatibility";
+import { mediaDeliveryRoutes } from "@/lib/media-delivery";
 import roomStyles from "./watch-party-room.module.css";
 import { enterPlayerFullscreen } from "@/lib/player-fullscreen";
 
 import Link from "next/link";
 import { Check, Clock3, Copy, Disc3, ExternalLink, FileUp, Film, Globe2, Link2, LoaderCircle, MessageCircle, Play, Send, Share2, SmilePlus, Star, Upload, Users, Video, Volume2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import type { PartyCapability, PartyChatMessage, PartyMedia, PartyParticipant, PartyPermissions, PartyProfile, PartyQueueItem, PartyReaction, PartySnapshot } from "@/lib/watch-party-types";
 import { newPartyProfile, readPartyProfile, savePartyProfile } from "@/lib/watch-party-profile";
@@ -22,7 +23,7 @@ import { sizedImageUrl } from "@/lib/image-url";
 import { showAppMessage } from "@/lib/app-messages";
 import type { SubtitleSelection } from "@/lib/subtitle-types";
 import { inferPersonalMediaKind, isSupportedPersonalMediaFile, type PersonalMediaFields, type PersonalMediaKind, type PersonalMediaMode } from "@/lib/watch-party-personal-media";
-import { isDonyayeSerial, playbackFailureText, recoverySources, regionalPlaybackHint, samePlaybackEpisode } from "@/lib/playback-help";
+import { isDonyayeSerial, needsPlaybackBuffer, playbackFailureText, recoverySources, regionalPlaybackHint, samePlaybackEpisode } from "@/lib/playback-help";
 
 type SearchItem = { title: string; imdbCode: string; year: number | null; type: string; posterUrl: string | null; imdbRating: number | null };
 type PlaybackState = PartySnapshot["playback"] & {
@@ -92,7 +93,10 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const [personalMediaBusy, setPersonalMediaBusy] = useState(false);
   const [personalMediaError, setPersonalMediaError] = useState("");
   const [mediaIssue, setMediaIssue] = useState("");
+  const [mediaErrorInfo, setMediaErrorInfo] = useState<{ code: number; detail?: string } | null>(null);
   const [sourceRevision, setSourceRevision] = useState(0);
+  const [delivery, setDelivery] = useState({ url: "", index: 0 });
+  const handledDeliveryFailure = useRef<HTMLMediaElement | null>(null);
   const [mediaBuffering, setMediaBuffering] = useState(false);
 
   const me = snapshot?.participants.find((participant) => participant.id === profile?.id);
@@ -100,15 +104,34 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
   const can = (capability: PartyCapability) => Boolean(isHost || (me && (me.permissions[capability] ?? snapshot?.guestPermissions[capability])));
   const regionalSource = isDonyayeSerial(snapshot?.playback.media.source);
   const currentSourceUrl = snapshot?.playback.media.source.url;
+  const currentSourceAudio = snapshot?.playback.media.mediaKind === "audio";
+  const deliveryRoutes = mediaDeliveryRoutes(snapshot?.playback.media.source);
+  const deliveryIndex = delivery.url === currentSourceUrl ? delivery.index : 0;
+  const deliveryCount = deliveryRoutes.length;
+  const playbackUrl = deliveryRoutes[deliveryIndex] ?? currentSourceUrl;
+  const tryRoomDeliveryFallback = useCallback((element: HTMLMediaElement | null, code: number) => {
+    if (!element || (element !== videoRef.current && element !== audioRef.current)) return false;
+    if (handledDeliveryFailure.current === element) return true;
+    if (code === 3 || !currentSourceUrl || deliveryIndex >= deliveryCount - 1) return false;
+    handledDeliveryFailure.current = element;
+    if (latestPlayback.current) pendingPlayback.current = latestPlayback.current;
+    setDelivery({ url: currentSourceUrl, index: deliveryIndex + 1 });
+    setMediaIssue(""); setMediaErrorInfo(null); setMediaBuffering(true);
+    return true;
+  }, [currentSourceUrl, deliveryIndex, deliveryCount]);
 
   useEffect(() => {
     if (!mediaBuffering || !currentSourceUrl) return;
     const timer = setTimeout(() => {
       setMediaBuffering(false);
+      const element = currentSourceAudio ? audioRef.current : videoRef.current;
+      if (!needsPlaybackBuffer(element, latestPlayback.current?.paused === false)) return;
+      if (tryRoomDeliveryFallback(element, 2)) return;
+      setMediaErrorInfo({ code: 2, detail: "Source load timed out without usable playback data (20s)" });
       setMediaIssue(regionalSource ? regionalPlaybackHint(document.documentElement.lang.startsWith("fa")) : playbackFailureText(2, document.documentElement.lang.startsWith("fa")));
-    }, 20000);
+    }, deliveryIndex < deliveryCount - 1 ? 8000 : 20000);
     return () => clearTimeout(timer);
-  }, [mediaBuffering, currentSourceUrl, regionalSource, sourceRevision]);
+  }, [mediaBuffering, currentSourceUrl, currentSourceAudio, regionalSource, sourceRevision, deliveryIndex, deliveryCount, tryRoomDeliveryFallback]);
 
   useEffect(() => {
     let active = true;
@@ -178,7 +201,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
       latestPlayback.current = state;
       setSnapshot((current) => current ? { ...current, playback: state } : current);
       const video = state.media.mediaKind === "audio" ? audioRef.current : videoRef.current;
-      if (!video || video.readyState < 1 || video.getAttribute("src") !== state.media.source.url) return;
+      if (!video || video.readyState < 1 || !mediaDeliveryRoutes(state.media.source).includes(video.getAttribute("src") || "")) return;
 
       const estimatedServerNow = hasServerClockOffset.current ? receivedAt + serverClockOffset.current : Number(state.serverNow ?? receivedAt);
       const elapsed = state.paused ? 0 : Math.max(0, estimatedServerNow - Number(state.serverNow ?? estimatedServerNow)) / 1000 * state.playbackRate;
@@ -287,14 +310,16 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     if (!source) return;
     // Retry locally without resetting room time or interrupting participants.
     failedSourceUrlsRef.current.delete(source.url);
+    setDelivery({ url: source.url, index: 0 });
     pendingPlayback.current = latestPlayback.current ?? snapshot.playback;
     setMediaIssue(""); setMediaBuffering(true); setPlayerDuration(0);
+    setMediaErrorInfo(null);
     setSourceRevision(value => value + 1);
   }
   function chooseNextRoomSource() {
     const media = snapshot?.playback.media;
     if (!media || !can("changeSource")) return;
-    const candidates = recoverySources(media.source, media.sources).map(row => row.link);
+    const candidates = recoverySources(media.source, media.sources, { differentServerFirst: true }).map(row => row.link);
     const untried = candidates.filter(candidate => !failedSourceUrlsRef.current.has(candidate.url));
     const available = untried.length ? untried : candidates;
     const source = available[compatibleMediaIndex(available, 0, isListeningRoom ? audioRef.current : videoRef.current, navigator.userAgent, isListeningRoom)];
@@ -304,10 +329,12 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     const media = snapshot?.playback.media;
     if (!media) return;
     if (event.currentTarget !== videoRef.current && event.currentTarget !== audioRef.current) return;
-    const failedUrl = event.currentTarget.getAttribute("src") || media.source.url;
+    if (tryRoomDeliveryFallback(event.currentTarget, event.currentTarget.error?.code ?? 2)) return;
+    const failedUrl = media.source.url;
     if (failedSourceUrlsRef.current.has(failedUrl)) return;
     failedSourceUrlsRef.current.add(failedUrl);
     setMediaBuffering(false);
+    setMediaErrorInfo({ code: event.currentTarget.error?.code ?? 2, detail: event.currentTarget.error?.message });
     if (isDonyayeSerial({ url: failedUrl })) {
       // A single participant's regional/network problem should not switch
       // the source for every participant who is already watching.
@@ -318,8 +345,10 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
     setMediaIssue(playbackFailureText(event.currentTarget.error?.code ?? 2, document.documentElement.lang.startsWith("fa")));
   }
   function handleMediaLoadStart(event: React.SyntheticEvent<HTMLMediaElement>) {
+    if (currentSourceUrl && delivery.url !== currentSourceUrl) setDelivery({ url: currentSourceUrl, index: 0 });
     failedSourceUrlsRef.current.delete(event.currentTarget.getAttribute("src") || "");
     setMediaBuffering(true); setMediaIssue("");
+    setMediaErrorInfo(null);
   }
   function handleMediaCanPlay(event: React.SyntheticEvent<HTMLMediaElement>) { setMediaBuffering(false); setMediaIssue(""); resumeWhenReady(event); }
   function finishRemoteSeek(event: React.SyntheticEvent<HTMLMediaElement>) {
@@ -559,13 +588,14 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
       >
         {isListeningRoom ? (
           <>
-            <audio ref={audioRef} key={`${playback.media.source.url}:${sourceRevision}`} src={playback.media.source.url} preload="auto" onLoadStart={handleMediaLoadStart} onWaiting={() => setMediaBuffering(true)} onStalled={() => setMediaBuffering(true)} onLoadedMetadata={handleLoadedMetadata} onError={handleMediaError} onTimeUpdate={(event) => { setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={handleMediaCanPlay} />
+            <audio ref={audioRef} key={`${playbackUrl}:${sourceRevision}`} src={playbackUrl} preload="auto" onLoadStart={handleMediaLoadStart} onWaiting={() => setMediaBuffering(true)} onStalled={() => setMediaBuffering(true)} onLoadedMetadata={handleLoadedMetadata} onError={handleMediaError} onTimeUpdate={(event) => { setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={handleMediaCanPlay} />
             <div className="party-listening-art" style={playback.media.posterUrl ? { backgroundImage: `url(${playback.media.posterUrl})` } : undefined} aria-hidden="true"><div>{playback.media.posterUrl ? <img src={playback.media.posterUrl} alt="" /> : <Disc3 size={84} />}</div></div>
             <div className="party-listening-copy" data-player-ui="true"><span>LISTEN TOGETHER · LIVE SYNC</span><h2>{playback.media.title}</h2><p>{playback.media.artistName || playback.media.details?.credits?.map((credit) => credit.name).join(" · ") || "Shared music room"}</p><small>{snapshot.participants.filter((item) => item.connected).length} people in the room · {playback.paused ? "paused" : "playing together"}</small></div>
             <div className="party-listening-wave" aria-hidden="true">{Array.from({ length: 32 }, (_, index) => <i key={index} style={{ "--wave": `${28 + (index * 19) % 72}%`, "--delay": `${index * -0.07}s` } as React.CSSProperties} />)}</div>
           </>
-        ) : <video ref={videoRef} key={`${playback.media.source.url}:${sourceRevision}`} src={playback.media.source.url} poster={playback.media.posterUrl ?? undefined} playsInline preload="auto" onLoadStart={handleMediaLoadStart} onWaiting={() => setMediaBuffering(true)} onStalled={() => setMediaBuffering(true)} onLoadedMetadata={handleLoadedMetadata} onError={handleMediaError} onTimeUpdate={(event) => { setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={handleMediaCanPlay} />}
+        ) : <video ref={videoRef} key={`${playbackUrl}:${sourceRevision}`} src={playbackUrl} poster={playback.media.posterUrl ?? undefined} playsInline preload="auto" onLoadStart={handleMediaLoadStart} onWaiting={() => setMediaBuffering(true)} onStalled={() => setMediaBuffering(true)} onLoadedMetadata={handleLoadedMetadata} onError={handleMediaError} onTimeUpdate={(event) => { setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={handleMediaCanPlay} />}
         {mediaIssue && !settingsOpen && !subtitlesOpen && <PlayerRecovery fa={document.documentElement.lang.startsWith("fa")} regional={isDonyayeSerial(playback.media.source)}
+          code={mediaErrorInfo?.code ?? 2} detail={mediaErrorInfo?.detail} sourceLabel={playback.media.source.label}
           onRetry={retryRoomSource} guest={!can("changeSource")}
           onNext={can("changeSource") && playback.media.sources.some(source => source.url !== playback.media.source.url && samePlaybackEpisode(source, playback.media.source)) ? chooseNextRoomSource : undefined}
           onChoose={() => { setSettingsOpen(true); setHudVisible(true); }} />}
@@ -609,7 +639,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
           </div>
         )}
 
-        <MediaPlayerControls frameRef={stageRef} mediaRef={isListeningRoom ? audioRef : videoRef} mediaKey={`${playback.media.source.url}:${sourceRevision}`}
+        <MediaPlayerControls frameRef={stageRef} mediaRef={isListeningRoom ? audioRef : videoRef} mediaKey={`${playbackUrl}:${sourceRevision}`}
           paused={playback.paused} time={playerTime} duration={playerDuration} rate={playback.playbackRate} audio={isListeningRoom}
           onPlay={() => command(playback.paused ? "play" : "pause", { time: (isListeningRoom ? audioRef.current : videoRef.current)?.currentTime })}
           onSeek={time => command("seek", { time })} onRate={rate => command("rate", { rate })}
@@ -625,7 +655,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
             <button type="button" onClick={() => toggleStagePanel("chat")} aria-expanded={stagePanel === "chat"} aria-label="Room chat"><MessageCircle /> Chat{roomChat.length > 0 && <small>{Math.min(roomChat.length, 99)}</small>}</button>
           </>}
         />
-        {!isListeningRoom && <PlayerSubtitles videoRef={videoRef} itemId={playback.media.itemId} title={playback.media.title} sourceKey={playback.media.source.url} sourceLabel={playback.media.source.label} sourceSubtitleUrl={playback.media.source.subtitleUrl ?? null} open={subtitlesOpen} onClose={() => setSubtitlesOpen(false)} selection={snapshot.subtitle} onSelectionChange={changeSubtitle} canChange={can("subtitles")} shared />}
+        {!isListeningRoom && <PlayerSubtitles videoRef={videoRef} itemId={playback.media.itemId} title={playback.media.title} sourceKey={`${playbackUrl}:${sourceRevision}`} sourceLabel={playback.media.source.label} sourceSubtitleUrl={playback.media.source.subtitleUrl ?? null} open={subtitlesOpen} onClose={() => setSubtitlesOpen(false)} selection={snapshot.subtitle} onSelectionChange={changeSubtitle} canChange={can("subtitles")} shared />}
       </div>
       <section className="party-queue">
         {isDonyayeSerial({ url: playback.media.source.url }) && <aside className="source-region-notice" dir="rtl"><strong>برای پخش از دنیای سریال، VPN را خاموش کن</strong><p>{regionalPlaybackHint(document.documentElement.lang.startsWith("fa"))}</p><div className="playback-help-actions">{playback.media.sources.filter(source => source.url !== playback.media.source.url && !isDonyayeSerial(source) && source.season === playback.media.source.season && source.episode === playback.media.source.episode).slice(0, 2).map(source => <button type="button" key={source.url} disabled={!can("changeSource")} onClick={() => command("source", { source, time: Math.max(0, expectedPosition()) })}>منبع جایگزین · {source.label}</button>)}</div>{!can("changeSource") && <small>از میزبان بخواه منبع پخش را عوض کند.</small>}</aside>}

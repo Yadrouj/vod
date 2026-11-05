@@ -2,7 +2,7 @@
 
 import { enterPlayerFullscreen } from "@/lib/player-fullscreen";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Play } from "lucide-react";
 import { MediaPlayerControls } from "./media-player-controls";
 import { BrandLoader } from "@/components/brand-loader";
@@ -15,9 +15,10 @@ import { readProgress, saveHistoryValue, PROGRESS_KEY } from "@/lib/media-histor
 import Link from "next/link";
 import { PlaybackHelp } from "@/components/playback-help";
 import { PlayerRecovery } from "@/components/player-recovery";
-import { isDonyayeSerial, preferredPlaybackIndex, regionalPlaybackHint, recoverySources, sourceHost } from "@/lib/playback-help";
+import { isDonyayeSerial, matchesPlaybackSource, needsPlaybackBuffer, preferredPlaybackIndex, regionalPlaybackHint, recoverySources, sourceHost } from "@/lib/playback-help";
 import styles from "./vod-player.module.css";
 import { compatibleMediaIndex } from "@/lib/media-compatibility";
+import { mediaDeliveryRoutes } from "@/lib/media-delivery";
 
 export function VodPlayer({
   title,
@@ -44,6 +45,8 @@ export function VodPlayer({
   const [choiceIndex, setChoiceIndex] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [sourceRevision, setSourceRevision] = useState(0);
+  const [delivery, setDelivery] = useState({ url: "", index: 0 });
+  const handledDeliveryFailure = useRef<HTMLMediaElement | null>(null);
   const [speed, setSpeed] = useState("1");
   const [volume, setVolume] = useState("0.85");
   const [paused, setPaused] = useState(true);
@@ -56,6 +59,7 @@ export function VodPlayer({
   const [sourceReady, setSourceReady] = useState(false);
   const [message, setMessage] = useState("");
   const [mediaError, setMediaError] = useState(0);
+  const [mediaErrorDetail, setMediaErrorDetail] = useState("");
   const [buffering, setBuffering] = useState(true);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
@@ -67,28 +71,48 @@ export function VodPlayer({
     [isSeries, links, title],
   );
   const active = playableSources[activeIndex] ?? playableSources[0];
-  const mediaKey = `${sourceReady ? active?.url : "awaiting-source"}:${sourceRevision}`;
-  const alternatives = active ? recoverySources(active, playableSources).filter(({ link }) => !isDonyayeSerial(link)).slice(0, 2) : [];
-  const nextRecovery = active ? recoverySources(active, playableSources).find(({ link }) => !failedSourceUrls.has(link.url)) : undefined;
+  const deliveryRoutes = mediaDeliveryRoutes(active);
+  const deliveryIndex = delivery.url === active?.url ? delivery.index : 0;
+  const playbackUrl = deliveryRoutes[deliveryIndex] ?? active?.url;
+  const mediaKey = `${sourceReady ? playbackUrl : "awaiting-source"}:${sourceRevision}`;
+  const recoveryOptions = { differentServerFirst: mediaError > 0 && mediaError !== 3 };
+  const alternatives = active ? recoverySources(active, playableSources, recoveryOptions).filter(({ link }) => !isDonyayeSerial(link)).slice(0, 2) : [];
+  const nextRecovery = active ? recoverySources(active, playableSources, recoveryOptions).find(({ link }) => !failedSourceUrls.has(link.url)) : undefined;
   const t = getDictionary(locale);
   const controlsShowing = paused || settingsOpen || subtitlesOpen || selectionOpen || controlsVisible;
+  const logicalUrl = active?.url;
+  const deliveryCount = deliveryRoutes.length;
+  const tryDeliveryFallback = useCallback((video: HTMLMediaElement | null, code: number) => {
+    if (!video || video !== videoRef.current) return false;
+    if (handledDeliveryFailure.current === video) return true;
+    if (code === 3 || !logicalUrl || deliveryIndex >= deliveryCount - 1) return false;
+    handledDeliveryFailure.current = video;
+    pendingSeekRef.current = pendingSeekRef.current ?? video.currentTime ?? 0;
+    playAfterSourceReadyRef.current = playAfterSourceReadyRef.current || !video.paused || !paused;
+    setDelivery({ url: logicalUrl, index: deliveryIndex + 1 });
+    setMediaError(0); setMediaErrorDetail(""); setMessage(""); setBuffering(true); setPaused(true);
+    return true;
+  }, [logicalUrl, deliveryIndex, deliveryCount, paused]);
 
   useEffect(() => {
     if (!buffering || !sourceReady || !active?.url) return;
     const timer = setTimeout(() => {
       setBuffering(false);
+      if (!needsPlaybackBuffer(videoRef.current, playAfterSourceReadyRef.current)) return;
+      if (tryDeliveryFallback(videoRef.current, 2)) return;
       setFailedSourceUrls(previous => new Set(previous).add(active.url));
       setMediaError(2);
+      setMediaErrorDetail("Source load timed out without usable playback data (20s)");
       setMessage(isDonyayeSerial(active) ? regionalPlaybackHint(locale === "fa") : t.player.sourceError);
-    }, 20000);
+    }, deliveryIndex < deliveryCount - 1 ? 8000 : 20000);
     return () => clearTimeout(timer);
-  }, [buffering, sourceReady, active, locale, t.player.sourceError, sourceRevision]);
+  }, [buffering, sourceReady, active, locale, t.player.sourceError, sourceRevision, deliveryIndex, deliveryCount, tryDeliveryFallback]);
 
   useEffect(() => {
     let current = true;
     queueMicrotask(() => {
       if (!current) return;
-      setMediaError(0); setMessage(""); setBuffered(0); setDuration(0); setTime(0);
+      setMediaError(0); setMediaErrorDetail(""); setMessage(""); setBuffered(0); setDuration(0); setTime(0);
       pendingSeekRef.current = null; playAfterSourceReadyRef.current = false;
       setFailedSourceUrls(new Set());
       if (!playableSources.length) {
@@ -101,7 +125,7 @@ export function VodPlayer({
       try {
         const saved = readProgress();
         const latest = Object.entries(saved).sort((a, b) => (typeof b[1] === "number" ? 0 : b[1].at) - (typeof a[1] === "number" ? 0 : a[1].at))
-          .find(([url]) => playableSources.some((link) => link.url === url))?.[0];
+          .find(([url]) => playableSources.some((link) => matchesPlaybackSource(link, url)))?.[0];
         const preferred = preferredPlaybackIndex(playableSources, initialSource, latest);
         const match = compatibleMediaIndex(playableSources, preferred, videoRef.current, navigator.userAgent);
         if (match >= 0) {
@@ -189,7 +213,10 @@ export function VodPlayer({
       if (videoRef.current !== video || (error as { name?: string })?.name === "AbortError") return;
       setBuffering(false);
       if (video.error || (error as { name?: string })?.name !== "NotAllowedError") {
+        if (tryDeliveryFallback(video, video.error?.code ?? 2)) return;
+        if (active?.url) setFailedSourceUrls(previous => new Set(previous).add(active.url));
         setMediaError(video.error?.code ?? 2);
+        setMediaErrorDetail(video.error?.message || (error instanceof Error ? `${error.name}: ${error.message}` : "Playback failed"));
         setMessage(isDonyayeSerial(active) ? regionalPlaybackHint(locale === "fa") : t.player.sourceError);
       } else {
         setPaused(true);
@@ -199,10 +226,11 @@ export function VodPlayer({
   }
 
   function retrySource() {
+    if (active?.url) setDelivery({ url: active.url, index: 0 });
     if (active?.url) setFailedSourceUrls(previous => { const next = new Set(previous); next.delete(active.url); return next; });
     pendingSeekRef.current = videoRef.current?.currentTime || time || null;
     playAfterSourceReadyRef.current = true;
-    setMediaError(0); setMessage(""); setBuffering(true); setPaused(true);
+    setMediaError(0); setMediaErrorDetail(""); setMessage(""); setBuffering(true); setPaused(true);
     setSourceReady(true); setSourceRevision(value => value + 1);
   }
 
@@ -225,10 +253,12 @@ export function VodPlayer({
     if (nextIndex === activeIndex) { if (mediaError) retrySource(); return; }
     const next = playableSources[nextIndex];
     if (!next) return;
+    setDelivery({ url: next.url, index: 0 });
     const sameEpisode = !isSeries || (next.season === active?.season && next.episode === active?.episode);
     pendingSeekRef.current = sameEpisode ? pendingSeekRef.current ?? videoRef.current?.currentTime ?? 0 : null;
     saveProgress(videoRef.current?.currentTime ?? 0);
     setMediaError(0);
+    setMediaErrorDetail("");
     setMessage("");
     const wasPlaying = Boolean(mediaError || (videoRef.current && !videoRef.current.paused));
     videoRef.current?.pause();
@@ -257,12 +287,14 @@ export function VodPlayer({
   }
 
   function confirmSource() {
-    changeSource(String(choiceIndex));
-    playAfterSourceReadyRef.current = true;
-    setMessage("");
-    setSourceReady(true);
     setSelectionOpen(false);
-    if (choiceIndex === activeIndex) void videoRef.current?.play().catch(() => setMessage(t.player.playbackBlocked));
+    if (choiceIndex === activeIndex) {
+      if (mediaError || videoRef.current?.error) retrySource();
+      else if (videoRef.current) attemptPlay(videoRef.current);
+    } else {
+      changeSource(String(choiceIndex));
+      playAfterSourceReadyRef.current = true;
+    }
   }
 
   function chooseSeriesSource(next: { season?: number; episode?: number }) {
@@ -289,7 +321,7 @@ export function VodPlayer({
           ref={videoRef}
           key={mediaKey}
           className="player"
-          src={sourceReady ? active?.url : undefined}
+          src={sourceReady ? playbackUrl : undefined}
           poster={posterUrl ?? undefined}
           playsInline
           preload={sourceReady ? "metadata" : "none"}
@@ -301,7 +333,8 @@ export function VodPlayer({
             event.currentTarget.playbackRate = Number(speed);
             const duration = Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0;
             setDuration(duration);
-            const saved = readProgress()[active?.url ?? ""];
+            const progress = readProgress();
+            const saved = progress[active?.url ?? ""] ?? progress[active?.sourceOriginalUrl ?? ""];
             const switchingQuality = pendingSeekRef.current !== null;
             const resumeAt = pendingSeekRef.current ?? (typeof saved === "number" ? saved : saved?.time);
             pendingSeekRef.current = null;
@@ -324,7 +357,7 @@ export function VodPlayer({
             }
           }}
           onWaiting={() => setBuffering(true)}
-          onStalled={() => setBuffering(true)}
+          onStalled={event => { if (needsPlaybackBuffer(event.currentTarget, playAfterSourceReadyRef.current)) setBuffering(true); }}
           onTimeUpdate={(event) => {
             const current = event.currentTarget.currentTime;
             setTime(current);
@@ -347,15 +380,18 @@ export function VodPlayer({
           onVolumeChange={(event) => { setMuted(event.currentTarget.muted); setVolume(String(event.currentTarget.volume)); }}
           onError={(event) => {
             if (event.currentTarget !== videoRef.current) return;
+            if (tryDeliveryFallback(event.currentTarget, event.currentTarget.error?.code ?? 2)) return;
             if (active?.url) setFailedSourceUrls(previous => new Set(previous).add(active.url));
             setBuffering(false);
             setMediaError(event.currentTarget.error?.code ?? 2);
+            setMediaErrorDetail(event.currentTarget.error?.message || "The browser did not provide a media error description");
             setMessage(isDonyayeSerial(active) ? (locale === "fa" ? "این منبع ممکن است با VPN باز نشود؛ VPN را خاموش کنید یا نسخهٔ دوبله / سرور دیگری را انتخاب کنید." : "This source may not work with a VPN. Turn it off in Iran, or try a dubbed version / another server.") : t.player.sourceError);
           }}
         />
 
         {mediaError > 0 && active && !settingsOpen && !selectionOpen && !subtitlesOpen && <PlayerRecovery
           fa={locale === "fa"} regional={isDonyayeSerial(active)} onRetry={retrySource}
+          code={mediaError} detail={mediaErrorDetail} sourceLabel={`${active.quality ?? ""} · ${sourceHost({ url: playbackUrl ?? active.url })}`}
           onNext={nextRecovery ? () => { changeSource(String(nextRecovery.index)); playAfterSourceReadyRef.current = true; } : undefined}
           nextLabel={nextRecovery ? sourceHost(nextRecovery.link) : undefined}
           onChoose={() => { setSettingsOpen(true); setControlsVisible(true); }} />}

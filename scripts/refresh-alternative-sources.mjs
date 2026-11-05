@@ -5,7 +5,7 @@ import { alternativeMediaKey, applyAlternativeSourceUpdates, isDonyayeSource, me
 import { contentRestriction } from '../lib/content-restrictions.mjs';
 import { parseSeasonEpisode } from './moviesho-source-lib.mjs';
 
-const approvedHost = host => /(?:^|\.)(?:moviesho\.com|upera\.tv|abrtech\.top|yserver675mufdv\.top|zxupload6137hgv\.fun|cartoonet\.ir)$/i.test(host);
+const approvedHost = host => /(?:^|\.)(?:moviesho\.com|upera\.tv|abrtech\.top|tmk51\.ir\.cdn\.ir|yserver675mufdv\.top|zxupload6137hgv\.fun|cartoonet\.ir)$/i.test(host);
 const approvedPage = link => {
   try {
     const host = new URL(link.sourceUrl).hostname;

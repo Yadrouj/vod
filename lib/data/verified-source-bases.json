@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "bases": {
+    "f2my-c2bb8dc3a85e": {
+      "provider": "f2my",
+      "label": "Film2Media direct CDN (pnot)",
+      "baseUrl": "https://cdnzz.tmk51.ir.cdn.ir/pnot/",
+      "fallbackBases": ["https://edge07.tmk51.ir.cdn.ir/pnot/", "https://edge08.tmk51.ir.cdn.ir/pnot/"],
+      "replaces": ["https://bnrhd3fvb374s4bkwzxm54xf.abrtech.top/pnot/"],
+      "verifiedAt": "2026-11-05T15:40:44.494Z"
+    }
+  }
+}

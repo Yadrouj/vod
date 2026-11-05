@@ -9,11 +9,25 @@ export function samePlaybackEpisode(a: Partial<VodLink>, b: Partial<VodLink>) {
   return (a.season ?? null) === (b.season ?? null) && (a.episode ?? null) === (b.episode ?? null);
 }
 
+/** Keep explicit episode selections and resume progress after a verified CDN move. */
+export function matchesPlaybackSource(link: Partial<VodLink>, url?: string) {
+  return Boolean(url && (link.url === url || link.sourceOriginalUrl === url));
+}
+
+/** `stalled` is a network notification, not proof that buffered video cannot play. */
+export function needsPlaybackBuffer(media: Pick<HTMLMediaElement, "error" | "readyState" | "paused" | "seeking" | "ended"> | null,
+  playRequested = false) {
+  if (!media || media.error) return true;
+  if (media.ended || media.readyState >= 3) return false;
+  if (media.paused && media.readyState >= 1 && !media.seeking && !playRequested) return false;
+  return true;
+}
+
 /** Explicit user choices win; passive history must not pin a regional source. */
 export function preferredPlaybackIndex(sources: VodLink[], requested?: string, remembered?: string) {
-  const explicit = sources.findIndex(link => link.url === requested);
+  const explicit = sources.findIndex(link => matchesPlaybackSource(link, requested));
   if (explicit >= 0) return explicit;
-  const previous = sources.findIndex(link => link.url === remembered);
+  const previous = sources.findIndex(link => matchesPlaybackSource(link, remembered));
   if (previous < 0) return sources.length ? 0 : -1;
   if (!isDonyayeSerial(sources[previous])) return previous;
   const alternative = sources.findIndex(link => !isDonyayeSerial(link) && samePlaybackEpisode(link, sources[previous]));
@@ -26,11 +40,12 @@ export function regionalPlaybackHint(fa: boolean) {
     : "Donyaye Serial source: if you are in Iran, turn off your VPN and retry. This source may require an Iranian IP. If you are abroad, choose another source. This message does not detect whether a VPN is enabled.";
 }
 
-export function recoverySources<T extends Partial<VodLink> & Pick<VodLink, "url">>(active: T, sources: T[]) {
+export function recoverySources<T extends Partial<VodLink> & Pick<VodLink, "url">>(active: T, sources: T[], options: { differentServerFirst?: boolean } = {}) {
   return sources.map((link, index) => ({ link, index }))
     .filter(({ link }) => link.url !== active.url && samePlaybackEpisode(link, active))
     .sort((a, b) => {
-      const score = (link: T) => (isDonyayeSerial(link) ? 0 : 100)
+      const score = (link: T) => (options.differentServerFirst && sourceHost(link) !== sourceHost(active) ? 200 : 0)
+        + (isDonyayeSerial(link) ? 0 : 100)
         + (sourceHost(link) !== sourceHost(active) ? 20 : 0)
         + (/\.(mp4|m4v|webm|mov)(?:$|[?#])/i.test(link.url) ? 5 : 0)
         + (/dubbed|دوبله/i.test(link.group ?? "") ? 2 : 0);

@@ -48,6 +48,22 @@ test('range verifier recognizes real headers, rejects HTML/private redirects and
   assert.equal(calls, 1);
 });
 
+test('F2MY verification follows only the observed direct CDN and its edge redirects', async () => {
+  const hops = [];
+  const result = await probeAlternativeMedia('https://source.abrtech.top/pnot/Friends.S01E01.mkv', { fetchImpl: async url => {
+    hops.push(url);
+    if (hops.length === 1) return new Response(null, { status: 302, headers: { location: 'https://cdnzz.tmk51.ir.cdn.ir/pnot/Friends.S01E01.mkv' } });
+    if (hops.length === 2) return new Response(null, { status: 302, headers: { location: 'https://edge08.tmk51.ir.cdn.ir/pnot/Friends.S01E01.mkv' } });
+    return new Response(Buffer.from('1a45dfa3a34286810142f7810142f281', 'hex'), { status: 206 });
+  } });
+  assert.equal(result.state, 'verified'); assert.equal(hops.length, 3);
+  let calls = 0;
+  const rejected = await probeAlternativeMedia('https://source.abrtech.top/a.mkv', { fetchImpl: async () => {
+    calls++; return new Response(null, { status: 302, headers: { location: 'https://edge08.tmk51.ir.cdn.ir.attacker.test/a.mkv' } });
+  } });
+  assert.equal(rejected.state, 'unapproved-host'); assert.equal(calls, 1);
+});
+
 test('worker matches exact IMDb and episode, excludes restrictions/expired links, and preserves failures', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'sarvnema-alternatives-'));
   try {

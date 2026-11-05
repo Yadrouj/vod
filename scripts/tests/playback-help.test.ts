@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { isDonyayeSerial, playbackFailureText, recoverySources } from "../../lib/playback-help";
+import { isDonyayeSerial, matchesPlaybackSource, needsPlaybackBuffer, playbackFailureText, preferredPlaybackIndex, recoverySources } from "../../lib/playback-help";
 import type { VodLink } from "../../lib/types";
 import { GET } from "../../app/api/viewer-connection/route";
 
@@ -18,6 +18,35 @@ test("regional hints target DonyayeSerial, not every failing source", () => {
   assert.equal(isDonyayeSerial({ url: "https://example.com/movie.mp4" }), false);
   assert.match(playbackFailureText(4, true), /کُدک/);
   assert.doesNotMatch(playbackFailureText(2, true), /VPN/);
+});
+
+test("a source failure can prefer a genuinely different server without changing the episode", () => {
+  const source = { url: "https://cdn.test/a.mkv", season: 1, episode: 1 } as VodLink;
+  const sameServer = { ...source, url: "https://cdn.test/a.720p.mkv" };
+  const independent = { ...source, url: "https://other.test/DonyayeSerial/a.mkv" };
+  const nextEpisode = { ...independent, episode: 2 };
+  assert.deepEqual(recoverySources(source, [source, sameServer, independent, nextEpisode], { differentServerFirst: true }).map(row => row.index), [2, 1]);
+  assert.deepEqual(recoverySources(source, [source, sameServer, independent]).map(row => row.index), [1, 2], "Initial provider policy is unchanged");
+});
+
+test("verified CDN migration preserves explicit selection and passive resume episode", () => {
+  const source = { url: "https://cdn.test/Friends.S01E02.mkv", sourceOriginalUrl: "https://old.test/Friends.S01E02.mkv", season: 1, episode: 2 } as VodLink;
+  const sources = [{ ...source, url: "https://cdn.test/Friends.S01E01.mkv", sourceOriginalUrl: null, episode: 1 }, source];
+  assert.equal(matchesPlaybackSource(source, source.sourceOriginalUrl!), true);
+  assert.equal(matchesPlaybackSource(source, undefined), false);
+  assert.equal(preferredPlaybackIndex(sources, source.sourceOriginalUrl!), 1);
+  assert.equal(preferredPlaybackIndex(sources, undefined, source.sourceOriginalUrl!), 1);
+});
+
+test("stalled network notifications do not fail paused metadata or playable buffered video", () => {
+  const media = { error: null, paused: false, readyState: 4, ended: false, seeking: false };
+  assert.equal(needsPlaybackBuffer(media), false);
+  assert.equal(needsPlaybackBuffer({ ...media, paused: true, readyState: 1 }), false);
+  assert.equal(needsPlaybackBuffer({ ...media, paused: true, readyState: 1 }, true), true);
+  assert.equal(needsPlaybackBuffer({ ...media, readyState: 2 }), true);
+  assert.equal(needsPlaybackBuffer({ ...media, paused: true, seeking: true, readyState: 1 }), true);
+  assert.equal(needsPlaybackBuffer({ ...media, readyState: 0 }), true);
+  assert.equal(needsPlaybackBuffer({ ...media, readyState: 0, ended: true }), false);
 });
 test("connection information is unknown without trusted proxy configuration, private and never cached", async () => {
   const before = process.env.TRUST_VIEWER_CONNECTION_HEADERS;

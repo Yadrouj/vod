@@ -1,6 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { VodItem, VodLink } from "./types";
+import verifiedSourceBases from "./data/verified-source-bases.json";
 
 export type SourceLinkBase = {
   id: string;
@@ -29,16 +30,34 @@ export async function loadSourceLinkRegistry(): Promise<SourceLinkRegistry> {
   if (cached && Date.now() < cacheExpiresAt) return cached;
   try {
     const parsed = JSON.parse(await readFile(REGISTRY_FILE, "utf8")) as Partial<SourceLinkRegistry>;
-    cached = {
+    cached = applyVerifiedSourceBases({
       version: 1,
       updatedAt: parsed.updatedAt ?? null,
       bases: parsed.bases ?? {},
-    };
+    });
   } catch {
-    cached = { version: 1, updatedAt: null, bases: {} };
+    cached = applyVerifiedSourceBases({ version: 1, updatedAt: null, bases: {} });
   }
   cacheExpiresAt = Date.now() + CACHE_MS;
   return cached;
+}
+
+/** Ship verified routing fixes without committing the private/mounted registry.
+ * Explicit admin overrides and newly discovered, different bases still win. */
+export function applyVerifiedSourceBases(registry: SourceLinkRegistry): SourceLinkRegistry {
+  const bases = { ...registry.bases };
+  for (const [id, repair] of Object.entries(verifiedSourceBases.bases)) {
+    const existing = bases[id];
+    const known = [repair.baseUrl, ...repair.replaces];
+    if (existing?.manual || (existing && !known.includes(existing.baseUrl))) continue;
+    bases[id] = {
+      ...existing, id, provider: repair.provider, label: repair.label, baseUrl: repair.baseUrl,
+      aliases: [...new Set([...(existing?.aliases ?? []), ...known])], manual: true,
+      discoveredAt: existing?.discoveredAt ?? repair.verifiedAt,
+      lastSeenAt: existing?.lastSeenAt ?? repair.verifiedAt, updatedAt: repair.verifiedAt,
+    };
+  }
+  return { ...registry, bases };
 }
 
 export async function saveSourceLinkBase(id: string, value: string, manual = true) {

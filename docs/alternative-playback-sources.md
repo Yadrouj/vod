@@ -91,3 +91,38 @@ direct media file. The sample was checked without cookies or account access.
 
 Production was not deployed by this change. Rebuild/restart the app and existing
 maintenance service on deployment, preserving mounted data and environment files.
+
+## Friends: direct CDN route and error recovery
+
+The November 5 follow-up found 702 existing Film2Media releases (234 episode
+identities, three qualities) for `tt0108778`, not 702 independently verified
+servers. Their `abrtech.top` URL redirects through `cdnzz.tmk51.ir.cdn.ir` to a
+provider edge. Ten 720p first-episode samples, one from every season, returned
+HTTP 206 and a Matroska signature through the direct CDN entry point. A real
+Chrome playback test also advanced the first 1080p episode beyond four seconds.
+This does not establish availability on every viewer connection/browser.
+
+Only registry base `f2my-c2bb8dc3a85e` is pinned to the observed CDN entry point.
+The tracked `lib/data/verified-source-bases.json` carries the repair; the private
+`data/source-link-registry.json` stays ignored and is not copied into Git.
+Original URLs and episode paths remain intact; resume history recognizes those
+original URLs after migration. The nightly discovery respects the manual pin.
+No media is proxied through SarvNema. Real Chrome testing reproduced an
+intermittent `net::ERR_CONNECTION_CLOSED` on the router, even when a Node range
+probe succeeded. The player therefore tries the two observed CDN edge routes
+locally, at most once each, preserving the exact filename, query, episode and
+position. Decoder errors do not retry the same bytes on another edge. A retry
+starts a fresh bounded attempt; room delivery fallbacks never change the shared
+logical source. No unregistered host or guessed file path is used.
+The runtime merges this repair into missing/stale automatic registries, while
+preserving explicit administrator overrides and different newly discovered bases.
+
+Recovery can now prefer an actually different server over another quality on
+the failed host, still within the same episode. The loading watchdog rechecks
+native readiness: `stalled` alone cannot fail already-buffered playback or
+intentionally paused metadata. The recovery panel exposes the native error code
+and expandable diagnostic text, with source URLs stripped from that text.
+
+Independent source review did not produce a verified public MP4 alternative:
+FamilyMovie's public search returned no Friends entry, and MiaMovies' online
+player required login. No protected downloads were extracted or imported.
