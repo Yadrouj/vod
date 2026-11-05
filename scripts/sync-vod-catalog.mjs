@@ -199,6 +199,11 @@ async function main() {
     }
     let curatedChanges = emptyChanges(changes);
     if ((curatedSource.items?.length ?? 0) > 0) {
+      await run("Verify alternative playback providers", "scripts/refresh-alternative-sources.mjs", [
+        curatedSourceFile,
+        path.join(DRY_RUN ? runDir : DATA_DIR, "alternative-source-links.json"),
+        path.join(runDir, "alternative-verification-report.json"),
+      ]);
       const curatedMergedFile = path.join(runDir, "catalog-curated-merged.json");
       await run(
         "Merge verified curated source links and timestamps",

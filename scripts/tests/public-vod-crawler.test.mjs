@@ -7,6 +7,20 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+test("FJ iOS reports the crawl restriction without requesting protected pages or importing files", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "sarvnema-fj-ios-"));
+  try {
+    const catalog = path.join(root, 'catalog.json');
+    await writeFile(catalog, JSON.stringify({ items: [] }));
+    await promisify(execFile)(process.execPath, ['--import', pathToFileURL(path.resolve('scripts/tests/fixtures/fj-ios-public-fetch.mjs')).href, 'scripts/scrape-public-vod-sources.mjs'], {
+      timeout: 10000, env: { ...process.env, PUBLIC_VOD_CATALOG: catalog, PUBLIC_VOD_WORK_DIR: path.join(root, 'work'), PUBLIC_VOD_SOURCE_IDS: 'fj-ios' },
+    });
+    const report = JSON.parse(await readFile(path.join(root, 'work', 'report.json'), 'utf8'));
+    assert.equal(report.state, 'blocked'); assert.equal(report.sources[0].state, 'robots-blocked');
+    assert.equal(report.sources[0].pages, 0); assert.equal(report.titles, 0); assert.equal(report.links, 0);
+  } finally { assert.ok(path.resolve(root).startsWith(path.join(path.resolve(os.tmpdir()), 'sarvnema-fj-ios-'))); await rm(root, { recursive: true, force: true }); }
+});
+
 test("full public API pagination resumes after a failed detail and keeps the correct title identities", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "sarvnema-public-vod-"));
   const catalog = path.join(root, "catalog.json");

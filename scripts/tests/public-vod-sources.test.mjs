@@ -9,8 +9,10 @@ const now = Date.parse("2026-10-31T12:00:00Z");
 const expires = Math.floor(now / 1000) + 86400;
 const download = { quality: "WEB-DL 1080pSoftSub", url: `https://media.example/Film.S01E02.1080p.WEB-DL.SoftSub.mkv?expires=${expires}&md5=signature`, season: "1", episode: "2" };
 
-test("all seven requested providers are registered without inventing a download API", () => {
-  assert.equal(PUBLIC_VOD_SOURCES.length, 7);
+test("requested providers and the gated FJ source are registered without inventing a download API", () => {
+  assert.equal(PUBLIC_VOD_SOURCES.length, 8);
+  assert.equal(PUBLIC_VOD_SOURCES.find(source => source.id === "fj-ios").requiresAuthorizedFeed, true);
+  assert.equal(robotsAllowed('User-agent: *\nDisallow: /', 'https://fj-ios.com/'), false);
   assert.equal(PUBLIC_VOD_SOURCES.find(source => source.id === "9movie").canonical, "https://9movie.info/");
   assert.equal(PUBLIC_VOD_SOURCES.find(source => source.id === "movie-chi").adapter, "discovery");
 });

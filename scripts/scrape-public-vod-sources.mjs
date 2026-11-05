@@ -61,6 +61,13 @@ for (const source of sources) {
     const base = source.canonical || source.url;
     const robotsResponse = await request(new URL("robots.txt", base), { allow404: true });
     const robots = robotsResponse?.text || "";
+    if (!robotsAllowed(robots, base)) {
+      status.state = "robots-blocked";
+      status.note = "Public crawling is disallowed. An authorized export/API is required; no login or protected media is accessed.";
+      if (!source.requiresAuthorizedFeed) report.partial = true;
+      await checkpoint();
+      continue;
+    }
     const fetchPage = async (url, options = {}) => {
       if (!robotsAllowed(robots, url)) throw new Error(`robots.txt disallows ${new URL(url).pathname}`);
       return request(url, options);
@@ -76,7 +83,7 @@ for (const source of sources) {
   await checkpoint();
   console.log(JSON.stringify(status));
 }
-report.state = report.partial ? "partial" : "completed";
+report.state = report.sources.every(source => ["robots-blocked", "authentication-required"].includes(source.state)) ? "blocked" : report.partial ? "partial" : "completed";
 report.finishedAt = new Date().toISOString();
 await checkpoint();
 console.log(JSON.stringify({ ...report, reportFile, outputFile }, null, 2));
@@ -209,6 +216,12 @@ async function wordpress(source, status, fetchPage) {
 async function inspectWebsite(source, status, fetchPage) {
   const response = await fetchPage(source.url);
   status.pages++;
+  if (/\/(?:login|sign-in|signin)(?:\.php|\/|$)/i.test(new URL(response.url).pathname)) {
+    status.state = "authentication-required";
+    status.note = "The public address redirects to sign-in. An authorized catalog feed/export is required; no authentication is bypassed.";
+    if (!source.requiresAuthorizedFeed) report.partial = true;
+    return;
+  }
   const candidates = [...new Set([...response.text.matchAll(/href=["']([^"']+)["']/gi)].map(match => publicUrl(match[1], response.url)).filter(Boolean))]
     .filter(url => new URL(url).hostname === new URL(response.url).hostname && /\/(?:title|movie|series)\/[^/]+/.test(new URL(url).pathname)).slice(0,3);
   for (const link of candidates) {

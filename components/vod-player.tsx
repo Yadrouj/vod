@@ -14,7 +14,8 @@ import type { VodLink } from "@/lib/types";
 import { readProgress, saveHistoryValue, PROGRESS_KEY } from "@/lib/media-history";
 import Link from "next/link";
 import { PlaybackHelp } from "@/components/playback-help";
-import { isDonyayeSerial, regionalPlaybackHint, recoverySources, sourceHost } from "@/lib/playback-help";
+import { PlayerRecovery } from "@/components/player-recovery";
+import { isDonyayeSerial, preferredPlaybackIndex, regionalPlaybackHint, recoverySources, sourceHost } from "@/lib/playback-help";
 import styles from "./vod-player.module.css";
 
 export function VodPlayer({
@@ -59,6 +60,7 @@ export function VodPlayer({
   const [fullscreen, setFullscreen] = useState(false);
   const [muted, setMuted] = useState(false);
   const lastSavedAt = useRef(0);
+  const [failedSourceUrls, setFailedSourceUrls] = useState<Set<string>>(new Set());
   const playableSources = useMemo(
     () => playableLinks(links, { isSeries, title, includeAlternateFiles: true }),
     [isSeries, links, title],
@@ -66,6 +68,7 @@ export function VodPlayer({
   const active = playableSources[activeIndex] ?? playableSources[0];
   const mediaKey = `${sourceReady ? active?.url : "awaiting-source"}:${sourceRevision}`;
   const alternatives = active ? recoverySources(active, playableSources).filter(({ link }) => !isDonyayeSerial(link)).slice(0, 2) : [];
+  const nextRecovery = active ? recoverySources(active, playableSources).find(({ link }) => !failedSourceUrls.has(link.url)) : undefined;
   const t = getDictionary(locale);
   const controlsShowing = paused || settingsOpen || subtitlesOpen || selectionOpen || controlsVisible;
 
@@ -73,6 +76,7 @@ export function VodPlayer({
     if (!buffering || !sourceReady || !active?.url) return;
     const timer = setTimeout(() => {
       setBuffering(false);
+      setFailedSourceUrls(previous => new Set(previous).add(active.url));
       setMediaError(2);
       setMessage(isDonyayeSerial(active) ? regionalPlaybackHint(locale === "fa") : t.player.sourceError);
     }, 20000);
@@ -85,6 +89,7 @@ export function VodPlayer({
       if (!current) return;
       setMediaError(0); setMessage(""); setBuffered(0); setDuration(0); setTime(0);
       pendingSeekRef.current = null; playAfterSourceReadyRef.current = false;
+      setFailedSourceUrls(new Set());
       if (!playableSources.length) {
         setSourceReady(false);
         setSelectionOpen(false);
@@ -94,11 +99,14 @@ export function VodPlayer({
       }
       try {
         const saved = readProgress();
-        const requested = playableSources.findIndex((link) => link.url === initialSource);
         const latest = Object.entries(saved).sort((a, b) => (typeof b[1] === "number" ? 0 : b[1].at) - (typeof a[1] === "number" ? 0 : a[1].at))
           .find(([url]) => playableSources.some((link) => link.url === url))?.[0];
-        const match = requested >= 0 ? requested : playableSources.findIndex((link) => link.url === latest);
+        const match = preferredPlaybackIndex(playableSources, initialSource, latest);
         if (match >= 0) {
+          if (latest && playableSources[match].url !== latest && !initialSource) {
+            const entry = saved[latest];
+            pendingSeekRef.current = typeof entry === "number" ? entry : entry?.time ?? null;
+          }
           setActiveIndex(match);
           setSelectionOpen(false);
           setSourceReady(true);
@@ -189,6 +197,7 @@ export function VodPlayer({
   }
 
   function retrySource() {
+    if (active?.url) setFailedSourceUrls(previous => { const next = new Set(previous); next.delete(active.url); return next; });
     pendingSeekRef.current = videoRef.current?.currentTime || time || null;
     playAfterSourceReadyRef.current = true;
     setMediaError(0); setMessage(""); setBuffering(true); setPaused(true);
@@ -330,17 +339,24 @@ export function VodPlayer({
             }
           }}
           onEnded={() => { setPaused(true); if (active?.url) { const progress = readProgress(); delete progress[active.url]; saveHistoryValue(PROGRESS_KEY, progress, "sarvnema-progress"); } }}
-          onPlaying={() => { setBuffering(false); setMediaError(0); setMessage(""); }}
+          onPlaying={() => { if (active?.url) setFailedSourceUrls(previous => { const next = new Set(previous); next.delete(active.url); return next; }); setBuffering(false); setMediaError(0); setMessage(""); }}
           onPlay={() => { setPaused(false); setControlsVisible(true); }}
           onPause={() => { setPaused(true); setControlsVisible(true); }}
           onVolumeChange={(event) => { setMuted(event.currentTarget.muted); setVolume(String(event.currentTarget.volume)); }}
           onError={(event) => {
             if (event.currentTarget !== videoRef.current) return;
+            if (active?.url) setFailedSourceUrls(previous => new Set(previous).add(active.url));
             setBuffering(false);
             setMediaError(event.currentTarget.error?.code ?? 2);
             setMessage(isDonyayeSerial(active) ? (locale === "fa" ? "این منبع ممکن است با VPN باز نشود؛ VPN را خاموش کنید یا نسخهٔ دوبله / سرور دیگری را انتخاب کنید." : "This source may not work with a VPN. Turn it off in Iran, or try a dubbed version / another server.") : t.player.sourceError);
           }}
         />
+
+        {mediaError > 0 && active && !settingsOpen && !selectionOpen && !subtitlesOpen && <PlayerRecovery
+          fa={locale === "fa"} regional={isDonyayeSerial(active)} onRetry={retrySource}
+          onNext={nextRecovery ? () => { changeSource(String(nextRecovery.index)); playAfterSourceReadyRef.current = true; } : undefined}
+          nextLabel={nextRecovery ? sourceHost(nextRecovery.link) : undefined}
+          onChoose={() => { setSettingsOpen(true); setControlsVisible(true); }} />}
 
         {buffering && sourceReady && active?.url && !selectionOpen && (
           <div className="player-loading">

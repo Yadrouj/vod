@@ -1,0 +1,11 @@
+.panel { position: absolute; inset: 0; z-index: 45; display: grid; place-items: center; overflow: auto; padding: 14px; background: #090a0deb; color: #fff; cursor: auto; }
+.content { width: min(100%, 520px); min-width: 0; text-align: center; font-size: 14px; line-height: 1.7; }
+.content strong { display: block; font-size: 16px; }
+.content p { margin: 8px 0 14px; color: #c6c8cc; }
+.content small { display: block; margin-top: 8px; color: #aeb4bd; }
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; min-width: 0; padding: 8px 12px; border: 1px solid #ffffff30; border-radius: 10px !important; background: #ffffff12; color: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+.actions button:first-child { background: #eed17b; color: #19170e; border-color: transparent; }
+.actions button:hover { filter: brightness(1.15); }
+.actions button:focus-visible { outline: 2px solid #eed17b; outline-offset: 3px; }
+@media (max-width: 600px), (max-height: 450px) { .panel { padding: 10px; } .content { font-size: 12px; line-height: 1.5; } .content strong { font-size: 14px; } .content p { margin: 6px 0 10px; } .actions { gap: 6px; } .actions button { padding: 6px 8px; font-size: 12px; } .actions button svg { flex-shrink: 0; } }

@@ -1,4 +1,6 @@
 import type { VodLink } from "./types";
+import { isDonyayeSerial } from "./playback-help";
+import { sourceLinkExpiry } from "./alternative-source-links.mjs";
 
 export type PlaybackLinkOptions = {
   isSeries?: boolean;
@@ -23,13 +25,22 @@ export function playableLinks(
   options: PlaybackLinkOptions = {},
 ): VodLink[] {
   const rawMediaLinks = (Array.isArray(links) ? links : [])
-    .filter((link) => !isTrailerLink(link) && !isNonPlayableAsset(link))
+    .filter((link) => !isTrailerLink(link) && !isNonPlayableAsset(link) && sourceLinkExpiry(link) > Date.now() + 60_000)
     .map((link) => options.isSeries ? addParsedEpisodeIdentity(link, options.title) : link);
   const mediaLinks = options.isSeries
     ? mapGenericSeriesFilesToEpisodes(rawMediaLinks)
     : rawMediaLinks;
+  // Format preferences apply within a provider tier, never ahead of it.
+  // A DonyayeSerial MP4 must not hide an alternative provider's MKV.
+  const selected = [false, true].flatMap(regional => selectPlaybackVersions(
+    mediaLinks.filter(link => isDonyayeSerial(link) === regional), options,
+  ));
+  return orderPlaybackEpisodes(selected, options.isSeries);
+}
+
+function selectPlaybackVersions(mediaLinks: VodLink[], options: PlaybackLinkOptions): VodLink[] {
   if (options.includeAlternateFiles) {
-    const preferred = playableLinks(links, { ...options, includeAlternateFiles: false });
+    const preferred = selectPlaybackVersions(mediaLinks, { ...options, includeAlternateFiles: false });
     const seen = new Set(preferred.map(link => link.url));
     return [...preferred, ...mediaLinks.filter(link => /\.mkv(?:$|[?#])/i.test(link.url) && !seen.has(link.url) && Boolean(seen.add(link.url)))];
   }
@@ -69,6 +80,14 @@ export function roomPlayableLinks(
   options: PlaybackLinkOptions = {},
 ) {
   const selected = playableLinks(links, options);
+  const candidates = [false, true].flatMap(regional => roomPlaybackVersions(
+    selected.filter(link => isDonyayeSerial(link) === regional),
+    (links || []).filter(link => isDonyayeSerial(link) === regional), options,
+  ));
+  return orderPlaybackEpisodes(candidates, options.isSeries);
+}
+
+function roomPlaybackVersions(selected: VodLink[], links: VodLink[], options: PlaybackLinkOptions) {
   const browserSelected = selected.filter(isBrowserPlayableVodLink);
   if (browserSelected.length) return browserSelected;
 
@@ -77,13 +96,21 @@ export function roomPlayableLinks(
   // usable by falling back to the native MP4 mirror instead of returning an
   // empty source list.
   const mirrors = (Array.isArray(links) ? links : [])
-    .filter((link) => !isTrailerLink(link) && !isNonPlayableAsset(link))
+    .filter((link) => !isTrailerLink(link) && !isNonPlayableAsset(link) && sourceLinkExpiry(link) > Date.now() + 60_000)
     .map((link) => addParsedEpisodeIdentity(link, options.title))
     .filter(isBrowserPlayableVodLink);
   if (mirrors.length) return mirrors;
   // Matroska with a compatible codec can play in some browsers. Offer the
   // release rather than claiming it does not exist; surface decoding errors.
   return selected.filter((link) => /\.mkv(?:$|[?#])/i.test(link.url));
+}
+
+function orderPlaybackEpisodes(links: VodLink[], isSeries?: boolean) {
+  if (!isSeries) return links;
+  // Keep the first/next episode chronological. Prefer an alternative within
+  // that episode, not a mirror of a completely different season or episode.
+  return [...links].sort((a, b) => (a.season ?? Infinity) - (b.season ?? Infinity)
+    || (a.episode ?? Infinity) - (b.episode ?? Infinity));
 }
 
 export function playbackSourceLabel(

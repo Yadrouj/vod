@@ -3,6 +3,7 @@ import path from "node:path";
 import { cache } from "react";
 import { applyDownloadBaseToItem } from "./download-settings";
 import { applyVerifiedDonyayeLinks } from "./donyaye-link-update-store";
+import { applyVerifiedAlternativeSources } from "./alternative-source-store";
 import { enrichOldIranianFilm } from "./old-iranian-media";
 import type { VodArchive, VodItem } from "./types";
 import { restrictCatalogItem } from './restricted-catalog';
@@ -32,7 +33,7 @@ export const findVodItem = cache(async (id: string): Promise<VodItem | null> => 
   const item = await findVodTitleFile(id);
   if (!item) return null;
   const mapped = await applyDownloadBaseToItem(enrichOldIranianFilm(item));
-  return restrictCatalogItem(await applyVerifiedDonyayeLinks(mapped));
+  return restrictCatalogItem(await applyVerifiedAlternativeSources(await applyVerifiedDonyayeLinks(mapped)));
 });
 
 export function normalizeVodType(type: string): "movie" | "series" {

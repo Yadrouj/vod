@@ -6,6 +6,7 @@ const root = process.env.PUBLIC_VOD_WORK_DIR || ".media-cache/public-vod";
 await refreshStep("Review public movie/series sources", "scripts/scrape-public-vod-sources.mjs", process.argv.includes("--full") ? ["--full"] : []);
 const report = JSON.parse(await readFile(path.join(root, "report.json"), "utf8"));
 if (report.titles) {
+  await refreshStep("Verify alternative providers for DonyayeSerial titles", "scripts/refresh-alternative-sources.mjs", [path.join(root, "source.json"), path.join(process.env.VOD_DATA_DIR || "public/data", "alternative-source-links.json"), path.join(root, "alternative-verification-report.json")]);
   await refreshStep("Merge public movie/series versions without deleting older sources", "scripts/merge-curated-vod-source.mjs", ["public/data/vod-catalog.json", path.join(root, "source.json"), "public/data/vod-catalog.json", path.join(root, "merge-report.json")]);
   await refreshStep("Publish title files", "scripts/build-vod-title-files.mjs");
   await refreshStep("Publish browse and landing indexes", "scripts/build-vod-index.mjs");

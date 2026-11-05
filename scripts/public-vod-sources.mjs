@@ -11,6 +11,7 @@ export const PUBLIC_VOD_SOURCES = [
   { id: "familymovie", url: "https://familymovie.tr/", adapter: "familymovie" },
   { id: "yekmoviez", url: "https://yekmoviez.com/", adapter: "discovery" },
   { id: "nightmovie", url: "https://nightmovie.org/", adapter: "html" },
+  { id: "fj-ios", url: "https://fj-ios.com/", adapter: "gated", label: "FJ iOS", requiresAuthorizedFeed: true },
 ];
 
 export function publicUrl(value, base) {
