@@ -7,6 +7,7 @@ import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import { getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
 import { heroImageSrc } from "@/lib/hero-art";
+import { localizedTitle } from "@/lib/title-display";
 import type { VodCard } from "@/lib/types";
 import type { TrendingTitle } from "@/lib/imdb-trending";
 import styles from "./cinema-landing-hero.module.css";
@@ -30,7 +31,7 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
   }, [rotating, engaged, total]);
   if (!item) return null;
   const select = (next: number) => { setIndex((next + total) % total); setRotating(false); };
-  const displayTitle = fa ? item.persianTitle || item.title : item.title;
+  const displayTitle = localizedTitle(item, locale);
   const trend = item.popularity;
   return <section className={styles.hero} data-cinema-hero dir={fa ? "rtl" : "ltr"} aria-roledescription="carousel" aria-label={fa ? "پیشنهادهای فیلم و سریال" : "Featured films and series"}
     onMouseEnter={() => setEngaged(true)} onMouseLeave={() => setEngaged(false)}

@@ -8,6 +8,7 @@ import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import { MobileFeatureCard } from "./mobile-feature-card";
 import { getDictionary, type Locale, typeLabel } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
+import { localizedTitle } from "@/lib/title-display";
 import type { VodCard } from "@/lib/types";
 import type { TrendingTitle } from "@/lib/imdb-trending";
 import featureStyles from "./landing-feature-actions.module.css";
@@ -35,7 +36,7 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
   const posterUrl = activeItem.posterUrl ?? activeItem.backdropUrl;
   const popularity = activeItem.popularity;
   const fa = locale === "fa";
-  const displayTitle = fa ? activeItem.persianTitle || activeItem.title : activeItem.title;
+  const displayTitle = localizedTitle(activeItem, locale);
   const chartLabel = popularity?.kind === "series" ? (fa ? "سریال‌ها" : "TV shows") : (fa ? "فیلم‌ها" : "Movies");
   const observedDate = popularity ? new Intl.DateTimeFormat(fa ? "fa-IR" : "en-US", { month: "short", day: "numeric", timeZone: "Asia/Tehran" }).format(new Date(popularity.observedAt)) : "";
   const heroStyle = artUrl

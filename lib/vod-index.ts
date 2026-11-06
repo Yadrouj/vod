@@ -4,6 +4,7 @@ import { enrichOldIranianCard } from "./old-iranian-media";
 import type { VodCard, VodCatalogIndex } from "./types";
 import { compareSearchRank, type SearchRankingSignals } from "./vod-search-order";
 import { matchVodSearch } from "./vod-search-match";
+import { persianTitleOrFallback } from "./title-display";
 
 export const HOME_SECTIONS = [
   "top-imdb",
@@ -71,11 +72,16 @@ function enrichLegacyCards(index: VodCatalogIndex): VodCatalogIndex {
   if (cached) return cached;
   const enriched = {
     ...index,
-    items: index.items.map(enrichOldIranianCard),
-    sections: index.sections.map((section) => ({ ...section, items: section.items.map(enrichOldIranianCard) })),
+    items: index.items.map(normalizeCardTitle),
+    sections: index.sections.map((section) => ({ ...section, items: section.items.map(normalizeCardTitle) })),
   };
   enrichedIndexes.set(index, enriched);
   return enriched;
+}
+
+function normalizeCardTitle(item: VodCard): VodCard {
+  const enriched = enrichOldIranianCard(item);
+  return { ...enriched, persianTitle: persianTitleOrFallback(enriched) };
 }
 
 export function pickHero(index: VodCatalogIndex): VodCard | null {
