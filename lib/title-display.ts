@@ -4,9 +4,11 @@ import type { Locale } from "@/lib/i18n";
 export const PERSIAN_TITLE_OVERRIDES: Readonly<Record<string, string>> = {
   tt14986406: "بلیچ: جنگ خونین هزارساله",
   tt2120120: "پیکسل",
+  tt5491994: "سیاره زمین ۲",
+  tt9253866: "سیاره ما",
 };
 
-const genericSourceTitles = /^(?:دانلود|خرید|مشاهده|پخش)\s+(?:فیلم|سریال|انیمه)(?:\s+(?:جدید|رایگان|بدون\s+سانسور))?$/u;
+const genericSourceTitles = /^(?:دانلود(?:\s+(?:فیلم|سریال|انیمه))?|خرید|مشاهده|پخش\s+(?:فیلم|سریال|انیمه)|فصل\s+(?:اول|دوم|سوم|چهارم|پنجم|ششم|هفتم|هشتم|نهم|دهم))$/u;
 
 type LocalizableTitle = {
   imdbCode?: string | null;

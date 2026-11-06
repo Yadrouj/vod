@@ -17,3 +17,8 @@ test("keeps the original title in English", () => {
 test("does not display generic provider SEO text as a film title", () => {
   assert.equal(localizedTitle({ imdbCode: "tt2120120", title: "Pixels", persianTitle: "دانلود فیلم" }, "fa"), "پیکسل");
 });
+
+test("uses real titles when a source stores a download label or season label", () => {
+  assert.equal(localizedTitle({ imdbCode: "tt5491994", title: "Planet Earth II", persianTitle: "دانلود" }, "fa"), "سیاره زمین ۲");
+  assert.equal(localizedTitle({ imdbCode: "tt9253866", title: "Our Planet", persianTitle: "فصل دوم" }, "fa"), "سیاره ما");
+});
