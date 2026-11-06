@@ -7,6 +7,7 @@ import { applyVerifiedAlternativeSources } from "./alternative-source-store";
 import { enrichOldIranianFilm } from "./old-iranian-media";
 import type { VodArchive, VodItem } from "./types";
 import { restrictCatalogItem } from './restricted-catalog';
+import { persianTitleOrFallback } from './title-display';
 
 const DATA_DIR = path.resolve(process.env.VOD_DATA_DIR || path.join(process.cwd(), "public", "data"));
 const FILE_CHECK_INTERVAL_MS = Math.max(5_000, Number(process.env.VOD_DATA_CHECK_INTERVAL_MS || 30_000));
@@ -32,7 +33,11 @@ async function loadArchiveFile(): Promise<VodArchive> {
 export const findVodItem = cache(async (id: string): Promise<VodItem | null> => {
   const item = await findVodTitleFile(id);
   if (!item) return null;
-  const mapped = await applyDownloadBaseToItem(enrichOldIranianFilm(item));
+  const enriched = enrichOldIranianFilm(item);
+  const mapped = await applyDownloadBaseToItem({
+    ...enriched,
+    persianTitle: persianTitleOrFallback(enriched),
+  });
   return restrictCatalogItem(await applyVerifiedAlternativeSources(await applyVerifiedDonyayeLinks(mapped)));
 });
 

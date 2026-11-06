@@ -18,8 +18,13 @@ type LocalizableTitle = {
 
 export function localizedTitle(item: LocalizableTitle, locale: Locale) {
   if (locale !== "fa") return item.title;
+  return persianTitleOrFallback(item) || item.title;
+}
+
+/** Returns only a trustworthy Persian title; provider SEO labels become null. */
+export function persianTitleOrFallback(item: LocalizableTitle): string | null {
   const sourceTitle = item.persianTitle?.trim();
   return (sourceTitle && !genericSourceTitles.test(sourceTitle))
     ? sourceTitle
-    : PERSIAN_TITLE_OVERRIDES[item.imdbCode ?? ""] || item.title;
+    : PERSIAN_TITLE_OVERRIDES[item.imdbCode ?? ""] || null;
 }
