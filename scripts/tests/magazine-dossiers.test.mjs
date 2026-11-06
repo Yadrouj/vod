@@ -19,7 +19,7 @@ test('sixty distinct complete dossiers preserve the existing thirty-article maga
   assert.equal(new Set(index.articles.map(a => a.image)).size, 60, 'Each subject has a distinct real cover');
   for (const a of index.articles) {
     assert.deepEqual(validateDossier(a), a, a.slug);
-    assert.ok(a.wordCount >= 850 && a.wordCount <= 1500, a.slug);
+    assert.ok(a.seriesGuide ? a.wordCount >= 3000 : a.wordCount >= 850 && a.wordCount <= 1500, a.slug);
     assert.ok(a.readingMinutes >= 5);
     assert.ok(Date.parse(a.publishedAt) <= Date.now());
     assert.equal(a.faqs.length, 2);
@@ -42,7 +42,7 @@ test('reviews use high-rated recent archive identities and explicitly optional s
     assert.ok(a.media[0].year >= 2025);
     assert.equal(a.media[0].id, a.dossier.subjectId);
     assert.equal(a.media[0].play, `/watch/${a.dossier.subjectId}`);
-    assert.equal(a.sections.filter(s => s.spoiler).length, 1);
+    assert.ok(a.sections.some(s => s.spoiler));
     assert.ok(a.critics.every(c => a.sources.some(s => s.url === c.url) && c.scope && c.name));
     assert.match(a.dossier.selectionNote, /رتبهٔ زندهٔ MovieMeter نیست/);
     assert.ok(!a.description.includes('[spoiler]'));

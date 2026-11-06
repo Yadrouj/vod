@@ -14,3 +14,12 @@
 @media(max-width:600px){.stills{grid-template-columns:minmax(0,1fr)}.trailer{padding:10px}.filmGallery>div{margin-block:20px}}
 @media(max-width:900px){.articleLayout{grid-template-columns:minmax(0,1fr);gap:24px}.libraryNav{display:none!important}.toc nav{grid-template-columns:1fr 1fr}.articleHeader{margin-bottom:15px}.cover{margin-bottom:24px}}
 @media(max-width:600px){.articleHeader h1{font-size:28px;line-height:1.55}.deck{font-size:16px;line-height:1.95}.meta{gap:8px 14px}.articleActions{gap:6px 18px}.articleActions>span{flex-basis:100%}.cover img{border-radius:8px}.toc nav{grid-template-columns:1fr;max-height:240px;overflow-y:auto;overscroll-behavior:contain}.toc a{min-height:38px}.body>.introduction{font-size:17px;line-height:2.1}.botNote{gap:12px;padding-block:18px}.botNote strong{font-size:16px}.readAlso{padding:14px}.readAlso a{font-size:15px}.breadcrumbs{font-size:11px;margin-bottom:18px}}
+.seriesCast { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,210px),1fr)); gap: 12px; }
+.seriesCast > a { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 10px; border: 1px solid #ffffff18; border-radius: 12px; }
+.seriesCast img { width: 56px; height: 72px; object-fit: cover; border-radius: 8px; }
+.seriesCast span { min-width: 0; }
+.seriesCast strong,.seriesCast small { display: block; overflow-wrap: anywhere; }
+.seriesCast small { margin-top: 6px; opacity: .65; font-size: 12px; }
+.episodeRatings { list-style: none; padding: 0; margin: 10px 0; }
+.episodeRatings li { display: grid; grid-template-columns: minmax(60px,1fr) auto auto auto; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid #ffffff18; font-size: 13px; }
+.episodeRatings a { white-space: nowrap; min-height: 44px; display: inline-flex; align-items: center; }

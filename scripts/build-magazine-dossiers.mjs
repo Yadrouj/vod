@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { reviewSelections } from '../content/magazine/dossiers/review-selections.mjs';
 import { biographySelections } from '../content/magazine/dossiers/biography-selections.mjs';
 import { biographyInsights } from '../content/magazine/dossiers/biography-insights.mjs';
+import { seriesBatchOne, seriesGuideData, seriesRatingsCheckedAt } from '../content/magazine/dossiers/series-batch-one.mjs';
 import { parseManuscript, countWords } from './blog-agent.mjs';
 import { writeJsonAtomic } from './atomic-json.mjs';
 
@@ -22,7 +23,8 @@ export function validateDossier(article) {
   if (article.sections.length < 6 || article.sources.length < 3) throw new Error(`${article.slug}: incomplete structure/references`);
   const words = countWords([article.intro, ...article.sections.flatMap(s => s.paragraphs), ...(article.critics ?? []).map(c => c.summary)].join(' '));
   // Reading time counts prose, not hundreds of filmography labels or schema.
-  if (words < 850) throw new Error(`${article.slug}: ${words} words; at least 850 original/attributed prose words required`);
+  const minimum = article.seriesGuide?.batch === 1 ? 3000 : 850;
+  if (words < minimum) throw new Error(`${article.slug}: ${words} words; at least ${minimum} original/attributed prose words required`);
   if (article.sections.some(s => !s.paragraphs.length) || /TODO|PLACEHOLDER|lorem ipsum/i.test(JSON.stringify(article))) throw new Error(`${article.slug}: unfinished manuscript`);
   if (article.dossier.kind === 'review' && (!article.sections.some(s => s.spoiler) || !article.critics?.length || article.media.length !== 1)) throw new Error(`${article.slug}: spoiler/critic/title missing`);
   if (article.dossier.kind === 'biography' && !article.filmography?.length) throw new Error(`${article.slug}: no verified filmography`);
@@ -56,6 +58,14 @@ export async function buildDossiers({ dataDir = process.env.VOD_DATA_DIR || 'pub
     const cover = bio ? person.imageUrl : coverStill?.url || subject.backdropUrl || subject.posterUrl;
     const portrait = bio || (!coverStill && (!subject.backdropUrl || subject.backdropUrl === subject.posterUrl));
     const body = parseManuscript(await readFile(path.join('content/magazine/dossiers', bio ? 'biographies' : 'reviews', seed.manuscript), 'utf8'));
+    const seriesConfig = seriesBatchOne[seed.slug];
+    if (seriesConfig) {
+      const manuscriptWords = countWords([body.intro, ...body.sections.flatMap(section => section.paragraphs)].join(' ').replace(/\[([^\]]+)\]\([^\s)]+\)/gu, '$1'));
+      if (manuscriptWords < 3000) throw new Error(`${seed.slug}: manuscript has only ${manuscriptWords} prose words`);
+    }
+    const episodeSnapshot = seriesConfig ? await read(path.join(dataDir, 'episode-metadata', `${seed.id}.json`)).catch(() => null) : null;
+    const guide = seriesConfig ? seriesGuideData(seed, title, episodeSnapshot?.episodes || [], people.people) : null;
+    if (guide && (!guide.cast.length || !guide.episodes.length)) throw new Error(`${seed.slug}: cast or episode data missing`);
     for (const section of body.sections) if (section.title.startsWith('[spoiler] ')) { section.spoiler = true; section.title = section.title.slice(10); }
     const related = bio ? [...new Map(person.items.filter(w => catalog.has(w.imdbCode)).map(w => [w.imdbCode, catalog.get(w.imdbCode)])).values()] : [subject];
     const primary = bio ? seed.works.map(id => related.find(w => w.imdbCode === id)).filter(Boolean) : [subject];
@@ -107,6 +117,17 @@ export async function buildDossiers({ dataDir = process.env.VOD_DATA_DIR || 'pub
       relatedSlugs: [], publishedAt: old?.publishedAt || now.toISOString(), modifiedAt: now.toISOString(),
     };
     if (!article.image) throw new Error(`${seed.slug}: no real image`);
+    if (guide) {
+      article.seriesGuide = guide;
+      // Register manuscript citations so the inline renderer can safely link them.
+      const referenced = [...new Set([seriesConfig.ratingSource, seriesConfig.additionalRatingSource,
+        ...Object.values(seriesConfig.extraEpisodeSources || {}), guide.audienceUrl, guide.audienceSample?.url,
+        ...[body.intro, ...body.sections.flatMap(s => s.paragraphs)].join(' ').matchAll(/\]\((https:\/\/[^\s)]+)\)/gu)].map(value => typeof value === 'string' ? value : value?.[1]).filter(Boolean))];
+      for (const url of referenced) if (!article.sources.some(source => source.url === url)) article.sources.push({
+        title: `${new URL(url).hostname.replace(/^www\./, '')} · ${decodeURIComponent(new URL(url).pathname.split('/').filter(Boolean).at(-1) || 'منبع')}`,
+        url, checkedAt: seriesRatingsCheckedAt,
+      });
+    }
     const checked = validate ? validateDossier(article) : { ...article, wordCount: countWords([article.intro, ...article.sections.flatMap(s => s.paragraphs), ...(article.critics ?? []).map(c => c.summary)].join(' ')) };
     articles.push(checked);
   }
