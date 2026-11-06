@@ -32,10 +32,14 @@ export function playableLinks(
     : rawMediaLinks;
   // Format preferences apply within a provider tier, never ahead of it.
   // A DonyayeSerial MP4 must not hide an alternative provider's MKV.
-  const selected = [false, true].flatMap(regional => selectPlaybackVersions(
-    mediaLinks.filter(link => isDonyayeSerial(link) === regional), options,
+  const selected = [0, 1, 2].flatMap(tier => selectPlaybackVersions(
+    mediaLinks.filter(link => playbackProviderTier(link) === tier), options,
   ));
   return orderPlaybackEpisodes(selected, options.isSeries);
+}
+
+function playbackProviderTier(link: VodLink) {
+  return link.sourceProvider === "moviezland" ? 0 : isDonyayeSerial(link) ? 2 : 1;
 }
 
 function selectPlaybackVersions(mediaLinks: VodLink[], options: PlaybackLinkOptions): VodLink[] {
@@ -82,9 +86,9 @@ export function roomPlayableLinks(
   options: PlaybackLinkOptions = {},
 ) {
   const selected = playableLinks(links, options);
-  const candidates = [false, true].flatMap(regional => roomPlaybackVersions(
-    selected.filter(link => isDonyayeSerial(link) === regional),
-    (links || []).filter(link => isDonyayeSerial(link) === regional), options,
+  const candidates = [0, 1, 2].flatMap(tier => roomPlaybackVersions(
+    selected.filter(link => playbackProviderTier(link) === tier),
+    (links || []).filter(link => playbackProviderTier(link) === tier), options,
   ));
   return orderPlaybackEpisodes(candidates, options.isSeries);
 }

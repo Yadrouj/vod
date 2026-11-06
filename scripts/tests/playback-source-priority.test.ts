@@ -8,6 +8,14 @@ const link = (url: string, extra: Partial<VodLink> = {}) => ({ url, label: "Sour
 const regional = link("https://dls3.aparatchi-dlcenter.top/DonyayeSerial/Film.1080p.mp4", { sourceProvider: "donyayeserial" });
 const alternative = link("https://sr.moviesho.com/Film.720p.mkv", { sourceProvider: "moviesho" });
 
+test("MovieLandz stays first even when another provider offers MP4", () => {
+  const publisher = link("https://dl.moviezland.ir/movies/Film.720p.mkv", { sourceProvider: "moviezland" });
+  const native = link("https://sr.moviesho.com/Film.1080p.mp4", { sourceProvider: "moviesho" });
+  for (const select of [playableLinks, roomPlayableLinks]) {
+    assert.deepEqual(select([regional, native, publisher]), [publisher, native, regional]);
+  }
+});
+
 test("auto-play prefers conventional audio within provider and episode, without removing 6CH", () => {
   const surround = link('https://cdn.example/Friends.S01E01.1080p.6CH.mkv', { season: 1, episode: 1 });
   const stereo = link('https://cdn.example/Friends.S01E01.720p.mkv', { season: 1, episode: 1 });
