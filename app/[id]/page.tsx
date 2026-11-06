@@ -121,6 +121,7 @@ export default async function DetailPage({ params }: Props) {
               <div className={styles.externalLinks}>
                 <a href={subzoneSearchUrl(item.title, item.year)} target="_blank" rel="noreferrer">{t.title.subzoneSubtitles}<ArrowUpLeft size={14} aria-hidden="true" /></a>
                 {item.sourcePageUrl && <a href={item.sourcePageUrl} target="_blank" rel="noreferrer">{fa ? "صفحه منبع" : "Source page"}<ArrowUpLeft size={14} aria-hidden="true" /></a>}
+                {item.publisherSourceUrl && <a href={item.publisherSourceUrl} target="_blank" rel="noreferrer">{fa ? `صفحه ناشر · ${item.publisherName ?? "MovieLandz"}` : `Publisher page · ${item.publisherName ?? "MovieLandz"}`}<ArrowUpLeft size={14} aria-hidden="true" /></a>}
                 {!canPlay && isOldIranianArchive && <a href={youtubeSearchUrl} target="_blank" rel="noreferrer">{fa ? "جست‌وجوی YouTube" : "Search YouTube"}<ArrowUpLeft size={14} aria-hidden="true" /></a>}
                 {item.imdbUrl && <a href={item.imdbUrl} target="_blank" rel="noreferrer">IMDb<ArrowUpLeft size={14} aria-hidden="true" /></a>}
               </div>

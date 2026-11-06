@@ -8,6 +8,7 @@ import { enrichOldIranianFilm } from "./old-iranian-media";
 import type { VodArchive, VodItem } from "./types";
 import { restrictCatalogItem } from './restricted-catalog';
 import { persianTitleOrFallback } from './title-display';
+import movielandzMatches from './data/movielandz-donyaye-match.json';
 
 const DATA_DIR = path.resolve(process.env.VOD_DATA_DIR || path.join(process.cwd(), "public", "data"));
 const FILE_CHECK_INTERVAL_MS = Math.max(5_000, Number(process.env.VOD_DATA_CHECK_INTERVAL_MS || 30_000));
@@ -15,6 +16,7 @@ const archiveCache: FileCache<VodArchive> = {};
 const archiveFallbackCache: FileCache<VodArchive> = {};
 const titleMapCache: FileCache<Record<string, string>> = {};
 const titleFilePromises = new Map<string, FileCache<VodItem>>();
+const movielandzByImdb = new Map((movielandzMatches.matches || []).map((match) => [match.imdbCode, match]));
 
 export async function loadVodArchive(): Promise<VodArchive> {
   return loadArchiveFile();
@@ -34,9 +36,12 @@ export const findVodItem = cache(async (id: string): Promise<VodItem | null> => 
   const item = await findVodTitleFile(id);
   if (!item) return null;
   const enriched = enrichOldIranianFilm(item);
+  const publisherMatch = movielandzByImdb.get(enriched.imdbCode);
   const mapped = await applyDownloadBaseToItem({
     ...enriched,
     persianTitle: persianTitleOrFallback(enriched),
+    publisherName: publisherMatch ? "MovieLandz" : enriched.publisherName,
+    publisherSourceUrl: publisherMatch?.movieLandzPage ?? enriched.publisherSourceUrl,
   });
   return restrictCatalogItem(await applyVerifiedAlternativeSources(await applyVerifiedDonyayeLinks(mapped)));
 });

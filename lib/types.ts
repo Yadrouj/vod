@@ -106,6 +106,8 @@ export type VodItem = {
   }[];
   source?: string | null;
   sourcePageUrl?: string | null;
+  publisherName?: string | null;
+  publisherSourceUrl?: string | null;
   persianYear?: number | null;
   apiFetchedAt?: string | null;
   seriesLinksExpandedAt?: string | null;
