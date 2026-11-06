@@ -100,7 +100,11 @@ async function main() {
   const library = JSON.parse(await readFile('public/data/melodify-library.json', 'utf8'));
   const base = JSON.parse(await readFile('public/data/music-index.json', 'utf8'));
   const extraFiles = process.argv.filter(arg => arg.startsWith('--source-index=')).map(arg => arg.slice('--source-index='.length));
-  for (const extraFile of extraFiles) base.tracks.push(...JSON.parse(await readFile(extraFile, 'utf8')).tracks);
+  // Avoid spreading large source snapshots into a single call frame.
+  for (const extraFile of extraFiles) {
+    const extraTracks = JSON.parse(await readFile(extraFile, 'utf8')).tracks || [];
+    for (const track of extraTracks) base.tracks.push(track);
+  }
   const candidates = recoveryCandidates(library, base);
   const reportDir = '.media-cache/music-recovery'; await mkdir(reportDir, { recursive: true });
   await writeFile(path.join(reportDir, 'library.txt'), candidates.map(t => `${t.id}\t${t.artist}\t${t.title}`).join('\n') + '\n');
