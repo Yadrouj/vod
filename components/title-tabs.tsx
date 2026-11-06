@@ -12,6 +12,7 @@ import type { VodItem } from "@/lib/types";
 import { trailerPlayback } from "@/lib/title-presentation";
 import styles from "./title-about.module.css";
 import { titleSynopsis } from "@/lib/title-synopsis";
+import { localizedTitle } from "@/lib/title-display";
 
 export type TitleTabsItem = Pick<VodItem,
   | "title"
@@ -185,7 +186,7 @@ function AboutTab({ item, locale, isSeries }: { item: TitleTabsItem; locale: Loc
       <div className={styles.main}>
         <section className={styles.story}>
           <span className={styles.eyebrow}>{locale === "fa" ? "داستان و دنیای اثر" : "The story"}</span>
-          <h2>{locale === "fa" ? `دربارهٔ ${item.persianTitle || item.title}` : `About ${item.title}`}</h2>
+            <h2>{locale === "fa" ? `دربارهٔ ${localizedTitle(item, "fa")}` : `About ${item.title}`}</h2>
           <p dir="auto">{titleSynopsis(item, locale) || (locale === "fa" ? "خلاصهٔ داستان هنوز در آرشیو ثبت نشده است." : "A synopsis has not been added yet.")}</p>
         </section>
         {(item.credits?.length ?? 0) > 0 && (
