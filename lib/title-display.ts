@@ -1,13 +1,12 @@
 import type { Locale } from "@/lib/i18n";
 
-/**
- * A small, curated safety net for titles whose source feeds have no Persian
- * title yet. The catalog remains the source of truth; these entries only keep
- * the Persian UI from falling back to an English title while enrichment runs.
- */
+/** Curated Persian names for titles whose provider metadata is generic or missing. */
 export const PERSIAN_TITLE_OVERRIDES: Readonly<Record<string, string>> = {
   tt14986406: "بلیچ: جنگ خونین هزارساله",
+  tt2120120: "پیکسل",
 };
+
+const genericSourceTitles = /^(?:دانلود|خرید|مشاهده|پخش)\s+(?:فیلم|سریال|انیمه)(?:\s+(?:جدید|رایگان|بدون\s+سانسور))?$/u;
 
 type LocalizableTitle = {
   imdbCode?: string | null;
@@ -17,5 +16,8 @@ type LocalizableTitle = {
 
 export function localizedTitle(item: LocalizableTitle, locale: Locale) {
   if (locale !== "fa") return item.title;
-  return item.persianTitle?.trim() || PERSIAN_TITLE_OVERRIDES[item.imdbCode ?? ""] || item.title;
+  const sourceTitle = item.persianTitle?.trim();
+  return (sourceTitle && !genericSourceTitles.test(sourceTitle))
+    ? sourceTitle
+    : PERSIAN_TITLE_OVERRIDES[item.imdbCode ?? ""] || item.title;
 }

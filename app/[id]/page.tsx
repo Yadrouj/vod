@@ -18,6 +18,7 @@ import { playableLinks } from "@/lib/link-labels";
 import { getOldIranianFilmMedia, getOldIranianYouTubeVideos } from "@/lib/old-iranian-media";
 import { getLocale } from "@/lib/server-locale";
 import { vodJsonLd, vodMetadata } from "@/lib/seo";
+import { localizedTitle } from "@/lib/title-display";
 import { subzoneSearchUrl } from "@/lib/subtitles";
 import { sizedImageUrl } from "@/lib/image-url";
 import { bestDownloadLink, detailHeroVideo, titleDownloadLinks } from "@/lib/title-presentation";
@@ -56,7 +57,7 @@ export default async function DetailPage({ params }: Props) {
   const watchHref = `/watch/${item.imdbCode}`;
   const heroBackdrop = item.backdropUrl ?? oldMedia?.backdropUrl ?? item.posterUrl;
   const posterUrl = item.posterUrl ?? oldMedia?.posterUrl;
-  const title = fa ? item.persianTitle || item.title : item.title;
+  const title = localizedTitle(item, fa ? "fa" : "en");
   const overview = fa ? item.persianOverview || item.overview : item.overview;
   const genres = fa && item.persianGenres?.length ? item.persianGenres : item.genres ?? [];
   const isOldIranianArchive = item.source === "old-iranian-archive";

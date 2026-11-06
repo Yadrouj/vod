@@ -13,3 +13,7 @@ test("prefers an enriched Persian title over the curated fallback", () => {
 test("keeps the original title in English", () => {
   assert.equal(localizedTitle({ imdbCode: "tt14986406", title: "Bleach: Thousand-Year Blood War", persianTitle: "بلیچ" }, "en"), "Bleach: Thousand-Year Blood War");
 });
+
+test("does not display generic provider SEO text as a film title", () => {
+  assert.equal(localizedTitle({ imdbCode: "tt2120120", title: "Pixels", persianTitle: "دانلود فیلم" }, "fa"), "پیکسل");
+});

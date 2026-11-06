@@ -16,6 +16,7 @@ import { getOldIranianFilmMedia, getOldIranianYouTubeVideos } from "@/lib/old-ir
 import { getLocale } from "@/lib/server-locale";
 import { subzoneSearchUrl } from "@/lib/subtitles";
 import { absoluteUrl, titleMetadata, videoJsonLd } from "@/lib/seo";
+import { localizedTitle } from "@/lib/title-display";
 import { watchPartyDetails } from "@/lib/watch-party-media";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import styles from "./watch.module.css";
@@ -73,7 +74,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
     subtitleUrl: link.subtitleUrl ?? null,
   }));
   const heroImage = item.backdropUrl ?? item.posterUrl ?? oldFilmMedia?.backdropUrl ?? null;
-  const displayTitle = locale === "fa" ? item.persianTitle || item.title : item.title;
+  const displayTitle = localizedTitle(item, locale);
   const displayOverview = locale === "fa" ? item.persianOverview || item.overview : item.overview;
   const displayGenres = locale === "fa" && item.persianGenres?.length ? item.persianGenres : item.genres;
   const partySource = partySources.find(source => source.url === initialSource) || partySources[0];
