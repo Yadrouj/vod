@@ -1,0 +1,145 @@
+[
+  {
+    "id": "tt12979628",
+    "title": "Family Secrets",
+    "persianTitle": "قضاوت",
+    "type": "series",
+    "year": 2021,
+    "countries": ["Turkey"],
+    "languages": ["Turkish"],
+    "genres": ["Crime", "Drama", "Mystery"],
+    "overview": "جیلین، وکیلی جسور، و ایلگاز، دادستانی پایبند به قانون، در جریان تحقیق دربارهٔ یک قتل با هم روبه‌رو می‌شوند. اختلاف نگاهشان به عدالت مانع همکاری سادهٔ آن‌هاست؛ به‌ویژه هنگامی که پرونده به زندگی خانواده‌های خودشان گره می‌خورد و مرز میان تعهد حرفه‌ای و وفاداری شخصی را به چالش می‌کشد.",
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BZDg1MDdlY2ItODk4OC00ZmYzLWJiOTgtZjU2NGZlMjNkMmI3XkEyXkFqcGc@._V1_.jpg",
+    "sourcePageUrl": "https://ayyapim.com/en-us/yargi",
+    "metadataSources": [
+      "https://ayyapim.com/en-us/yargi",
+      "https://www.imdb.com/title/tt12979628/",
+      "https://www.imdb.com/title/tt12979628/fullcredits/",
+      "https://www.primevideo.com/detail/0N68RC9QXIMG54RT5MPZW96DBV"
+    ],
+    "aliases": ["Yargi", "Yargı", "Family.Secrets", "Family_Secrets", "Family Secrets", "The.Judgment", "The Judgment", "Judgment", "Judgement", "قضاوت"],
+    "cast": ["Pınar Deniz", "Kaan Urgancıoğlu", "Hüseyin Avni Danyal", "Uğur Polat", "Mehmet Yılmaz Ak", "Uğur Aslan"],
+    "directors": ["Ali Bilgin", "Beste Sultan Kasapoğulları"],
+    "notes": [
+      "Reuses existing local series tt12979628, titled Family Secrets (2021). IMDb identifies its original title as Yargi and alternate title as The Judgment; the Ay Yapım producer page confirms the Family Secrets/Yargı identity and 2021 start year.",
+      "Input evidence: 300 unique media URL lines under /serial/turkish/Yargi/ in the inspected input, plus six directory/query lines. Examples: Yargi.S02E38.1080p56.mkv, Yargi.S02E38.720p56.mkv and Yargi.S01E65.1080p.mkv. This is a source-file count, not a count of episodes; the parent's filtered eligible-file total may differ.",
+      "Aliases are title-level filename prefixes only. Treat S01E65, S02E38, trailing quality digits such as 1080p56, and any episodes1/source ordering labels as unverified source semantics. Do not infer original Turkish broadcast season, absolute episode number, episode title, episode air date, or a re-edit mapping from this profile. Parent owns filename parsing and source-label preservation.",
+      "The generic English aliases Family Secrets and Judgment require the series type and 2021 identity as disambiguation; they must not be matched globally by substring to unrelated titles. In particular, Kanal D International's Family Secrets page is Babam ve Ailesi, a different production, and is deliberately not used as evidence for Yargı.",
+      "Ali Bilgin is credited by the producer; Prime Video and IMDb full credits additionally credit Beste Sultan Kasapoğulları. Prime Video's linked season page displays 2022, which is not substituted for the series' verified 2021 start year.",
+      "Existing local poster retained and verified HTTP 200, image/jpeg, 87085 bytes on 2026-11-07. Original language is Turkish; no per-file dubbing or audio-track assertion is made."
+    ]
+  },
+  {
+    "id": "tt11561800",
+    "title": "The Phoenix",
+    "persianTitle": "شعله عشق",
+    "type": "series",
+    "year": 2020,
+    "countries": ["Turkey"],
+    "languages": ["Turkish"],
+    "genres": ["Drama", "Romance"],
+    "overview": "زمرد پس از رسیدن خبر مرگ سرحات، مردی که دوستش دارد، زیر فشار شرایط به ازدواج با عموی او تن می‌دهد. این تصمیم او را درگیر روابط دشوار خانوادهٔ دمیرکان و کشمکش میان عشق، وفاداری و اجبار می‌کند. داستان این درام ترکی در کاپادوکیه می‌گذرد.",
+    "posterUrl": "https://en.pastelfilm.com.tr/uploads/afis/800/zumruduanka-072623246e192d5250a364ae9d9e58b2.jpg",
+    "sourcePageUrl": "https://en.pastelfilm.com.tr/diziler/zumruduanka",
+    "metadataSources": [
+      "https://en.pastelfilm.com.tr/diziler/zumruduanka",
+      "https://www.imdb.com/title/tt11561800/",
+      "https://www.imdb.com/title/tt11561800/fullcredits/",
+      "https://www.nowtv.com.tr/Zumruduanka/haber/2456/FOX-un-yeni-dizisi-Zumruduanka-nin-teaser-i-buyuk-begeni-topladi",
+      "https://thetvdb.com/series/zumruduanka"
+    ],
+    "aliases": ["The_Phoenix", "The.Phoenix", "Zümrüdüanka", "Zumruduanka", "شعله_عشق", "شعله عشق"],
+    "cast": ["Alp Navruz", "Ceren Yılmaz", "Selim Bayraktar", "Hatice Aslan"],
+    "directors": ["Cemal Şan", "Volkan Kocatürk", "Serhan Şahin"],
+    "notes": [
+      "Original title: Zümrüdüanka. IMDb identifies the series as tt11561800, first released in 2020; it is not the German film Phoenix or the Indian films with that title.",
+      "Input evidence: /s1/ contains 123 MP4 URL lines, including قسمت_هشتاد_و_یکم_فصل_دوم_سریال_درام_ترکی_شعله_عشقدوبله_فارسی.mp4 and filenames ending in The_Phoenix. Aliases identify the title, not the episode.",
+      "The Persian title fragment occurs after a variable episode/season prefix in these filenames. Do not match a generic قسمت prefix. Match the decoded title fragment within the basename instead.",
+      "Persian dubbed/re-edited episode and season labels are unverified source labels, not a mapping to original Turkish broadcasts. No original episode numbers, episode titles, episode count, or episode air dates are assigned by this profile.",
+      "languages records the original language; the observed /s1/ files are labeled Persian dubbed. Do not interpret the profile language as a verified per-file audio probe.",
+      "Director credits use IMDb full credits, with initial director Cemal Şan corroborated by the broadcaster. The English producer page gives a different single director credit (Yaşar Şahin); no attempt is made to infer episode-level directing assignments.",
+      "Poster extracted from the producer page's The Phoenix Afiş image; verified HTTP 200, image/jpeg, 466394 bytes on 2026-11-07."
+    ]
+  },
+  {
+    "id": "tt2112131",
+    "title": "Dabangg 2",
+    "persianTitle": "دبنگ ۲",
+    "type": "movie",
+    "year": 2012,
+    "countries": ["India"],
+    "languages": ["Hindi"],
+    "genres": ["Action", "Comedy", "Crime"],
+    "overview": "چولبول پاندی، پلیس سرسخت و نامتعارف، در ادامهٔ ماجراهایش با قدرت یک سیاستمدار تبهکار روبه‌رو می‌شود. درگیری‌ای که از مقابله با افراد او آغاز شده، زندگی شخصی و خانوادهٔ چولبول را نیز در معرض انتقام قرار می‌دهد.",
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BNWEzMTQ3NDItYTI2Ni00MjU0LWIyMGUtYzE5MmI2ZWE5YzNiXkEyXkFqcGc@._V1_.jpg",
+    "sourcePageUrl": "https://www.imdb.com/title/tt2112131/",
+    "metadataSources": [
+      "https://www.imdb.com/title/tt2112131/",
+      "https://www.imdb.com/title/tt2112131/fullcredits/",
+      "https://www.rottentomatoes.com/m/dabangg_2_2012/cast-and-crew",
+      "https://www.iffm.com.au/iffm2013/programbooklet.pdf"
+    ],
+    "aliases": ["Dabangg-2", "Dabangg.2", "Dabangg_2", "Dabangg 2", "Fearless.2", "Fearless 2"],
+    "cast": ["Salman Khan", "Sonakshi Sinha", "Prakash Raj", "Arbaaz Khan"],
+    "directors": ["Arbaaz Khan"],
+    "notes": [
+      "Reuses the existing local tt2112131 entry titled Fearless 2. That entry has no Persian title and no sourcePageUrl; do not create a second record for the alternate English title.",
+      "Input evidence: /movies/hendi/Dabangg/Dabangg-2.2012.720p(MarzFun.ir).mkv. Aliases are filename title prefixes and must retain the installment numeral.",
+      "Existing local poster URL retained and verified HTTP 200, image/jpeg, 467276 bytes on 2026-11-07. IMDb search results and full credits confirm the identity; direct IMDb HTML retrieval was access-restricted."
+    ]
+  },
+  {
+    "id": "tt7059844",
+    "title": "Dabangg 3",
+    "persianTitle": "دبنگ ۳",
+    "type": "movie",
+    "year": 2019,
+    "countries": ["India"],
+    "languages": ["Hindi"],
+    "genres": ["Action", "Comedy", "Crime"],
+    "overview": "بازگشت بالی سینگ، دشمنی از گذشته، چولبول پاندی و خانواده‌اش را تهدید می‌کند. این قسمت از مجموعهٔ دبنگ، رویارویی تازهٔ چولبول را با بازگشت به ماجراهایی پیوند می‌زند که پیش از پلیس شدن او رخ داده‌اند.",
+    "posterUrl": "https://upload.wikimedia.org/wikipedia/en/8/89/Dabangg_3_poster.jpg",
+    "sourcePageUrl": "https://www.imdb.com/title/tt7059844/",
+    "metadataSources": [
+      "https://www.imdb.com/title/tt7059844/",
+      "https://www.youtube.com/watch?v=-AJ7cLi1Jfk",
+      "https://www.boxofficeindia.com/cast_crew?movieid=5742",
+      "https://en.wikipedia.org/wiki/Dabangg_3"
+    ],
+    "aliases": ["Dabangg.3", "Dabangg_3", "Dabangg-3", "Dabangg 3", "Fearless.3", "Fearless 3"],
+    "cast": ["Salman Khan", "Sudeep", "Sonakshi Sinha", "Saiee Manjrekar"],
+    "directors": ["Prabhu Deva"],
+    "notes": [
+      "tt7059844 was absent from the inspected local index. IMDb search results identify the film and its cast; the Salman Khan Films official trailer independently confirms the director and Hindi version.",
+      "Input evidence: /movies/hendi/Dabangg/Dabangg.3.2019.480p.WEB-DL.Farsi.Dubbed.mkv and Dabangg_3_2019_1080p_Duble.mkv. These belong to the third film, not the first Dabangg already indexed as tt1620719.",
+      "The poster is the theatrical release poster linked from the Wikipedia film infobox. Verified HTTP 200, image/jpeg, 29222 bytes on 2026-11-07. Direct IMDb HTML retrieval was access-restricted."
+    ]
+  },
+  {
+    "id": "tt13022984",
+    "title": "Khuda Haafiz: Chapter 2 - Agni Pariksha",
+    "persianTitle": "خدا حافظ ۲: آزمون آتش",
+    "type": "movie",
+    "year": 2022,
+    "countries": ["India"],
+    "languages": ["Hindi"],
+    "genres": ["Action", "Crime", "Thriller"],
+    "overview": "سمیر و نرگس پس از تجربه‌ای دردناک می‌کوشند زندگی مشترکشان را دوباره بسازند. ورود ناندینی، دختر یتیمی که به سرپرستی می‌پذیرند، امید تازه‌ای به خانه می‌آورد؛ اما ناپدید شدن او خانواده را با بحرانی دیگر روبه‌رو می‌کند و سمیر را به جست‌وجوی حقیقت می‌کشاند.",
+    "posterUrl": "https://m.media-amazon.com/images/M/MV5BYTBhM2U3ZGMtMjdkYy00NDE3LWI0MmQtNjAxNWJiNmY5YWQxXkEyXkFqcGc@._V1_.jpg",
+    "sourcePageUrl": "https://www.zee5.com/global/movies/details/khuda-haafiz-chapter-2-agni-pariksha/0-0-1z5206274",
+    "metadataSources": [
+      "https://www.zee5.com/global/movies/details/khuda-haafiz-chapter-2-agni-pariksha/0-0-1z5206274",
+      "https://www.imdb.com/title/tt13022984/fullcredits/",
+      "https://tva.onscreenasia.com/2022/08/zee5-global-announces-world-digital-premiere-of-khuda-haafiz-chapter-2-agni-pariksha/"
+    ],
+    "aliases": ["Khuda.Haafiz.2", "Khuda.Haafiz.Chapter.2", "Khuda.Haafiz.Chapter.II", "Khuda Haafiz 2", "Khuda_Haafiz_2"],
+    "cast": ["Vidyut Jammwal", "Shivaleeka Oberoi", "Dibyendu Bhattacharya", "Sheeba Chaddha"],
+    "directors": ["Faruk Kabir"],
+    "notes": [
+      "Reuses the existing local tt13022984 entry, whose overview ends mid-word (missi), whose Persian title is only دانلود فیلم, and whose Persian overview is generic download boilerplate.",
+      "Input evidence: /movies/hendi/Khuda.Haafiz/Khuda.Haafiz.2.mp4 and Khuda.Haafiz.2.Agni.Pariksha.2022.720p.Farsi.Dub.mkv. Never apply the unnumbered Khuda.Haafiz prefix: the same directory also contains the first film, tt7363104.",
+      "languages records the original Hindi language. ZEE5 also lists Tamil and Telugu audio versions, but those availability claims do not establish the audio tracks in the supplied Moviezland files.",
+      "Existing local poster URL retained and verified HTTP 200, image/jpeg, 357921 bytes on 2026-11-07."
+    ]
+  }
+]

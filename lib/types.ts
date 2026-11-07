@@ -25,6 +25,7 @@ export type VodLink = {
   sourceUrl?: string | null;
   modified?: string | null;
   subtitleUrl?: string | null;
+  verifiedAt?: string | null;
   subtitles?: VodSubtitleLink[];
   sourceProvider?: string | null;
   sourceBaseId?: string | null;

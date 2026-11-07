@@ -8,7 +8,9 @@ import { enrichOldIranianFilm } from "./old-iranian-media";
 import type { VodArchive, VodItem } from "./types";
 import { restrictCatalogItem } from './restricted-catalog';
 import { persianTitleOrFallback } from './title-display';
+import { enrichMoviezlandProfile, moviezlandProfile } from './moviezland-profiles';
 import movielandzMatches from './data/movielandz-donyaye-match.json';
+import { exactPublisherPageMapping } from './moviezland-page-match.mjs';
 
 const DATA_DIR = path.resolve(process.env.VOD_DATA_DIR || path.join(process.cwd(), "public", "data"));
 const FILE_CHECK_INTERVAL_MS = Math.max(5_000, Number(process.env.VOD_DATA_CHECK_INTERVAL_MS || 30_000));
@@ -16,7 +18,7 @@ const archiveCache: FileCache<VodArchive> = {};
 const archiveFallbackCache: FileCache<VodArchive> = {};
 const titleMapCache: FileCache<Record<string, string>> = {};
 const titleFilePromises = new Map<string, FileCache<VodItem>>();
-const movielandzByImdb = new Map((movielandzMatches.matches || []).map((match) => [match.imdbCode, match]));
+const movielandzByImdb = new Map((movielandzMatches.matches || []).filter(exactPublisherPageMapping).map((match) => [match.imdbCode, match]));
 
 export async function loadVodArchive(): Promise<VodArchive> {
   return loadArchiveFile();
@@ -33,9 +35,9 @@ async function loadArchiveFile(): Promise<VodArchive> {
 }
 
 export const findVodItem = cache(async (id: string): Promise<VodItem | null> => {
-  const item = await findVodTitleFile(id);
+  const item = await findVodTitleFile(id) || moviezlandProfile(id);
   if (!item) return null;
-  const enriched = enrichOldIranianFilm(item);
+  const enriched = enrichMoviezlandProfile(enrichOldIranianFilm(item));
   const publisherMatch = movielandzByImdb.get(enriched.imdbCode);
   const mapped = await applyDownloadBaseToItem({
     ...enriched,
@@ -43,7 +45,9 @@ export const findVodItem = cache(async (id: string): Promise<VodItem | null> => 
     publisherName: publisherMatch ? "MovieLandz" : enriched.publisherName,
     publisherSourceUrl: publisherMatch?.movieLandzPage ?? enriched.publisherSourceUrl,
   });
-  return restrictCatalogItem(await applyVerifiedAlternativeSources(await applyVerifiedDonyayeLinks(mapped)));
+  const withSources = await applyVerifiedAlternativeSources(await applyVerifiedDonyayeLinks(mapped));
+  const publisherLink = withSources.links.find(link => link.sourceProvider === "moviezland" && link.verifiedAt);
+  return restrictCatalogItem(publisherLink ? { ...withSources, publisherName: "MovieLandz", publisherSourceUrl: publisherLink.sourceUrl || withSources.publisherSourceUrl } : withSources);
 });
 
 export function normalizeVodType(type: string): "movie" | "series" {

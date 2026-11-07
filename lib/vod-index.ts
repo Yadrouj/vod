@@ -5,6 +5,7 @@ import type { VodCard, VodCatalogIndex } from "./types";
 import { compareSearchRank, type SearchRankingSignals } from "./vod-search-order";
 import { matchVodSearch } from "./vod-search-match";
 import { persianTitleOrFallback } from "./title-display";
+import { addMoviezlandProfiles } from "./moviezland-profiles";
 
 export const HOME_SECTIONS = [
   "top-imdb",
@@ -63,17 +64,18 @@ export async function loadVodHomeIndex(): Promise<VodCatalogIndex> {
 /** Avoid parsing the complete 21k-title catalog for the 901-title classic collection. */
 export async function loadOldIranianVodIndex(): Promise<VodCatalogIndex> {
   return loadFreshJson(path.join(DATA_DIR, "vod-old-iranian.json"), oldIranianIndexCache)
-    .then(enrichLegacyCards)
+    .then(index => enrichLegacyCards(index, false))
     .catch(() => loadVodIndex());
 }
 
-function enrichLegacyCards(index: VodCatalogIndex): VodCatalogIndex {
+function enrichLegacyCards(index: VodCatalogIndex, includeNew = true): VodCatalogIndex {
   const cached = enrichedIndexes.get(index);
   if (cached) return cached;
+  const supplemented = addMoviezlandProfiles(index, includeNew);
   const enriched = {
-    ...index,
-    items: index.items.map(normalizeCardTitle),
-    sections: index.sections.map((section) => ({ ...section, items: section.items.map(normalizeCardTitle) })),
+    ...supplemented,
+    items: supplemented.items.map(normalizeCardTitle),
+    sections: supplemented.sections.map((section) => ({ ...section, items: section.items.map(normalizeCardTitle) })),
   };
   enrichedIndexes.set(index, enriched);
   return enriched;
