@@ -2,6 +2,10 @@ import { refreshStep } from "./refresh-step.mjs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+try {
+  await refreshStep("Refresh verified Breaking Bad episode mirrors", "scripts/refresh-breaking-bad-mirrors.mjs");
+} catch (error) { console.warn(`Episode mirrors retained: ${error.message}`); }
+
 // Independent fallback: a DonyayeSerial outage cannot prevent Moviesho/ZardFilm publication.
 await refreshStep("Curated movie and series sources", "scripts/scrape-curated-vod-sources.mjs");
 const report = JSON.parse(await readFile(process.env.CURATED_VOD_REPORT || ".media-cache/vod-sync/curated-vod-report.json", "utf8"));
