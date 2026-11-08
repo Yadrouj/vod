@@ -1,6 +1,7 @@
 import type { VodItem, VodLink, VodSubtitleLink } from "./types";
 import { episodeArtworkFallbackUrl, loadEpisodeMetadata, type EpisodeImageFit, type EpisodeImageSource } from "./episode-metadata";
 import { contentRestriction } from './content-restrictions.mjs';
+import { isDonyayeSource } from './alternative-source-links.mjs';
 
 export type DownloadSource = {
   sourceHost?: string;
@@ -126,6 +127,8 @@ export function toDownloadSource(link: VodLink): DownloadSource {
 
 export function movieDownloadSources(links: VodLink[]): DownloadSource[] {
   return links.map(toDownloadSource).sort((a, b) => {
+    const provider = downloadProviderTier(a) - downloadProviderTier(b);
+    if (provider !== 0) return provider;
     const quality = sortQuality(a.quality ?? "", b.quality ?? "");
     if (quality !== 0) return quality;
     return a.group.localeCompare(b.group) || a.label.localeCompare(b.label);
@@ -284,9 +287,16 @@ async function fetchWithTimeout(url: string, timeoutMs: number) {
 }
 
 function sortEpisodeFiles(a: EpisodeFile, b: EpisodeFile) {
+  const provider = downloadProviderTier(a) - downloadProviderTier(b);
+  if (provider !== 0) return provider;
   const quality = sortQuality(a.quality ?? "", b.quality ?? "");
   if (quality !== 0) return quality;
   return a.group.localeCompare(b.group) || (a.release ?? "").localeCompare(b.release ?? "") || a.name.localeCompare(b.name);
+}
+
+function downloadProviderTier(link: { url: string }) {
+  try { if (new URL(link.url).hostname === 'dl.moviezland.ir') return 0; } catch { /* Preserve malformed records last. */ }
+  return isDonyayeSource(link) ? 2 : 1;
 }
 
 function sortQuality(a: string, b: string) {

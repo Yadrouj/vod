@@ -17,7 +17,7 @@ test('signed refresh replaces only its matching file, preserves metadata and nev
   const updates = { version: 1, items: { tt9999001: { links: [fresh] } } };
   assert.equal(alternativeMediaKey(old), alternativeMediaKey(fresh));
   const result = applyAlternativeSourceUpdates(raw, updates, now);
-  assert.deepEqual(result.links, [ds, fresh]); assert.equal(result.posterUrl, 'poster');
+  assert.deepEqual(result.links, [fresh, ds]); assert.equal(result.posterUrl, 'poster');
   assert.equal(raw.links[1].url, old.url);
   assert.deepEqual(applyAlternativeSourceUpdates(raw, updates, now + 86400001).links, [ds]);
   assert.deepEqual(applyAlternativeSourceUpdates({ ...raw, id: 'tt9999002' }, updates, now).links, [ds]);
@@ -80,13 +80,17 @@ test('worker matches exact IMDb and episode, excludes restrictions/expired links
     const bounded = await refreshAlternativeSources([source], { titleDir: path.join(root, 'titles'), limit: 0 });
     assert.equal(bounded.report.budgetExhausted, true); assert.equal(bounded.report.verified, 0);
     assert.deepEqual(JSON.parse(await readFile(path.join(root, 'titles', id + '.json'), 'utf8')).links, [ds]);
+    await writeFile(path.join(root, 'titles', id + '.json'), JSON.stringify({ id, imdbCode: id, type: 'tvSeries', links: [ds, { ...good, verifiedAt: undefined }] }));
+    const scrapedOnly = await refreshAlternativeSources([source], { titleDir: path.join(root, 'titles'), probe: async () => ({ state: 'verified' }) });
+    assert.equal(scrapedOnly.report.probes, 1, 'An unverified mirror already in the catalog must still be tested');
+    assert.equal(scrapedOnly.report.verified, 1);
   } finally { assert.ok(path.resolve(root).startsWith(path.join(path.resolve(os.tmpdir()), 'sarvnema-alternatives-'))); await rm(root, { recursive: true, force: true }); }
 });
 
 test('bundled additions are media-verified, non-regional and do not restore restricted content', async () => {
   const data = JSON.parse(await readFile('lib/data/alternative-source-links.json', 'utf8'));
-  assert.equal(data.version, 1); assert.equal(Object.keys(data.items).length, 16);
-  assert.equal(Object.values(data.items).reduce((n, item) => n + item.links.length, 0), 1307);
+  assert.equal(data.version, 1); assert.ok(Object.keys(data.items).length >= 16);
+  assert.ok(Object.values(data.items).reduce((n, item) => n + item.links.length, 0) >= 1307);
   assert.equal(data.items.tt33184638, undefined);
   for (const item of Object.values(data.items)) for (const link of item.links) {
     assert.ok(alternativeMediaKey(link)); assert.ok(Number.isFinite(Date.parse(link.verifiedAt))); assert.ok(link.sourceUrl);

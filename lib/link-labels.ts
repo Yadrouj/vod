@@ -1,6 +1,6 @@
 import type { VodLink } from "./types";
 import { isDonyayeSerial, playbackCodecRisk } from "./playback-help";
-import { sourceLinkExpiry } from "./alternative-source-links.mjs";
+import { sourceLinkExpiry, validAlternativeLink } from "./alternative-source-links.mjs";
 
 export type PlaybackLinkOptions = {
   isSeries?: boolean;
@@ -32,14 +32,14 @@ export function playableLinks(
     : rawMediaLinks;
   // Format preferences apply within a provider tier, never ahead of it.
   // A DonyayeSerial MP4 must not hide an alternative provider's MKV.
-  const selected = [0, 1, 2].flatMap(tier => selectPlaybackVersions(
+  const selected = [0, 1, 2, 3].flatMap(tier => selectPlaybackVersions(
     mediaLinks.filter(link => playbackProviderTier(link) === tier), options,
   ));
   return orderPlaybackEpisodes(selected, options.isSeries);
 }
 
 function playbackProviderTier(link: VodLink) {
-  return link.sourceProvider === "moviezland" ? 0 : isDonyayeSerial(link) ? 2 : 1;
+  return link.sourceProvider === "moviezland" ? 0 : isDonyayeSerial(link) ? 3 : validAlternativeLink(link) ? 1 : 2;
 }
 
 function selectPlaybackVersions(mediaLinks: VodLink[], options: PlaybackLinkOptions): VodLink[] {
@@ -86,7 +86,7 @@ export function roomPlayableLinks(
   options: PlaybackLinkOptions = {},
 ) {
   const selected = playableLinks(links, options);
-  const candidates = [0, 1, 2].flatMap(tier => roomPlaybackVersions(
+  const candidates = [0, 1, 2, 3].flatMap(tier => roomPlaybackVersions(
     selected.filter(link => playbackProviderTier(link) === tier),
     (links || []).filter(link => playbackProviderTier(link) === tier), options,
   ));

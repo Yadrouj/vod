@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { alternativeMediaKey, applyAlternativeSourceUpdates, isDonyayeSource, mergeAlternativeSourceUpdates, sourceLinkExpiry } from '../lib/alternative-source-links.mjs';
+import { alternativeMediaKey, applyAlternativeSourceUpdates, isDonyayeSource, mergeAlternativeSourceUpdates, sourceLinkExpiry, validAlternativeLink } from '../lib/alternative-source-links.mjs';
 import { contentRestriction } from '../lib/content-restrictions.mjs';
 import { parseSeasonEpisode } from './moviesho-source-lib.mjs';
 
@@ -31,7 +31,9 @@ export async function probeAlternativeMedia(url, { fetchImpl = fetch, timeoutMs 
         prefix = Buffer.concat([prefix, Buffer.from(chunk.value).subarray(0, 16 - prefix.length)]);
       } } finally { await reader.cancel(); }
       const verified = prefix.subarray(0, 4).toString('hex') === '1a45dfa3' || prefix.toString('ascii', 4, 8) === 'ftyp';
-      return { state: verified ? 'verified' : 'unverified', status: response.status, checkedAt: new Date().toISOString() };
+      const range = response.headers.get('content-range');
+      const totalBytes = range ? Number(range.match(/\/(\d+)$/)?.[1]) : response.status === 200 ? Number(response.headers.get('content-length')) : null;
+      return { state: verified ? 'verified' : 'unverified', status: response.status, totalBytes: Number.isFinite(totalBytes) && totalBytes > 0 ? totalBytes : null, checkedAt: new Date().toISOString() };
     }
     return { state: 'redirect-limit' };
   } catch (error) { return { state: 'unverified', error: error.message }; }
@@ -55,7 +57,8 @@ export async function refreshAlternativeSources(sources, { titleDir, initial, pr
     if (!raw.links?.some(isDonyayeSource)) continue;
     report.matchedTitles++;
     const current = applyAlternativeSourceUpdates(raw, updates);
-    const existing = new Set(current.links.map(link => link.url));
+    // Presence in scraped data is not evidence that a mirror actually works.
+    const existing = new Set(current.links.filter(validAlternativeLink).map(link => link.url));
     const bucket = buckets.get(id) || new Map();
     for (const link of incoming.links || []) {
       if (!alternativeMediaKey(link) || !approvedPage(link) || !approvedHost(new URL(link.url).hostname)) continue;
@@ -83,7 +86,11 @@ export async function refreshAlternativeSources(sources, { titleDir, initial, pr
       if (report.probes >= limit || Date.now() >= deadline) { report.budgetExhausted = true; return; }
       const { id, link } = queue[cursor++]; report.probes++;
       const result = await probe(link.url);
+      if (result.state === 'verified' && result.totalBytes && result.totalBytes < (link.episode ? 8 : 80) * 1024 ** 2) {
+        result.state = 'unverified'; result.error = 'File is smaller than a full-release safety threshold';
+      }
       report.checks.push({ itemId: id, url: link.url, ...result });
+      if (report.probes % 25 === 0) onProgress({ probes: report.probes, verified: report.verified, titles: report.titles.length });
       if (result.state !== 'verified') { report.unverified++; continue; }
       const verified = { ...link, verifiedAt: result.checkedAt || new Date().toISOString() };
       updates = mergeAlternativeSourceUpdates(updates, { version: 1, items: { [id]: { links: [verified] } } });

@@ -16,6 +16,12 @@ test("MovieLandz stays first even when another provider offers MP4", () => {
   }
 });
 
+test("a verified mirror precedes unverified alternatives and regional sources", () => {
+  const verified = { ...alternative, sourceUrl: 'https://www.moviesho.com/movie/example/', verifiedAt: new Date().toISOString() };
+  const unverified = link('https://cdn.example/Film.mp4', { sourceProvider: 'moviesho' });
+  for (const select of [playableLinks, roomPlayableLinks]) assert.deepEqual(select([regional, unverified, verified]), [verified, unverified, regional]);
+});
+
 test("auto-play prefers conventional audio within provider and episode, without removing 6CH", () => {
   const surround = link('https://cdn.example/Friends.S01E01.1080p.6CH.mkv', { season: 1, episode: 1 });
   const stereo = link('https://cdn.example/Friends.S01E01.720p.mkv', { season: 1, episode: 1 });
