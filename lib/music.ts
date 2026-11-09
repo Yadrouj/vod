@@ -1,7 +1,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { compareMusicPopularityYear } from "./music-search-ranking";
-import { mergeMelodifyCatalog } from "./music-library-merge";
+import { mergeMelodifyCatalog, withRecoveredMusicSources } from "./music-library-merge";
 import { searchText, TypoSearchIndex, type SearchMatches } from "./typo-search";
 import type { MusicArtist, MusicArtistIndex, MusicIndex, MusicLandingIndex, MusicTrack } from "@/lib/music-types";
 
@@ -218,6 +218,7 @@ export function relatedMusic(index: MusicIndex, track: MusicTrack, limit = 12) {
  * immediately useful without requiring a full re-scrape.
  */
 export function normalizeMusicTrack(track: MusicTrack): MusicTrack {
+  track = withRecoveredMusicSources(track);
   const isVarious = track.artists.length === 1 && musicSlug(track.artists[0]?.slug || track.artists[0]?.name) === "various-artists";
   const match = isVarious ? track.title.match(/^\s*(.+?)\s+---\s+(.+?)\s*$/u) : null;
   if (!match) return track;

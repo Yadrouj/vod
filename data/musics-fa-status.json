@@ -1,15 +1,15 @@
 {
   "state": "complete",
-  "startedAt": "2026-10-31T20:18:14.036Z",
-  "updatedAt": "2026-10-31T20:18:36.482Z",
+  "startedAt": "2026-11-09T06:03:37.602Z",
+  "updatedAt": "2026-11-09T06:03:55.267Z",
   "pages": {
     "total": 1,
     "complete": 1
   },
   "tracks": {
     "discovered": 20,
-    "new": 0,
-    "updated": 20,
+    "new": 2,
+    "updated": 18,
     "failures": 0
   },
   "details": {

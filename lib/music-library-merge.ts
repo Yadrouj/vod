@@ -1,10 +1,12 @@
 import type { MusicArtist, MusicArtistIndex, MusicIndex, MusicLandingIndex, MusicTrack } from "./music-types";
 import replacementBundle from "./data/melodify-source-replacements.json";
+import musicReplacements from "./data/music-source-replacements.json";
 import type { MusicSource } from "./music-types";
 
 /** Preserve imported IDs/artists/tags while adding verified exact-track sources. */
 export function withRecoveredMusicSources(track: MusicTrack): MusicTrack {
-  const replacements = (replacementBundle as Record<string, MusicSource[]>)[track.id];
+  const replacements = (musicReplacements as Record<string, MusicSource[]>)[track.id]
+    ?? (replacementBundle as Record<string, MusicSource[]>)[track.id];
   if (!replacements?.length) return track;
   // A verified MP3 can stream even if its provider catalog called it a download.
   const sources: MusicSource[] = [...replacements.map(source => ({ ...source, kind: "stream" as const })), ...track.sources];

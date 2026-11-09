@@ -8,7 +8,7 @@ import { probeDonyayeMedia } from './donyaye-link-health.mjs';
 export async function refreshDonyayeLinks(source, { titleDir, initial, probe = probeDonyayeMedia, limit = 800, observedFailures = [], onProgress = () => {} } = {}) {
   let updates = mergeDonyayeUpdateSets(initial || { version: 1, items: {} }, { version: 1, items: {} });
   const report = { sourceTitles: source.items.length, comparedTitles: 0, probes: 0, added: 0, replaced: 0, keptHealthy: 0,
-    unavailableCandidates: 0, restrictedSkipped: 0, quarantined: 0, restored: 0, recheckedHealthy: 0, budgetExhausted: false, checks: [] };
+    unavailableCandidates: 0, restrictedSkipped: 0, quarantined: 0, restored: 0, recheckedHealthy: 0, budgetExhausted: false, checks: [], titleReadFailures: [] };
   const cache = new Map();
   const check = async url => {
     if (cache.has(url)) return cache.get(url);
@@ -38,7 +38,15 @@ export async function refreshDonyayeLinks(source, { titleDir, initial, probe = p
     if (contentRestriction(incoming)) { report.restrictedSkipped++; continue; }
     let raw;
     try { raw = JSON.parse(await readFile(path.join(titleDir, `${id}.json`), 'utf8')); }
-    catch (error) { if (error.code === 'ENOENT') continue; throw error; }
+    catch (error) {
+      if (error.code === 'ENOENT') continue;
+      if (['UNKNOWN', 'EIO'].includes(error.code)) {
+        report.titleReadFailures.push({ id, code: error.code });
+        console.warn(`Preserving unreadable title ${id}: ${error.code}`);
+        continue;
+      }
+      throw error;
+    }
     const item = applyDonyayeLinkUpdates(raw, updates);
     const links = [...item.links, ...(item.f2myExtraLinks || [])];
     const byKey = new Map(links.map(link => [donyayeLinkKey(link.url), link]).filter(([key]) => key));
