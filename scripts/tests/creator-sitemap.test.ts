@@ -22,6 +22,11 @@ test('the main sitemap includes both hubs and all 200 canonical creator profiles
       assert.ok(!allUrls.has(entry.url), 'parts must not overlap');
       assert.ok(!new URL(entry.url).pathname.startsWith('/mag'), 'magazine is independently indexed');
       allUrls.add(entry.url);
+      for (const image of entry.images || []) {
+        const parsed = new URL(image);
+        assert.ok(['http:', 'https:'].includes(parsed.protocol), 'images must be absolute HTTP URLs');
+      }
+      if (entry.lastModified) assert.ok(new Date(entry.lastModified).getUTCFullYear() >= 1970);
       expected.delete(entry.url);
     }
   }

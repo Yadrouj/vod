@@ -4,6 +4,7 @@ import { SITE_URL } from "@/lib/seo";
 import { loadVodIndex } from "@/lib/vod-index";
 import { loadMoodPlaylists } from '@/lib/mood-playlists';
 import { loadCreatorProfiles } from '@/lib/creator-profiles';
+import { normalizeSitemapEntries, sitemapDate } from './sitemap-values';
 
 // Stay below Google's 50,000-URL / 50MB sitemap limit while leaving room for
 // route growth. robots.txt advertises every generated part.
@@ -16,7 +17,7 @@ let pending: Promise<SitemapEntry[]> | undefined;
 async function cachedEntries(): Promise<SitemapEntry[]> {
   if (snapshot && snapshot.expiresAt > Date.now()) return snapshot.entries;
   if (!pending) pending = allEntries().then(entries => {
-    snapshot = { entries, expiresAt: Date.now() + 60_000 };
+    snapshot = { entries, expiresAt: Date.now() + 300_000 };
     return entries;
   }).finally(() => { pending = undefined; });
   return pending;
@@ -68,7 +69,7 @@ async function allEntries(): Promise<SitemapEntry[]> {
     if (!track.sources.some((source) => source.available !== false)) continue;
     entries.push({
       url: `${SITE_URL}/music/${encodeURIComponent(track.id)}`,
-      lastModified: validDate(track.publishedAt) || musicUpdatedAt,
+      lastModified: validDate(track.addedAt) ?? validDate(track.publishedAt) ?? musicUpdatedAt,
       changeFrequency: "monthly",
       priority: track.coverUrl ? 0.65 : 0.45,
       images: track.coverUrl ? [track.coverUrl] : undefined,
@@ -88,7 +89,7 @@ async function allEntries(): Promise<SitemapEntry[]> {
   for (const playlist of playlists.playlists) entries.push(entry(`/music/collections/${encodeURIComponent(playlist.id)}`, validDate(playlist.updatedAt), 0.65, 'weekly'));
   for (const profile of creators.directors) entries.push({...entry(`/person/${profile.id}`, validDate(profile.researchedAt),0.7,'monthly'),images:profile.imageUrl?[profile.imageUrl]:undefined});
   for (const profile of creators.singers) entries.push({...entry(`/music/artists/${encodeURIComponent(profile.slug)}`, validDate(profile.researchedAt),0.7,'monthly'),images:profile.imageUrl?[profile.imageUrl]:undefined});
-  return [...new Map(entries.map((item) => [item.url, item])).values()];
+  return [...new Map(normalizeSitemapEntries(entries).map((item) => [item.url, item])).values()];
 }
 
 function entry(pathname: string, lastModified: Date | undefined, priority: number, changeFrequency: SitemapEntry["changeFrequency"]): SitemapEntry {
@@ -96,6 +97,5 @@ function entry(pathname: string, lastModified: Date | undefined, priority: numbe
 }
 
 function validDate(value: string | null | undefined) {
-  const date = value ? new Date(value) : null;
-  return date && Number.isFinite(date.valueOf()) && date.valueOf() <= Date.now() ? date : undefined;
+  return sitemapDate(value);
 }
