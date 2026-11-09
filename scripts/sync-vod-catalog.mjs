@@ -190,6 +190,10 @@ async function main() {
         CURATED_VOD_CACHE: process.env.CURATED_VOD_CACHE || path.join(WORK_DIR, "curated-vod-cache.json"),
         CURATED_VOD_CONCURRENCY: process.env.CURATED_VOD_CONCURRENCY || "2",
         CURATED_VOD_REQUEST_GAP_MS: process.env.CURATED_VOD_REQUEST_GAP_MS || "350",
+        // Daily runs review recently modified posts, not the entire historical archive.
+        // Explicit zero values still permit an intentional deep refresh.
+        CURATED_VOD_PAGE_LIMIT: process.env.CURATED_VOD_PAGE_LIMIT ?? "2",
+        CURATED_VOD_DETAIL_LIMIT: process.env.CURATED_VOD_DETAIL_LIMIT ?? "120",
       },
     );
     const curated = await readJson(curatedReportFile);

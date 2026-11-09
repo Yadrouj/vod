@@ -25,4 +25,8 @@
 
 ## Production safety
 
-The production checkout has uncommitted live catalog data overlapping video refresh outputs. Deployment must not overwrite it or reset/stash it. Follow `deploy/DEPLOY-SARVNEMA.md` and obtain approval for a backup-and-merge procedure before deploying overlapping files.
+The user approved backup-and-merge of overlapping live data. A complete backup of tracked live changes is under `/home/ubuntu/vod/.deploy-backups/2026-11-09-source-refresh/`. The live server catalog was downloaded and merged into the refreshed catalog before rebuilding indexes. The merged result has 29,045 titles and 538,062 links, including 284 links retained from the live server beyond the fresh local result.
+
+The incremental refresh added 29 titles and updated 8,136 existing records before the live-data merge. Four curated requests timed out, the live Donyaye series feed was unavailable, and two new-title metadata API requests failed. Existing data was preserved. This is a partial source review, not proof that all remote archives or codecs work.
+
+`deploy/tools/pack-lfs-delta.mjs` creates a thin Git transfer pack against existing LFS objects, without changing the application checkout/index. Every reconstructed LFS object must be SHA-256 verified before use. `deploy/tools/push-staged-lfs.mjs` can upload staged objects from the server using the laptop's existing Git credential over SSH stdin; it does not save credentials or alter persistent Git config. Never print credential payloads or authentication headers.
