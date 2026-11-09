@@ -1,9 +1,7 @@
 import type { MetadataRoute } from "next";
-import { sitemapPartCount } from "@/lib/site-sitemap";
 import { SITE_URL } from "@/lib/seo";
 
-export default async function robots(): Promise<MetadataRoute.Robots> {
-  const partCount = await sitemapPartCount();
+export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
@@ -13,8 +11,9 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       },
     ],
     // Do not block /_next/: Google needs the page's public CSS and scripts to
-    // render the page accurately. Each part is declared for large catalogs.
-    sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/mag/sitemap.xml`, ...Array.from({ length: partCount }, (_, index) => `${SITE_URL}/sitemap/${index}.xml`)],
+    // render the page accurately. The dynamic index discovers new parts without
+    // requiring a rebuild of this lightweight robots metadata route.
+    sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/mag/sitemap.xml`],
     host: SITE_URL,
   };
 }

@@ -14,9 +14,19 @@ test('the main sitemap includes both hubs and all 200 canonical creator profiles
   ]);
   assert.equal(expected.size,202);
   const count=await sitemapPartCount();assert.ok(count>0 && count<20);
+  const allUrls = new Set<string>();
   for(let part=0;part<count;part++){
     const entries=await sitemapEntriesForPart(part);assert.ok(entries.length<=SITEMAP_LIMIT);
-    for(const entry of entries) expected.delete(entry.url);
+    assert.ok(entries.length > 0, 'index cannot advertise an empty part');
+    for(const entry of entries) {
+      assert.ok(!allUrls.has(entry.url), 'parts must not overlap');
+      assert.ok(!new URL(entry.url).pathname.startsWith('/mag'), 'magazine is independently indexed');
+      allUrls.add(entry.url);
+      expected.delete(entry.url);
+    }
   }
+  assert.equal(count, Math.ceil(allUrls.size / SITEMAP_LIMIT));
+  assert.deepEqual(await sitemapEntriesForPart(count), []);
+  assert.deepEqual(await sitemapEntriesForPart(-1), []);
   assert.deepEqual([...expected],[]);
 });

@@ -2,33 +2,39 @@ import type { MetadataRoute } from "next";
 import { loadMusicIndex } from "@/lib/music";
 import { SITE_URL } from "@/lib/seo";
 import { loadVodIndex } from "@/lib/vod-index";
-import { loadMagazine } from '@/lib/magazine';
 import { loadMoodPlaylists } from '@/lib/mood-playlists';
 import { loadCreatorProfiles } from '@/lib/creator-profiles';
 
 // Stay below Google's 50,000-URL / 50MB sitemap limit while leaving room for
 // route growth. robots.txt advertises every generated part.
-export const SITEMAP_LIMIT = 45_000;
+export const SITEMAP_LIMIT = 20_000;
 
 type SitemapEntry = MetadataRoute.Sitemap[number];
+let snapshot: { entries: SitemapEntry[]; expiresAt: number } | undefined;
+let pending: Promise<SitemapEntry[]> | undefined;
+
+async function cachedEntries(): Promise<SitemapEntry[]> {
+  if (snapshot && snapshot.expiresAt > Date.now()) return snapshot.entries;
+  if (!pending) pending = allEntries().then(entries => {
+    snapshot = { entries, expiresAt: Date.now() + 60_000 };
+    return entries;
+  }).finally(() => { pending = undefined; });
+  return pending;
+}
 
 export async function sitemapEntriesForPart(index: number): Promise<MetadataRoute.Sitemap> {
-  const entries = await allEntries();
+  if (!Number.isSafeInteger(index) || index < 0) return [];
+  const entries = await cachedEntries();
   return entries.slice(index * SITEMAP_LIMIT, (index + 1) * SITEMAP_LIMIT);
 }
 
 export async function sitemapPartCount() {
-  const [vod, music, magazine, playlists, creators] = await Promise.all([loadVodIndex(), loadMusicIndex(), loadMagazine(), loadMoodPlaylists(), loadCreatorProfiles()]);
-  const staticCount = 14;
-  const vodCount = vod.items.filter((item) => item.linksCount > 0 || Boolean(item.posterUrl) || Boolean(item.overview)).length;
-  const trackCount = music.tracks.filter((track) => track.sources.some((source) => source.available !== false)).length;
-  const artistCount = new Set([...music.artists.filter((artist) => artist.trackIds.length > 0).map(artist => artist.slug), ...creators.singers.map(profile => profile.slug)]).size;
-  const count = staticCount + vodCount + trackCount + artistCount + creators.directors.length + 7 + magazine.articles.length + playlists.playlists.length + 2 + new Set(magazine.articles.map(a => a.category)).size;
+  const count = (await cachedEntries()).length;
   return Math.max(1, Math.ceil(count / SITEMAP_LIMIT));
 }
 
 async function allEntries(): Promise<SitemapEntry[]> {
-  const [vod, music, magazine, playlists, creators] = await Promise.all([loadVodIndex(), loadMusicIndex(), loadMagazine(), loadMoodPlaylists(), loadCreatorProfiles()]);
+  const [vod, music, playlists, creators] = await Promise.all([loadVodIndex(), loadMusicIndex(), loadMoodPlaylists(), loadCreatorProfiles()]);
   const vodUpdatedAt = validDate(vod.generatedAt);
   const musicUpdatedAt = validDate(music.updatedAt);
   const entries: SitemapEntry[] = [
@@ -40,8 +46,6 @@ async function allEntries(): Promise<SitemapEntry[]> {
     entry("/music/artists", musicUpdatedAt, 0.85, "weekly"),
     entry("/music/playlists", musicUpdatedAt, 0.75, "daily"),
     entry("/updates", vodUpdatedAt, 0.8, "daily"),
-    entry("/mag", validDate(magazine.updatedAt), 0.8, "daily"),
-    entry("/mag/about", validDate('2026-10-02'), 0.5, "monthly"),
     entry("/music/collections", musicUpdatedAt, 0.75, "weekly"),
     entry("/people", vodUpdatedAt, 0.65, "weekly"),
     entry('/people/directors', validDate(creators.researchedAt), 0.8, 'monthly'),
@@ -50,9 +54,11 @@ async function allEntries(): Promise<SitemapEntry[]> {
 
   for (const item of vod.items) {
     if (item.linksCount <= 0 && !item.posterUrl && !item.overview) continue;
+    const id = item.imdbCode || item.id;
+    if (!id || id === 'undefined' || id === 'null') continue;
     entries.push({
-      url: `${SITE_URL}/${encodeURIComponent(item.imdbCode)}`,
-      lastModified: vodUpdatedAt,
+      url: `${SITE_URL}/${encodeURIComponent(id)}`,
+      lastModified: validDate(item.catalogUpdatedAt || item.sourceUpdatedAt) ?? vodUpdatedAt,
       changeFrequency: "weekly",
       priority: item.linksCount > 0 ? 0.75 : 0.45,
       images: item.posterUrl ? [item.posterUrl] : undefined,
@@ -78,22 +84,18 @@ async function allEntries(): Promise<SitemapEntry[]> {
       images: artist.profileImageUrl || artist.coverUrl ? [artist.profileImageUrl || artist.coverUrl!] : undefined,
     });
   }
-  for (const slug of ["daily-cinema-updates", "best-sad-movies", "best-mini-series", "persian-movies-guide", "best-ebi-music", "watch-together-guide", "listen-together-guide"]) {
-    entries.push(entry(`/mag/${slug}`, slug === "daily-cinema-updates" ? vodUpdatedAt : musicUpdatedAt, 0.65, slug === "daily-cinema-updates" ? "daily" : "monthly"));
-  }
-  for (const article of magazine.articles) entries.push({ ...entry(`/mag/${article.slug}`, validDate(article.modifiedAt), 0.8, 'monthly'), images: [new URL(article.image, SITE_URL).href] });
-  for (const category of new Set(magazine.articles.map(a => a.category))) entries.push(entry(`/mag/topics/${category}`, validDate(magazine.updatedAt), 0.7, 'daily'));
+  // Magazine URLs are published once, in /mag/sitemap.xml linked by the index.
   for (const playlist of playlists.playlists) entries.push(entry(`/music/collections/${encodeURIComponent(playlist.id)}`, validDate(playlist.updatedAt), 0.65, 'weekly'));
   for (const profile of creators.directors) entries.push({...entry(`/person/${profile.id}`, validDate(profile.researchedAt),0.7,'monthly'),images:profile.imageUrl?[profile.imageUrl]:undefined});
   for (const profile of creators.singers) entries.push({...entry(`/music/artists/${encodeURIComponent(profile.slug)}`, validDate(profile.researchedAt),0.7,'monthly'),images:profile.imageUrl?[profile.imageUrl]:undefined});
   return [...new Map(entries.map((item) => [item.url, item])).values()];
 }
 
-function entry(pathname: string, lastModified: Date, priority: number, changeFrequency: SitemapEntry["changeFrequency"]): SitemapEntry {
+function entry(pathname: string, lastModified: Date | undefined, priority: number, changeFrequency: SitemapEntry["changeFrequency"]): SitemapEntry {
   return { url: `${SITE_URL}${pathname}`, lastModified, priority, changeFrequency };
 }
 
 function validDate(value: string | null | undefined) {
   const date = value ? new Date(value) : null;
-  return date && !Number.isNaN(date.valueOf()) ? date : new Date();
+  return date && Number.isFinite(date.valueOf()) && date.valueOf() <= Date.now() ? date : undefined;
 }
