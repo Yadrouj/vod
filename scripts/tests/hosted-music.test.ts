@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { combineMusicLibraries, hostedCoverUrl, isHostedFileUrl } from "../../lib/hosted-music";
 import { mergeMelodifyCatalog } from "../../lib/music-library-merge";
 import type { MusicIndex, MusicTrack } from "../../lib/music-types";
+import { musicPartyMedia } from "../../lib/watch-party-music";
 
 const empty: MusicIndex = { version: 1, source: "multi-source", updatedAt: "", scanned: { musicPages: 0, videoPages: 0, full: false }, tracks: [], artists: [], categories: [] };
 function track(id: string, provider: "melodify" | "sarvnema-hosted"): MusicTrack {
@@ -26,4 +27,12 @@ test("hosted and old libraries retain tracks and counts in compact and full inde
 });
 test("cover paths cannot turn into an arbitrary authenticated request", () => {
   assert.equal(hostedCoverUrl({ ...track("x", "sarvnema-hosted"), hostedCoverPath: "../../secret" } as MusicTrack), null);
+});
+
+test("listen together excludes download-only archival originals", () => {
+  const song = track("test", "sarvnema-hosted");
+  song.sources.push({ ...song.sources[0], url: "https://music.sarvnema.ir/files/ABBA/original.m4a", playback: false, kind: "download" });
+  const media = musicPartyMedia(song);
+  assert.equal(media?.sources.length, 1);
+  assert.ok(media?.source.url.startsWith("/api/music/media?"));
 });

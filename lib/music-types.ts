@@ -10,6 +10,8 @@ export type MusicSource = {
   sourcePageUrl?: string;
   basePath?: string | null;
   available?: boolean;
+  /** False for archival originals kept for download, not browser playback. */
+  playback?: boolean;
   checkedAt?: string;
 };
 

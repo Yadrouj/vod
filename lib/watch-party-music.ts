@@ -9,7 +9,7 @@ function yearFromPublishedAt(value: string | null) {
 function uniqueSources(track: MusicTrack): PartyMediaSource[] {
   const seen = new Set<string>();
   return track.sources
-    .filter((item) => item.available !== false && isBrowserPlayableMusicSource(item.url) && !seen.has(item.url) && Boolean(seen.add(item.url)))
+    .filter((item) => item.available !== false && item.playback !== false && isBrowserPlayableMusicSource(item.url) && !seen.has(item.url) && Boolean(seen.add(item.url)))
     .map((item, index) => ({
       url: item.provider === "sarvnema-hosted" || item.provider === "melodify"
         ? `/api/music/media?${new URLSearchParams({ id: track.id, url: item.url })}` : item.url,

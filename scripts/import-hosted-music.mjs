@@ -40,7 +40,7 @@ export function buildHostedCatalog(metadata, existingArtists = [], addedAt = new
       hostedCoverPath: /^\.sarvnema\/covers\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(row.coverPath || '') ? row.coverPath : null,
       sources: [
         ...(compatiblePath ? [{ url: fileUrl(compatiblePath), label: 'پخش سازگار · MP3', quality: 'MP3 · 320 kbps', kind: 'stream', provider: 'sarvnema-hosted', available: true }] : []),
-        { url: fileUrl(row.path), label: compatiblePath ? 'فایل اصلی · ALAC' : 'آرشیو سرونما', quality: row.codec === 'alac' ? 'ALAC · Original' : /\.flac$/i.test(row.path) ? 'FLAC' : row.bitrate ? `${Math.round(row.bitrate / 1000)} kbps` : row.path.split('.').pop().toUpperCase(), kind: compatiblePath ? 'download' : 'stream', provider: 'sarvnema-hosted', available: true },
+        { url: fileUrl(row.path), label: compatiblePath ? 'فایل اصلی · ALAC' : 'آرشیو سرونما', quality: row.codec === 'alac' ? 'ALAC · Original' : /\.flac$/i.test(row.path) ? 'FLAC' : row.bitrate ? `${Math.round(row.bitrate / 1000)} kbps` : row.path.split('.').pop().toUpperCase(), kind: compatiblePath ? 'download' : 'stream', ...(compatiblePath ? { playback: false } : {}), provider: 'sarvnema-hosted', available: true },
       ],
     });
   }
@@ -120,8 +120,15 @@ async function main() {
   for (let offset = 0; offset < entries.length; offset += 4) {
     await Promise.all(entries.slice(offset, offset + 4).map(async ([id, entry]) => {
       if (!/^hosted-[a-f0-9]{20}$/.test(id) || entry.path !== `.sarvnema/compatible/${id}.mp3`) return;
-      const response = await fetch(fileUrl(entry.path), { method: 'HEAD', headers: { Authorization: `Bearer ${token}` }, redirect: 'error', signal: AbortSignal.timeout(20000) });
-      if (!response.ok || Number(response.headers.get('content-length')) !== entry.bytes) throw new Error(`Compatible source unavailable: ${id}`);
+      let verified = false, status = 0;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const response = await fetch(fileUrl(entry.path), { method: 'HEAD', headers: { Authorization: `Bearer ${token}` }, redirect: 'error', signal: AbortSignal.timeout(20000) });
+        status = response.status;
+        if (response.ok && Number(response.headers.get('content-length')) === entry.bytes) { verified = true; break; }
+        if (status === 401 || status === 403) break;
+        await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+      }
+      if (!verified) throw new Error(`Compatible source unavailable: ${id} (HTTP ${status}); catalog was not overwritten.`);
       compatible[id] = entry;
     }));
   }

@@ -28,6 +28,7 @@ test('verified MP3 playback comes first, ALAC original is retained, IDs remain s
   assert.equal(result.tracks[0].id, id);
   assert.equal(result.tracks[0].sources[0].quality, 'MP3 · 320 kbps');
   assert.equal(result.tracks[0].sources[1].kind, 'download');
+  assert.equal(result.tracks[0].sources[1].playback, false);
   assert.equal(result.tracks[0].sources[1].url, first.tracks[0].sources[0].url);
   compatible[id].sourcePath = 'another/recording.m4a';
   assert.equal(buildHostedCatalog(input, [], '', null, compatible).tracks[0].sources.length, 1);

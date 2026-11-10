@@ -433,7 +433,7 @@ export function MusicPlayerEngine({
 
 function uniqueSources(sources: MusicSource[]) {
   const seen = new Set<string>();
-  return sources.filter((source) => source.available !== false && source.url && !seen.has(source.url) && Boolean(seen.add(source.url)));
+  return sources.filter((source) => source.available !== false && source.playback !== false && source.url && !seen.has(source.url) && Boolean(seen.add(source.url)));
 }
 
 function musicPlaybackUrl(trackId: string, sourceUrl: string) {
