@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { DiscoveryUpdateStrip } from "@/components/discovery-update-strip";
+import { loadHostedMusic } from "@/lib/hosted-music";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { LandingSeoContent } from "@/components/landing-seo-content";
@@ -48,10 +50,11 @@ export default async function MusicPage({ searchParams }: Props) {
   const year = Number(asText(params.year)) || null;
   const filterLabel = q || category || (libraryOnly ? "تازه‌های آرشیو" : "") || (fresh === "week" ? "تازه‌های این هفته" : "") || (year ? String(year) : "") || kind;
   const hasFilter = Boolean(q || category || kind !== "all" || year || fresh || libraryOnly);
-  const [locale, index, moodIndex] = await Promise.all([
+  const [locale, index, moodIndex, hosted] = await Promise.all([
     getLocale(),
     hasFilter ? loadMusicIndex() : loadMusicLandingIndex(),
     hasFilter ? Promise.resolve(null) : loadMoodPlaylists(),
+    hasFilter ? Promise.resolve(null) : loadHostedMusic(),
   ]);
   const allMatches = hasFilter
     ? searchMusic(index, q, kind, category)
@@ -100,7 +103,7 @@ export default async function MusicPage({ searchParams }: Props) {
   // Music-video artwork is generally larger and more reliable than the tiny
   // archive thumbnails, so it leads the visual hero while the shelves keep
   // their chronological catalog order.
-  const heroSourceTracks = hasFilter && tracks.length ? tracks : [...recentVideos, ...remixes, ...recentTracks];
+  const heroSourceTracks = hasFilter && tracks.length ? tracks : [...libraryArrivals, ...weeklyTracks, ...recentVideos, ...remixes, ...recentTracks];
   const heroTracks: MusicHeroTrack[] = [...heroSourceTracks]
     .sort((left, right) => Number(Boolean(right.coverUrl)) - Number(Boolean(left.coverUrl)))
     .slice(0, 8)
@@ -113,12 +116,12 @@ export default async function MusicPage({ searchParams }: Props) {
       artists: track.artists.map((artist) => ({ name: artist.name })),
     }));
   const discovery = [
-    { href: "/music/collections/melodify-tagged-library", label: "آرشیو تگ‌دار", description: "همهٔ آهنگ‌های تازه با دسته‌بندی‌های واقعی", coverUrl: libraryArrivals[0]?.coverUrl ?? null },
+    { href: "/music?added=library", label: "تازه‌های آرشیو", description: "آهنگ‌های اضافه‌شده با دسته‌بندی‌های واقعی", coverUrl: libraryArrivals[0]?.coverUrl ?? null },
     { href: `/music?category=${encodeURIComponent(REMIX_CATEGORY)}`, label: REMIX_CATEGORY, description: REMIX_DESCRIPTION, coverUrl: remixes[0]?.coverUrl ?? null },
     { href: "/music/collections", label: "پلی‌لیست‌های حال‌وهوا", description: "سفر، تمرکز، ورزش و خاطره‌ها", coverUrl: heroTracks[0]?.coverUrl ?? null },
     { href: "/music?kind=video", label: "موزیک‌ویدیو", description: "تصویر، صدا و اجرای زنده", coverUrl: recentVideos[0]?.coverUrl ?? null },
     { href: "/music?category=%D9%85%D9%88%D8%B3%DB%8C%D9%82%DB%8C%20%D9%82%D8%AF%DB%8C%D9%85%DB%8C%20%D9%81%D8%A7%D8%B1%D8%B3%DB%8C", label: "خاطره‌ها", description: "گلچین موسیقی قدیمی فارسی", coverUrl: classics[0]?.coverUrl ?? null },
-    { href: "/music?q=موسیقی%20خارجی", label: "Foreign picks", description: "چند انتخاب تازه از آرشیو خارجی", coverUrl: foreign[0]?.coverUrl ?? null },
+    { href: `/music?category=${encodeURIComponent("موسیقی خارجی")}`, label: "گلچین خارجی", description: "راک، متال، جاز، پاپ و کشف‌های تازه", coverUrl: foreign[0]?.coverUrl ?? null },
   ];
 
   return (
@@ -141,7 +144,10 @@ export default async function MusicPage({ searchParams }: Props) {
       </section>
 
       <section className="wrap music-content music-landing-content">
-        {!hasFilter && moodIndex && moodIndex.playlists.length > 0 && <MoodCollections playlists={moodIndex.playlists} preview />}
+        {!hasFilter && <DiscoveryUpdateStrip music title="تازه بشنو، راحت‌تر کشف کن"
+          description={`${(hosted?.tracks.length ?? 0).toLocaleString("fa-IR")} فایل در آرشیو میزبانی‌شده؛ پلی‌لیست‌های سبک‌محور و صفحهٔ هنرمندان. تازه‌اضافه‌شده به معنی تازه‌منتشرشده نیست.`}
+          updatedAt={hosted?.updatedAt || index.updatedAt}
+          links={[{ href: "/music?added=library", label: "تازه‌های آرشیو" }, { href: "/music/collections", label: "پلی‌لیست‌ها" }, { href: `/music?category=${encodeURIComponent("موسیقی خارجی")}`, label: "موسیقی خارجی" }, { href: "/music/artists", label: "هنرمندان" }]} />}
         {hasFilter ? (
           <>
             {q && matchingMusicArtists(index.artists, q).length > 0 && <section><h2>خواننده‌ها</h2><MusicHorizontalRail label="خواننده‌های مرتبط">{matchingMusicArtists(index.artists, q).slice(0, 12).map(artist => <MusicArtistCard key={artist.slug} artist={artist} />)}</MusicHorizontalRail></section>}
@@ -160,6 +166,7 @@ export default async function MusicPage({ searchParams }: Props) {
         ) : (
           <>
             <MusicShelf eyebrow="اضافه‌شده به سرونما · دسته‌بندی با تگ‌ها" title="تازه‌های آرشیو" tracks={libraryArrivals} viewAll="/music?added=library" preload />
+            {moodIndex && moodIndex.playlists.length > 0 && <MoodCollections playlists={moodIndex.playlists} preview />}
             <PublicPartyRooms mode="listen" locale={locale} />
             <nav className="music-discovery-grid" aria-label="میان‌برهای موسیقی">
               {discovery.map((item, itemIndex) => (

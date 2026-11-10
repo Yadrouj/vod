@@ -201,7 +201,7 @@ export function MediaPlayerControls(props: Props) {
         }
       }} onPointerCancel={() => { pointer.current = null; finishHold(); }} onLostPointerCapture={() => finishHold()} />
     {feedback && <div className={styles.feedback} role="status">{feedback}</div>}
-    {(shown || paused) && <button className={`${styles.center} ${!paused ? styles.touchOnly : ""}`} data-player-ui="true" type="button" onClick={play} disabled={!canPlay} aria-label={paused ? label("Play", "پخش") : label("Pause", "توقف")}>{paused ? <Play fill="currentColor" /> : <Pause fill="currentColor" />}</button>}
+    {(shown || paused) && <button className={`${styles.center} ${!paused ? styles.touchOnly : ""}`} data-player-center data-player-ui="true" type="button" onClick={play} disabled={!canPlay} aria-label={paused ? label("Play", "پخش") : label("Pause", "توقف")}>{paused ? <Play fill="currentColor" /> : <Pause fill="currentColor" />}</button>}
     <div className={`${styles.controls} ${shown ? styles.visible : ""}`} data-player-controls data-player-ui="true" dir="ltr" inert={!shown} onPointerEnter={() => { holding.current = true; reveal(); }} onPointerLeave={() => { holding.current = false; reveal(); }} onFocusCapture={reveal}>
       <div className={styles.timeline} onPointerMove={event => { if (!safeDuration || event.pointerType !== "mouse") return; const rect = event.currentTarget.getBoundingClientRect(); setHover(Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width))); }} onPointerLeave={() => setHover(null)}>
         <div className={styles.track}><i style={{ width: `${Math.min(100, props.buffered ?? buffered)}%` }} /><b style={{ width: `${progress}%` }} /><em style={{ left: `${progress}%` }} /></div>

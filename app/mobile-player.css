@@ -47,4 +47,6 @@
 }
 @media (max-width: 760px) and (orientation: portrait) {
   .party-layout .party-player-stage:not(.is-cinema-fullscreen) { margin-top: clamp(24px, 6svh, 56px); }
+  .party-layout .party-player-stage:not(.party-listening-stage):not(.is-cinema-fullscreen):not(.is-pseudo-fullscreen):not(:fullscreen) { --player-controls-reserve: calc(112px + env(safe-area-inset-bottom, 0px)); padding-bottom: var(--player-controls-reserve); aspect-ratio: auto; }
+  .party-layout .party-player-stage:not(.party-listening-stage):not(.is-cinema-fullscreen):not(.is-pseudo-fullscreen):not(:fullscreen) > video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
 }

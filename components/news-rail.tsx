@@ -8,7 +8,7 @@ export function NewsRail({ items, daily, locale = DEFAULT_LOCALE }: { items: Vod
   const t = getDictionary(locale);
 
   return (
-    <section className="section news-section">
+    <section className="section news-section" id="daily-news">
       <div className="section-head news-head">
         <div>
           <p className="label">{t.common.featured}</p>

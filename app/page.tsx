@@ -29,6 +29,9 @@ import { FILM_LANDING_SEO, landingJsonLd } from "@/lib/landing-seo";
 import { titleMetadata } from "@/lib/seo";
 import { loadVodHomeIndex, loadVodIndex, selectVodSection } from "@/lib/vod-index";
 import { categoryCounts } from "@/lib/category-counts";
+import { matchWeeklyPicks, recentlyUpdatedTitles } from "@/lib/home-discovery";
+import weeklyPicks from "@/public/data/imdb-weekly-picks.json";
+import { DiscoveryUpdateStrip } from "@/components/discovery-update-strip";
 import { loadImdbTrending, loadHeroArtwork } from "@/lib/imdb-trending";
 import { rankDiscovery } from "@/lib/discovery-ranking";
 import { loadAudienceSignals } from "@/lib/discovery-feedback";
@@ -70,6 +73,8 @@ export default async function HomePage() {
     megaSections,
     megaFeaturedItems,
     wideItems,
+    weeklyTitles,
+    updatedTitles,
   } = await buildHomePageData(locale);
 
   const aiPrompt = t.home.aiPrompt;
@@ -82,7 +87,7 @@ export default async function HomePage() {
   const primaryLandingRails = anchorRailIds
     .map((id) => landingRails.find((section) => section.id === id))
     .filter((section): section is HomeRailSection => Boolean(section));
-  const remainingLandingRails = landingRails.filter((section) => !anchorRailIds.includes(section.id) && !freshRailIds.includes(section.id));
+  const remainingLandingRails = landingRails.filter((section) => section.id !== "kids" && !anchorRailIds.includes(section.id) && !freshRailIds.includes(section.id));
 
   return (
     <main className={`shell film-spotify-page ${landingStyles.landing}`} data-media-theme="cinema">
@@ -102,6 +107,12 @@ export default async function HomePage() {
       </section>
 
       <section className="home-stack wrap film-landing-content">
+        <DiscoveryUpdateStrip title={locale === "fa" ? "امروز در سرونما" : "Discover SarvNema"}
+          description={locale === "fa" ? `${(news.daily?.count ?? 0).toLocaleString("fa-IR")} خبر در انتخاب روزانه؛ تازه‌های آرشیو و محبوب‌های IMDb، یک‌جا برای انتخاب راحت‌تر.` : "Daily news, archive updates and IMDb's weekly picks."}
+          updatedAt={news.daily?.checkedAt || news.generatedAt}
+          links={[{ href: "#popular-imdb", label: locale === "fa" ? "محبوب‌های IMDb" : "IMDb picks" }, { href: "/updates", label: locale === "fa" ? "فیلم و قسمت‌های به‌روز" : "Archive updates" }, { href: "#daily-news", label: locale === "fa" ? "خبرهای تازه" : "Latest news" }, { href: "/music", label: locale === "fa" ? "تازه‌های موسیقی" : "Music" }]} />
+        {weeklyTitles.length > 0 && <section id="popular-imdb"><HomeRail section={makeSection("imdb-weekly", locale === "fa" ? "محبوب‌های IMDb · فهرست هفتگی" : "IMDb weekly picks", locale === "fa" ? "بر اساس گزارش منتشرشدهٔ ۲ نوامبر؛ فهرست هفتهٔ منتهی به ۳۱ اکتبر، نه رتبه‌بندی زندهٔ امروز." : "Published November 2, for the week ending October 31; not a live daily chart.", weeklyTitles, weeklyPicks.sourceUrl)} locale={locale} /></section>}
+        {updatedTitles.length > 0 && <HomeRail section={makeSection("recently-updated", locale === "fa" ? "تازه به‌روزشده در آرشیو" : "Recently updated", locale === "fa" ? "به ترتیب آخرین تغییر ثبت‌شدهٔ منابع؛ تاریخ به‌روزرسانی با سال انتشار اثر متفاوت است." : "Ordered by actual source/catalog update time, not release year.", updatedTitles, "/updates")} locale={locale} />}
         {freshLandingRails.map((section) => <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />)}
         <ReleaseUpdatesRail items={newEpisodes} variant="episodes" locale={locale} generatedAt={updates.generatedAt} asOf={updates.asOf} />
         <ReleaseUpdatesRail items={updates.items} locale={locale} generatedAt={updates.generatedAt} asOf={updates.asOf} />
@@ -160,6 +171,9 @@ async function computeHomePageData(locale: Locale) {
   const t = getDictionary(locale);
   const seen = new Set<string>();
   const signals = { trends: trending, audience };
+  const weeklyAge = Date.now() - Date.parse(weeklyPicks.publishedAt);
+  const weeklyTitles = weeklyAge >= 0 && weeklyAge < 30 * 86400_000 ? matchWeeklyPicks(catalog.items, weeklyPicks.entries) : [];
+  const updatedTitles = recentlyUpdatedTitles(catalog.items);
   const discovery = rankDiscovery([...index.items, ...trending.filter(item => item.popularity.current)].filter(isLandingReady), signals, 80);
   const trendMap = new Map(trending.map(item => [item.imdbCode, item.popularity]));
   // The lead frame is deliberately separate from personalised discovery: it
@@ -168,7 +182,10 @@ async function computeHomePageData(locale: Locale) {
   const heroPool = trending.filter(item => item.popularity.current && isLandingReady(item) && isHeroReady(item));
   // Even during an IMDb outage the full-width desktop hero must not silently
   // revert to soft posters. Verified artwork does not imply a current chart rank.
-  const fallbackHero = rankDiscovery(index.items.filter(item => isLandingReady(item) && artwork[item.imdbCode]), signals, 8)
+  const fallbackHero = uniqueCards([
+    ...weeklyTitles, ...updatedTitles,
+    ...rankDiscovery(index.items.filter(item => isLandingReady(item) && artwork[item.imdbCode]), signals, 8),
+  ]).filter(item => isLandingReady(item) && artwork[item.imdbCode])
     .map(item => ({ ...item, heroArt: artwork[item.imdbCode] }));
   const heroBanners = takeFreshHeroVisual(heroPool.length ? heroPool : fallbackHero, seen, 8)
     .map(item => ({ ...item, popularity: trendMap.get(item.imdbCode) }));
@@ -285,6 +302,8 @@ async function computeHomePageData(locale: Locale) {
     megaSections,
     megaFeaturedItems,
     wideItems,
+    weeklyTitles,
+    updatedTitles,
   };
 }
 

@@ -1,4 +1,4 @@
-.surface { position: absolute; inset: 0; z-index: 2; touch-action: manipulation; cursor: pointer; }
+.surface { position: absolute; inset: 0 0 var(--player-controls-reserve, 0px); z-index: 2; touch-action: manipulation; cursor: pointer; }
 .controls { position: absolute; z-index: 30; inset: auto 0 0; padding: 38px 12px 6px; background: linear-gradient(transparent, #000c); color: #fff; opacity: 0; pointer-events: none; transition: opacity .18s; font: 13px/1.4 Arial, sans-serif; }
 .visible { opacity: 1; pointer-events: auto; }
 .row, .group { display: flex; align-items: center; gap: 0; min-width: 0; }
@@ -63,3 +63,8 @@
   .extras button { padding: 6px 10px; font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .controls, .track, .track em, .volume input { transition: none; } }
+@media (max-width: 760px) and (orientation: portrait) {
+  .controls { padding: 4px max(6px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); background: #090909; }
+  .center { top: calc((100% - var(--player-controls-reserve, 0px)) / 2); width: 52px; height: 52px; min-width: 52px; max-width: 52px; min-height: 52px; }
+  .center svg { width: 26px; height: 26px; }
+}

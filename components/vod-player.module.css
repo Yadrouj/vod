@@ -53,3 +53,7 @@
 }
 @media (prefers-reduced-motion: reduce) { .player *, .player *::before { transition: none !important; } }
 @media (max-width: 360px) { .duration { display: none; } }
+@media (max-width: 760px) and (orientation: portrait) {
+  .player:global(.pro-player):not(:fullscreen) { --player-controls-reserve: calc(76px + env(safe-area-inset-bottom, 0px)); aspect-ratio: auto; height: auto; padding-bottom: var(--player-controls-reserve); }
+  .player:not(:fullscreen) :global(video.player) { display: block; height: auto; aspect-ratio: 16 / 9; }
+}
