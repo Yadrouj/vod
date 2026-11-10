@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { ArrowRight, Download, Film, History, Library, ListMusic, Music2, Search, Users, WifiOff, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ActivityDialog, openActivity } from "./landing-activity";
-import { DiscoverySearchDialog } from "./discovery-search";
+import { DiscoverySearchDialog } from "./lazy-discovery-search";
 import { WatchTogetherLauncher } from "./watch-together-launcher";
 import type { Locale } from "@/lib/i18n";
 

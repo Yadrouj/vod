@@ -28,7 +28,7 @@ import { loadMusicHomeIndex } from "@/lib/music";
 import { FILM_LANDING_SEO, landingJsonLd } from "@/lib/landing-seo";
 import { titleMetadata } from "@/lib/seo";
 import { loadVodHomeIndex, loadVodIndex, selectVodSection } from "@/lib/vod-index";
-import { categoryCounts } from "@/lib/category-counts";
+import { categoryCounts, categoryCardBuckets } from "@/lib/category-counts";
 import { matchWeeklyPicks, recentlyUpdatedTitles } from "@/lib/home-discovery";
 import weeklyPicks from "@/public/data/imdb-weekly-picks.json";
 import { DiscoveryUpdateStrip } from "@/components/discovery-update-strip";
@@ -71,7 +71,6 @@ export default async function HomePage() {
     initialAiResults,
     landingRails,
     megaSections,
-    megaFeaturedItems,
     wideItems,
     weeklyTitles,
     updatedTitles,
@@ -98,7 +97,6 @@ export default async function HomePage() {
           totalTitles={index.totalTitles}
           locale={locale}
           menuSections={megaSections}
-          featuredItems={megaFeaturedItems}
         />
         <FilmLandingHero items={heroBanners} locale={locale} />
         <div className="wrap">
@@ -213,7 +211,7 @@ async function computeHomePageData(locale: Locale) {
         reasons,
       };
     });
-  const { sections: megaSections, featuredItems: megaFeaturedItems } = buildGenreMenu(
+  const { sections: megaSections } = buildGenreMenu(
     catalog.items,
     locale,
   );
@@ -300,7 +298,6 @@ async function computeHomePageData(locale: Locale) {
     initialAiResults,
     landingRails,
     megaSections,
-    megaFeaturedItems,
     wideItems,
     weeklyTitles,
     updatedTitles,
@@ -388,16 +385,6 @@ function isLandingReady(item: VodCard) {
   return item.type !== "series" || item.linksCount >= 8;
 }
 
-function uniqueVisualCards(items: VodCard[]) {
-  const seen = new Set<string>();
-  return uniqueCards(items).filter((item) => {
-    const image = item.backdropUrl ?? item.posterUrl;
-    if (!image || seen.has(image)) return false;
-    seen.add(image);
-    return true;
-  });
-}
-
 function makeSection(id: string, title: string, subtitle: string, items: VodCard[], href: string): HomeRailSection {
   return {
     id,
@@ -412,11 +399,10 @@ function makeSection(id: string, title: string, subtitle: string, items: VodCard
 function buildGenreMenu(items: VodCard[], locale: Locale) {
   const usedImages = new Set<string>();
   const usedIds = new Set<string>();
+  const genreBuckets = categoryCardBuckets(items, isLandingReady);
   const genreSections = categoryCounts(items)
     .map(([genre, total], genreIndex) => {
-      const candidates = uniqueCards(items.filter((item) =>
-        isLandingReady(item) && (item.genres ?? []).some((itemGenre) => itemGenre.toLowerCase() === genre.toLowerCase())
-      ));
+      const candidates = genreBuckets.get(genre.toLowerCase()) ?? [];
       const rotated = candidates.slice((genreIndex * 2) % Math.max(candidates.length, 1))
         .concat(candidates.slice(0, (genreIndex * 2) % Math.max(candidates.length, 1)));
       const artItem = rotated.find((item) => {
@@ -431,13 +417,13 @@ function buildGenreMenu(items: VodCard[], locale: Locale) {
         id: `genre-${encodeURIComponent(genre.toLowerCase())}`,
         title: genre,
         href: `/browse?genre=${encodeURIComponent(genre)}`,
-        items: (selected.length ? selected : candidates).slice(0, 10).map(toMegaMenuItem),
+        items: (selected.length ? selected : candidates).slice(0, 6).map(toMegaMenuItem),
         artUrl: artItem?.backdropUrl ?? artItem?.posterUrl ?? null,
         total,
       };
     });
   const classicTitles = uniqueCards(selectVodSection(items, "old-iranian-films"));
-  const oldIranianItems = classicTitles.slice(0, 10);
+  const oldIranianItems = classicTitles.slice(0, 6);
   const oldIranianMenuSection = oldIranianItems.length
     ? [{
         id: "old-iranian-films",
@@ -453,20 +439,12 @@ function buildGenreMenu(items: VodCard[], locale: Locale) {
     id: "persian-movies",
     title: locale === "fa" ? "فیلم‌های ایرانی" : "Iranian films",
     href: "/browse?section=persian-movies",
-    items: persianTitles.slice(0, 10).map(toMegaMenuItem),
+    items: persianTitles.slice(0, 6).map(toMegaMenuItem),
     total: persianTitles.length,
   }] : [];
   const iranian = (section: { title: string }) => /iran|ایران/i.test(section.title);
   const sections = [...genreSections.filter(section => !iranian(section)), ...genreSections.filter(iranian), ...persianSections, ...oldIranianMenuSection];
-  const featuredItems = uniqueVisualCards(
-    [...items]
-      .filter(isLandingReady)
-      .sort((a, b) => (b.imdbRating ?? 0) - (a.imdbRating ?? 0) || (b.imdbVotes ?? 0) - (a.imdbVotes ?? 0))
-  )
-    .filter((item) => item.posterUrl && !usedImages.has(item.posterUrl))
-    .slice(0, 8)
-    .map(toMegaMenuItem);
-  return { sections, featuredItems };
+  return { sections };
 }
 
 function toMegaMenuItem(item: VodCard): MegaMenuItem {

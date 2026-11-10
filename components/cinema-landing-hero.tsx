@@ -16,6 +16,7 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
   const [index, setIndex] = useState(0);
   const [rotating, setRotating] = useState(true);
   const [engaged, setEngaged] = useState(false);
+  const [loadedArtwork, setLoadedArtwork] = useState<string | null>(null);
   const touch = useRef<number | null>(null);
   const fa = locale === "fa";
   const t = getDictionary(locale);
@@ -44,9 +45,9 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
     }}>
     <div className={styles.art} aria-hidden="true">
       {items.map((entry, position) => <div key={entry.imdbCode} className={`${styles.slide} ${position === active ? styles.active : ""}`}>
-        {(position === active || position === (active + 1) % total) && <picture>
+        {(position === active || loadedArtwork === item.imdbCode && position === (active + 1) % total) && <picture>
           {entry.posterUrl && <source media="(max-width: 600px)" srcSet={sizedImageUrl(entry.posterUrl, 780) ?? entry.posterUrl} />}
-          <img src={entry.backdropUrl ? heroImageSrc(entry.backdropUrl, 1920) : undefined} alt="" loading={position === active ? "eager" : "lazy"} fetchPriority={position === active ? "high" : "low"} decoding="async" />
+          <img src={entry.backdropUrl ? heroImageSrc(entry.backdropUrl, 1920) : undefined} alt="" loading={position === active ? "eager" : "lazy"} fetchPriority={position === active ? "high" : "low"} decoding="async" onLoad={() => { if (position === active) setLoadedArtwork(entry.imdbCode); }} onError={() => { if (position === active) setLoadedArtwork(entry.imdbCode); }} />
         </picture>}
       </div>)}
     </div>

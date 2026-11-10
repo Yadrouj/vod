@@ -19,7 +19,7 @@ import { titleMetadata } from "@/lib/seo";
 import { LandingPulse } from "@/components/landing-pulse";
 import { matchingMusicArtists } from "@/lib/music-search-ranking";
 import styles from "@/components/music-refresh.module.css";
-import { MoodCollections } from "@/components/mood-collections";
+import { MoodCollectionsPreview } from "@/components/mood-collections-preview";
 import { loadMoodPlaylists } from "@/lib/mood-playlists";
 import { MusicCategoryNav } from "@/components/music-category-nav";
 import { selectLibraryArrivals } from "@/lib/music-library-merge";
@@ -166,7 +166,7 @@ export default async function MusicPage({ searchParams }: Props) {
         ) : (
           <>
             <MusicShelf eyebrow="اضافه‌شده به سرونما · دسته‌بندی با تگ‌ها" title="تازه‌های آرشیو" tracks={libraryArrivals} viewAll="/music?added=library" preload />
-            {moodIndex && moodIndex.playlists.length > 0 && <MoodCollections playlists={moodIndex.playlists} preview />}
+            {moodIndex && moodIndex.playlists.length > 0 && <MoodCollectionsPreview playlists={moodIndex.playlists} />}
             <PublicPartyRooms mode="listen" locale={locale} />
             <nav className="music-discovery-grid" aria-label="میان‌برهای موسیقی">
               {discovery.map((item, itemIndex) => (
