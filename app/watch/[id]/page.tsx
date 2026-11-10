@@ -97,7 +97,11 @@ export default async function WatchPage({ params, searchParams }: Props) {
       </header>
       <div className={styles.layout}>
         <section className={styles.main}>
-          {publisher ? <PublisherFilmPlayer source={publisher} title={displayTitle} poster={heroImage} /> : youtubeSource ? <YouTubePlayer source={youtubeSource} title={displayTitle} /> : <VodPlayer itemId={item.imdbCode} initialSource={initialSource} title={item.title} posterUrl={heroImage} links={links} isSeries={isSeries} locale={locale} />}
+          {!links.length && !publisher && !youtubeSource ? <div role="status" className="player-choice-card" dir={locale === 'fa' ? 'rtl' : 'ltr'}>
+            <h2>{locale === 'fa' ? 'نسخهٔ کامل برای پخش موجود نیست' : 'No full-length playback source available'}</h2>
+            <p>{locale === 'fa' ? 'ممکن است صفحهٔ ناشر فقط تریلر داشته باشد. تریلر را به‌جای فیلم کامل پخش نمی‌کنیم.' : 'The publisher may only have a trailer. Previews are not presented as full releases.'}</p>
+            <Link href={`/${item.imdbCode}`}>{locale === 'fa' ? 'بازگشت به اطلاعات اثر و منابع ناشر' : 'Back to title details and publisher sources'}</Link>
+          </div> : publisher ? <PublisherFilmPlayer source={publisher} title={displayTitle} poster={heroImage} /> : youtubeSource ? <YouTubePlayer source={youtubeSource} title={displayTitle} /> : <VodPlayer itemId={item.imdbCode} initialSource={initialSource} title={item.title} posterUrl={heroImage} links={links} isSeries={isSeries} locale={locale} />}
           <div className={styles.titleRow}>
             <div><h1>{displayTitle}</h1><p>{item.year} · {isSeries ? t.common.series : t.common.films}{item.imdbRating ? ` · IMDb ${item.imdbRating.toFixed(1)}` : ""}</p></div>
             {partyMedia ? <WatchTogetherInvite locale={locale} placement="player" label={locale === "fa" ? "تماشای همزمان" : "Watch together"} media={partyMedia} /> : <WatchTogetherLauncher placement="inline" locale={locale} />}

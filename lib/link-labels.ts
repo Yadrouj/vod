@@ -1,6 +1,7 @@
 import type { VodLink } from "./types";
 import { isDonyayeSerial, playbackCodecRisk } from "./playback-help";
 import { sourceLinkExpiry, validAlternativeLink } from "./alternative-source-links.mjs";
+import { isVerifiedPublisherPreview } from "./publisher-previews.mjs";
 
 export type PlaybackLinkOptions = {
   isSeries?: boolean;
@@ -241,6 +242,7 @@ function genericSeriesFileKey(link: VodLink) {
 }
 
 function isTrailerLink(link: VodLink) {
+  if (isVerifiedPublisherPreview(link)) return true;
   if (link.mediaKind === "trailer") return true;
   return /(?:^|[._/\s-])(?:trailers?|trailer\d+|teasers?|previews?|promos?|clips?|fragman|bande[._\s-]annonce|first[._\s-]look)(?:[._/\s-]|$)/i.test(
     `${link.label} ${link.fileName ?? ""} ${link.url}`,

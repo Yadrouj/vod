@@ -17,6 +17,7 @@ import { decodePlayerPayload, derivePersianTitle } from "./moviesho-archive-lib.
 import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 import { isDirectVideoCandidate } from "./video-source-validation.mjs";
 import { curatedSourceType } from "./curated-source-type.mjs";
+import { publisherTrailerUrls } from "../lib/publisher-previews.mjs";
 
 const ROOT = process.cwd();
 const OUTPUT = resolvePath(process.env.CURATED_VOD_OUTPUT, ".media-cache/vod-sync/curated-vod-source.json");
@@ -294,6 +295,7 @@ function extractMedia(html, pageUrl, provider) {
   const videoUrls = new Set();
   const subtitleUrls = new Set();
   const normalized = decodeHtmlEntities(String(html ?? "")).replace(/\\\//g, "/");
+  const trailers = publisherTrailerUrls(normalized);
   const add = (value) => {
     const url = normalizeMediaUrl(value, pageUrl);
     if (!url) return;
@@ -328,7 +330,7 @@ function extractMedia(html, pageUrl, provider) {
       subtitleUrl: subtitles[0]?.url ?? null,
       subtitles,
       sourceProvider: provider,
-      mediaKind: /\.m3u8(?:$|[?#])/i.test(url) ? "stream" : "video",
+      mediaKind: trailers.has(url) ? "trailer" : /\.m3u8(?:$|[?#])/i.test(url) ? "stream" : "video",
     };
   }).sort(sortLinks);
   return { links, subtitles };
