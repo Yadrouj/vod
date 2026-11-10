@@ -74,3 +74,28 @@ npx tsc --noEmit
 
 Also test actual browser playback, seeking, cover loading, artist profiles,
 playlist resolution, a ranged download and Listen Together media selection.
+
+## ALAC compatibility repair
+
+The `.m4a` extension alone does not guarantee browser compatibility. The initial
+archive has 799 ALAC-encoded files; Chrome rejects them with
+`DEMUXER_ERROR_NO_SUPPORTED_STREAMS` despite a valid HTTP 206 response. AAC M4A
+playback tests do not cover ALAC.
+
+`scripts/prepare-hosted-music-playback.py` creates validated 320-kbps MP3 copies
+under the music host's `.sarvnema/compatible/` directory, using a privately scoped
+FFmpeg binary and Mutagen wheel. Originals are never changed. Duration is checked
+before atomic publication; resumable output is recorded in `manifest.json`.
+Use at most four low-priority workers on the music server.
+
+Copy that manifest to `.media-cache/music-compatible-manifest.json` and run:
+
+```sh
+node scripts/import-hosted-music.mjs .media-cache/music-hosted-metadata.json --derivatives-only
+```
+
+The importer verifies each derivative's authenticated HEAD response and byte
+length. It puts the verified MP3 first, keeps the original as a download-only
+source (`playback: false`), and preserves track URLs. The player and listening
+rooms exclude download-only originals. The codec-only option reuses the prior
+import's original-file set; omit it for a complete directory refresh.

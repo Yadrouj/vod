@@ -10,6 +10,17 @@ const persianFolders = new Set(['Farhad', 'Fereydoun Farokhzaad', 'Fereydoun For
 const aliases = { 'ACDC': 'AC/DC', 'Micheal Jackson': 'Michael Jackson', 'White Stripes': 'The White Stripes', 'Beach Boys': 'The Beach Boys', 'Moody Blues': 'The Moody Blues' };
 const fileUrl = value => `${origin}/files/${value.split('/').map(encodeURIComponent).join('/')}`;
 
+async function archiveFetch(url, options) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await fetch(url, { ...options, redirect: 'error', signal: AbortSignal.timeout(20000) });
+      if (![429, 502, 503, 504].includes(response.status) || attempt === 2) return response;
+      await response.body?.cancel();
+    } catch (error) { if (attempt === 2) throw error; }
+    await new Promise(resolve => setTimeout(resolve, 700 * (attempt + 1)));
+  }
+}
+
 export function buildHostedCatalog(metadata, existingArtists = [], addedAt = new Date().toISOString(), availablePaths = null, compatible = {}) {
   const artistsByName = new Map(existingArtists.map(a => [a.name.normalize('NFKC').toLowerCase().trim(), a]));
   const tracks = [], seen = new Set(), excluded = [];
@@ -87,7 +98,7 @@ async function scanApi(token) {
     const batch = queue.splice(0, 4).filter(p => !visited.has(p));
     await Promise.all(batch.map(async dir => {
       visited.add(dir);
-      const response = await fetch(`${origin}/api/files?${new URLSearchParams({ path: dir })}`, { headers: { Authorization: `Bearer ${token}` }, redirect: 'error', signal: AbortSignal.timeout(20000) });
+      const response = await archiveFetch(`${origin}/api/files?${new URLSearchParams({ path: dir })}`, { headers: { Authorization: `Bearer ${token}` } });
       if (response.status === 403) {
         console.log(JSON.stringify({ skippedForbiddenDirectory: dir }));
         return; // Respect denied directories; never bypass origin/CDN restrictions.
@@ -113,7 +124,14 @@ async function main() {
   const existing = JSON.parse(await readFile('public/data/music-artists.json', 'utf8'));
   const token = process.env.SARVNEMA_MUSIC_TOKEN;
   if (!token) throw new Error('Set SARVNEMA_MUSIC_TOKEN privately; never place it in URLs.');
-  const available = await scanApi(token);
+  // Codec-only updates retain the already imported original-file set. Every new
+  // derivative is still checked against the authenticated file API below.
+  const available = process.argv.includes('--derivatives-only')
+    ? new Set((previous.tracks ?? []).flatMap(track => track.sources ?? []).map(source => {
+      try { const url = new URL(source.url); return url.origin === origin && url.pathname.startsWith('/files/') ? decodeURIComponent(url.pathname.slice(7)) : ''; }
+      catch { return ''; }
+    }).filter(value => value && !value.startsWith('.')))
+    : await scanApi(token);
   const manifest = JSON.parse(await readFile('.media-cache/music-compatible-manifest.json', 'utf8').catch(() => '{"completed":{}}'));
   const compatible = {};
   const entries = Object.entries(manifest.completed ?? {});
@@ -122,7 +140,7 @@ async function main() {
       if (!/^hosted-[a-f0-9]{20}$/.test(id) || entry.path !== `.sarvnema/compatible/${id}.mp3`) return;
       let verified = false, status = 0;
       for (let attempt = 0; attempt < 3; attempt++) {
-        const response = await fetch(fileUrl(entry.path), { method: 'HEAD', headers: { Authorization: `Bearer ${token}` }, redirect: 'error', signal: AbortSignal.timeout(20000) });
+        const response = await archiveFetch(fileUrl(entry.path), { method: 'HEAD', headers: { Authorization: `Bearer ${token}` } });
         status = response.status;
         if (response.ok && Number(response.headers.get('content-length')) === entry.bytes) { verified = true; break; }
         if (status === 401 || status === 403) break;
@@ -131,6 +149,7 @@ async function main() {
       if (!verified) throw new Error(`Compatible source unavailable: ${id} (HTTP ${status}); catalog was not overwritten.`);
       compatible[id] = entry;
     }));
+    if ((offset + 4) % 100 === 0) console.log(JSON.stringify({ verifiedCompatible: Object.keys(compatible).length, totalCompatible: entries.length }));
   }
   const index = buildHostedCatalog(metadata, existing.artists, previous.updatedAt || new Date().toISOString(), available, compatible);
   if (index.tracks.length < (previous.tracks?.length || 0) * .9) throw new Error('Import would unexpectedly remove over 10% of hosted tracks');
