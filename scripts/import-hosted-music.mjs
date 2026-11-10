@@ -10,7 +10,7 @@ const persianFolders = new Set(['Farhad', 'Fereydoun Farokhzaad', 'Fereydoun For
 const aliases = { 'ACDC': 'AC/DC', 'Micheal Jackson': 'Michael Jackson', 'White Stripes': 'The White Stripes', 'Beach Boys': 'The Beach Boys', 'Moody Blues': 'The Moody Blues' };
 const fileUrl = value => `${origin}/files/${value.split('/').map(encodeURIComponent).join('/')}`;
 
-export function buildHostedCatalog(metadata, existingArtists = [], addedAt = new Date().toISOString(), availablePaths = null) {
+export function buildHostedCatalog(metadata, existingArtists = [], addedAt = new Date().toISOString(), availablePaths = null, compatible = {}) {
   const artistsByName = new Map(existingArtists.map(a => [a.name.normalize('NFKC').toLowerCase().trim(), a]));
   const tracks = [], seen = new Set(), excluded = [];
   for (const row of metadata.tracks ?? []) {
@@ -19,6 +19,8 @@ export function buildHostedCatalog(metadata, existingArtists = [], addedAt = new
     }
     seen.add(row.path);
     const id = `hosted-${hash(row.path)}`;
+    const derivative = compatible[id];
+    const compatiblePath = derivative?.sourcePath === row.path && derivative?.codec === 'mp3' && derivative.path === `.sarvnema/compatible/${id}.mp3` ? derivative.path : null;
     const artists = row.artists.map(raw => {
       const name = aliases[raw] || raw;
       const existing = artistsByName.get(name.normalize('NFKC').toLowerCase().trim());
@@ -36,7 +38,10 @@ export function buildHostedCatalog(metadata, existingArtists = [], addedAt = new
       album: row.album ? { id: `hosted-album-${hash(`${artists[0].slug}:${row.album}`)}`, title: row.album, sourceUrl: `/music?${new URLSearchParams({ q: `${artists[0].name} ${row.album}` })}`, coverUrl, genres } : undefined,
       folder: { root: row.kind === 'video' ? 'Music Video' : 'Music', year: null, month: null, day: null },
       hostedCoverPath: /^\.sarvnema\/covers\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(row.coverPath || '') ? row.coverPath : null,
-      sources: [{ url: fileUrl(row.path), label: 'آرشیو سرونما', quality: /\.flac$/i.test(row.path) ? 'FLAC' : row.bitrate ? `${Math.round(row.bitrate / 1000)} kbps` : row.path.split('.').pop().toUpperCase(), kind: 'stream', provider: 'sarvnema-hosted', available: true }],
+      sources: [
+        ...(compatiblePath ? [{ url: fileUrl(compatiblePath), label: 'پخش سازگار · MP3', quality: 'MP3 · 320 kbps', kind: 'stream', provider: 'sarvnema-hosted', available: true }] : []),
+        { url: fileUrl(row.path), label: compatiblePath ? 'فایل اصلی · ALAC' : 'آرشیو سرونما', quality: row.codec === 'alac' ? 'ALAC · Original' : /\.flac$/i.test(row.path) ? 'FLAC' : row.bitrate ? `${Math.round(row.bitrate / 1000)} kbps` : row.path.split('.').pop().toUpperCase(), kind: compatiblePath ? 'download' : 'stream', provider: 'sarvnema-hosted', available: true },
+      ],
     });
   }
   const artists = buildArtists(tracks);
@@ -109,10 +114,21 @@ async function main() {
   const token = process.env.SARVNEMA_MUSIC_TOKEN;
   if (!token) throw new Error('Set SARVNEMA_MUSIC_TOKEN privately; never place it in URLs.');
   const available = await scanApi(token);
-  const index = buildHostedCatalog(metadata, existing.artists, previous.updatedAt || new Date().toISOString(), available);
+  const manifest = JSON.parse(await readFile('.media-cache/music-compatible-manifest.json', 'utf8').catch(() => '{"completed":{}}'));
+  const compatible = {};
+  const entries = Object.entries(manifest.completed ?? {});
+  for (let offset = 0; offset < entries.length; offset += 4) {
+    await Promise.all(entries.slice(offset, offset + 4).map(async ([id, entry]) => {
+      if (!/^hosted-[a-f0-9]{20}$/.test(id) || entry.path !== `.sarvnema/compatible/${id}.mp3`) return;
+      const response = await fetch(fileUrl(entry.path), { method: 'HEAD', headers: { Authorization: `Bearer ${token}` }, redirect: 'error', signal: AbortSignal.timeout(20000) });
+      if (!response.ok || Number(response.headers.get('content-length')) !== entry.bytes) throw new Error(`Compatible source unavailable: ${id}`);
+      compatible[id] = entry;
+    }));
+  }
+  const index = buildHostedCatalog(metadata, existing.artists, previous.updatedAt || new Date().toISOString(), available, compatible);
   if (index.tracks.length < (previous.tracks?.length || 0) * .9) throw new Error('Import would unexpectedly remove over 10% of hosted tracks');
   await writeJsonAtomic('public/data/hosted-music.json', index);
   await writeJsonAtomic('public/data/hosted-music-playlists.json', hostedPlaylists(index));
-  console.log(JSON.stringify({ apiFiles: available.size, imported: index.tracks.length, artists: index.artists.length, covers: index.tracks.filter(t => t.hostedCoverPath).length, excluded: index.excluded.length }));
+  console.log(JSON.stringify({ apiFiles: available.size, imported: index.tracks.length, artists: index.artists.length, compatible: Object.keys(compatible).length, covers: index.tracks.filter(t => t.hostedCoverPath).length, excluded: index.excluded.length }));
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch(error => { console.error(error.message); process.exitCode = 1; });

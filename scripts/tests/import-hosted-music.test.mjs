@@ -18,3 +18,17 @@ test('Persian archive folders are not labelled foreign', () => {
   const index = buildHostedCatalog({ tracks: [{ ...row, folderArtist: 'Farhad' }] });
   assert.equal(index.tracks[0].category, 'موسیقی قدیمی فارسی');
 });
+
+test('verified MP3 playback comes first, ALAC original is retained, IDs remain stable', () => {
+  const input = { tracks: [{ ...row, codec: 'alac' }] };
+  const first = buildHostedCatalog(input);
+  const id = first.tracks[0].id;
+  const compatible = { [id]: { path: `.sarvnema/compatible/${id}.mp3`, sourcePath: row.path, codec: 'mp3' } };
+  const result = buildHostedCatalog(input, [], '2026-11-10T00:00:00Z', null, compatible);
+  assert.equal(result.tracks[0].id, id);
+  assert.equal(result.tracks[0].sources[0].quality, 'MP3 · 320 kbps');
+  assert.equal(result.tracks[0].sources[1].kind, 'download');
+  assert.equal(result.tracks[0].sources[1].url, first.tracks[0].sources[0].url);
+  compatible[id].sourcePath = 'another/recording.m4a';
+  assert.equal(buildHostedCatalog(input, [], '', null, compatible).tracks[0].sources.length, 1);
+});
