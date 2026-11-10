@@ -62,6 +62,7 @@ export function ArchiveResults({ initial, totalInPage, query, page, locale, grou
         <div className={styles.grid}>{group.map((item, index) => <Link data-archive-card prefetch={false} className={styles.card} key={item.id} href={`/${item.id}`}>
           <div className={styles.art}><span className={styles.placeholder} aria-hidden="true">▶</span>{item.image && <img src={sizedImageUrl(item.image, 400) || item.image} alt="" width={400} height={600} loading={index < 6 ? "eager" : "lazy"} decoding="async" onError={(event) => { event.currentTarget.style.visibility = "hidden"; }} />}
             {item.rating != null && <span className={styles.rating} dir="ltr">★ {item.rating.toFixed(1)}</span>}
+            {item.comingSoon && <span className={styles.comingSoon} title={fa ? 'لینک نسخهٔ کامل هنوز موجود نیست' : 'Full-release links not available yet'}>{fa ? 'به‌زودی' : 'Coming soon'}</span>}
             <CardNavigation locale={locale} />
           </div><strong>{localizedTitle(item, locale)}</strong><small>{typeLabel(item.type, locale)} · {item.year ? new Intl.NumberFormat(locale, { useGrouping: false }).format(item.year) : "—"}</small>
         </Link>)}</div>

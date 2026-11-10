@@ -2048,6 +2048,10 @@ export function enrichOldIranianFilm(item: VodItem): VodItem {
 }
 
 export function enrichOldIranianCard(item: VodCard): VodCard {
+  const youtubeReferences = getOldIranianYouTubeVideos(item.id) ?? getOldIranianYouTubeVideos(item.imdbCode);
+  if (youtubeReferences?.some(video => video.playbackStatus !== 'unavailable')) {
+    item = { ...item, fullLengthLinksCount: Math.max(item.linksCount, 1) };
+  }
   const media = getOldIranianFilmMedia(item.id) ?? getOldIranianFilmMedia(item.imdbCode);
   if (!media) return item;
 

@@ -11,6 +11,7 @@ import { localizedTitle } from "@/lib/title-display";
 import type { VodCard } from "@/lib/types";
 import type { TrendingTitle } from "@/lib/imdb-trending";
 import styles from "./cinema-landing-hero.module.css";
+import { isAwaitingTitleLinks } from '@/lib/title-availability';
 
 export function FilmLandingHero({ items, locale }: { items: (VodCard & { popularity?: TrendingTitle["popularity"] })[]; locale: Locale }) {
   const [index, setIndex] = useState(0);
@@ -34,6 +35,7 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
   const select = (next: number) => { setIndex((next + total) % total); setRotating(false); };
   const displayTitle = localizedTitle(item, locale);
   const trend = item.popularity;
+  const comingSoon = isAwaitingTitleLinks(item);
   return <section className={styles.hero} data-cinema-hero dir={fa ? "rtl" : "ltr"} aria-roledescription="carousel" aria-label={fa ? "پیشنهادهای فیلم و سریال" : "Featured films and series"}
     onMouseEnter={() => setEngaged(true)} onMouseLeave={() => setEngaged(false)}
     onFocusCapture={() => setEngaged(true)} onBlurCapture={e => { if (!e.currentTarget.contains(e.relatedTarget)) setEngaged(false); }}
@@ -55,12 +57,13 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
       <div className={styles.copy} aria-live={rotating ? "off" : "polite"} aria-atomic="true">
         <span className={styles.eyebrow}><TrendingUp size={16} />{trend ? (trend.current ? (fa ? "ترند روز IMDb" : "Trending today on IMDb") : (fa ? "آخرین ترند ثبت‌شدهٔ IMDb" : "Latest recorded IMDb trend")) : (fa ? "برای تماشای بعدی شما" : "Your next great watch")}</span>
         <h1 dir="auto">{displayTitle}</h1>
+        {comingSoon && <p className="coming-soon-notice">{fa ? 'به‌زودی · لینک نسخهٔ کامل هنوز در سرونما موجود نیست' : 'Coming soon · Full-release links are not available yet'}</p>}
         <div className={styles.meta}><b dir="ltr">IMDb {item.imdbRating?.toFixed(1) ?? "—"}</b><span>{item.year}</span><span>{typeLabel(item.type, locale)}</span><span>{item.genres.slice(0, 2).join(" · ")}</span></div>
         <p className={styles.overview} dir="auto">{(fa ? item.persianOverview || item.overview : item.overview) || item.genres.join(" · ")}</p>
         <div className={styles.actions}>
-          <Link className={styles.play} href={item.linksCount > 0 ? `/watch/${item.imdbCode}` : `/${item.imdbCode}`}><Play size={22} fill="currentColor" />{item.linksCount > 0 ? t.common.playOnline : t.common.details}</Link>
+          <Link className={styles.play} href={!comingSoon ? `/watch/${item.imdbCode}` : `/${item.imdbCode}`}><Play size={22} fill="currentColor" />{!comingSoon ? t.common.playOnline : t.common.details}</Link>
           <Link className={styles.details} href={`/${item.imdbCode}`}><Info size={20} />{t.common.details}</Link>
-          {item.linksCount > 0 && <WatchTogetherLauncher locale={locale} placement="inline" preset={{ itemId: item.imdbCode, title: displayTitle, posterUrl: item.posterUrl }} />}
+          {!comingSoon && <WatchTogetherLauncher locale={locale} placement="inline" preset={{ itemId: item.imdbCode, title: displayTitle, posterUrl: item.posterUrl }} />}
         </div>
         {trend && <a className={styles.source} href={trend.sourceUrl} target="_blank" rel="noreferrer">{fa ? "رتبهٔ ترند IMDb" : "IMDb trend rank"} #{trend.rank} · {new Intl.DateTimeFormat(fa ? "fa-IR" : "en-US", { month: "short", day: "numeric", timeZone: "Asia/Tehran" }).format(new Date(trend.observedAt))}</a>}
       </div>

@@ -67,4 +67,5 @@
   .page :global(.topbar) { gap: 12px; flex-wrap: wrap; }
   .card strong { font-size: 14px; }
 }
+.comingSoon{position:absolute;inset-inline-end:8px;bottom:8px;padding:5px 9px;border-radius:8px;background:#e9cb76;color:#211b0b;font-size:12px;font-weight:700;z-index:2}
 @media(prefers-reduced-motion: reduce) { .card, .skeleton { animation: none; } .art img { transition: none; } }

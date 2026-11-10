@@ -179,6 +179,8 @@ export type VodCard = {
   qualities: string[];
   groups: string[];
   linksCount: number;
+  /** Full-release sources only, when supplied by the index builder. */
+  fullLengthLinksCount?: number;
   source?: string | null;
   sourcePageUrl?: string | null;
   /** Latest timestamp received from a curated source page. */

@@ -7245,6 +7245,8 @@ html[dir="rtl"] .suggest-item img { order: initial; }
   box-shadow: inset 0 0 0 1px rgba(243, 203, 104, 0.2);
 }
 
+.poster-coming-soon { background: #e9cb76 !important; color: #211b0b !important; }
+.coming-soon-notice { color: #e9cb76; font-size: 13px; line-height: 1.8; }
 .poster-fresh {
   position: absolute;
   inset-block-start: 12px;
