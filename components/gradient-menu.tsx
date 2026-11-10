@@ -43,11 +43,11 @@ export function GradientMenu({
     { href: "/mag", label: locale === "fa" ? "مجله" : "Magazine" },
     { href: "/kids", label: locale === "fa" ? "دنیای کودک" : "Kids" },
     { href: "/music", label: locale === "fa" ? "موسیقی" : "Music" },
-    { href: "/browse?section=persian-movies", label: t.common.persianMovies },
     { href: "/browse?section=top-imdb", label: t.nav.topImdb },
     { href: "/browse?section=recent-films", label: t.nav.films },
     { href: "/browse?section=best-series", label: t.nav.series },
     { href: "/browse?section=animation", label: t.nav.animation },
+    { href: "/browse?section=persian-movies", label: t.common.persianMovies },
   ];
 
 

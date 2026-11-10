@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "سرونما | فیلم، سریال و موسیقی",
+    name: "سرونما | موتور جستجوی فیلم، سریال و موسیقی",
     short_name: "سرونما",
-    description: "جستجو، پخش آنلاین و پیدا کردن فیلم، سریال و موسیقی در سرونما.",
+    description: "موتور جستجوی فیلم، سریال و موسیقی؛ پیدا کردن آثار، منابع دانلود و پخش آنلاین در سرونما.",
     start_url: "/",
     id: "/",
     scope: "/",

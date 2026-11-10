@@ -25,10 +25,10 @@ import "./product-polish.css";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "سرونما | دانلود فیلم، سریال و موسیقی جدید",
+    default: "سرونما | موتور جستجوی فیلم، سریال و موسیقی",
     template: `%s | ${BRAND_NAME}`,
   },
-  description: "سرونما؛ مرجع فارسی جستجو، اطلاعات، پخش آنلاین و لینک منبع فیلم، سریال، قسمت جدید و موسیقی.",
+  description: "سرونما، موتور جستجوی فیلم، سریال و موسیقی؛ جستجو بر اساس نام، ژانر، سال و امتیاز IMDb، مقایسهٔ منابع و کیفیت‌ها، پخش آنلاین و تجربهٔ تماشای هم‌زمان.",
   alternates: { canonical: "/" },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
   keywords: ["دانلود فیلم", "دانلود سریال", "دانلود آهنگ", "فیلم جدید", "سریال جدید", "قسمت جدید سریال", "موزیک جدید", "پخش آنلاین فیلم", "پخش آنلاین موسیقی", "تماشای هم‌زمان", "شنیدن هم‌زمان موسیقی"],
@@ -44,14 +44,14 @@ export const metadata: Metadata = {
     apple: "/app-icon/192",
   },
   openGraph: {
-    title: "سرونما | فیلم، سریال و موسیقی",
-    description: "دانلود و پخش آنلاین فیلم، سریال و موسیقی؛ همراه با اطلاعات، زیرنویس، پلی‌لیست و تماشای هم‌زمان.",
+    title: "سرونما | موتور جستجوی فیلم، سریال و موسیقی",
+    description: "موتور جستجوی فیلم، سریال و موسیقی؛ پیدا کردن آثار، مقایسهٔ کیفیت‌ها و منابع، پخش آنلاین و تماشای هم‌زمان.",
     siteName: BRAND_NAME,
     type: "website",
     locale: "fa_IR",
     alternateLocale: "en_US",
   },
-  twitter: { card: "summary", title: "سرونما | فیلم، سریال و موسیقی", description: "فیلم، سریال، موسیقی و تجربهٔ تماشای هم‌زمان." },
+  twitter: { card: "summary", title: "سرونما | موتور جستجوی فیلم، سریال و موسیقی", description: "جستجوی فیلم، سریال و آهنگ، مقایسهٔ منابع و پخش آنلاین در سرونما." },
 };
 
 export const viewport: Viewport = {

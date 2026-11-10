@@ -27,7 +27,8 @@ import { loadTopPeople } from "@/lib/top-people";
 import { loadMusicHomeIndex } from "@/lib/music";
 import { FILM_LANDING_SEO, landingJsonLd } from "@/lib/landing-seo";
 import { titleMetadata } from "@/lib/seo";
-import { loadVodHomeIndex } from "@/lib/vod-index";
+import { loadVodHomeIndex, loadVodIndex, selectVodSection } from "@/lib/vod-index";
+import { categoryCounts } from "@/lib/category-counts";
 import { loadImdbTrending, loadHeroArtwork } from "@/lib/imdb-trending";
 import { rankDiscovery } from "@/lib/discovery-ranking";
 import { loadAudienceSignals } from "@/lib/discovery-feedback";
@@ -141,7 +142,7 @@ async function buildHomePageData(locale: Locale) {
 }
 
 async function computeHomePageData(locale: Locale) {
-  const [index, news, topPeople, rawUpdates, music, trending, audience, artwork] = await Promise.all([
+  const [index, news, topPeople, rawUpdates, music, trending, audience, artwork, catalog] = await Promise.all([
     loadVodHomeIndex(),
     loadVodNews(),
     loadTopPeople(),
@@ -150,6 +151,7 @@ async function computeHomePageData(locale: Locale) {
     loadImdbTrending(100),
     loadAudienceSignals(),
     loadHeroArtwork(),
+    loadVodIndex(),
   ]);
   const verifiedUpdates = selectFreshReleaseUpdates(rawUpdates.items);
   const newEpisodes = prioritizeReleaseUpdates(verifiedUpdates.filter((item) => item.status === "available" && item.kind === "episode" && item.changeType === "new-episode"));
@@ -195,8 +197,7 @@ async function computeHomePageData(locale: Locale) {
       };
     });
   const { sections: megaSections, featuredItems: megaFeaturedItems } = buildGenreMenu(
-    index.items,
-    index.sections.find((section) => section.id === "old-iranian-films"),
+    catalog.items,
     locale,
   );
   const wideCandidates = index.items
@@ -389,14 +390,10 @@ function makeSection(id: string, title: string, subtitle: string, items: VodCard
   };
 }
 
-function buildGenreMenu(items: VodCard[], oldIranianSection: VodHomeSection | undefined, locale: Locale) {
-  const counts = new Map<string, number>();
+function buildGenreMenu(items: VodCard[], locale: Locale) {
   const usedImages = new Set<string>();
   const usedIds = new Set<string>();
-  for (const item of items) for (const genre of item.genres ?? []) counts.set(genre, (counts.get(genre) ?? 0) + 1);
-  const genreSections = [...counts.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-    .slice(0, 7)
+  const genreSections = categoryCounts(items)
     .map(([genre, total], genreIndex) => {
       const candidates = uniqueCards(items.filter((item) =>
         isLandingReady(item) && (item.genres ?? []).some((itemGenre) => itemGenre.toLowerCase() === genre.toLowerCase())
@@ -420,7 +417,8 @@ function buildGenreMenu(items: VodCard[], oldIranianSection: VodHomeSection | un
         total,
       };
     });
-  const oldIranianItems = uniqueCards(oldIranianSection?.items ?? []).slice(0, 10);
+  const classicTitles = uniqueCards(selectVodSection(items, "old-iranian-films"));
+  const oldIranianItems = classicTitles.slice(0, 10);
   const oldIranianMenuSection = oldIranianItems.length
     ? [{
         id: "old-iranian-films",
@@ -428,10 +426,19 @@ function buildGenreMenu(items: VodCard[], oldIranianSection: VodHomeSection | un
         href: "/browse?section=old-iranian-films",
         items: oldIranianItems.map(toMegaMenuItem),
         artUrl: oldIranianItems[0]?.backdropUrl ?? oldIranianItems[0]?.posterUrl ?? null,
-        total: oldIranianSection?.total ?? oldIranianItems.length,
+        total: classicTitles.length,
       }]
     : [];
-  const sections = [...oldIranianMenuSection, ...genreSections];
+  const persianTitles = uniqueCards(selectVodSection(items, "persian-movies"));
+  const persianSections = persianTitles.length ? [{
+    id: "persian-movies",
+    title: locale === "fa" ? "فیلم‌های ایرانی" : "Iranian films",
+    href: "/browse?section=persian-movies",
+    items: persianTitles.slice(0, 10).map(toMegaMenuItem),
+    total: persianTitles.length,
+  }] : [];
+  const iranian = (section: { title: string }) => /iran|ایران/i.test(section.title);
+  const sections = [...genreSections.filter(section => !iranian(section)), ...genreSections.filter(iranian), ...persianSections, ...oldIranianMenuSection];
   const featuredItems = uniqueVisualCards(
     [...items]
       .filter(isLandingReady)

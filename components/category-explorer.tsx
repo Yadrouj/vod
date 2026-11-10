@@ -27,7 +27,7 @@ export function CategoryExplorer({ sections, locale }: { sections: MegaMenuSecti
     <button ref={trigger} className="mega-button" type="button" disabled={!ready} aria-haspopup="dialog" aria-expanded={open} aria-controls="category-explorer" onPointerEnter={() => warmCategoryImages((sections.find(s => s.id === selected) ?? sections[0])?.items ?? [])} onFocus={() => warmCategoryImages((sections.find(s => s.id === selected) ?? sections[0])?.items ?? [])} onClick={() => { setQuery(""); setOpen(true); dialog.current?.showModal(); search.current?.focus(); }}><LayoutGrid size={18} />{fa ? "دسته‌بندی‌ها" : "Categories"}</button>
     <dialog ref={dialog} id="category-explorer" data-category-dialog className={styles.dialog} dir={fa ? "rtl" : "ltr"} aria-labelledby="category-heading" onClose={() => setOpen(false)} onClick={event => { if (event.target === event.currentTarget) close(); }}>
       <header className={styles.header}>
-        <div><span>{fa ? "یک انتخاب تازه" : "Find your next watch"}</span><h2 id="category-heading">{fa ? "کجا بریم؟" : "Explore the library"}</h2></div>
+        <div><span>{sections.length.toLocaleString(fa ? "fa-IR" : "en-US")} {fa ? "دسته از آرشیو کامل" : "categories from the full archive"}</span><h2 id="category-heading">{fa ? "کجا بریم؟" : "Explore the library"}</h2></div>
         <Link href="/browse" onClick={close} className={styles.archive}>{fa ? "تمام آرشیو" : "Full archive"}<ArrowUpLeft size={17} /></Link>
         <button type="button" onClick={close} aria-label={fa ? "بستن دسته‌بندی‌ها" : "Close categories"}><X size={21} /></button>
       </header>
@@ -41,7 +41,7 @@ export function CategoryExplorer({ sections, locale }: { sections: MegaMenuSecti
         </aside>
         <section id="category-preview" className={styles.preview} aria-label={active?.title ?? (fa ? "پیش‌نمایش" : "Preview")}>
           {active ? <>
-            <div className={styles.sectionHead}><div><span>{fa ? "برای شروع تماشا" : "Start exploring"}</span><h3>{active.title}</h3></div><Link href={active.href} onClick={close}>{fa ? "مشاهده همه" : "View all"}<ArrowUpLeft size={17} /></Link></div>
+            <div className={styles.sectionHead}><div><span>{active.total.toLocaleString(fa ? "fa-IR" : "en-US")} {fa ? "عنوان · چند پیشنهاد برای شروع" : "titles · a few picks to start"}</span><h3>{active.title}</h3></div><Link href={active.href} onClick={close}>{fa ? "مشاهده همه" : "View all"}<ArrowUpLeft size={17} /></Link></div>
             <div className={styles.cards}>
               {active.items.slice(0, 6).map(item => <Link key={item.imdbCode} href={`/${item.imdbCode}`} onClick={close} prefetch={false}>
                 <div className={styles.art}>{open && <CategoryArt key={`${item.imdbCode}-${item.backdropUrl}-${item.posterUrl}`} backdropUrl={item.backdropUrl} posterUrl={item.posterUrl} />}<span><ArrowUpLeft size={17} /></span></div>
