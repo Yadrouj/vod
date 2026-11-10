@@ -10,6 +10,7 @@ import { WatchTogetherLauncher } from "./watch-together-launcher";
 import { musicPartyMedia } from "@/lib/watch-party-music";
 import { downloadGateUrl } from "@/lib/download-gate";
 import { compatibleMediaIndex, nextUntriedMusicSource } from "@/lib/media-compatibility";
+import { useMediaWarmup } from './use-media-warmup';
 
 const PLAYBACK_KEY = "sarvnema-music-playback";
 const LIKES_KEY = "sarvnema-music-likes";
@@ -79,6 +80,7 @@ export function MusicPlayerEngine({
   const hasVideo = activeTrack.kind === "video" || /\.(?:mp4|mkv|webm)(?:$|\?)/i.test(source?.url ?? "");
   const playbackUrl = source ? (useDirectSource ? source.url : musicPlaybackUrl(activeTrack.id, source.url)) : "";
   const mediaKey = `${playbackUrl}:${sourceRevision}`;
+  useMediaWarmup(media, preview ? undefined : mediaKey);
   const failureHandler = useRef<(player: HTMLMediaElement) => void>(() => {});
 
   useLayoutEffect(() => { failureHandler.current = handleMediaError; });

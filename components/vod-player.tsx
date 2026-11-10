@@ -19,6 +19,7 @@ import { isDonyayeSerial, matchesPlaybackSource, needsPlaybackBuffer, preferredP
 import styles from "./vod-player.module.css";
 import { compatibleMediaIndex } from "@/lib/media-compatibility";
 import { mediaDeliveryRoutes } from "@/lib/media-delivery";
+import { useMediaWarmup } from './use-media-warmup';
 
 export function VodPlayer({
   title,
@@ -76,6 +77,7 @@ export function VodPlayer({
   const deliveryIndex = delivery.url === active?.url ? delivery.index : 0;
   const playbackUrl = deliveryRoutes[deliveryIndex] ?? active?.url;
   const mediaKey = `${sourceReady ? playbackUrl : "awaiting-source"}:${sourceRevision}`;
+  useMediaWarmup(videoRef, sourceReady ? mediaKey : undefined);
   const recoveryOptions = { differentServerFirst: mediaError > 0 && mediaError !== 3 };
   const alternatives = active ? recoverySources(active, playableSources, recoveryOptions).filter(({ link }) => !isDonyayeSerial(link)).slice(0, 2) : [];
   const nextRecovery = active ? recoverySources(active, playableSources, recoveryOptions).find(({ link }) => !failedSourceUrls.has(link.url)) : undefined;
