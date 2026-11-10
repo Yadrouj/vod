@@ -25,6 +25,9 @@ export function createRemoteChannelStore({ api, token, directory, fetchImpl = fe
   const cacheDirectory = path.join(directory, 'data-cache');
   const journal = path.join(directory, 'state.journal.json');
   let lastUploaded = null;
+  // This process is the only writer, so after the first load its own copy is
+  // current. Downloading the whole document every cycle cost ~27 GB a day.
+  let current = null;
   const url = suffix => new URL(`/api/bot/channel/${suffix}`, api);
   const request = (suffix, init = {}, timeout = 30000) => fetchImpl(url(suffix), {
     ...init,
@@ -81,15 +84,17 @@ export function createRemoteChannelStore({ api, token, directory, fetchImpl = fe
         await uploadState(pending);
         return state;
       }
+      if (current !== null) return JSON.parse(current);
       const response = await request('state?document=state');
       if (!response.ok) throw new Error(`Channel state returned ${response.status}`);
       const { document } = JSON.parse(await response.text());
-      if (document) lastUploaded = digest(JSON.stringify(document));
+      if (document) { current = JSON.stringify(document); lastUploaded = digest(current); }
       return document ?? null;
     },
 
     async saveState(state) {
       const text = JSON.stringify(state);
+      current = text;
       if (digest(text) === lastUploaded) return;
       await writeJsonAtomic(journal, state);
       await uploadState(text);

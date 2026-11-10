@@ -81,3 +81,14 @@ test('catalogue data is cached by ETag and a failed refresh throws', async t => 
   mode = 'down';
   await assert.rejects(store.readData('vod-updates'), /503/);
 });
+
+test('the state is downloaded once per process; later cycles reuse the copy this writer saved', async t => {
+  const { store, calls } = await harness(call => json(call.method === 'PUT' ? { ok: true } : { document: { posts: { a: 1 } } }), t);
+  const first = await store.loadState();
+  assert.deepEqual(first, { posts: { a: 1 } });
+  first.posts.b = 2;
+  await store.saveState(first);
+  first.posts.c = 3; // later in-memory mutation must not leak into the next load
+  assert.deepEqual(await store.loadState(), { posts: { a: 1, b: 2 } });
+  assert.deepEqual(calls.map(call => call.method), ['GET', 'PUT']);
+});

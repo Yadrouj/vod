@@ -49,9 +49,23 @@ export function selectScheduledEntries(state, pending, now = Date.now(), trendRa
     selected.push({ entry: candidates[0], alternatives: candidates.slice(1, 5), type, slot });
   };
   choose('vod', window.vod, sortVodEventsByTrend(pending.filter(({ event }) => event.type === 'vod' && !contentRestriction(event)), trendRanks));
-  choose('music', window.music, pending.filter(({ event }) => event.type === 'music')
-    .sort((a, b) => String(b.event.eventAt ?? '').localeCompare(String(a.event.eventAt ?? ''))));
   return { window, selected };
+}
+
+/**
+ * Music is no longer posted. Its unsent backlog (each entry carried the track's
+ * sources) made the state document tens of megabytes, so forget it entirely.
+ * Sent posts keep a slim record so delivery spacing still sees them.
+ */
+export function dropMusicPosts(state) {
+  for (const [key, entry] of Object.entries(state.posts ?? {})) {
+    if (entry.event?.type !== 'music') continue;
+    if (entry.status !== 'sent') { delete state.posts[key]; continue; }
+    const { musicId, title, artist } = entry.event;
+    entry.event = { key: entry.event.key, type: 'music', musicId, title, artist };
+  }
+  state.music = {};
+  return state;
 }
 
 /** Resolve season-less series updates to a real, downloadable episode. */
@@ -203,12 +217,11 @@ export async function runChannel({ publish = false, preview = false, kernelLocke
     const remote = process.env.TELEGRAM_CHANNEL_REMOTE_DATA === '1' ? createRemoteChannelStore({ api, token, directory: dir }) : null;
     const previous = remote ? await remote.loadState() : await read(stateFile, null);
     const dataDir = process.env.VOD_DATA_DIR || 'public/data';
-    const [updates, music, library] = remote
-      ? await Promise.all([remote.readData('vod-updates'), remote.readData('music-index'), remote.readData('melodify-library')])
-      : await Promise.all([read(path.join(dataDir, 'vod-updates.json'), {items:[]}),read(path.join(dataDir, 'music-index.json'), {tracks:[]}),read(path.join(dataDir, 'melodify-library.json'), {tracks:[]})]);
-    music.tracks = [...new Map([...(music.tracks ?? []), ...(library.tracks ?? [])].map(t => [t.id, t])).values()];
-    const discovered = discoverPosts(updates, music, preview && !publish ? { music:{} } : previous, now);
+    const updates = remote ? await remote.readData('vod-updates') : await read(path.join(dataDir, 'vod-updates.json'), {items:[]});
+    // The channel publishes films and series only; music is no longer posted.
+    const discovered = discoverPosts(updates, { tracks: [] }, preview && !publish ? { music:{} } : previous, now);
     const state = previous || { channel, posts:{}, music:{} };
+    dropMusicPosts(state);
     state.publishedSlots ??= { vod: {}, music: {} };
     state.publishedSlots.vod ??= {};
     state.publishedSlots.music ??= {};

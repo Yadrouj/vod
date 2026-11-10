@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {composePost, discoverPosts, musicFingerprint, postHashtags, selectScheduledEntries, resolveChannelDetail, runChannel} from '../telegram-channel.mjs';
+import {composePost, discoverPosts, dropMusicPosts, musicFingerprint, postHashtags, selectScheduledEntries, resolveChannelDetail, runChannel} from '../telegram-channel.mjs';
 import {publishingSlot, publishingWindow, tehranClock, hasPublishedSlot} from '../lib/telegram-publishing-schedule.mjs';
 import {mkdtemp, writeFile, readFile, readdir, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
@@ -79,7 +79,7 @@ test('channel cadence is evaluated in Tehran time and stops after the 22:00 slot
  assert.equal(publishingWindow(after).music,null);
 });
 
-test('exactly one channel message is selected per alternating hourly slot',()=>{
+test('only films and series are scheduled; music hours stay quiet',()=>{
  const now=Date.parse('2026-09-27T07:30:00Z');
  const state={publishedSlots:{vod:{},music:{}}};
  const pending=[
@@ -88,10 +88,10 @@ test('exactly one channel message is selected per alternating hourly slot',()=>{
   {event:{key:'music:new',type:'music',eventAt:'2026-09-27T06:29:00Z'}},
  ];
  const result=selectScheduledEntries(state,pending,now,new Map([['tt1',1],['tt2',2]]));
- assert.deepEqual(result.selected.map(item=>[item.type,item.entry.event.key]),[['music','music:new']]);
+ assert.deepEqual(result.selected,[],'music is no longer posted to the channel');
  const hour=selectScheduledEntries(state,pending,Date.parse('2026-09-27T06:30:00Z'),new Map([['tt1',1],['tt2',2]]));
  assert.deepEqual(hour.selected.map(item=>[item.type,item.entry.event.key]),[['vod','vod:rank-one']]);
- assert.equal(selectScheduledEntries({...state,publishedSlots:{vod:{'2026-09-27:10':{}} ,music:{}}},pending,now,new Map()).selected.length,1);
+ assert.equal(selectScheduledEntries({...state,publishedSlots:{vod:{'2026-09-27:10':{}},music:{}}},pending,Date.parse('2026-09-27T06:30:00Z'),new Map()).selected.length,0);
 });
 
 test('every hour alternates, including late checks, and configuration anchors the first film hour',()=>{
@@ -107,12 +107,12 @@ test('every hour alternates, including late checks, and configuration anchors th
 
 test('old half-hour slots survive migration and deliveries are at least sixty minutes apart',()=>{
  assert.equal(hasPublishedSlot({publishedSlots:{music:{'2026-10-03:10:30':{}}}},'vod','2026-10-03:10'),true);
- const sentAt='2026-10-03T10:45:00+03:30';
- const pending=[{event:{type:'music',key:'next'}}];
- const state={posts:{old:{status:'sent',sentAt}},publishedSlots:{music:{'2026-10-03:10:30':{sentAt}}}};
- assert.equal(selectScheduledEntries(state,pending,Date.parse('2026-10-03T11:00:00+03:30')).selected.length,0);
- assert.equal(selectScheduledEntries(state,pending,Date.parse('2026-10-03T11:45:00+03:30')).selected.length,1);
- assert.equal(selectScheduledEntries({...state,posts:{old:{status:'uncertain',sentAt}},publishedSlots:{}},pending,Date.parse('2026-10-03T11:00:00+03:30')).selected.length,0);
+ const sentAt='2026-10-03T11:15:00+03:30';
+ const pending=[{event:{type:'vod',key:'next',imdbCode:'tt1'}}];
+ const state={posts:{old:{status:'sent',sentAt}},publishedSlots:{music:{'2026-10-03:11':{sentAt}}}};
+ assert.equal(selectScheduledEntries(state,pending,Date.parse('2026-10-03T12:00:00+03:30')).selected.length,0);
+ assert.equal(selectScheduledEntries(state,pending,Date.parse('2026-10-03T12:15:00+03:30')).selected.length,1);
+ assert.equal(selectScheduledEntries({...state,posts:{old:{status:'uncertain',sentAt}},publishedSlots:{}},pending,Date.parse('2026-10-03T12:00:00+03:30')).selected.length,0);
 });
 
 test('both deployment stacks reserve enough heap and container headroom for the full archive',async()=>{
@@ -166,4 +166,18 @@ test('a broken leading series cannot starve a valid film; sending spends one slo
   assert.equal(state.posts['vod:bad'].status,'pending');assert.equal(state.posts['vod:good'].status,'sent');
   assert.equal(state.publishedSlots.vod['2026-10-03:10'].messageId,77);
  }finally{globalThis.fetch=originalFetch;for(const key of Object.keys(process.env))if(!(key in originalEnv))delete process.env[key];Object.assign(process.env,originalEnv);t.mock.timers.reset();await rm(dir,{recursive:true,force:true});}
+});
+
+test('the unsent music backlog is dropped and sent music keeps only a slim record',()=>{
+ const sources=[{url:'https://dl.test/song.mp3'}];
+ const state={music:{song:'fp'},posts:{
+  'music:a':{status:'pending',event:{key:'music:a',type:'music',musicId:'a',title:'A',sources}},
+  'music:b':{status:'uncertain',event:{key:'music:b',type:'music',musicId:'b',sources}},
+  'music:c':{status:'sent',sentAt:'2026-11-01T10:00:00Z',messageId:9,event:{key:'music:c',type:'music',musicId:'c',title:'C',artist:'X',sources}},
+  'vod:1':{status:'pending',event:{key:'vod:1',type:'vod'}},
+ }};
+ dropMusicPosts(state);
+ assert.deepEqual(Object.keys(state.posts).sort(),['music:c','vod:1']);
+ assert.deepEqual(state.posts['music:c'],{status:'sent',sentAt:'2026-11-01T10:00:00Z',messageId:9,event:{key:'music:c',type:'music',musicId:'c',title:'C',artist:'X'}});
+ assert.deepEqual(state.music,{});
 });

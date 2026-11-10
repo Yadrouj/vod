@@ -29,7 +29,10 @@ test("valid partial MP3 responses advertise byte ranges without caching partial 
   const headers = musicRelayHeaders(response, "https://dl.rozmusic.com/song.mp3", false, "bytes=0-1");
   assert.equal(headers.get("Content-Type"), "audio/mpeg"); assert.equal(headers.get("Accept-Ranges"), "bytes");
   assert.equal(headers.get("Content-Range"), "bytes 0-1/9000"); assert.equal(headers.get("Content-Length"), "2");
-  assert.match(headers.get("Cache-Control")!, /no-store/); assert.equal(headers.get("Vary"), "Range");
+  assert.match(headers.get("Cache-Control")!, /^private, max-age=604800\b/, "Browsers keep slices; shared caches never store them");
+  assert.equal(headers.get("Vary"), null, "Vary: Range would turn every new slice into a browser cache miss");
+  const whole = musicRelayHeaders(new Response(null, { status: 200 }), "https://dl.rozmusic.com/song.mp3", false, null);
+  assert.match(whole.get("Cache-Control")!, /^public, max-age=604800, s-maxage=604800\b/); assert.equal(whole.get("Vary"), "Range");
   const ignored = musicRelayHeaders(new Response(null), "https://cdn.test/song.mp3", false, "bytes=0-1");
   assert.equal(ignored.get("Accept-Ranges"), null, "Do not pretend that an upstream supports ranges");
 });
