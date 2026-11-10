@@ -1,4 +1,5 @@
 import type { VodItem, VodLink } from "./types";
+import { isVerifiedPublisherPreview } from './publisher-previews.mjs';
 
 /** Unsigned URLs have no expiration. Never interpret a missing parameter as 0. */
 export function videoUrlExpired(value: string, now = Date.now()) {
@@ -42,6 +43,7 @@ export function detailHeroVideo(item: Pick<VodItem, "imdbVideos">, now = Date.no
 
 export function titleDownloadLinks(links: VodLink[]) {
   return links.filter((link) => /^https?:\/\//i.test(link.url)
+    && !isVerifiedPublisherPreview(link)
     && link.mediaKind !== "trailer" && link.mediaKind !== "subtitle"
     && !/(?:^|[._/\s-])(?:trailer|teaser|preview|promo|clip)(?:[._/\s-]|$)/i.test(`${link.label} ${link.fileName ?? ""} ${link.url}`)
     && !/\.(srt|vtt|ass|ssa|sub)(?:$|[?#])/i.test(link.url));

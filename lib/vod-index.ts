@@ -6,6 +6,7 @@ import { compareSearchRank, type SearchRankingSignals } from "./vod-search-order
 import { matchVodSearch } from "./vod-search-match";
 import { persianTitleOrFallback } from "./title-display";
 import { addMoviezlandProfiles } from "./moviezland-profiles";
+import { cachedFamilyMovieCount, familyMovieReleaseRevision } from './familymovie-release';
 
 export const HOME_SECTIONS = [
   "top-imdb",
@@ -48,7 +49,7 @@ const FILE_CHECK_INTERVAL_MS = Math.max(5_000, Number(process.env.VOD_DATA_CHECK
 const indexCache: FileCache<VodCatalogIndex> = {};
 const homeIndexCache: FileCache<VodCatalogIndex> = {};
 const oldIranianIndexCache: FileCache<VodCatalogIndex> = {};
-const enrichedIndexes = new WeakMap<VodCatalogIndex, VodCatalogIndex>();
+const enrichedIndexes = new WeakMap<VodCatalogIndex, { revision: string; value: VodCatalogIndex }>();
 
 export async function loadVodIndex(): Promise<VodCatalogIndex> {
   const index = await loadFreshJson(path.join(DATA_DIR, "vod-index.json"), indexCache);
@@ -70,20 +71,21 @@ export async function loadOldIranianVodIndex(): Promise<VodCatalogIndex> {
 
 function enrichLegacyCards(index: VodCatalogIndex, includeNew = true): VodCatalogIndex {
   const cached = enrichedIndexes.get(index);
-  if (cached) return cached;
+  if (cached?.revision === familyMovieReleaseRevision()) return cached.value;
   const supplemented = addMoviezlandProfiles(index, includeNew);
   const enriched = {
     ...supplemented,
     items: supplemented.items.map(normalizeCardTitle),
     sections: supplemented.sections.map((section) => ({ ...section, items: section.items.map(normalizeCardTitle) })),
   };
-  enrichedIndexes.set(index, enriched);
+  enrichedIndexes.set(index, { revision: familyMovieReleaseRevision(), value: enriched });
   return enriched;
 }
 
 function normalizeCardTitle(item: VodCard): VodCard {
   const enriched = enrichOldIranianCard(item);
-  return { ...enriched, persianTitle: persianTitleOrFallback(enriched) };
+  const freshCount = cachedFamilyMovieCount(enriched);
+  return { ...enriched, ...(freshCount !== undefined ? { fullLengthLinksCount: freshCount } : {}), persianTitle: persianTitleOrFallback(enriched) };
 }
 
 export function pickHero(index: VodCatalogIndex): VodCard | null {

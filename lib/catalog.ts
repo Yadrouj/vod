@@ -11,6 +11,7 @@ import { persianTitleOrFallback } from './title-display';
 import { enrichMoviezlandProfile, moviezlandProfile } from './moviezland-profiles';
 import movielandzMatches from './data/movielandz-donyaye-match.json';
 import { exactPublisherPageMapping } from './moviezland-page-match.mjs';
+import { refreshFamilyMovieRelease } from './familymovie-release';
 
 const DATA_DIR = path.resolve(process.env.VOD_DATA_DIR || path.join(process.cwd(), "public", "data"));
 const FILE_CHECK_INTERVAL_MS = Math.max(5_000, Number(process.env.VOD_DATA_CHECK_INTERVAL_MS || 30_000));
@@ -45,7 +46,7 @@ export const findVodItem = cache(async (id: string): Promise<VodItem | null> => 
     publisherName: publisherMatch ? "MovieLandz" : enriched.publisherName,
     publisherSourceUrl: publisherMatch?.movieLandzPage ?? enriched.publisherSourceUrl,
   });
-  const withSources = await applyVerifiedAlternativeSources(await applyVerifiedDonyayeLinks(mapped));
+  const withSources = await refreshFamilyMovieRelease(await applyVerifiedAlternativeSources(await applyVerifiedDonyayeLinks(mapped)));
   const publisherLink = withSources.links.find(link => link.sourceProvider === "moviezland" && link.verifiedAt);
   return restrictCatalogItem(publisherLink ? { ...withSources, publisherName: "MovieLandz", publisherSourceUrl: publisherLink.sourceUrl || withSources.publisherSourceUrl } : withSources);
 });

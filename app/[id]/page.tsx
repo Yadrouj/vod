@@ -54,6 +54,7 @@ export default async function DetailPage({ params }: Props) {
   const youtube = oldMedia?.youtubeVideos[0] ?? getOldIranianYouTubeVideos(item.id)?.[0] ?? getOldIranianYouTubeVideos(item.imdbCode)?.[0] ?? item.youtubeVideos?.[0];
   const publisher = validPublisherPlayer(item.publisherPlayer);
   const canPlay = playable.length > 0 || Boolean(youtube) || Boolean(publisher);
+  const comingSoon = !canPlay && downloads.length === 0;
   const watchHref = `/watch/${item.imdbCode}`;
   const heroBackdrop = item.backdropUrl ?? oldMedia?.backdropUrl ?? item.posterUrl;
   const posterUrl = item.posterUrl ?? oldMedia?.posterUrl;
@@ -96,6 +97,7 @@ export default async function DetailPage({ params }: Props) {
             <div className={styles.copy}>
               <div className={styles.eyebrow}><Film size={15} aria-hidden="true" /><span>{typeLabel(isSeries ? "series" : "movie", locale)}</span><span>{item.year}</span>{item.certificate && <span>{item.certificate}</span>}</div>
               <h1 id="title-heading">{title}</h1>
+              {comingSoon && <p className={styles.availability} data-coming-soon role="status"><strong>{fa ? 'به‌زودی' : 'Coming soon'}</strong> · {fa ? 'لینک نسخهٔ کامل هنوز در سرونما موجود نیست. با اضافه شدن لینک، این برچسب خودکار برداشته می‌شود.' : 'No full-release links in SarvNema yet. This label disappears automatically when a release is added.'}</p>}
               {title !== item.title && <p className={styles.original} dir="auto">{item.title}</p>}
               <div className={styles.facts}>
                 {item.imdbRating != null && <a href={item.imdbUrl ?? `https://www.imdb.com/title/${item.imdbCode}/`} target="_blank" rel="noreferrer" className={styles.rating} aria-label={`IMDb ${item.imdbRating} / 10`}>
