@@ -57,7 +57,7 @@ export default async function MusicPage({ searchParams }: Props) {
     ? searchMusic(index, q, kind, category)
       .filter((track) => !year || trackPublishedYear(track) === year)
       .filter((track) => fresh !== "week" || isMusicReleasedThisWeek(track))
-      .filter((track) => !libraryOnly || track.sources.some(source => source.provider === "melodify"))
+      .filter((track) => !libraryOnly || track.sources.some(source => source.provider === "melodify" || source.provider === "sarvnema-hosted"))
     : [];
   if (libraryOnly) allMatches.sort((a, b) => (b.addedAt ?? "").localeCompare(a.addedAt ?? "") || a.id.localeCompare(b.id, "en", { numeric: true }));
   const pageCount = Math.max(1, Math.ceil(allMatches.length / 80));

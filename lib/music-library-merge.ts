@@ -53,6 +53,7 @@ export function mergeMelodifyCatalog<T extends MusicIndex>(base: T, library: Mus
       const artist: MusicArtist = existing ?? {
         ...ref, slug, coverUrl: source?.coverUrl || track.coverUrl,
         profileImageUrl: source?.profileImageUrl || track.coverUrl,
+        bio: source?.bio,
         trackIds: [], trackCount: 0, categories: [], aliases: [],
       };
       if (!artist.trackIds.includes(track.id)) {
@@ -86,6 +87,7 @@ export function mergeMelodifyCatalog<T extends MusicIndex>(base: T, library: Mus
     categories: [...new Set([...base.categories, ...library.categories, ...library.tracks.flatMap(t => [t.category, ...(t.moods ?? [])])])],
     ...(stats ? { archiveStats: { ...stats,
       tracks: stats.tracks + additions.filter(t => t.kind === "track").length,
+      videos: stats.videos + additions.filter(t => t.kind === "video").length,
       artists: stats.artists + [...artists.keys()].filter(slug => !representedArtists.has(slug)).length,
     } } : {}),
     ...(artistTrackIds ? { artistTrackIds: Object.fromEntries(Object.entries(artistTrackIds).map(([slug, ids]) => [slug, [...ids]])) } : {}),
@@ -133,7 +135,7 @@ function countCategories(tracks: MusicTrack[]) {
 }
 
 export function selectLibraryArrivals(tracks: MusicTrack[], limit: number) {
-  const sorted = tracks.filter(t => t.sources.some(s => s.provider === "melodify" && s.available !== false))
+  const sorted = tracks.filter(t => t.sources.some(s => (s.provider === "melodify" || s.provider === "sarvnema-hosted") && s.available !== false))
     .sort((a, b) => (b.addedAt ?? "").localeCompare(a.addedAt ?? "") || a.id.localeCompare(b.id, "en", { numeric: true }));
   const selected: MusicTrack[] = [];
   const used = new Set<string>();

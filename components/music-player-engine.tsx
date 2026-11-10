@@ -322,7 +322,7 @@ export function MusicPlayerEngine({
     if (player !== media.current) return;
     const resume = playing || autoplayTrackId.current === activeTrack.id;
     pendingSeek.current = media.current?.currentTime || currentTime || null;
-    const directAllowed = source?.provider !== "melodify" && source?.url && (source.url.startsWith("https:") || window.location.protocol !== "https:");
+    const directAllowed = source?.provider !== "melodify" && source?.provider !== "sarvnema-hosted" && source?.url && (source.url.startsWith("https:") || window.location.protocol !== "https:");
     if (!useDirectSource && directAllowed) {
       setSourceIssue("در حال امتحان منبع اصلی…");
       setUseDirectSource(true);

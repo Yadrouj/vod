@@ -1,5 +1,6 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { combineMusicLibraries, HOSTED_MUSIC_FILE, loadHostedMusic } from "./hosted-music";
 import { compareMusicPopularityYear } from "./music-search-ranking";
 import { mergeMelodifyCatalog, withRecoveredMusicSources } from "./music-library-merge";
 import { searchText, TypoSearchIndex, type SearchMatches } from "./typo-search";
@@ -36,7 +37,7 @@ export async function loadMusicIndex(): Promise<MusicIndex> {
   if (cache.refreshing) return cache.value ?? cache.refreshing;
   cache.refreshing = (async () => {
     try {
-      const [info, libraryInfo] = await Promise.all([stat(DATA_FILE), stat(MELODIFY_DATA_FILE).catch(() => null)]);
+      const [info, libraryInfo] = await Promise.all([stat(DATA_FILE), musicLibraryStamp()]);
       if (!cache.value || cache.mtimeMs !== info.mtimeMs || cache.libraryMtimeMs !== libraryInfo?.mtimeMs) {
         cache.mtimeMs = info.mtimeMs;
         cache.libraryMtimeMs = libraryInfo?.mtimeMs;
@@ -397,7 +398,7 @@ async function loadCompactMusicIndex<T extends MusicLandingIndex | MusicArtistIn
   if (compactCache.refreshing) return compactCache.value ?? compactCache.refreshing;
   compactCache.refreshing = (async () => {
     try {
-      const [info, libraryInfo] = await Promise.all([stat(file), stat(MELODIFY_DATA_FILE).catch(() => null)]);
+      const [info, libraryInfo] = await Promise.all([stat(file), musicLibraryStamp()]);
       if (!compactCache.value || compactCache.mtimeMs !== info.mtimeMs || compactCache.libraryMtimeMs !== libraryInfo?.mtimeMs) {
         compactCache.mtimeMs = info.mtimeMs;
         compactCache.libraryMtimeMs = libraryInfo?.mtimeMs;
@@ -429,10 +430,13 @@ async function loadMelodifyCatalog(expectedMtimeMs?: number): Promise<MusicIndex
   if (melodifyCache.refreshing) return melodifyCache.refreshing;
   melodifyCache.refreshing = (async () => {
     try {
-      const info = await stat(MELODIFY_DATA_FILE);
+      const info = await musicLibraryStamp();
       if (!melodifyCache.value || melodifyCache.mtimeMs !== info.mtimeMs) {
         melodifyCache.mtimeMs = info.mtimeMs;
-        melodifyCache.value = readFile(MELODIFY_DATA_FILE, "utf8").then((data) => JSON.parse(data) as MusicIndex);
+        melodifyCache.value = Promise.all([
+          readFile(MELODIFY_DATA_FILE, "utf8").then((data) => JSON.parse(data) as MusicIndex).catch(() => emptyIndex),
+          loadHostedMusic(),
+        ]).then(([base, hosted]) => combineMusicLibraries(base, hosted));
       }
       return await melodifyCache.value;
     } catch {
@@ -443,4 +447,9 @@ async function loadMelodifyCatalog(expectedMtimeMs?: number): Promise<MusicIndex
     }
   })();
   return melodifyCache.refreshing;
+}
+
+async function musicLibraryStamp() {
+  const files = await Promise.all([MELODIFY_DATA_FILE, HOSTED_MUSIC_FILE].map(file => stat(file).catch(() => null)));
+  return { mtimeMs: files.reduce((sum, info) => sum + (info?.mtimeMs ?? 0), 0) };
 }

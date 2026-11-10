@@ -3,6 +3,7 @@ import { fetchStreamHeaders } from "@/lib/upstream-stream";
 import { musicAttachment } from "@/lib/music-download";
 import { streamMelodifyFile } from "@/lib/melodify-library";
 import { musicRelayHeaders } from "@/lib/music-media-response";
+import { fetchHostedFile } from "@/lib/hosted-music";
 
 const MAX_ID_LENGTH = 180;
 const MAX_URL_LENGTH = 4096;
@@ -47,7 +48,9 @@ export async function GET(request: Request) {
   let upstream: Response;
   let resolvedSourceUrl = source.url;
   try {
-    upstream = await fetchStreamHeaders(source.url, upstreamHeaders, request.signal);
+    upstream = source.provider === "sarvnema-hosted"
+      ? await fetchHostedFile(source.url, upstreamHeaders, request.signal)
+      : await fetchStreamHeaders(source.url, upstreamHeaders, request.signal);
   } catch {
     if (request.signal.aborted) return new Response(null, { status: 499 });
     const fallbackUrl = worldOfMusicHttpFallback(source.url, source.provider);

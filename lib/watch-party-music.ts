@@ -11,7 +11,8 @@ function uniqueSources(track: MusicTrack): PartyMediaSource[] {
   return track.sources
     .filter((item) => item.available !== false && isBrowserPlayableMusicSource(item.url) && !seen.has(item.url) && Boolean(seen.add(item.url)))
     .map((item, index) => ({
-      url: item.url,
+      url: item.provider === "sarvnema-hosted" || item.provider === "melodify"
+        ? `/api/music/media?${new URLSearchParams({ id: track.id, url: item.url })}` : item.url,
       label: item.label || item.quality || `${item.kind === "stream" ? "Stream" : "Download"} ${index + 1}`,
       quality: item.quality ?? null,
       season: null,
@@ -53,8 +54,8 @@ export function musicPartyMedia(track: MusicTrack): PartyMedia | null {
       tagline: track.category || null,
       certificate: null,
       genres: track.category ? [track.category] : [],
-      countries: ["Iran"],
-      languages: ["Persian"],
+      countries: track.category.includes("فارسی") ? ["Iran"] : [],
+      languages: track.category.includes("فارسی") ? ["Persian"] : [],
       credits: track.artists.map((artist) => ({
         id: artist.slug,
         name: artist.name,
