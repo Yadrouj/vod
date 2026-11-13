@@ -1,3 +1,9 @@
+/** Telegram reports unchanged channel metadata as an error, not success. */
+export function profileUpdateUnchanged(method, result) {
+  return ['setChatTitle', 'setChatDescription'].includes(method) && result.error_code === 400
+    && /^Bad Request: chat (?:title|description) is not modified$/i.test(result.description || '');
+}
+
 export function searchBotProfile(vod, music) {
   const number = value => new Intl.NumberFormat('fa-IR').format(Math.max(0, Number(value) || 0));
   const inventory = `${number(vod.totals.movies)} فیلم · ${number(vod.totals.series)} سریال · ${number(music.totals.tracks)} موسیقی و موزیک‌ویدئو`;

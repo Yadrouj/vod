@@ -3,7 +3,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createBotNavigation } from "./bot-navigation.mjs";
 import { miniAppUrl, miniAppButton } from "./telegram-mini-app.mjs";
-import { searchBotProfile } from './telegram-search-profile.mjs';
+import { searchBotProfile, profileUpdateUnchanged } from './telegram-search-profile.mjs';
 
 try {
   const env = await readFile(".env.local", "utf8");
@@ -82,6 +82,7 @@ async function configureTelegramProfile() {
     await call('setChatDescription', { chat_id: channel, description: profile.channelDescription });
   } catch { console.error('Channel profile refresh deferred; check channel admin rights.'); }
   lastProfileRefresh = Date.now();
+  return { profile, vod, music };
 }
 
 // A fresh connection per Telegram call: filtered networks (e.g. the Iranian
@@ -95,6 +96,7 @@ async function call(method, body = {}) {
     signal: AbortSignal.timeout(method === "getUpdates" ? 40_000 : 15_000),
   });
   const data = await response.json();
+  if (!data.ok && profileUpdateUnchanged(method, data)) return true;
   if (!data.ok) throw new Error(data.description || method);
   return data.result;
 }
@@ -673,13 +675,12 @@ async function runBot() {
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   if (process.argv.includes('--profile-only')) {
-    await configureTelegramProfile();
-    const [vod, music] = await Promise.all([api('/api/bot/filters'), api('/api/bot/music?mode=filters')]);
-    const profile = searchBotProfile(vod, music);
+    const { profile, vod, music } = await configureTelegramProfile();
     const channel = process.env.TELEGRAM_CHANNEL_ID || '@sarvnema';
-    await call('setChatTitle', { chat_id: channel, title: profile.channelTitle });
-    await call('setChatDescription', { chat_id: channel, description: profile.channelDescription });
-    const actual = await call('getMyDescription');
-    console.log(JSON.stringify({ applied: actual.description === profile.description, inventory: { vod: vod.totals, music: music.totals }, channel }));
+    const [actual, chat, menu] = await Promise.all([call('getMyDescription'), call('getChat', { chat_id: channel }), call('getChatMenuButton')]);
+    const applied = actual.description === profile.description;
+    const channelApplied = chat.title === profile.channelTitle && chat.description === profile.channelDescription;
+    console.log(JSON.stringify({ applied, channelApplied, menuType: menu.type, inventory: { vod: vod.totals, music: music.totals }, channel }));
+    if (!applied || !channelApplied) process.exitCode = 1;
   } else await runBot();
 }
