@@ -6,6 +6,7 @@ import { mergeMelodifyCatalog, withRecoveredMusicSources } from "./music-library
 import { searchText, TypoSearchIndex, type SearchMatches } from "./typo-search";
 import type { MusicArtist, MusicArtistIndex, MusicIndex, MusicLandingIndex, MusicTrack } from "@/lib/music-types";
 import { sousanLibrary } from './sousan-collection';
+import { MusicRelatedIndex } from './music-related-index';
 
 const DATA_FILE = path.join(process.cwd(), "public", "data", "music-index.json");
 const LANDING_DATA_FILE = path.join(process.cwd(), "public", "data", "music-landing.json");
@@ -188,29 +189,14 @@ export function selectMusicShelfTracks(tracks: MusicTrack[], limit = 15) {
   return diversifyMusicTracks(candidates, limit);
 }
 
+const relatedIndexes = new WeakMap<MusicIndex, MusicRelatedIndex>();
 export function relatedMusic(index: MusicIndex, track: MusicTrack, limit = 12) {
-  track = normalizeMusicTrack(track);
-  const currentArtists = new Set(track.artists.flatMap((artist) => [artist.slug, ...(artist.aliases ?? [])]));
-  const titleTerms = new Set(normalizeTrackText(track.title).split(" ").filter((term) => term.length > 3));
-
-  return index.tracks
-    .map(normalizeMusicTrack)
-    .filter((candidate) => candidate.id !== track.id && candidate.kind === track.kind)
-    .map((candidate) => {
-      const candidateArtists = candidate.artists.flatMap((artist) => [artist.slug, ...(artist.aliases ?? [])]);
-      const sharesArtist = candidateArtists.some((artist) => currentArtists.has(artist));
-      const sharedTerms = normalizeTrackText(candidate.title).split(" ").filter((term) => titleTerms.has(term)).length;
-      const score = (sharesArtist ? 1000 : 0)
-        + (candidate.category === track.category ? 180 : 0)
-        + sharedTerms * 24
-        + (candidate.coverUrl ? 8 : 0)
-        + (candidate.sources.some((source) => source.kind === "stream") ? 4 : 0);
-      return { candidate, score };
-    })
-    .filter((item) => item.score > 0)
-    .sort((left, right) => right.score - left.score || (right.candidate.publishedAt ?? "").localeCompare(left.candidate.publishedAt ?? ""))
-    .slice(0, limit)
-    .map((item) => item.candidate);
+  let related = relatedIndexes.get(index);
+  if (!related) {
+    related = new MusicRelatedIndex(index.tracks.map(normalizeMusicTrack));
+    relatedIndexes.set(index, related);
+  }
+  return related.related(normalizeMusicTrack(track), limit);
 }
 
 /**
@@ -312,10 +298,6 @@ export function relatedMusicArtists(index: MusicIndex, artist: MusicArtist, limi
     .sort((left, right) => right.score - left.score || right.candidate.trackIds.length - left.candidate.trackIds.length)
     .slice(0, limit)
     .map((item) => item.candidate);
-}
-
-function normalizeTrackText(value: string) {
-  return value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }
 
 /** Uses compact artist metadata, so artist pages do not scan the whole archive twice. */

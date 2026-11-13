@@ -10,3 +10,18 @@
 - Next.js/eslint-config-next pinned to 16.4.6; PostCSS to 8.5.32; compatible dependency security updates applied without `--force`. Production-dependency npm audit reported zero findings. Telegram-only image uses patched sharp 0.35.5. These checks are not a guarantee of absence of vulnerabilities.
 - Registry manifest is prepared under `integrations/mcp/server.json`; the official publisher checksum was verified. Registry validation endpoint was unreachable from this connection, so no directory/registry publication is claimed. Code/documentation publication on GitHub is separate from registry listing.
 - Production deployment must preserve `data/mcp` state along with all existing archive data. The Docker context excludes runtime billing records, deployment backups and abandoned archive temp/old copies; none of the host files are deleted.
+# Production load follow-up
+
+The first deployment exposed sustained music-detail CPU saturation: V8 sampling
+identified `relatedMusic` repeatedly normalizing and sorting the entire catalogue.
+Replace that path with a snapshot-scoped inverted recommendation index. Artist
+and title boosts are retained exactly; constant-score fallback groups only need
+their first `limit` candidates. A new catalogue object rebuilds the index.
+
+Regression tests compare the complete ranking against the previous algorithm,
+including aliases, repeated title terms, categories, kind, dates, stable ties,
+empty catalogues and refresh invalidation. On the local 156,683-track catalogue,
+20 recommendations measured 8,355 ms before and 16 ms after (excluding the
+807 ms one-time index construction). These are local timings, not a production
+latency guarantee. Production health and real SDK smoke must pass after rollout.
+
