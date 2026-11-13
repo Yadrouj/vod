@@ -10,7 +10,8 @@
 - Next.js/eslint-config-next pinned to 16.4.6; PostCSS to 8.5.32; compatible dependency security updates applied without `--force`. Production-dependency npm audit reported zero findings. Telegram-only image uses patched sharp 0.35.5. These checks are not a guarantee of absence of vulnerabilities.
 - Registry manifest is prepared under `integrations/mcp/server.json`; the official publisher checksum was verified. Registry validation endpoint was unreachable from this connection, so no directory/registry publication is claimed. Code/documentation publication on GitHub is separate from registry listing.
 - Production deployment must preserve `data/mcp` state along with all existing archive data. The Docker context excludes runtime billing records, deployment backups and abandoned archive temp/old copies; none of the host files are deleted.
-# Production load follow-up
+
+## Production load follow-up
 
 The first deployment exposed sustained music-detail CPU saturation: V8 sampling
 identified `relatedMusic` repeatedly normalizing and sorting the entire catalogue.
@@ -23,5 +24,23 @@ including aliases, repeated title terms, categories, kind, dates, stable ties,
 empty catalogues and refresh invalidation. On the local 156,683-track catalogue,
 20 recommendations measured 8,355 ms before and 16 ms after (excluding the
 807 ms one-time index construction). These are local timings, not a production
-latency guarantee. Production health and real SDK smoke must pass after rollout.
+latency guarantee.
+
+## Verified rollout
+
+- Web image `b90e3149` passed readiness after rollout and remained healthy in the
+  subsequent 17-minute observation. A later readiness sample took 1.7 ms.
+- Real SDK requests to `https://sarvnema.ir/mcp` passed tool discovery, spelling
+  correction, usage, missing-key rejection and foreign-origin rejection. A
+  disposable credential was rotated after the checks.
+- Authenticated checkout correctly refused payment while the wallet/activation
+  settings are absent. No invoice, transfer or paid entitlement was created.
+- Public developer-page browser checks at 390/1440px passed with no horizontal
+  overflow or JavaScript exceptions. All ten observed weekly-shelf links stayed
+  within SarvNema, including View All.
+- Telegram worker `46e6b965` was rebuilt and restarted without restarting the
+  channel publisher. Direct Telegram API readback confirmed both profiles and
+  the Mini App menu. Live totals were 24,563 films, 5,409 series and 156,706 music
+  entries (including 202 videos); these are a snapshot, not fixed advertised
+  totals. Idempotent channel metadata updates no longer report false failures.
 
