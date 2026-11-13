@@ -3,22 +3,28 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import { writeJsonAtomic } from './atomic-json.mjs';
+import { searchBotProfile } from './telegram-search-profile.mjs';
 
 try { process.loadEnvFile('.env.local'); } catch { /* Environment may be injected. */ }
 
 const channel = process.env.TELEGRAM_CHANNEL_ID || '@sarvnema';
 const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://sarvnema.ir';
+let searchProfile;
+if (process.env.BOT_API_TOKEN) {
+  const read = async endpoint => { const response = await fetch(new URL(endpoint, process.env.BOT_SITE_URL || site), { headers: { 'x-bot-token': process.env.BOT_API_TOKEN }, signal: AbortSignal.timeout(15000) }); if (!response.ok) throw new Error('Cannot obtain current catalogue counts'); return response.json(); };
+  searchProfile = searchBotProfile(...await Promise.all([read('/api/bot/filters'), read('/api/bot/music?mode=filters')]));
+}
 const profile = {
-  title: 'سرونما | دانلود فیلم و سریال، موسیقی | SarvNema',
-  description: [
-    '🎬 فیلم و سریال ایرانی و خارجی، انیمیشن و موسیقی',
+  title: searchProfile?.channelTitle || 'سرونما | موتور جستجوی فیلم، سریال و موسیقی',
+  description: searchProfile?.channelDescription || [
+    '🔎 موتور جستجوی فیلم، سریال و موسیقی',
     'دوبله فارسی و زیرنویس • کیفیت‌های مختلف • تماشای آنلاین و همزمان',
     'آهنگ و موزیک‌ویدئو، تازه‌های آرشیو و راهنمای دانلود',
     '🌐 sarvnema.ir',
     '🔎 @Sarvnema_bot',
   ].join('\n'),
   welcome: [
-    '<b>به سرونما خوش اومدی 🌿</b>', '',
+    '<b>سرونما؛ موتور جستجوی فیلم، سریال و موسیقی 🌿</b>', '',
     'دنبال یه فیلم برای امشب، قسمت بعدی سریالت یا آهنگ تازه‌ای؟ از دکمه‌های پایین شروع کن.', '',
     '🎬 <b>فیلم و سریال</b> — ایرانی و خارجی، انیمیشن، دوبله فارسی و زیرنویس؛ با کیفیت‌های مختلف.',
     '🎧 <b>موسیقی</b> — آهنگ ایرانی و خارجی، پلی‌لیست و موزیک‌ویدئو.',

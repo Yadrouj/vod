@@ -41,6 +41,7 @@ async function allEntries(): Promise<SitemapEntry[]> {
   const entries: SitemapEntry[] = [
     entry("/", vodUpdatedAt, 1, "daily"),
     entry("/browse", vodUpdatedAt, 0.9, "daily"),
+    entry('/developers', vodUpdatedAt, 0.6, 'monthly'),
     entry("/kids", vodUpdatedAt, 0.8, "weekly"),
     entry("/kids/learn", vodUpdatedAt, 0.75, "weekly"),
     entry("/music", musicUpdatedAt, 0.95, "daily"),

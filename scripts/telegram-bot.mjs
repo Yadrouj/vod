@@ -3,6 +3,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createBotNavigation } from "./bot-navigation.mjs";
 import { miniAppUrl, miniAppButton } from "./telegram-mini-app.mjs";
+import { searchBotProfile } from './telegram-search-profile.mjs';
 
 try {
   const env = await readFile(".env.local", "utf8");
@@ -33,6 +34,8 @@ const profileCommands = [
   { command: "iranian", description: "فیلم‌های قدیمی ایرانی" },
   { command: "help", description: "راهنمای استفاده" },
   { command: "app", description: "بازکردن مینی‌اپ سرونما" },
+  { command: 'stats', description: 'آمار به‌روز موتور جستجوی سرونما' },
+  { command: 'apikey', description: 'کلید رایگان MCP برای توسعه‌دهندگان' },
 ];
 
 let intro = [
@@ -58,29 +61,27 @@ const helpText = [
   "نکته: برای جست‌وجوی زنده در هر گفت‌وگو، نام بات را با @ بنویسید و نام اثر را بعدش وارد کنید.",
 ].join("\n");
 
+let lastProfileRefresh = 0;
 async function configureTelegramProfile() {
   await call("setChatMenuButton", { menu_button: appUrl ? { type: "web_app", text: "سرونما", web_app: { url: appUrl } } : { type: "commands" } });
   const [vod, music] = await Promise.all([api("/api/bot/filters"), api("/api/bot/music?mode=filters")]);
-  const inventory = `آرشیو: ${formatNumber(vod.totals.movies)} فیلم · ${formatNumber(vod.totals.series)} سریال · ${formatNumber(music.totals.tracks)} موزیک · ${formatNumber(music.totals.musicVideos)} موزیک‌ویدئو`;
-  intro = [
-    "🎬 <b>به SarvNema خوش آمدید</b>",
-    "",
-    "فیلم، سریال، انیمیشن و موزیک را جست‌وجو کنید؛ پیشنهاد بگیرید، آنلاین ببینید و لینک امن دانلود را باز کنید.",
-    "",
-    `<b>${inventory}</b>`,
-    "",
-    "برای سریال ابتدا فصل و سپس قسمت را انتخاب می‌کنید.",
-    "",
-    "از کجا شروع کنیم؟",
-  ].join("\n");
-  await call("setMyName", { name: "SarvNema | فیلم، سریال و موزیک" });
-  await call("setMyShortDescription", {
-    short_description: `فیلم، سریال، موزیک و دانلود امن · ${formatNumber(vod.totals.titles)} عنوان`,
-  });
-  await call("setMyDescription", {
-    description: `SarvNema راهی سریع برای پیدا کردن فیلم، سریال، انیمیشن و موزیک است. ${inventory}. نام اثر را جست‌وجو کنید، دسته‌بندی و فیلترها را ببینید، فصل و قسمت سریال را انتخاب کنید و لینک امن سایت را دریافت کنید.`,
-  });
+  const profile = searchBotProfile(vod, music);
+  intro = profile.intro;
+  await call('setMyName', { name: profile.name });
+  await call('setMyShortDescription', { short_description: profile.short_description });
+  await call('setMyDescription', { description: profile.description });
   await call("setMyCommands", { commands: profileCommands });
+  await call('setMyCommands', { commands: profileCommands, language_code: 'fa' });
+  // Remove stale language-specific overrides as well as updating the default profile.
+  await call('setMyName', { name: profile.name, language_code: 'fa' });
+  await call('setMyDescription', { description: profile.description, language_code: 'fa' });
+  await call('setMyShortDescription', { short_description: profile.short_description, language_code: 'fa' });
+  try {
+    const channel = process.env.TELEGRAM_CHANNEL_ID || '@sarvnema';
+    await call('setChatTitle', { chat_id: channel, title: profile.channelTitle });
+    await call('setChatDescription', { chat_id: channel, description: profile.channelDescription });
+  } catch { console.error('Channel profile refresh deferred; check channel admin rights.'); }
+  lastProfileRefresh = Date.now();
 }
 
 // A fresh connection per Telegram call: filtered networks (e.g. the Iranian
@@ -134,6 +135,7 @@ function mainKeyboard(chatId) {
     [b("🧸 انیمیشن و کودک", "section:animation"), b("🏆 ۲۵۰ برتر IMDb", "section:top-imdb")],
     [b("🎞 فیلم ایرانی قدیمی", "section:old-iranian-films"), b("🆕 فیلم‌های ۲۰۲۶", "section:recent-2026")],
     [b("🔎 جست‌وجوی نام اثر", "search")],
+    [urlButton('⚙️ توسعه‌دهندگان و MCP', 'https://sarvnema.ir/developers')],
     ...(appUrl ? [[miniAppButton(appUrl, Number(chatId) > 0)]] : []),
   ]);
 }
@@ -442,6 +444,18 @@ export async function handle(update) {
     return send(chatId, intro, mainKeyboard(chatId));
   }
   if (message?.text?.startsWith("/help")) return send(chatId, helpText, mainKeyboard(chatId));
+  if (message?.text?.startsWith('/stats')) {
+    const [vod, music] = await Promise.all([api('/api/bot/filters'), api('/api/bot/music?mode=filters')]);
+    return send(chatId, searchBotProfile(vod, music).intro, mainKeyboard(chatId));
+  }
+  if (/^\/apikey(?:@\w+)?(?:\s|$)/i.test(message?.text || '')) {
+    if (message.chat.type !== 'private') return send(chatId, 'کلید دسترسی محرمانه است؛ این دستور را فقط در گفت‌وگوی خصوصی بات بفرست.');
+    const rotate = /\srotate\s*$/i.test(message.text);
+    const response = await fetch(`${apiBase}/api/bot/developers`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-bot-token': token }, body: JSON.stringify({ telegramId: String(message.from.id), rotate }), signal: AbortSignal.timeout(15000) });
+    if (!response.ok) return send(chatId, 'صدور کلید فعلاً در دسترس نیست؛ کمی بعد دوباره امتحان کن.');
+    const result = await response.json();
+    return send(chatId, result.apiKey ? `<b>کلید خصوصی MCP سرونما</b>\n<code>${escapeHtml(result.apiKey)}</code>\n\nاین کلید را با دیگران به اشتراک نگذار؛ فقط همین‌بار نمایش داده می‌شود. سهمیهٔ رایگان: ۱۰۰ فراخوانی ابزار در ماه.\n\nراهنما: https://sarvnema.ir/developers` : `قبلاً کلید گرفته‌ای. برای جایگزینی کلید گم‌شده، <code>/apikey rotate</code> را بفرست؛ کلید قبلی فوراً غیرفعال می‌شود ولی سهمیهٔ مصرف‌شده باقی می‌ماند.\nپلن: ${escapeHtml(result.account.plan)} · باقی‌مانده: ${result.account.remaining}`);
+  }
   if (message?.text?.startsWith("/app")) return send(chatId, "فیلم، سریال و موسیقی را در اپ سرونما پیدا کنید.", keyboard(appUrl ? [[miniAppButton(appUrl, message.chat.type === "private")]] : [[b("🏠 شروع", "home")]]));
   if (message?.text?.startsWith("/search")) {
     session.waitingSearch = true;
@@ -637,6 +651,11 @@ async function runBot() {
   console.log("SarvNema Telegram bot is running...");
   while (true) {
     try {
+      if (Date.now() - lastProfileRefresh > 6 * 3600000) {
+        // Back off on Telegram/API failures rather than retrying profile writes on every poll.
+        lastProfileRefresh = Date.now();
+        await configureTelegramProfile().catch(() => console.error('Profile refresh deferred.'));
+      }
       const updates = await call("getUpdates", {
         offset,
         timeout: 30,
@@ -652,4 +671,15 @@ async function runBot() {
     }
   }
 }
-if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) await runBot();
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  if (process.argv.includes('--profile-only')) {
+    await configureTelegramProfile();
+    const [vod, music] = await Promise.all([api('/api/bot/filters'), api('/api/bot/music?mode=filters')]);
+    const profile = searchBotProfile(vod, music);
+    const channel = process.env.TELEGRAM_CHANNEL_ID || '@sarvnema';
+    await call('setChatTitle', { chat_id: channel, title: profile.channelTitle });
+    await call('setChatDescription', { chat_id: channel, description: profile.channelDescription });
+    const actual = await call('getMyDescription');
+    console.log(JSON.stringify({ applied: actual.description === profile.description, inventory: { vod: vod.totals, music: music.totals }, channel }));
+  } else await runBot();
+}

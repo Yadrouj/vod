@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { randomBytes, randomUUID } from "node:crypto";
 import { createRequestAdmission, RequestBudget, verifiedClientIp } from "./lib/request-admission";
 import next from "next";
+import { startCryptoPaymentMonitor } from './lib/mcp/payments';
 import { Server } from "socket.io";
 import { loadVodHomeIndex, loadVodIndex } from "./lib/vod-index";
 import type { PartyCapability, PartyChatMessage, PartyLiveCaption, PartyMedia, PartyParticipant, PartyPermissions, PartyPlayback, PartyProfile, PartyPublicRoom, PartyQueueItem, PartyRoomVisibility, PartySharedAudio, PartySnapshot } from "./lib/watch-party-types";
@@ -841,6 +842,7 @@ process.once("SIGTERM", () => shutdown("SIGTERM"));
 process.once("SIGINT", () => shutdown("SIGINT"));
 }
 
+startCryptoPaymentMonitor();
 start().catch((error) => {
   console.error(error);
   process.exit(1);

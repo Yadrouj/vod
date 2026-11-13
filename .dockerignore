@@ -14,5 +14,10 @@ data/telegram-deliveries/
 data/telegram-channel/
 .media-cache/
 .deploy-backups/
+data/media-import-backups/
+data/mcp/
+public/data/titles.old/
+public/data/title-map.old.json
+public/data/vod-catalog.json.tmp-*
 # NOTE: public/ (the LFS-backed catalog) and .env.local are intentionally kept —
 # the catalog is served at runtime and .env.local is needed at build for NEXT_PUBLIC_*.

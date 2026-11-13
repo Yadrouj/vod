@@ -1,0 +1,9 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Yadrouj/sarvnema",
+  "title": "SarvNema Search",
+  "description": "Search Persian and original film, series and music titles in SarvNema.",
+  "version": "1.0.0",
+  "repository": { "url": "https://github.com/Yadrouj/vod", "source": "github" },
+  "remotes": [{ "type": "streamable-http", "url": "https://sarvnema.ir/mcp", "headers": [{ "name": "Authorization", "description": "Bearer API key issued by @Sarvnema_bot /apikey", "isRequired": true, "isSecret": true }] }]
+}

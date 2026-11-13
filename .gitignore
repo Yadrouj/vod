@@ -6,6 +6,7 @@ build
 *.tsbuildinfo
 next-env.d.ts
 .env*
+!.env.mcp.example
 .DS_Store
 npm-debug.log*
 dev-server*.log
@@ -50,6 +51,7 @@ public/data/*.lock.kernel
 data/refresh-checkpoints/
 data/media-import-backups/
 data/media-refresh-*.lock
+data/mcp/
 data/telegram-deliveries/
 data/telegram-channel/
 .media-cache/
