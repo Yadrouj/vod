@@ -9,6 +9,11 @@ export default function robots(): MetadataRoute.Robots {
         allow: ["/", "/api/publisher-poster/"],
         disallow: ["/api/", "/admin/", "/watch-together/"],
       },
+      {
+        userAgent: ['OAI-SearchBot', 'Claude-SearchBot', 'Claude-User', 'PerplexityBot'],
+        allow: ['/', '/api/publisher-poster/'],
+        disallow: ['/api/', '/admin/', '/watch-together/'],
+      },
     ],
     // Do not block /_next/: Google needs the page's public CSS and scripts to
     // render the page accurately. The dynamic index discovers new parts without

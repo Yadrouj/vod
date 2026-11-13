@@ -1,4 +1,5 @@
 import { absoluteUrl, SITE_URL } from "@/lib/seo";
+import { PRIMARY_SECTIONS } from './site-navigation';
 
 export type LandingFaq = {
   question: string;
@@ -133,18 +134,15 @@ export function siteJsonLd() {
         inLanguage: "fa-IR",
         description: "سرونما، موتور جستجوی فیلم، سریال و موسیقی؛ جستجوی آثار و پیدا کردن منابع پخش و دانلود.",
         publisher: { "@id": `${SITE_URL}/#organization` },
-        mainEntity: { '@type': 'ItemList', itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'جستجوی فیلم و سریال', url: absoluteUrl('/browse') },
-          { '@type': 'ListItem', position: 2, name: 'موسیقی و پلی‌لیست‌ها', url: absoluteUrl('/music') },
-          { '@type': 'ListItem', position: 3, name: 'مجلهٔ سرونما', url: absoluteUrl('/mag') },
-          { '@type': 'ListItem', position: 4, name: 'تازه‌های آرشیو', url: absoluteUrl('/updates') },
-        ] },
         potentialAction: {
           "@type": "SearchAction",
           target: `${absoluteUrl("/browse")}?q={search_term_string}`,
           "query-input": "required name=search_term_string",
         },
       },
+      { '@type': 'SiteNavigationElement', '@id': absoluteUrl('/#navigation'),
+        name: PRIMARY_SECTIONS.map(item => item.label), url: PRIMARY_SECTIONS.map(item => absoluteUrl(item.href)),
+        isPartOf: { '@id': absoluteUrl('/#website') } },
     ],
   };
 }

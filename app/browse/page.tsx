@@ -17,6 +17,8 @@ import {
   OLD_IRANIAN_YOUTUBE_REVIEW_CHANNELS,
 } from "@/lib/old-iranian-youtube-collections";
 import { browseVodIndex, loadOldIranianVodIndex, loadVodIndex, queryString, SECTION_LABELS } from "@/lib/vod-index";
+import { hubForBrowse } from '@/lib/site-navigation';
+import { EntityFaqSection } from '@/components/entity-faq';
 
 type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -24,12 +26,19 @@ type Props = {
 
 export const revalidate = 300;
 
-export const metadata: Metadata = titleMetadata({
+const defaultMetadata: Metadata = titleMetadata({
   title: "جستجوی فیلم و سریال",
   description: "موتور جستجوی فیلم و سریال سرونما؛ جستجو و فیلتر آرشیو بر اساس نام فارسی و اصلی، ژانر، سال، کشور، زبان، کیفیت و امتیاز IMDb.",
   pathname: "/browse",
   keywords: ["فهرست فیلم", "فهرست سریال", "جستجوی فیلم", "جستجوی سریال", "دانلود فیلم", "دانلود سریال", "فیلم جدید", "سریال جدید", "امتیاز IMDb"],
 });
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const params = normalizeParams(await searchParams);
+  const hub = hubForBrowse(params);
+  if (params.q) return { ...titleMetadata({ title: `جستجوی «${params.q.slice(0, 80)}» در فیلم‌ها و سریال‌ها`, description: 'نتایج جستجوی آرشیو سرونما همراه با پیشنهاد املایی و فیلترهای فیلم و سریال.', pathname: `/browse?q=${encodeURIComponent(params.q.slice(0, 120))}` }), robots: { index: false, follow: true } };
+  return hub ? titleMetadata({ title: hub.title, description: hub.description, pathname: hub.href }) : defaultMetadata;
+}
 
 export default async function BrowsePage({ searchParams }: Props) {
   const locale = await getLocale();
@@ -40,7 +49,7 @@ export default async function BrowsePage({ searchParams }: Props) {
   const batch = Math.min(5, Math.max(1, Math.floor(Number(params.batch)) || 1));
   const archiveQuery = new URLSearchParams(Object.entries(params).filter(([key]) => key !== "batch")).toString();
   const sectionTitle = t.home.sections[result.section as keyof typeof t.home.sections]?.title;
-  const title = locale === "fa" && result.section === "old-iranian-films" ? "فیلم‌های قدیمی ایرانی" : sectionTitle ?? SECTION_LABELS[result.section] ?? t.browse.titleFallback;
+  const title = locale === "fa" && result.section === "old-iranian-films" ? "فیلم‌های قدیمی ایرانی" : result.section === 'all' && ['movie', 'series'].includes(params.type) ? (params.type === 'movie' ? t.common.films : t.common.series) : sectionTitle ?? SECTION_LABELS[result.section] ?? t.browse.titleFallback;
 
   return (
     <main className={`shell ${styles.page}`} data-media-theme="cinema">
@@ -179,6 +188,10 @@ export default async function BrowsePage({ searchParams }: Props) {
             </Link>
           )}
         </nav>
+        <EntityFaqSection items={[
+          { question: `چطور در ${title} جستجو کنم؟`, answer: 'نام فارسی یا اصلی اثر را وارد کنید؛ پیشنهادهای املایی و فیلترهای نوع، ژانر، کشور، سال و امتیاز به محدودکردن انتخاب‌ها کمک می‌کنند. صفحهٔ مستقل هر اثر، اطلاعات عوامل و وضعیت نسخه‌ها را نشان می‌دهد.' },
+          { question: 'آیا همهٔ عنوان‌های این فهرست لینک پخش دارند؟', answer: 'خیر؛ فهرست شامل معرفی آثار و نسخه‌های ثبت‌شده است. وضعیت به‌زودی، منابع موجود و محدودیت دسترسی را در صفحهٔ همان فیلم یا سریال بررسی کنید.' },
+        ]} />
       </section>
     </main>
   );

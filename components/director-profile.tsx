@@ -7,6 +7,8 @@ import { absoluteUrl } from '@/lib/seo';
 import type { DirectorProfile } from '@/lib/creator-profile-types';
 import type { VodCard } from '@/lib/types';
 import styles from './creator-profiles.module.css';
+import { EntityFaqSection } from './entity-faq';
+import { directorFaqs } from '@/lib/entity-seo';
 
 export function DirectorProfileView({ profile }: { profile: DirectorProfile }) {
   const directed = new Set(profile.directedIds);
@@ -29,7 +31,8 @@ export function DirectorProfileView({ profile }: { profile: DirectorProfile }) {
       <p className={styles.note}>شامل بازیگری، نویسندگی، حضور مستند و سایر ارتباط‌های ثبت‌شده؛ حضور در این بخش به معنای کارگردانیِ اثر نیست.</p>
       {related.length ? <Works works={related} /> : <p className={styles.note}>ارتباطِ دیگری در آرشیو فعلی ثبت نشده است.</p>}
     </section>
-    <StructuredData data={{ '@context':'https://schema.org','@type':'ProfilePage',url:absoluteUrl(`/person/${profile.id}`),name:profile.nameFa,
+    <EntityFaqSection items={directorFaqs(profile)} />
+    <StructuredData data={{ '@context':'https://schema.org','@type':'ProfilePage','@id':absoluteUrl(`/person/${profile.id}#profile`),url:absoluteUrl(`/person/${profile.id}`),name:profile.nameFa,
       mainEntity:{'@type':'Person',name:profile.name,alternateName:profile.nameFa,description:profile.focusFa,image:profile.imageUrl,jobTitle:'Film director',
         sameAs:profile.sources.map(source=>source.url)} }} />
   </div></main>;

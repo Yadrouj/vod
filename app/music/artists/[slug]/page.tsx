@@ -16,6 +16,8 @@ import { CreatorProfileBio } from '@/components/creator-profile-bio';
 import { SingerRecordings } from '@/components/singer-recordings';
 import { CreatorPortrait } from '@/components/creator-portrait';
 import creatorStyles from '@/components/creator-profiles.module.css';
+import { EntityFaqSection } from '@/components/entity-faq';
+import { artistFaqs } from '@/lib/entity-seo';
 
 export const revalidate = 300;
 
@@ -24,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const profile = findSingerProfile(creators, slug);
   const artist = profile ? singerAsArtist(profile, tracksForSinger(index, profile)) : findMusicArtist(index, slug);
   if (!artist) return { title: "Artist not found" };
-  return artistMetadata(artist, artistTrackCount(artist));
+  return artistMetadata(artist, artistTrackCount(artist), profile?.name);
 }
 
 export default async function MusicArtistPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ page?: string; category?: string }> }) {
@@ -65,6 +67,7 @@ export default async function MusicArtistPage({ params, searchParams }: { params
           <div className="music-artist-hero-copy">
             <p>هنرمند · آرشیو موسیقی سرونما</p>
             <h1>{artist.name}</h1>
+            {profile && profile.name !== artist.name && <p lang="en" dir="ltr">{profile.name}</p>}
             <span>{allTracks.length.toLocaleString("fa-IR")} اثر · {activeCategory ? `فیلتر: ${activeCategory}` : artistCategories.slice(0, 4).join("، ") || "موسیقی"}</span>
             <div className="music-artist-hero-meta"><a href="#artist-tracks">{allTracks.length ? 'شنیدن آهنگ‌ها ↓' : 'وضعیت آرشیو ↓'}</a><Link href="/music/artists">همهٔ هنرمندان</Link>{profile && <Link href="/music/artists/top-100">۱۰۰ صدای برجسته</Link>}<a href={artist.profileSourceUrl || artist.sourceUrl} target="_blank" rel="noreferrer">منبع معرفی ↗</a></div>
           </div>
@@ -78,6 +81,7 @@ export default async function MusicArtistPage({ params, searchParams }: { params
         {profile && <CreatorProfileBio profile={profile} />}
         {allTracks.length > 0 ? <MusicArtistPlaylist key={`${artist.slug}-${page}-${activeCategory}`} artistName={artist.name} tracks={tracks.slice((page - 1) * 50, page * 50)} /> : <section id="artist-tracks" className={creatorStyles.bio}><h2>هنوز اثری در آرشیو سرونما نداریم</h2><p>معرفی و کاور آثار را در پایین ببینید. تا زمانی که فایلِ معتبری در آرشیو ثبت نشود، دکمهٔ پخش یا دانلود نمایش نمی‌دهیم.</p></section>}
         {profile && <SingerRecordings recordings={singerRecordings(profile, allTracks)} />}
+        <EntityFaqSection items={artistFaqs(artist, allTracks.length)} />
         {pages > 1 && <nav className={styles.tools} aria-label="صفحه‌بندی آهنگ‌ها">
           {page > 1 && <Link href={pageHref(page - 1)}>← قبلی</Link>}
           <span>صفحهٔ {page.toLocaleString("fa")} از {pages.toLocaleString("fa")}</span>

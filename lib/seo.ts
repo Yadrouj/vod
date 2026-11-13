@@ -3,6 +3,8 @@ import { BRAND_NAME } from "@/lib/brand";
 import { normalizeVodType } from "@/lib/catalog";
 import type { MusicArtist, MusicTrack } from "@/lib/music-types";
 import type { VodItem } from "@/lib/types";
+import { localizedTitle } from './title-display';
+import { contentRestriction } from './content-restrictions.mjs';
 
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://sarvnema.ir").replace(/\/$/u, "");
 
@@ -98,7 +100,7 @@ export function titleMetadata({
   const canonical = absoluteUrl(pathname);
   const images = image ? [{ url: image, alt: title }] : undefined;
   return {
-    title,
+    title: title.includes('سرونما') ? { absolute: title } : title,
     description: cleanSeoText(description, 170),
     keywords: uniqueSeoValues(keywords ?? []),
     alternates: { canonical },
@@ -108,15 +110,15 @@ export function titleMetadata({
 }
 
 export function vodMetadata(item: VodItem): Metadata {
-  const persianTitle = item.persianTitle?.trim();
-  const displayTitle = persianTitle && persianTitle !== item.title ? `${persianTitle} | ${item.title}` : item.title;
+  const persianTitle = localizedTitle(item, 'fa');
+  const original = item.originalTitle || item.title;
+  const displayTitle = persianTitle !== original ? `${persianTitle} (${original})` : original;
   const isSeries = normalizeVodType(item.type) === "series";
   const typeLabel = isSeries ? P.series : P.movie;
-  const hasFiles = item.links.length > 0;
-  const action = hasFiles
-    ? `${P.download} ${typeLabel} ${displayTitle} با کیفیت‌های موجود و ${P.online}`
-    : `${P.info} ${typeLabel} ${displayTitle} و ${P.linkStatus}`;
-  const description = `${action} در ${BRAND_NAME}; اطلاعات IMDb، ژانر، بازیگران، ${P.subtitle}، لینک منبع و امکان ${isSeries ? P.watchEpisodes : P.watchTogether}.`;
+  const hasFiles = !contentRestriction(item) && item.links.some(link => link.mediaKind !== 'trailer' && link.mediaKind !== 'subtitle'
+    && !/trailer|teaser|\.srt(?:$|[?#])/i.test(link.url));
+  const facts = [item.year, ...(item.persianGenres || item.genres || []).slice(0, 2)].filter(Boolean).join('، ');
+  const description = `${typeLabel} ${displayTitle}${facts ? `؛ ${facts}` : ''}. ${cleanSeoText(item.persianOverview || item.overview, 75) || `${P.info} اثر و بازیگران`}. ${hasFiles ? 'نسخه‌ها و کیفیت‌های موجود، منابع پخش و دانلود' : 'معرفی، عوامل و وضعیت دسترسی به نسخه‌ها'} در ${BRAND_NAME}.`;
   const keywords = uniqueSeoValues([
     `${hasFiles ? P.download : P.info} ${typeLabel} ${persianTitle || item.title}`,
     `${hasFiles ? "download" : "info"} ${item.title}`,
@@ -128,12 +130,13 @@ export function vodMetadata(item: VodItem): Metadata {
     P.watchTogether,
     "watch together فارسی",
   ]);
-  return titleMetadata({ title: `${displayTitle}; ${hasFiles ? P.download : P.info} ${typeLabel}`, description, pathname: `/${item.imdbCode}`, image: item.posterUrl || item.backdropUrl, keywords });
+  return titleMetadata({ title: `${typeLabel} ${displayTitle}${item.year ? ` (${item.year})` : ''}؛ داستان، بازیگران و ${isSeries ? 'قسمت‌ها' : 'نسخه‌ها'}`, description, pathname: `/${item.imdbCode || item.id}`, image: item.posterUrl || item.backdropUrl, keywords });
 }
 
 export function musicMetadata(track: MusicTrack): Metadata {
   const artistNames = track.artists.map((artist) => artist.name).join(", ");
-  const title = track.persianTitle || track.title;
+  const primary = track.persianTitle || track.title;
+  const title = primary !== track.title ? `${primary} (${track.title})` : primary;
   const kindLabel = track.kind === "video" ? P.musicVideo : P.song;
   const description = `${kindLabel} ${title} از ${artistNames || P.iranianArtist}; پخش آنلاین، لینک منبع، اطلاعات ${P.album} و ${P.listenTogether} در ${BRAND_NAME}.`;
   const keywords = uniqueSeoValues([
@@ -146,13 +149,13 @@ export function musicMetadata(track: MusicTrack): Metadata {
     "listen together فارسی",
     fa("0634-0646-06cc-062f-0646-0020-0647-0645-0632-0645-0627-0646-0020-0622-0647-0646-06af-0020-0628-0627-0020-062f-0648-0633-062a-0627-0646"),
   ]);
-  return titleMetadata({ title: `${title}; ${kindLabel} و پخش آنلاین`, description, pathname: `/music/${track.id}`, image: track.coverUrl, keywords });
+  return titleMetadata({ title: `${title}${artistNames ? ` از ${artistNames}` : ''}؛ ${kindLabel} و پخش آنلاین`, description, pathname: `/music/${track.id}`, image: track.coverUrl, keywords });
 }
 
-export function artistMetadata(artist: MusicArtist, trackCount: number): Metadata {
-  const name = artist.name;
+export function artistMetadata(artist: MusicArtist, trackCount: number, originalName?: string): Metadata {
+  const name = originalName && originalName !== artist.name ? `${artist.name} (${originalName})` : artist.name;
   if (trackCount === 0) return titleMetadata({title:`${name}؛ معرفی و آثار`,description:artist.bio || `معرفی ${name} و انتشارهای مرتبط؛ هنوز فایل قابل‌پخشی از این هنرمند در آرشیو سرونما نداریم.`,pathname:`/music/artists/${encodeURIComponent(artist.slug)}`,image:artist.profileImageUrl || artist.coverUrl,keywords:[name,'معرفی خواننده','آثار هنرمند']});
-  const description = `${P.songs} ${name}; پخش آنلاین و ${P.downloadSong}، ${P.albums}، ${P.musicVideo}ها و پلی‌لیست‌های مرتبط در ${BRAND_NAME}. ${trackCount.toLocaleString("fa-IR")} اثر از آرشیو موسیقی.`;
+  const description = `${name}؛ ${cleanSeoText(artist.bio, 80) || 'معرفی هنرمند و فهرست آثار موسیقی'}. ${trackCount.toLocaleString("fa-IR")} اثر ثبت‌شده در آرشیو سرونما؛ اطلاعات آهنگ‌ها، آلبوم‌ها، منابع و پخش آنلاین.`;
   const keywords = uniqueSeoValues([
     `${P.songs} ${name}`,
     `${P.downloadSong} ${name}`,
@@ -162,7 +165,7 @@ export function artistMetadata(artist: MusicArtist, trackCount: number): Metadat
     `${P.bestSongs} ${name}`,
     "شنیدن همزمان موسیقی",
   ]);
-  return titleMetadata({ title: `${P.songs} ${name}; ${P.downloadSong} و پخش آنلاین`, description, pathname: `/music/artists/${encodeURIComponent(artist.slug)}`, image: artist.profileImageUrl || artist.coverUrl, keywords });
+  return titleMetadata({ title: `${name}؛ بیوگرافی، آهنگ‌ها و آلبوم‌ها`, description, pathname: `/music/artists/${encodeURIComponent(artist.slug)}`, image: artist.profileImageUrl || artist.coverUrl, keywords });
 }
 
 export function breadcrumbJsonLd(items: { name: string; pathname: string }[]) {
@@ -178,16 +181,16 @@ export function vodJsonLd(item: VodItem) {
     "@type": isSeries ? "TVSeries" : "Movie",
     "@id": absoluteUrl(`/${item.imdbCode}#title`),
     url: absoluteUrl(`/${item.imdbCode}`),
-    name: item.title,
-    alternateName: item.persianTitle || undefined,
+    name: localizedTitle(item, 'fa'),
+    alternateName: uniqueSeoValues([item.originalTitle, item.title, item.persianTitle]).filter(name => name !== localizedTitle(item, 'fa')),
     description: cleanSeoText(item.persianOverview || item.overview, 500) || undefined,
-    image: uniqueSeoValues([item.posterUrl, item.backdropUrl]),
+    image: uniqueSeoValues([item.posterUrl, item.backdropUrl].map(schemaMediaUrl)),
     dateCreated: item.year ? String(item.year) : undefined,
     genre: uniqueSeoValues([...(item.persianGenres || []), ...(item.genres || [])]),
     countryOfOrigin: (item.persianCountries || item.countries || []).map((name) => ({ "@type": "Country", name })),
-    actor: (item.credits || []).filter((credit) => /actor|actress|cast/i.test(credit.category)).slice(0, 12).map((credit) => ({ "@type": "Person", name: credit.name_text, image: credit.name_image_url || undefined })),
-    director: (item.credits || []).filter((credit) => /director/i.test(credit.category)).slice(0, 3).map((credit) => ({ "@type": "Person", name: credit.name_text })),
-    potentialAction: item.links.length ? { "@type": "WatchAction", target: absoluteUrl(`/watch/${item.imdbCode}`) } : undefined,
+    actor: (item.credits || []).filter((credit) => /actor|actress|cast|stars?/i.test(credit.category)).slice(0, 12).map((credit) => ({ "@type": "Person", name: credit.name_text, image: schemaMediaUrl(credit.name_image_url), url: credit.name_id ? absoluteUrl(`/person/${encodeURIComponent(credit.name_id)}`) : undefined })),
+    director: (item.credits || []).filter((credit) => /director/i.test(credit.category)).slice(0, 3).map((credit) => ({ "@type": "Person", name: credit.name_text, url: credit.name_id ? absoluteUrl(`/person/${encodeURIComponent(credit.name_id)}`) : undefined })),
+    potentialAction: item.links.length && !contentRestriction(item) ? { "@type": "WatchAction", target: absoluteUrl(`/watch/${item.imdbCode}`) } : undefined,
   };
   if (item.imdbRating && item.imdbVotes) entity.aggregateRating = { "@type": "AggregateRating", ratingValue: item.imdbRating, ratingCount: item.imdbVotes, bestRating: 10, worstRating: 1 };
   return { "@context": "https://schema.org", "@graph": [entity, breadcrumbJsonLd([{ name: P.home, pathname: "/" }, { name: isSeries ? P.seriesPlural : P.films, pathname: `/browse?type=${isSeries ? "series" : "movie"}` }, { name: item.title, pathname: `/${item.imdbCode}` }])] };

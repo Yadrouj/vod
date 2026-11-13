@@ -2,9 +2,12 @@ import Link from "next/link";
 import { DEFAULT_LOCALE, formatNumber, getDictionary, type Locale } from "@/lib/i18n";
 import { sizedImageUrl } from "@/lib/image-url";
 import type { TopPerson } from "@/lib/top-people";
+import { personIdentity } from '@/lib/person-names';
 
 export function PersonCard({ person, locale = DEFAULT_LOCALE, rank }: { person: TopPerson; locale?: Locale; rank?: number }) {
   const t = getDictionary(locale);
+  const identity = personIdentity(person);
+  const name = locale === 'fa' ? identity.nameFa : identity.name;
   const meta = [
     person.age ? `${formatNumber(person.age, locale)} ${t.people.age}` : null,
     `${formatNumber(person.worksCount, locale)} ${t.people.works}`,
@@ -15,13 +18,13 @@ export function PersonCard({ person, locale = DEFAULT_LOCALE, rank }: { person: 
       <span className="person-rank">{rank ? String(rank).padStart(2, "0") : formatNumber(person.popularityScore, locale)}</span>
       <span className="person-avatar">
         {person.imageUrl ? (
-          <img src={sizedImageUrl(person.imageUrl, 180) ?? person.imageUrl} alt={person.name} loading="lazy" decoding="async" />
+          <img src={sizedImageUrl(person.imageUrl, 180) ?? person.imageUrl} alt={name} loading="lazy" decoding="async" />
         ) : (
           <span>{person.name.slice(0, 1)}</span>
         )}
       </span>
       <span className="person-card-copy">
-        <strong>{person.name}</strong>
+        <strong>{name}</strong>
         <small>{person.categories.slice(0, 2).join(" / ") || t.people.actor}</small>
       </span>
       <small className="person-card-meta">{meta}</small>

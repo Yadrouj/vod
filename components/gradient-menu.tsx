@@ -7,6 +7,7 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { LandingActivity } from "@/components/landing-activity";
 import { LandingSearchLauncher } from "@/components/lazy-discovery-search";
 import { formatNumber, getDictionary, type Locale } from "@/lib/i18n";
+import { PRIMARY_SECTIONS } from '@/lib/site-navigation';
 
 export type MegaMenuItem = {
   imdbCode: string;
@@ -39,15 +40,7 @@ export function GradientMenu({
   activity?: boolean;
 }) {
   const t = getDictionary(locale);
-  const menuItems = [
-    { href: "/mag", label: locale === "fa" ? "مجله" : "Magazine" },
-    { href: "/music", label: locale === "fa" ? "موسیقی" : "Music" },
-    { href: "/browse?section=top-imdb", label: t.nav.topImdb },
-    { href: "/browse?section=recent-films", label: t.nav.films },
-    { href: "/browse?section=best-series", label: t.nav.series },
-    { href: "/browse?section=animation", label: t.nav.animation },
-    { href: "/browse?section=persian-movies", label: t.common.persianMovies },
-  ];
+  const menuItems = PRIMARY_SECTIONS.map(item => ({ href: item.href, label: locale === 'fa' ? item.label : item.labelEn }));
 
 
   return (

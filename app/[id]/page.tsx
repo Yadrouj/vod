@@ -27,6 +27,8 @@ import styles from "./detail.module.css";
 import { validPublisherPlayer } from "@/lib/publisher-player";
 import { contentRestriction } from '@/lib/content-restrictions.mjs';
 import { RestrictedTitleActions } from '@/components/restricted-title-actions';
+import { EntityFaqSection } from '@/components/entity-faq';
+import { vodFaqs } from '@/lib/entity-seo';
 
 type Props = { params: Promise<{ id: string }> };
 export const revalidate = 300;
@@ -133,6 +135,7 @@ export default async function DetailPage({ params }: Props) {
       </section>
       <main className={styles.content}>
         <TitleTabs key={item.imdbCode} item={toTitleTabsItem(item)} isSeries={isSeries} seasons={seasons} movieFiles={movieFiles} playbackUrls={playable.map(link => link.url)} episodePlayback={Object.fromEntries([...playable].reverse().filter(link => link.season && link.episode).map(link => [`${link.season}:${link.episode}`, link.url]))} locale={locale} />
+        <EntityFaqSection items={vodFaqs(item)} />
       </main>
       <nav className={styles.mobileDock} aria-label={fa ? "دسترسی سریع پخش و دانلود" : "Quick playback and downloads"}>
         {canPlay && <Link className={styles.dockPlay} href={watchHref}><Play size={19} fill="currentColor" aria-hidden="true" />{t.common.playOnline}</Link>}

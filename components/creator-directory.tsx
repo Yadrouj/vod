@@ -6,6 +6,7 @@ import { absoluteUrl } from '@/lib/seo';
 import { identityKey } from '@/lib/creator-identities.mjs';
 import type { DirectorProfile, SingerProfile } from '@/lib/creator-profile-types';
 import styles from './creator-profiles.module.css';
+import { EntityFaqSection } from './entity-faq';
 
 export function CreatorDirectory({ profiles, kind, query, available }: { profiles: DirectorProfile[] | SingerProfile[]; kind: 'director' | 'singer'; query: string; available: boolean }) {
   const music = kind === 'singer';
@@ -35,6 +36,10 @@ export function CreatorDirectory({ profiles, kind, query, available }: { profile
         <small>{worksCount(profile) ? `${worksCount(profile).toLocaleString('fa-IR')} اثر در سرونما` : 'معرفی و آثار پیشنهادی'}</small>
       </Link>)}</div>
       {!visible.length && <p className={styles.note}>با این فیلتر چهره‌ای پیدا نشد. نام دیگری بنویسید یا فیلتر را بردارید.</p>}
+      <EntityFaqSection items={[
+        { question: `این فهرست ${noun}‌ها چگونه انتخاب شده است؟`, answer: 'انتخاب تحریریهٔ سرونما برای کشف و آشنایی با هنرمندان است؛ ترتیب کارت‌ها رتبه‌بندی رسمی یا ادعای بهترین‌بودن نیست. منابع معرفی و تصویر در صفحهٔ هر فرد آمده‌اند.' },
+        { question: `چطور آثار یک ${noun} را پیدا کنم؟`, answer: 'نام فارسی یا اصلی را جستجو کنید و وارد پروفایل شوید. آثار موجود به صفحهٔ مستقل خود در سرونما لینک دارند؛ معرفی اثری که فایل ندارد به معنی امکان پخش آن نیست.' },
+      ]} />
       <StructuredData data={{ '@context':'https://schema.org','@type':'CollectionPage',name:`۱۰۰ ${noun} برجسته`,url:absoluteUrl(base),
         mainEntity: { '@type':'ItemList', itemListOrder:'https://schema.org/ItemListUnordered',numberOfItems:visible.length,
           itemListElement:visible.map(profile => ({'@type':'ListItem',item:{'@type':'ProfilePage',name:profile.nameFa,url:absoluteUrl(profile.kind === 'director' ? `/person/${profile.id}` : `/music/artists/${profile.slug}`)}})) } }} />

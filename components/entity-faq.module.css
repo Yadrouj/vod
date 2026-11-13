@@ -1,0 +1,6 @@
+.faq { margin: 2rem 0; padding: clamp(1rem, 3vw, 2rem); border: 1px solid #ffffff16; border-radius: 1.25rem; background: #ffffff04; overflow-wrap: anywhere; }
+.faq h2 { font-size: clamp(1.1rem, 3vw, 1.4rem); margin: 0 0 1rem; }
+.faq details { border-top: 1px solid #ffffff12; padding: .9rem 0; }
+.faq summary { cursor: pointer; line-height: 1.9; font-weight: 600; }
+.faq summary:focus-visible { outline: 2px solid #e8ca70; outline-offset: 5px; }
+.faq p { color: #cbc9c0; line-height: 2; max-width: 80ch; margin-bottom: 0; }

@@ -3,13 +3,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
-import { formatNumber, getDictionary, interpolate, typeLabel } from "@/lib/i18n";
+import { formatNumber, getDictionary, typeLabel } from "@/lib/i18n";
 import { findPerson } from "@/lib/people";
 import { getLocale } from "@/lib/server-locale";
 import type { VodCard, VodPerson } from "@/lib/types";
 import { loadCreatorProfiles } from '@/lib/creator-profiles';
 import { DirectorProfileView } from '@/components/director-profile';
-import { titleMetadata } from '@/lib/seo';
+import { directorMetadata, personMetadata, personIntroduction, personFaqs, personJsonLd } from '@/lib/entity-seo';
+import { personIdentity } from '@/lib/person-names';
+import { localizedTitle } from '@/lib/title-display';
+import { StructuredData } from '@/components/structured-data';
+import { EntityFaqSection } from '@/components/entity-faq';
 import type { Metadata } from 'next';
 
 type Props = {
@@ -19,9 +23,9 @@ type Props = {
 export async function generateMetadata({params}:Props):Promise<Metadata> {
   const [{id},data]=await Promise.all([decodedParams(params),loadCreatorProfiles()]);
   const profile=data.directors.find(person=>person.personIds.includes(id));
-  if(profile) return titleMetadata({title:`${profile.nameFa} | ${profile.name}؛ معرفی و فیلم‌ها`,description:profile.focusFa,pathname:`/person/${profile.id}`,image:profile.imageUrl});
+  if(profile) return directorMetadata(profile);
   const person=await findPerson(id);
-  return person ? titleMetadata({title:person.name,description:`معرفی ${person.name} و آثار مرتبط در سرونما`,pathname:`/person/${id}`,image:person.imageUrl}) : {title:'Person not found'};
+  return person ? personMetadata(person) : {title:'فرد پیدا نشد', robots: { index: false, follow: true }};
 }
 
 export default async function PersonPage({ params }: Props) {
@@ -33,6 +37,8 @@ export default async function PersonPage({ params }: Props) {
   if (director) return <DirectorProfileView profile={director} />;
   const person = await findPerson(id);
   if (!person) notFound();
+  const identity = personIdentity(person);
+  const name = locale === 'fa' ? identity.nameFa : identity.name;
   const stats = personStats(person);
   const works = [...person.items].sort(
     (a, b) => (b.year ?? 0) - (a.year ?? 0) || (b.imdbRating ?? 0) - (a.imdbRating ?? 0)
@@ -40,6 +46,7 @@ export default async function PersonPage({ params }: Props) {
 
   return (
     <main className="shell" data-media-theme="cinema">
+      <StructuredData data={personJsonLd(person)} />
       <section className="person-hero person-page-hero">
         <div className="wrap">
           <header className="topbar person-topbar">
@@ -49,7 +56,7 @@ export default async function PersonPage({ params }: Props) {
               <span aria-hidden="true">/</span>
               <Link href="/people">{t.people.people}</Link>
               <span aria-hidden="true">/</span>
-              <span className="breadcrumb-current" aria-current="page">{person.name}</span>
+              <span className="breadcrumb-current" aria-current="page">{name}</span>
             </nav>
             <div className="topbar-actions person-topbar-actions">
               <LanguageToggle locale={locale} />
@@ -67,12 +74,12 @@ export default async function PersonPage({ params }: Props) {
                 )}
                 <div>
                   <p className="label">{person.categories.join(" / ")}</p>
-                  <h1>{person.name}</h1>
+                  <h1>{name}</h1>
+                  {identity.name !== name && <p lang="en" dir="ltr">{identity.name}</p>}
                   <div className="person-inline-stats">
                     <span>{formatNumber(person.items.length, locale)} {t.people.works}</span>
                     <span>{formatNumber(stats.movies, locale)} {t.people.movies}</span>
                     <span>{formatNumber(stats.series, locale)} {t.people.series}</span>
-                    <span>{t.people.age}: -</span>
                   </div>
                 </div>
               </div>
@@ -80,7 +87,7 @@ export default async function PersonPage({ params }: Props) {
                 <p className="label">{t.people.history}</p>
                 <h2>{t.people.career}</h2>
                 <p className="muted">
-                  {interpolate(t.people.historyNote, { name: person.name, count: formatNumber(person.items.length, locale) })}
+                  {personIntroduction(person)}
                 </p>
                 <div className="person-genre-line">{stats.genres.slice(0, 5).join(" / ")}</div>
               </div>
@@ -103,7 +110,7 @@ export default async function PersonPage({ params }: Props) {
                   >
                     <span className="person-work-shade" />
                     <span className="person-work-copy">
-                      <strong>{item.title}</strong>
+                      <strong>{localizedTitle(item, locale)}</strong>
                       <small>{[item.year ?? "-", typeLabel(item.type, locale), item.imdbRating ? `IMDb ${item.imdbRating.toFixed(1)}` : null].filter(Boolean).join(" / ")}</small>
                     </span>
                   </Link>
@@ -111,6 +118,8 @@ export default async function PersonPage({ params }: Props) {
               </div>
             </section>
           </div>
+          <EntityFaqSection items={personFaqs(person)} />
+          {identity.source && <p><a href={identity.source} target="_blank" rel="noreferrer">منبع نام فارسی و اصلی · ویکی‌داده</a></p>}
         </div>
       </section>
     </main>

@@ -5,6 +5,7 @@ import { loadVodIndex } from "@/lib/vod-index";
 import { loadMoodPlaylists } from '@/lib/mood-playlists';
 import { loadCreatorProfiles } from '@/lib/creator-profiles';
 import { normalizeSitemapEntries, sitemapDate } from './sitemap-values';
+import { CATALOG_HUBS } from './site-navigation';
 
 // Stay below Google's 50,000-URL / 50MB sitemap limit while leaving room for
 // route growth. robots.txt advertises every generated part.
@@ -41,6 +42,7 @@ async function allEntries(): Promise<SitemapEntry[]> {
   const entries: SitemapEntry[] = [
     entry("/", vodUpdatedAt, 1, "daily"),
     entry("/browse", vodUpdatedAt, 0.9, "daily"),
+    ...Object.values(CATALOG_HUBS).map(hub => entry(hub.href, vodUpdatedAt, 0.9, 'daily')),
     entry('/developers', vodUpdatedAt, 0.6, 'monthly'),
     entry("/kids", vodUpdatedAt, 0.8, "weekly"),
     entry("/kids/learn", vodUpdatedAt, 0.75, "weekly"),

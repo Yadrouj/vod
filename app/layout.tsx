@@ -12,6 +12,7 @@ import { isRtl } from "@/lib/i18n";
 import { siteJsonLd } from "@/lib/landing-seo";
 import { getLocale } from "@/lib/server-locale";
 import { SITE_URL } from "@/lib/seo";
+import { SiteSectionLinks } from '@/components/site-section-links';
 import "./globals.css";
 import "./watch-together-overrides.css";
 import "./mobile-ux-overrides.css";
@@ -79,6 +80,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <NavigationFeedback />
         </Suspense>
         <AudienceBoundary measurementId={googleAnalyticsId} adultChrome={<>
+          <SiteSectionLinks />
           <MobileAppShell locale={locale} />
           <WatchTogetherLauncher locale={locale} />
           <AppMessageCenter />

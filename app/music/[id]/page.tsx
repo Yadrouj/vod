@@ -8,6 +8,8 @@ import { findMusicTrack, loadMusicIndex, relatedMusic } from "@/lib/music";
 import { musicJsonLd, musicMetadata } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import styles from "./music-detail.module.css";
+import { EntityFaqSection } from '@/components/entity-faq';
+import { musicFaqs } from '@/lib/entity-seo';
 
 export const revalidate = 300;
 
@@ -35,6 +37,7 @@ export default async function MusicDetailPage({ params }: { params: Promise<{ id
         </section>
 
         <details className={styles.about}><summary>دربارهٔ این اثر <span>{track.category}</span></summary><p>{track.description}</p><a href={track.sourceUrl} target="_blank" rel="noreferrer">منبع اثر <ExternalLink size={14} /></a></details>
+        <EntityFaqSection items={musicFaqs(track)} />
 
         {more.length > 0 && (
           <section className={styles.related}>
