@@ -10,6 +10,8 @@ import { sizedImageUrl } from "@/lib/image-url";
 import type { DownloadSource, EpisodeDownload, ExpandedSeasonDownloads, SeasonSummary } from "@/lib/downloads";
 import { contentRestriction, restrictionMessage } from '@/lib/content-restrictions.mjs';
 import { showAppMessage } from '@/lib/app-messages';
+import { ReleaseVersionSelector } from './release-version-selector';
+import { sortedQualities, releaseKind, releaseKindLabels } from '@/lib/release-options';
 
 type DownloadBrowserProps = {
   itemId: string; title: string; isSeries: boolean; seasons: SeasonSummary[];
@@ -51,17 +53,17 @@ export function DownloadBrowser({ itemId, title, isSeries, seasons, movieFiles, 
   const loading = isSeries && seasons.length > 0 && !activeData && !error;
 
   const intro = <div className="download-intro"><div>
-    <h2>{fa ? isSeries ? "فصل و قسمت را انتخاب کنید" : "با کدام کیفیت؟" : isSeries ? "Choose your episode" : "Choose your quality"}</h2>
+    <h2>{fa ? isSeries ? "فصل و قسمت را انتخاب کنید" : "نوع نسخه، سپس کیفیت" : isSeries ? "Choose your episode" : "Choose version, then quality"}</h2>
     <p>{fa ? "پخش داخل سرونما؛ دانلود از منبع در تب جدید. کیفیت و زبان هر نسخه را بررسی کنید." : "Watch on SarvNema or download from the source in a new tab. Check each version’s quality and language."}</p>
   </div></div>;
   const empty = <p className="download-empty">{fa ? "هنوز لینک دانلودی برای این عنوان ثبت نشده است." : "No download links are available for this title yet."}</p>;
 
   if (!isSeries || seasons.length === 0) return <div className="download-browser movie-download-browser">
     {intro}
-    {!!movieFiles.length && <LinkBundle files={movieFiles.map(file => ({ url: file.url, quality: file.quality, group: file.group, label: file.label }))} title={title} fileName={title} locale={locale} />}
+    {!!movieFiles.length && <details className="download-export"><summary>{fa ? 'کپی یا دانلود فهرست لینک‌ها' : 'Copy or download a link list'}</summary><LinkBundle files={movieFiles.map(file => ({ url: file.url, quality: file.quality, group: file.group, label: file.label }))} title={title} fileName={title} locale={locale} /></details>}
     {!movieFiles.length ? empty : <div className="movie-file-list">
-      {movieFiles.slice(0, visibleFiles).map((file, index) => <FileRow key={`${file.url}-${index}`} file={file} itemId={itemId} title={title} posterUrl={fallbackImage} canPlay={playable.has(file.url)} locale={locale} />)}
-      {movieFiles.length > visibleFiles && <button className="download-retry" type="button" onClick={() => setVisibleFiles(count => count + 8)}>{fa ? "نمایش کیفیت‌ها و منابع بیشتر" : "More qualities & sources"} <ChevronDown size={17} /></button>}
+      <ReleaseVersionSelector files={movieFiles} locale={locale}>{selected => <>{selected.slice(0, visibleFiles).map((file, index) => <FileRow key={`${file.url}-${index}`} file={file} itemId={itemId} title={title} posterUrl={fallbackImage} canPlay={playable.has(file.url)} locale={locale} />)}
+      {selected.length > visibleFiles && <button className="download-retry" type="button" onClick={() => setVisibleFiles(count => count + 8)}>{fa ? "نمایش منابع بیشتر" : "More sources"} <ChevronDown size={17} /></button>}</>}</ReleaseVersionSelector>
     </div>}
   </div>;
 
@@ -80,12 +82,12 @@ export function DownloadBrowser({ itemId, title, isSeries, seasons, movieFiles, 
       {loading && <div className="episode-list" role="status" aria-label={t.common.loading}>{[0,1,2].map(n => <div key={n} className="episode-row episode-skeleton" />)}</div>}
       {error && <div role="alert"><p className="download-error">{error}</p><button className="download-retry" type="button" onClick={() => { setErrors(current => ({ ...current, [activeSeason]: "" })); setRetry(n => n + 1); }}>{fa ? "تلاش دوباره" : "Try again"}</button></div>}
       {activeData && <>
-        <LinkBundle
+        <details className="download-export"><summary>{fa ? 'کپی یا دانلود لینک‌های فصل' : 'Copy or download season links'}</summary><LinkBundle
           files={activeData.episodes.flatMap(episode => episode.files.map(file => ({ url: file.url, quality: file.quality, group: file.group, label: `${episode.code} · ${file.name}` })))}
           title={`${title} · Season ${activeSeason}`}
           fileName={`${title}-S${String(activeSeason).padStart(2, "0")}`}
           locale={locale}
-        />
+        /></details>
         {!activeData.episodes.length ? empty : <div className="episode-list">
           {activeData.episodes.map(episode => <EpisodeRow key={`${episode.season}-${episode.episode ?? "pack"}`} episode={episode} itemId={itemId} seriesTitle={title} fallbackImage={fallbackImage} playable={playable} playUrl={episodePlayback[`${episode.season}:${episode.episode}`]} locale={locale} />)}
         </div>}
@@ -100,7 +102,7 @@ function LinkBundle({ files, title, fileName, locale }: { files: BundleLink[]; t
   const [selectedQuality, setSelectedQuality] = useState("all");
   const [copied, setCopied] = useState(false);
   const groups = useMemo(() => Array.from(new Set(files.map(file => file.group).filter(Boolean))).sort(), [files]);
-  const qualities = useMemo(() => Array.from(new Set(files.map(file => file.quality).filter((quality): quality is string => Boolean(quality)))).sort(), [files]);
+  const qualities = useMemo(() => sortedQualities(files.filter(file => selectedGroup === 'all' || file.group === selectedGroup).map(file => file.quality)), [files, selectedGroup]);
   const group = selectedGroup === "all" || groups.includes(selectedGroup) ? selectedGroup : "all";
   const quality = selectedQuality === "all" || qualities.includes(selectedQuality) ? selectedQuality : "all";
   const filtered = useMemo(() => files.filter(file => (group === "all" || file.group === group) && (quality === "all" || file.quality === quality)), [files, group, quality]);
@@ -144,11 +146,10 @@ function LinkBundle({ files, title, fileName, locale }: { files: BundleLink[]; t
 }
 
 function groupLabel(value: string, fa: boolean) {
-  if (!fa) return value;
-  return ({ Dubbed: "دوبله", HardSub: "هاردساب", SoftSub: "سافت‌ساب" } as Record<string, string>)[value] ?? value;
+  return releaseKindLabels[releaseKind(value)][fa ? 0 : 1];
 }
 
-function EpisodeRow({ episode, itemId, seriesTitle, fallbackImage, playable, playUrl, locale }: { episode: EpisodeDownload; itemId: string; seriesTitle: string; fallbackImage: string | null; playable: Set<string>; playUrl?: string; locale: Locale }) {
+function EpisodeRow({ episode, itemId, seriesTitle, fallbackImage, playable, locale }: { episode: EpisodeDownload; itemId: string; seriesTitle: string; fallbackImage: string | null; playable: Set<string>; playUrl?: string; locale: Locale }) {
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(6);
   const [imageFailed, setImageFailed] = useState(false);
@@ -174,9 +175,8 @@ function EpisodeRow({ episode, itemId, seriesTitle, fallbackImage, playable, pla
     {open && <>
       {episode.summary && <p className="episode-summary">{episode.summary}</p>}
       <div className="episode-quality-list">
-        {playUrl && <Link className="file-play" href={`/watch/${itemId}?resume=${encodeURIComponent(playUrl)}`}><Play size={16} fill="currentColor" aria-hidden="true" />{fa ? "پخش آنلاین" : "Watch online"} · {identity}</Link>}
-        {episode.files.slice(0, visible).map((file, i) => <FileRow key={`${file.url}-${i}`} file={{ ...file, label: file.sourceLabel || file.name }} itemId={itemId} title={`${seriesTitle} · ${identity}`} posterUrl={image} canPlay={playable.has(file.url)} locale={locale} />)}
-        {episode.files.length > visible && <button type="button" className="download-retry" onClick={() => setVisible(n => n + 6)}>{fa ? "کیفیت‌ها و منابع بیشتر" : "More qualities & sources"}<ChevronDown size={17} aria-hidden="true" /></button>}
+        <ReleaseVersionSelector files={episode.files} locale={locale}>{selected => <>{selected.slice(0, visible).map((file, i) => <FileRow key={`${file.url}-${i}`} file={{ ...file, label: file.sourceLabel || file.name }} itemId={itemId} title={`${seriesTitle} · ${identity}`} posterUrl={image} canPlay={playable.has(file.url)} locale={locale} />)}
+        {selected.length > visible && <button type="button" className="download-retry" onClick={() => setVisible(n => n + 6)}>{fa ? "منابع بیشتر" : "More sources"}<ChevronDown size={17} aria-hidden="true" /></button>}</>}</ReleaseVersionSelector>
       </div>
     </>}
   </details>;
@@ -184,7 +184,7 @@ function EpisodeRow({ episode, itemId, seriesTitle, fallbackImage, playable, pla
 
 function FileRow({ file, itemId, title, posterUrl, canPlay, locale }: { file: DownloadSource; itemId: string; title: string; posterUrl: string | null; canPlay: boolean; locale: Locale }) {
   const fa = locale === "fa";
-  const group = fa ? ({ Dubbed: "دوبله فارسی", HardSub: "زیرنویس چسبیده", SoftSub: "زیرنویس نرم" }[file.group] ?? file.group) : file.group;
+  const group = releaseKindLabels[releaseKind(file.group)][fa ? 0 : 1];
   const identity = [file.quality, group, file.release].filter(value => value && !/^(file|files|unknown)$/i.test(value)).join(" · ");
   return <div className="movie-file-row">
     <div className="file-info"><strong dir="auto">{identity || (fa ? "لینک منبع" : "Source link")}</strong>

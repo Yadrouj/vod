@@ -112,6 +112,6 @@ export function NavigationFeedback() {
   return (
     <><div className="route-progress" aria-hidden="true">
       <span />
-    </div><div ref={status} className="route-status" role="status" aria-live="polite" /></>
+    </div><div data-nosnippet="" ref={status} className="route-status" role="status" aria-live="polite" /></>
   );
 }

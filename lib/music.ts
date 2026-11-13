@@ -5,6 +5,7 @@ import { compareMusicPopularityYear } from "./music-search-ranking";
 import { mergeMelodifyCatalog, withRecoveredMusicSources } from "./music-library-merge";
 import { searchText, TypoSearchIndex, type SearchMatches } from "./typo-search";
 import type { MusicArtist, MusicArtistIndex, MusicIndex, MusicLandingIndex, MusicTrack } from "@/lib/music-types";
+import { sousanLibrary } from './sousan-collection';
 
 const DATA_FILE = path.join(process.cwd(), "public", "data", "music-index.json");
 const LANDING_DATA_FILE = path.join(process.cwd(), "public", "data", "music-landing.json");
@@ -436,7 +437,7 @@ async function loadMelodifyCatalog(expectedMtimeMs?: number): Promise<MusicIndex
         melodifyCache.value = Promise.all([
           readFile(MELODIFY_DATA_FILE, "utf8").then((data) => JSON.parse(data) as MusicIndex).catch(() => emptyIndex),
           loadHostedMusic(),
-        ]).then(([base, hosted]) => combineMusicLibraries(base, hosted));
+        ]).then(([base, hosted]) => combineMusicLibraries(combineMusicLibraries(base, hosted), sousanLibrary));
       }
       return await melodifyCache.value;
     } catch {

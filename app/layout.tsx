@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: "سرونما | موتور جستجوی فیلم، سریال و موسیقی",
-    template: `%s | ${BRAND_NAME}`,
+    template: '%s | سرونما',
   },
   description: "سرونما، موتور جستجوی فیلم، سریال و موسیقی؛ جستجو بر اساس نام، ژانر، سال و امتیاز IMDb، مقایسهٔ منابع و کیفیت‌ها، پخش آنلاین و تجربهٔ تماشای هم‌زمان.",
   alternates: { canonical: "/" },

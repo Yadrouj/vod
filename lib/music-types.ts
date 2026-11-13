@@ -5,7 +5,7 @@ export type MusicSource = {
   label: string;
   quality?: string | null;
   kind: "stream" | "download";
-  provider?: "rozmusic" | "musics-fa" | "remiixbaz" | "worldofmusic" | "download1music" | "sevilmusics" | "aftabmusic" | "musics-mehr" | "melodify" | "meloobit" | "sarvnema-hosted";
+  provider?: "rozmusic" | "musics-fa" | "remiixbaz" | "worldofmusic" | "download1music" | "sevilmusics" | "aftabmusic" | "musics-mehr" | "melodify" | "meloobit" | "sarvnema-hosted" | "avajavan";
   /** Original provider page, retained when identical releases share one archive ID. */
   sourcePageUrl?: string;
   basePath?: string | null;

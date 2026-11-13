@@ -56,7 +56,7 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
     <div className={styles.content}>
       <div className={styles.copy} aria-live={rotating ? "off" : "polite"} aria-atomic="true">
         <span className={styles.eyebrow}><TrendingUp size={16} />{trend ? (trend.current ? (fa ? "ترند روز IMDb" : "Trending today on IMDb") : (fa ? "آخرین ترند ثبت‌شدهٔ IMDb" : "Latest recorded IMDb trend")) : (fa ? "برای تماشای بعدی شما" : "Your next great watch")}</span>
-        <h1 dir="auto">{displayTitle}</h1>
+        <h2 dir="auto">{displayTitle}</h2>
         {comingSoon && <p className="coming-soon-notice">{fa ? 'به‌زودی · لینک نسخهٔ کامل هنوز در سرونما موجود نیست' : 'Coming soon · Full-release links are not available yet'}</p>}
         <div className={styles.meta}><b dir="ltr">IMDb {item.imdbRating?.toFixed(1) ?? "—"}</b><span>{item.year}</span><span>{typeLabel(item.type, locale)}</span><span>{item.genres.slice(0, 2).join(" · ")}</span></div>
         <p className={styles.overview} dir="auto">{(fa ? item.persianOverview || item.overview : item.overview) || item.genres.join(" · ")}</p>

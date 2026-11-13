@@ -90,6 +90,7 @@ export default async function HomePage() {
 
   return (
     <main className={`shell film-spotify-page ${landingStyles.landing}`} data-media-theme="cinema">
+      <h1 className="sr-only">{locale === 'fa' ? 'سرونما؛ موتور جستجوی فیلم، سریال و موسیقی' : 'SarvNema — film, series and music search'}</h1>
       <StructuredData data={landingJsonLd(FILM_LANDING_SEO, "/")} />
       <section className="film-landing-shell">
         <GradientMenu

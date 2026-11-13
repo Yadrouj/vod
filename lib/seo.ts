@@ -102,7 +102,7 @@ export function titleMetadata({
     description: cleanSeoText(description, 170),
     keywords: uniqueSeoValues(keywords ?? []),
     alternates: { canonical },
-    openGraph: { title, description: cleanSeoText(description, 200), url: canonical, siteName: BRAND_NAME, type, images },
+    openGraph: { title, description: cleanSeoText(description, 200), url: canonical, siteName: 'سرونما', type, images },
     twitter: { card: image ? "summary_large_image" : "summary", title, description: cleanSeoText(description, 200), images: image ? [image] : undefined },
   };
 }

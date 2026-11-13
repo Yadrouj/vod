@@ -8,7 +8,7 @@ export function BrandLoader({
   compact?: boolean;
 }) {
   return (
-    <div className={["brand-loader", compact ? "brand-loader-compact" : ""].filter(Boolean).join(" ")} role="status" aria-live="polite">
+    <div data-nosnippet="" className={["brand-loader", compact ? "brand-loader-compact" : ""].filter(Boolean).join(" ")} role="status" aria-live="polite">
       <span className="brand-loader-orbit" aria-hidden="true">
         <span className="brand-loader-mark" style={{ backgroundImage: `url(${BRAND_MARK})` }} />
       </span>

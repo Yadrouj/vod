@@ -49,8 +49,9 @@ export function assessCapacity(ready, loadAverage, limits = {}) {
 }
 
 export const DAILY_JOBS = [
-  { id: "news", script: "scripts/scrape-vod-news.mjs", minutes: 5 },
+  { id: "news", script: "scripts/scrape-vod-news.mjs", minutes: 4 },
   { id: "iran-box-office", script: "scripts/refresh-iran-box-office.mjs", minutes: 4 },
+  { id: "world-box-office", script: "scripts/refresh-world-box-office.mjs", minutes: 1 },
   { id: "imdb-trending", script: "scripts/refresh-imdb-trending.mjs", minutes: 8 },
   { id: "video", script: "scripts/sync-vod-catalog.mjs", minutes: 35 },
   { id: "f2my", script: "scripts/scrape-f2my-catalog.mjs", minutes: 25, args: ["--skip-imdb-lookup", "--concurrency=1", "--archive-concurrency=1", "--limit=80"] },
