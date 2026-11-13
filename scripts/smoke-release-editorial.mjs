@@ -22,6 +22,20 @@ try {
   await list.locator('.movie-file-row').first().waitFor();
   const rows = await list.locator('.file-info strong').allTextContents();
   assert.ok(rows.every(text => text.includes('1080p') && text.includes('دوبله فارسی')));
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `overflow at ${width}px`);
+    const sizes = await list.locator('fieldset button').evaluateAll(buttons => buttons.map(button => ({ height: button.getBoundingClientRect().height, radius: getComputedStyle(button).borderRadius })));
+    assert.ok(sizes.every(size => size.height >= 44 && size.radius === '12px'), `touch targets/rounding at ${width}px`);
+  }
+  await list.locator('fieldset').first().locator('..').screenshot({ path: '.media-cache/release-selector-desktop.png' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await list.locator('fieldset').first().locator('..').screenshot({ path: '.media-cache/release-selector-mobile.png' });
+  const softsub = list.getByRole('button', { name: 'زیرنویس قابل تغییر', exact: true });
+  if (await softsub.count()) {
+    await softsub.click();
+    assert.equal(await list.locator('.movie-file-row').count(), 0, 'switching language clears the previous quality');
+  }
   await page.goto(`${origin}/tt0903747`, { waitUntil: 'domcontentloaded' });
   const episode = page.locator('.episode-row').filter({ has: page.locator('summary') }).first();
   await episode.locator('summary').click();
@@ -38,6 +52,10 @@ try {
   await page.goto(`${origin}/music/collections/sousan-collection`, { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: 'سوسن؛ خاطره‌ها و ریمیکس‌ها', exact: true, level: 1 }).waitFor();
   assert.ok(await page.getByText('با تو چه شب‌ها (ریمیکس)', { exact: false }).count());
+  assert.ok(await page.getByText('می‌خوام برم از این دیار', { exact: false }).count());
+  await page.goto(`${origin}/music/collections/library-tag-instagram-trends`, { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: 'ترند اینستاگرام؛ منتخب‌ها', level: 1, exact: true }).waitFor();
+  assert.ok(await page.getByText('می‌خوام برم از این دیار', { exact: false }).count());
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ movieSelection: 'type → quality → matching links', seriesSelection: 'type → quality → matching links', worldRows: 30, sousanCollection: 'visible', mobileOverflow: false, pageErrors: errors }));
 } finally { await browser.close(); }

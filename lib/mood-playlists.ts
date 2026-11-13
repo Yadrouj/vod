@@ -23,6 +23,11 @@ export async function loadMoodPlaylists(): Promise<MoodPlaylistIndex> {
   const [base, hosted] = await Promise.all([
     readFileSnapshot(path.join(process.cwd(), "public/data/music-mood-playlists.json"), cache).catch(() => ({ version: 1, updatedAt: "", uniqueTracks: 0, playlists: [] } as MoodPlaylistIndex)), hostedPlaylists(),
   ]);
-  const playlists = [sousanCollection, ...hosted.playlists, ...base.playlists.filter(playlist => playlist.id !== sousanCollection.id)];
+  const instagramTrack = sousanTracks.find(track => track.id === 'editorial-sousan-mikham-beram-az-in-diyar-remix');
+  const playlists = [sousanCollection, ...hosted.playlists, ...base.playlists.filter(playlist => playlist.id !== sousanCollection.id)].map(playlist => {
+    if (playlist.id !== 'library-tag-instagram-trends' || !instagramTrack) return playlist;
+    return { ...playlist, title: 'ترند اینستاگرام؛ منتخب‌ها', description: 'انتخاب تحریریه و کاربران؛ این مجموعه بیانگر رتبه‌بندی رسمی اینستاگرام نیست.',
+      trackIds: [...new Set([instagramTrack.id, ...playlist.trackIds])], covers: [...new Set([instagramTrack.coverUrl, ...playlist.covers].filter((cover): cover is string => Boolean(cover)))].slice(0, 4), updatedAt: sousanCollection.updatedAt };
+  });
   return { ...base, playlists, updatedAt: base.updatedAt > hosted.updatedAt ? base.updatedAt : hosted.updatedAt, uniqueTracks: new Set(playlists.flatMap(p => p.trackIds)).size };
 }

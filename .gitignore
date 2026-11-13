@@ -48,6 +48,8 @@ public/data/iran-box-office.json.*.tmp
 data/*.lock.kernel
 public/data/*.lock.kernel
 data/refresh-checkpoints/
+data/media-import-backups/
+data/media-refresh-*.lock
 data/telegram-deliveries/
 data/telegram-channel/
 .media-cache/

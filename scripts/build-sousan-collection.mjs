@@ -27,7 +27,9 @@ const artist = { name: 'سوسن', slug: 'سوسن', aliases: ['sousan', 'soosan
 const remix = { id: 'editorial-sousan-ba-to-che-shabha-remix', title: 'با تو چه شب‌ها (ریمیکس)', persianTitle: 'با تو چه شب‌ها (ریمیکس)', kind: 'track', artist, artists: [artist], coverUrl: cover || null,
   description: 'ریمیکس «با تو چه شب‌ها» از سوسن؛ ناشر آن را با عنوان «ریمیکس ترند» معرفی کرده است. این معرفی به معنی تأیید رتبهٔ رسمی در اینستاگرام نیست.', sourceUrl: page, publishedAt: null, addedAt: now, category: 'ریمیکس', moods: ['سوسن', 'نوستالژی'], folder: { root: 'Music', year: null, month: null, day: null },
   sources: [{ url: audio, label: 'پخش از آواجوان', kind: 'stream', provider: 'avajavan', sourcePageUrl: page, checkedAt: now, available: true }] };
-const all = [remix, ...verified];
+// Keep explicitly imported editorial releases across collection rebuilds.
+const saved = JSON.parse(await readFile('lib/data/sousan-collection.json', 'utf8').catch(() => '{"tracks":[]}'));
+const all = [...new Map([...saved.tracks.filter(track => track.id.startsWith('editorial-sousan-') && track.id !== remix.id), remix, ...verified].map(track => [track.id, track])).values()];
 const collection = { id: 'sousan-collection', title: 'سوسن؛ خاطره‌ها و ریمیکس‌ها', scope: 'persian', mood: 'سوسن', description: 'مجموعهٔ آثار موجود سوسن با نام و لینک ناشر؛ همراه ریمیکس «با تو چه شب‌ها». موجودی فایل‌ها در زمان ساخت مجموعه بررسی شده است.', trackIds: all.map(track => track.id), covers: [...new Set(all.map(track => track.coverUrl).filter(Boolean))].slice(0, 4), artistCount: 1, updatedAt: now, selection: 'curated-mood' };
 await writeJsonAtomic('lib/data/sousan-collection.json', { checkedAt: now, tracks: all, collection });
 console.log(JSON.stringify({ originalCandidates: tracks.length, verifiedTracks: verified.length, total: all.length, remix: remix.id }));
