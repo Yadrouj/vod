@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<meta charset="utf-8">
+<title>سرونما — ریل سینمایی</title>
+<style>
+@font-face{font-family:Reel;src:url('/fonts/regular.ttf');font-weight:400;font-display:block}
+@font-face{font-family:Reel;src:url('/fonts/bold.ttf');font-weight:700;font-display:block}
+@font-face{font-family:Reel;src:url('/fonts/black.ttf');font-weight:950;font-display:block}
+*{box-sizing:border-box}html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#080909;color:#f6f3ec;font-family:Reel,sans-serif}
+#reel{position:relative;width:1080px;height:1920px;overflow:hidden;isolation:isolate;background:#080909}
+.ambient{position:absolute;inset:-200px;background:radial-gradient(ellipse at 10% 25%,#bb914922,transparent 46%),radial-gradient(ellipse at 100% 75%,#8a744b1f,transparent 45%);z-index:0}
+.light{position:absolute;width:500px;height:2400px;top:-240px;left:-700px;background:linear-gradient(90deg,transparent,#ddc79109,transparent);transform:rotate(-24deg);z-index:8;pointer-events:none}
+#grain{position:absolute;inset:0;width:1080px;height:1920px;opacity:.018;mix-blend-mode:screen;z-index:12;pointer-events:none}
+.brand{position:absolute;top:142px;right:90px;z-index:20;display:flex;align-items:center;gap:14px;font-size:38px;font-weight:950;color:#e7ce94}
+.mark{width:52px;height:58px;mask:url('/brand/mark.svg') center/contain no-repeat;mask-mode:luminance;background:#e5c988}
+.edition{position:absolute;top:163px;left:92px;font:18px Arial,sans-serif;letter-spacing:5px;color:#b8b5ac;z-index:20}
+.scene{position:absolute;inset:0;opacity:0;visibility:hidden;overflow:hidden;will-change:opacity}
+.heading{position:absolute;top:285px;right:90px;left:90px;text-align:right;z-index:5}
+.eyebrow{font-size:25px;font-weight:700;color:#d1b77d;display:flex;gap:14px;align-items:center;margin:0 0 28px}
+.eyebrow:before{content:'';width:38px;height:2px;background:currentColor}
+h1,h2,p{margin:0}h2{font-size:88px;line-height:1.4;font-weight:950;letter-spacing:-3px}em{font-style:normal;color:#e5ca8d}
+.sub{font-size:35px;font-weight:400;color:#b6b6af;line-height:1.9;margin-top:18px}
+.window{position:absolute;z-index:4;background:#0e1010;border:1px solid #b1a18155;border-radius:30px;overflow:hidden;box-shadow:0 55px 130px #000b,0 0 0 7px #ffffff03;transform-origin:center}
+.chrome{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:#171918;color:#aaaca6;border-bottom:1px solid #ffffff12;font:18px Arial,sans-serif;direction:ltr}
+.chrome i{display:flex;gap:6px}.chrome i:before,.chrome i:after{content:'';width:6px;height:6px;background:#b9a474;border-radius:50%;opacity:.6}
+.screen{display:block;width:100%;height:auto;max-width:none}
+.badge{position:absolute;z-index:7;display:flex;align-items:center;justify-content:center;gap:14px;padding:15px 27px;border:1px solid #d7bc7d55;border-radius:100px;background:#171811eb;color:#e5d19f;font-size:29px;font-weight:700;white-space:nowrap}
+.badge svg{width:27px;height:27px;flex-shrink:0}
+.poster-wall{position:absolute;width:1260px;left:-90px;top:60px;display:grid;grid-template-columns:repeat(3,1fr);gap:30px;transform:rotate(-12deg);opacity:.58}
+.poster-wall img{width:100%;height:560px;object-fit:cover;display:block;border-radius:22px;border:1px solid #ffffff18;filter:saturate(.68)}
+.poster-veil{position:absolute;inset:0;background:linear-gradient(180deg,#080909bd,#08090910 30%,#080909e6 80%,#080909),radial-gradient(ellipse at 50% 44%,#08090900,#080909a8)}
+#intro .heading{top:680px;text-align:center;left:70px;right:70px}
+#intro .eyebrow{justify-content:center;font-size:26px;letter-spacing:0;color:#e0c68a}
+#intro h2{font-size:144px;line-height:1.35;letter-spacing:-5px;text-shadow:0 5px 50px #000}
+#intro .sub{font-size:40px;color:#d8d6ce;margin-top:28px}
+.hero-rule{width:80px;height:2px;background:#e0c68a;margin:45px auto 0}
+#search .window{top:725px;left:88px;width:904px;height:758px}
+#search .badge{top:1530px;right:135px}
+.search-orbit{position:absolute;top:890px;left:-280px;width:1600px;height:1600px;border:1px solid #dcc59118;border-radius:50%}
+.cursor{position:absolute;z-index:8;width:65px;height:65px;border:2px solid #e7c775;border-radius:50%;background:#e7c77510;left:820px;top:1318px;box-shadow:0 0 36px #e7c77530;opacity:0}
+#together .heading{top:280px}#together h2{font-size:86px}
+#together .film{top:735px;left:65px;width:645px;height:450px;transform:rotate(-5deg)}
+#together .room{top:1045px;left:290px;width:710px;height:485px;transform:rotate(4deg)}
+#together .film .screen{transform:translateY(-20px)}
+#together .room .screen{transform:translateY(-78px)}
+.connection{position:absolute;left:85px;right:85px;top:1605px;z-index:7;display:flex;gap:28px;align-items:center;justify-content:center}
+.avatar{width:82px;height:82px;display:grid;place-items:center;border-radius:50%;border:1px solid #d1ba7c66;background:#25241d;color:#e6ce92;font-size:25px;font-weight:700;box-shadow:0 0 0 8px #ffffff03}
+.linkline{height:1px;flex:1;max-width:180px;background:linear-gradient(90deg,transparent,#ddc58d,transparent);position:relative}
+.linkline:after{content:'';position:absolute;left:50%;top:-4px;width:9px;height:9px;border-radius:50%;background:#e4ca90;box-shadow:0 0 18px #eddb9f}
+.sync-label{font-size:27px;color:#c4c3b9;white-space:nowrap}
+#music .heading{top:275px}#music em{color:#b2e1c7}
+#music:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,#37745c34,transparent 62%)}
+.record{position:absolute;top:675px;left:175px;width:730px;height:730px;border-radius:50%;background:repeating-radial-gradient(circle,#121714 0px,#121714 4px,#27312a 5px,#111713 6px,#141b17 9px);box-shadow:0 50px 110px #000c,0 0 0 2px #bfd6c321,0 0 100px #a7dfba0c;display:grid;place-items:center;direction:ltr}
+.record:before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 30deg,transparent,#dae6ce12 15deg,transparent 45deg,transparent 170deg,#dae6ce12 185deg,transparent 220deg)}
+.record-label{width:252px;height:252px;border-radius:50%;background:#b3dcc4;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#133225;gap:8px;box-shadow:0 0 0 2px #fff4}
+.record-label .mark{width:62px;height:68px;background:#173d2b}.record-label strong{font-size:29px}.record-label small{font:12px Arial;letter-spacing:3px}
+.record-hole{position:absolute;left:calc(50% - 6px);top:calc(50% - 6px);width:12px;height:12px;background:#111714;border:2px solid #e7f4e8;border-radius:50%}
+.music-controls{position:absolute;top:1425px;left:120px;width:840px;height:133px;border:1px solid #abd8be40;border-radius:26px;background:#141b17;overflow:hidden;box-shadow:0 24px 80px #0008}
+.music-controls img{width:100%;display:block}
+.music-note{position:absolute;top:1610px;right:90px;left:90px;text-align:center;color:#b5c8ba;font-size:31px}
+.eq{position:absolute;top:1280px;left:60px;right:60px;height:100px;display:flex;gap:9px;align-items:center;justify-content:center;opacity:.8}
+.eq i{display:block;width:6px;height:30px;border-radius:6px;background:#b2e1c7;transform-origin:center}
+#all .poster-wall{opacity:.4;top:-250px}#all .poster-veil{background:linear-gradient(180deg,#080909c4,#0809099e 35%,#080909ef 85%)}
+.words{position:absolute;top:490px;left:90px;right:90px;text-align:center;z-index:5;font-size:146px;font-weight:950;line-height:1.6;letter-spacing:-4px}
+.words p:nth-child(2){color:#e5ca8d}.all-sub{position:absolute;top:1350px;left:90px;right:90px;text-align:center;font-size:44px;color:#d1cfc6;z-index:5}
+#outro:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 43%,#8e713529,transparent 55%)}
+.end-brand{position:absolute;top:555px;left:90px;right:90px;display:flex;flex-direction:column;align-items:center;z-index:5}
+.end-brand .mark{width:180px;height:210px;margin-bottom:28px;background:linear-gradient(140deg,#f0dbab,#b78c45)}
+.end-word{font-size:160px;font-weight:950;line-height:1.5;letter-spacing:-7px}
+.end-sub{font-size:35px;font-weight:400;color:#c2c1b9;margin-top:20px;white-space:nowrap}
+.url{position:absolute;top:1275px;left:215px;right:215px;height:112px;border:1px solid #d5b97977;border-radius:18px;display:grid;place-items:center;background:linear-gradient(110deg,#d7b97a14,#cdb77e05);font:50px Arial,sans-serif;letter-spacing:3px;color:#f0d89c;z-index:5;direction:ltr}
+.end-note{position:absolute;top:1460px;right:90px;left:90px;text-align:center;color:#c6c4ba;font-size:35px;z-index:5}
+.progress{position:absolute;top:1740px;left:400px;right:400px;height:2px;background:#ffffff0c;z-index:20;direction:ltr}.progress i{display:block;height:100%;width:0;background:#c5ac73}
+</style>
+<div id="reel">
+  <div class="ambient"></div><div class="light"></div>
+  <div class="brand"><span class="mark"></span><span>سرو‌نما</span></div><div class="edition">SARVNEMA</div>
+  <section class="scene" id="intro" data-start="0" data-end="3.65">
+    <div class="poster-wall" data-wall></div><div class="poster-veil"></div>
+    <div class="heading" data-reveal=".2"><p class="eyebrow">داستان بعدی، همین‌جاست</p><h2>امشب،<br><em>چی ببینیم؟</em></h2><p class="sub">یک جست‌وجو تا انتخاب بعدی.</p><div class="hero-rule"></div></div>
+  </section>
+  <section class="scene" id="search" data-start="3.15" data-end="9.2">
+    <div class="search-orbit"></div>
+    <div class="heading" data-reveal=".1"><p class="eyebrow">جستجوی هوشمند</p><h2>اسمش دقیق<br><em>یادت نیست؟</em></h2><p class="sub">نزدیک بنویس؛ پیداش می‌کنیم.</p></div>
+    <div class="window" data-camera="-.8"><div class="chrome"><i></i><span>sarvnema.ir / search</span><span>⌕</span></div><img class="screen" src="/assets/search.png" alt="نتیجهٔ واقعی جستجوی breakng bud در سرونما"></div>
+    <div class="cursor"></div><div class="badge" data-reveal="1.5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L20 5"/></svg>بریکینگ بد، پیدا شد.</div>
+  </section>
+  <section class="scene" id="together" data-start="8.7" data-end="16.2">
+    <div class="heading" data-reveal=".1"><p class="eyebrow">تماشای همزمان</p><h2><em>دوریم؛</em><br>ولی با هم می‌بینیم.</h2><p class="sub">یک اتاق خصوصی. یک لینک دعوت.</p></div>
+    <div class="window film" data-camera="-4"><div class="chrome"><i></i><span>sarvnema.ir</span><span>▶</span></div><img class="screen" src="/assets/film.png" alt="صفحهٔ واقعی سریال در سرونما"></div>
+    <div class="window room" data-camera="3"><div class="chrome"><i></i><span>Watch together</span><span>◎</span></div><img class="screen" src="/assets/together.png" alt="رابط واقعی ساخت اتاق خصوصی"></div>
+    <div class="connection" data-reveal="1.3"><div class="avatar">من</div><i class="linkline"></i><span class="sync-label">همگام، کنار هم</span><i class="linkline"></i><div class="avatar">تو</div></div>
+  </section>
+  <section class="scene" id="music" data-start="15.7" data-end="22.15">
+    <div class="heading" data-reveal=".1"><p class="eyebrow">دنیای موسیقی</p><h2>فقط دیدن نیست.<br><em>وقتِ شنیدنه.</em></h2><p class="sub">برای هر حال‌وهوا، یک انتخاب.</p></div>
+    <div class="record"><div class="record-label"><span class="mark"></span><strong>سرونما</strong><small>MUSIC TOGETHER</small></div><i class="record-hole"></i></div>
+    <div class="eq"></div>
+    <div class="music-controls" data-reveal=".6"><img src="/assets/music-actions.png" alt="دکمه‌های واقعی پخش و شنیدن همزمان سرونما"></div>
+    <p class="music-note" data-reveal="1">پلی‌لیست‌ها، موسیقی و شنیدن همزمان.</p>
+  </section>
+  <section class="scene" id="all" data-start="21.65" data-end="26.25">
+    <div class="poster-wall" data-wall></div><div class="poster-veil"></div>
+    <div class="words"><p data-reveal=".05">فیلم.</p><p data-reveal=".35">سریال.</p><p data-reveal=".65">موسیقی.</p></div><p class="all-sub" data-reveal="1">همه، در یک جست‌وجو.</p>
+  </section>
+  <section class="scene" id="outro" data-start="25.75" data-end="30">
+    <div class="end-brand" data-reveal=".2"><span class="mark"></span><span class="end-word">سرو‌نما</span><p class="end-sub">موتور جستجوی فیلم، سریال و موسیقی</p></div>
+    <div class="url" data-reveal=".7">sarvnema.ir</div><p class="end-note" data-reveal="1">جستجو کن. با هم لذت ببر.</p>
+  </section>
+  <div class="progress"><i></i></div><canvas id="grain" width="270" height="480"></canvas>
+</div>
+<script>
+const scenes=[...document.querySelectorAll('.scene')];
+const clamp=v=>Math.max(0,Math.min(1,v));const ease=v=>1-Math.pow(1-clamp(v),3);
+for(const wall of document.querySelectorAll('[data-wall]'))for(let i=0;i<12;i++){const img=document.createElement('img');img.src='/assets/poster-'+(i%6)+'.png';img.alt='';wall.append(img);}
+for(let i=0;i<35;i++){const bar=document.createElement('i');document.querySelector('.eq').append(bar);}
+let seed=1481;const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+const ctx=document.querySelector('#grain').getContext('2d'),noise=ctx.createImageData(270,480);for(let i=0;i<noise.data.length;i+=4){const v=Math.floor(random()*255);noise.data[i]=noise.data[i+1]=noise.data[i+2]=v;noise.data[i+3]=255;}ctx.putImageData(noise,0,0);
+window.renderFrame=function(t){
+ document.querySelector('.ambient').style.transform=`translate(${Math.sin(t*.19)*35}px,${Math.cos(t*.23)*45}px)`;
+ document.querySelector('.light').style.transform=`translateX(${(t%7.5)/7.5*2100}px) rotate(-24deg)`;
+ document.querySelector('.progress i').style.width=(t/30*100)+'%';
+ for(const scene of scenes){const start=Number(scene.dataset.start),end=Number(scene.dataset.end),p=t-start,duration=end-start;
+  const opacity=clamp(p/.48)*(scene.id==='outro'?1:clamp((end-t)/.48));scene.style.opacity=opacity;scene.style.visibility=opacity>0?'visible':'hidden';
+  if(!opacity)continue;
+  for(const el of scene.querySelectorAll('[data-reveal]')){const enter=ease((p-Number(el.dataset.reveal))/.8);el.style.opacity=enter;el.style.transform=`translateY(${(1-enter)*58}px)`;}
+  for(const el of scene.querySelectorAll('[data-camera]')){const enter=ease(p/.9),progress=clamp(p/duration);el.style.transform=`translateY(${(1-enter)*130-progress*24}px) rotate(${Number(el.dataset.camera)+progress*.8}deg) scale(${.94+enter*.06+progress*.012})`;}
+  for(const wall of scene.querySelectorAll('[data-wall]'))wall.style.transform=`translateY(${-clamp(p/duration)*110}px) rotate(-12deg) scale(${1.02+clamp(p/duration)*.045})`;
+ }
+ const p=t-3.15;document.querySelector('.cursor').style.opacity=clamp((p-1.5)/.3)*clamp((4.3-p)/.5)*.8;document.querySelector('.cursor').style.transform=`scale(${1+Math.sin(t*7)*.12})`;
+ const record=document.querySelector('.record');record.style.transform=`rotate(${(t-15.7)*16}deg)`;
+ for(const [i,bar]of [...document.querySelectorAll('.eq i')].entries())bar.style.height=(12+(Math.sin(t*6+i*.67)*.5+.5)*(32+Math.sin(i*.33)**2*48))+'px';
+};
+window.reelReady=Promise.all([document.fonts.ready,...[...document.images].map(img=>img.complete?Promise.resolve():new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('Missing reel asset '+img.src));}))]);
+window.renderFrame(0);
+</script>
+</html>
