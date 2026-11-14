@@ -32,3 +32,21 @@ test('provider mismatches and failures never attach unrelated media', async () =
     assert.equal(cachedFamilyMovieCount(source), undefined);
   } finally { globalThis.fetch = original; }
 });
+
+test('a reviewed alternative publisher page can refresh even when the original source is DonyayeSerial', async () => {
+  const original = globalThis.fetch; let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return Response.json({ id: 'alternative-fixture', title: 'Fixture', type: 'series', year: 2026,
+      downloads: [{ url: 'https://cdn.example.com/Fixture.S01E01.1080p.mp4', season: '1', episode: '1' }] });
+  };
+  try {
+    const source = { ...item('alternative-fixture'), sourcePageUrl: 'https://donyayeserial.com/fixture/',
+      curatedSourcePages: ['https://familymovie.tr/?movie=alternative-fixture'],
+      links: [{ url: 'https://old.example.com/Fixture.S01E01.mkv', group: 'SoftSub', label: 'Old', quality: '720p', release: null, size: null, sourceProvider: 'donyaye' }] };
+    const refreshed = await refreshFamilyMovieRelease(source);
+    assert.equal(calls, 1); assert.equal(refreshed.links.length, 2);
+    assert.equal(refreshed.links[0].sourceProvider, 'familymovie');
+    assert.equal(refreshed.links[1].url, source.links[0].url);
+  } finally { globalThis.fetch = original; }
+});

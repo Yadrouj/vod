@@ -12,16 +12,26 @@ export function cachedFamilyMovieCount(item: { sourcePageUrl?: string | null }) 
   return item.sourcePageUrl ? cache.get(item.sourcePageUrl)?.length : undefined;
 }
 
+function publisherPage(item: VodItem): URL | null {
+  for (const value of [item.sourcePageUrl, ...(item.curatedSourcePages || [])]) {
+    try {
+      const page = new URL(value || '');
+      if (page.protocol === 'https:' && page.hostname === 'familymovie.tr' && page.pathname === '/' && !page.username && !page.password && !page.port
+        && /^[a-zA-Z0-9_-]{1,120}$/.test(page.searchParams.get('movie') || '')) return page;
+    } catch { /* Only explicit, trusted publisher pages may refresh a signature. */ }
+  }
+  return null;
+}
+
 /** Refresh only this publisher's existing catalogue entries, never user URLs. */
 export async function refreshFamilyMovieRelease(item: VodItem): Promise<VodItem> {
-  let page: URL;
-  try { page = new URL(item.sourcePageUrl || ''); } catch { return item; }
-  if (page.hostname !== 'familymovie.tr' || page.pathname !== '/' || page.username || page.password || page.port) return item;
+  const page = publisherPage(item);
+  if (!page) return item;
   const id = page.searchParams.get('movie');
   if (!id || !/^[a-zA-Z0-9_-]{1,120}$/.test(id)) return item;
   // Existing fresh release files need no extra request before playback.
-  if (item.links.some(link => link.mediaKind !== 'trailer' && sourceLinkExpiry(link) > Date.now() + 6 * 3600_000)) return item;
-  const key = item.sourcePageUrl!;
+  if (item.links.some(link => link.sourceProvider === 'familymovie' && link.mediaKind !== 'trailer' && sourceLinkExpiry(link) > Date.now() + 6 * 3600_000)) return item;
+  const key = page.href;
   if (failures.get(key)) return item;
   let links = cache.get(key);
   if (!links) {

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { versionSignature } from './melodify-source-recovery.mjs';
 import { cleanText, decodeHtmlEntities, normalizeComparable, slugify, canonicalizeTrackArtists } from './music-catalog.mjs';
 
 export const MELOOBIT_ROOT = 'https://meloobit.ir';
@@ -143,7 +144,7 @@ export function mergeSources(previous = [], incoming = []) {
 function trackKeys(track) {
   const artists = [track.artist?.name, track.artist?.slug, ...(track.artist?.aliases ?? []), track.englishArtist].filter(Boolean);
   return [...new Set([track.matchKey, ...artists.flatMap(a => [track.title,track.persianTitle].map(t => `${a} ${t}`)),
-    ...(track.sources ?? []).filter(s => /^https?:/.test(s.url)).map(s => mediaIdentity(s.url))].filter(Boolean).map(v => `${track.kind}:${normalizeComparable(v)}`))];
+    ...(track.sources ?? []).filter(s => /^https?:/.test(s.url)).map(s => mediaIdentity(s.url))].filter(Boolean).map(v => `${track.kind}:${versionSignature(track)}:${normalizeComparable(v)}`))];
 }
 /** Exact complete artist+song identities only; never fuzzy-match a download. */
 export function mergeMeloobitTracks(tracks, incoming, previous = tracks) {

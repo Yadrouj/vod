@@ -24,7 +24,7 @@ const titles = (track, creditedNames = []) => {
 const keys = (track, names = []) => artists(track).flatMap(artist => titles(track, names).map(title => `${track.kind}:${artist}:${title}`));
 
 /** A short translated heading must not hide a remix/live version in its filename. */
-function versionSignature(track) {
+export function versionSignature(track) {
   let text = [track.title, track.persianTitle, ...(track.sources || []).map(s => s.basePath || s.url)].join(' ');
   try { text = decodeURIComponent(text); } catch { /* keep original */ }
   const flags = [

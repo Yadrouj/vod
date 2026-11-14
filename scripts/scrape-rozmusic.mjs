@@ -6,16 +6,20 @@ import { preserveMusicIdentities } from "./stable-music-identities.mjs";
 import { buildArtists as buildCanonicalArtists, canonicalizeTrackArtists, cleanText as cleanCatalogText, normalizeComparable as normalizeCatalogText } from "./music-catalog.mjs";
 
 const ROOT = "https://rozmusic.com";
-const OUTPUT = path.join("public", "data", "music-index.json");
-const MUSICS_FA_OUTPUT = path.join(".media-cache", "music", "musics-fa-source.json");
-const CLASSICS_OUTPUT = path.join(".media-cache", "music", "persian-classics-source.json");
-const FOREIGN_OUTPUT = path.join(".media-cache", "music", "aftab-foreign-source.json");
-const REMIIXBAZ_OUTPUT = path.join(".media-cache", "music", "remiixbaz-source.json");
-const WORLDOFMUSIC_OUTPUT = path.join(".media-cache", "music", "worldofmusic-source.json");
+// Isolated review batches can inspect fresh releases without rewriting the full
+// live/LFS catalogue or inadvertently mixing historical source caches into them.
+const SOURCE_CACHE_DIR = process.env.MUSIC_SOURCE_CACHE_DIR || path.join('.media-cache', 'music');
+const ROZ_CACHE_DIR = process.env.ROZMUSIC_CACHE_DIR || path.join('.media-cache', 'rozmusic');
+const OUTPUT = process.env.ROZMUSIC_OUTPUT || path.join("public", "data", "music-index.json");
+const MUSICS_FA_OUTPUT = path.join(SOURCE_CACHE_DIR, "musics-fa-source.json");
+const CLASSICS_OUTPUT = path.join(SOURCE_CACHE_DIR, "persian-classics-source.json");
+const FOREIGN_OUTPUT = path.join(SOURCE_CACHE_DIR, "aftab-foreign-source.json");
+const REMIIXBAZ_OUTPUT = path.join(SOURCE_CACHE_DIR, "remiixbaz-source.json");
+const WORLDOFMUSIC_OUTPUT = path.join(SOURCE_CACHE_DIR, "worldofmusic-source.json");
 const MELOOBIT_OUTPUT = path.join(process.env.MELOOBIT_STATE_DIR || ".media-cache/music", "meloobit-source.json");
-const REPORT = path.join("data", "rozmusic-status.json");
-const CACHE = path.join(".media-cache", "rozmusic", "detail-cache.json");
-const LISTING_CACHE = path.join(".media-cache", "rozmusic", "catalog-checkpoint.json");
+const REPORT = process.env.ROZMUSIC_STATUS_FILE || path.join("data", "rozmusic-status.json");
+const CACHE = path.join(ROZ_CACHE_DIR, "detail-cache.json");
+const LISTING_CACHE = path.join(ROZ_CACHE_DIR, "catalog-checkpoint.json");
 const args = new Set(process.argv.slice(2));
 const numberArg = (name, fallback) => {
   const value = process.argv.find((argument) => argument.startsWith(`${name}=`));

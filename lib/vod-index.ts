@@ -8,6 +8,9 @@ import { persianTitleOrFallback } from "./title-display";
 import { addMoviezlandProfiles } from "./moviezland-profiles";
 import { cachedFamilyMovieCount, familyMovieReleaseRevision } from './familymovie-release';
 import { catalogFacets, matchesFacet, normalizeCardFacets } from './catalog-facets.mjs';
+import videoReleaseData from './data/media-refresh-2026-11-14-vod.json';
+import { applyVideoReleaseIndex, type VideoReleaseBundle } from './bundled-video-release';
+const videoReleaseBundle = videoReleaseData as unknown as VideoReleaseBundle;
 
 export const HOME_SECTIONS = [
   "top-imdb",
@@ -73,7 +76,7 @@ export async function loadOldIranianVodIndex(): Promise<VodCatalogIndex> {
 function enrichLegacyCards(index: VodCatalogIndex, includeNew = true): VodCatalogIndex {
   const cached = enrichedIndexes.get(index);
   if (cached?.revision === familyMovieReleaseRevision()) return cached.value;
-  const supplemented = addMoviezlandProfiles(index, includeNew);
+  const supplemented = addMoviezlandProfiles(applyVideoReleaseIndex(index, videoReleaseBundle, includeNew), includeNew);
   const enriched = {
     ...supplemented,
     items: supplemented.items.map(normalizeCardTitle),
@@ -82,6 +85,11 @@ function enrichLegacyCards(index: VodCatalogIndex, includeNew = true): VodCatalo
   // Rebuild from the current cards, not stale/raw provider filter lists. This also
   // fixes existing on-disk indexes without overwriting live archive data.
   enriched.filters = { ...supplemented.filters, ...catalogFacets(enriched.items) };
+  const fullIndex = enriched.totalTitles === enriched.items.length;
+  enriched.sections = enriched.sections.map(section => {
+    const selected = selectSection(enriched.items, section.id);
+    return { ...section, total: fullIndex ? selected.length : Math.max(section.total, selected.length), items: selected.slice(0, section.items.length || 15) };
+  });
   enrichedIndexes.set(index, { revision: familyMovieReleaseRevision(), value: enriched });
   return enriched;
 }

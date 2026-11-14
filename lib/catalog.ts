@@ -12,6 +12,9 @@ import { enrichMoviezlandProfile, moviezlandProfile } from './moviezland-profile
 import movielandzMatches from './data/movielandz-donyaye-match.json';
 import { exactPublisherPageMapping } from './moviezland-page-match.mjs';
 import { refreshFamilyMovieRelease } from './familymovie-release';
+import videoReleaseData from './data/media-refresh-2026-11-14-vod.json';
+import { mergeVideoRelease, type VideoReleaseBundle } from './bundled-video-release';
+const videoReleaseBundle = videoReleaseData as unknown as VideoReleaseBundle;
 
 const DATA_DIR = path.resolve(process.env.VOD_DATA_DIR || path.join(process.cwd(), "public", "data"));
 const FILE_CHECK_INTERVAL_MS = Math.max(5_000, Number(process.env.VOD_DATA_CHECK_INTERVAL_MS || 30_000));
@@ -36,7 +39,7 @@ async function loadArchiveFile(): Promise<VodArchive> {
 }
 
 export const findVodItem = cache(async (id: string): Promise<VodItem | null> => {
-  const item = await findVodTitleFile(id) || moviezlandProfile(id);
+  const item = mergeVideoRelease(await findVodTitleFile(id) || moviezlandProfile(id), id, videoReleaseBundle);
   if (!item) return null;
   const enriched = enrichMoviezlandProfile(enrichOldIranianFilm(item));
   const publisherMatch = movielandzByImdb.get(enriched.imdbCode);

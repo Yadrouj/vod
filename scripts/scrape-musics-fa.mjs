@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { extractPrimaryArtist, extractPrimaryMedia, isExcludedListingArticle } from "./music-fa-primary.mjs";
 
 const ROOT = "https://musics-fa.com";
-const OUTPUT = path.join(".media-cache", "music", "musics-fa-source.json");
-const STATUS = path.join("data", "musics-fa-status.json");
+const OUTPUT = process.env.MUSICS_FA_OUTPUT || path.join(".media-cache", "music", "musics-fa-source.json");
+const STATUS = process.env.MUSICS_FA_STATUS_FILE || path.join("data", "musics-fa-status.json");
 const args = new Set(process.argv.slice(2));
 const value = (name, fallback) => { const raw = process.argv.find((argument) => argument.startsWith(`${name}=`)); return Math.max(1, Number(raw?.slice(name.length + 1) ?? fallback) || fallback); };
 const categoryPath = process.argv.find((argument) => argument.startsWith("--category-path="))?.slice("--category-path=".length).replace(/^\/+|\/+$/g, "") || "";
@@ -28,7 +29,7 @@ async function main() {
     status.current = `archive page ${page}`; await saveStatus();
     try {
       const discovered = parseListing(await fetchText(listingUrl(page)), forcedCategory);
-      for (const track of discovered) { const before = tracks.has(track.id); tracks.set(track.id, mergeTrack(tracks.get(track.id), track)); refreshedTrackIds.add(track.id); if (!refreshedTrackRanks.has(track.id)) refreshedTrackRanks.set(track.id, refreshedTrackOrder); refreshedTrackOrder++; before ? status.tracks.updated++ : status.tracks.new++; }
+      for (const track of discovered) { const before = tracks.has(track.id); tracks.set(track.id, mergeTrack(tracks.get(track.id), track)); refreshedTrackIds.add(track.id); if (!refreshedTrackRanks.has(track.id)) refreshedTrackRanks.set(track.id, refreshedTrackOrder); refreshedTrackOrder++; if (before) status.tracks.updated++; else status.tracks.new++; }
       status.tracks.discovered += discovered.length; status.pages.complete++;
     } catch (error) { status.tracks.failures++; status.warnings.push(`page ${page}: ${message(error)}`); }
     await saveStatus(); await sleep(delayMs);
@@ -66,11 +67,12 @@ function listingUrl(page) {
 
 function parseListing(html, categoryOverride = "") {
   const entries = html.match(/<article\b[\s\S]*?<\/article>/gi) ?? [];
-  const tracks = entries.map((article) => parseArticle(article, categoryOverride)).filter(Boolean);
+  const tracks = entries.map((article) => parseArticle(article)).filter(Boolean);
   return categoryOverride ? tracks.map((track) => ({ ...track, category: categoryOverride })) : tracks;
 }
 
-function parseArticle(article, categoryOverride = "") {
+function parseArticle(article) {
+  if (isExcludedListingArticle(article)) return null;
   const url = first(article, /<h2[^>]*>\s*<a[^>]+href=["']([^"']+)["']/i);
   if (!url || !/\/download-song\//.test(url)) return null;
   const title = cleanTitle(clean(first(article, /<h2[^>]*>\s*<a[^>]*>([\s\S]*?)<\/a>/i)));
@@ -79,20 +81,14 @@ function parseArticle(article, categoryOverride = "") {
   const image = first(article, /(?:data-src|src)=["'](https:\/\/musics-fa\.com\/wp-content\/uploads\/[^"']+)/i);
   const publishedAt = first(article, /<time[^>]+datetime=["']([^"']+)/i);
   const category = clean(first(article, /(?:class=["'][^"']*(?:cat|category)[^"']*["'][^>]*>|<time[\s\S]*?<\/time>)[\s\S]*?<a[^>]*>([\s\S]*?)<\/a>/i)) || "آهنگ";
-  const archiveArtist = extractArtist(article)[0];
-  const artist = parsedEnglish.artist ? { name: parsedEnglish.artist, slug: slugify(parsedEnglish.artist), sourceUrl: archiveArtist?.sourceUrl ?? ROOT } : archiveArtist ?? deriveArtist(title);
+  const expectedArtist = parsedEnglish.artist ? { name: parsedEnglish.artist, slug: slugify(parsedEnglish.artist), sourceUrl: ROOT } : deriveArtist(title);
+  const artist = extractPrimaryArtist(article, { artist: expectedArtist, persianTitle: title })[0] ?? expectedArtist;
   return { id: `musicfa-${hash(url)}`, kind: "track", title: parsedEnglish.title || title, persianTitle: title, artist, artists: [artist], coverUrl: image || null, description: null, sourceUrl: absolute(url), matchKey: parsedEnglish.matchKey, publishedAt: publishedAt || null, category, folder: { root: "Unknown", year: null, month: null, day: null }, sources: [] };
 }
 
 async function parseDetail(htmlPromise, track) {
   const html = await htmlPromise;
-  const media = [];
-  for (const match of html.matchAll(/(?:data-song|href)=["'](https?:\/\/(?:dls\.)?musics-fa\.com\/[^"']+\.(?:mp3|m4a|aac|flac|mp4)(?:\?[^"']*)?)["'][^>]*(?:title=["']([^"']*)["'])?/gi)) {
-    const url = decode(match[1]);
-    if (!media.some((item) => item.url === url)) media.push({ url, label: /data-song=/i.test(match[0]) ? "Online stream" : "Direct download", quality: quality(match[0], url), kind: /data-song=/i.test(match[0]) ? "stream" : "download", provider: "musics-fa", basePath: basePath(url) });
-  }
-  const direct = media.find((item) => item.kind === "download");
-  if (direct && !media.some((item) => item.kind === "stream")) media.unshift({ ...direct, label: "Online stream", kind: "stream" });
+  const media = extractPrimaryMedia(html);
   const artistList = extractPrimaryArtist(html, track);
   const remixArtist = track.category === "\u0631\u06cc\u0645\u06cc\u06a9\u0633" ? track.artist : null;
   const selectedArtist = remixArtist ?? artistList[0] ?? track.artist;
@@ -100,24 +96,6 @@ async function parseDetail(htmlPromise, track) {
   const description = clean(first(html, /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)/i));
   const publishedAt = first(html, /<meta[^>]+property=["']article:published_time["'][^>]+content=["']([^"']+)/i);
   return { ...track, title: cleanTitle(track.title), persianTitle: cleanTitle(track.persianTitle || track.title), coverUrl: image || track.coverUrl, description: description || track.description, publishedAt: publishedAt || track.publishedAt, artist: selectedArtist, artists: selectedArtist ? [selectedArtist] : track.artists, sources: media.length ? media : track.sources, folder: parseFolder(media[0]?.url ?? ""), detailCheckedAt: new Date().toISOString() };
-}
-
-function extractArtist(html) {
-  const artists = [];
-  for (const match of html.matchAll(/<a[^>]+href=["']([^"']*\/artists\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
-    const name = clean(match[2]).replace(/^آرشیو آهنگ های\s*/u, ""); if (!name || /آهنگ جدید|موزیکفا|کردی|شاد/u.test(name)) continue;
-    const sourceUrl = absolute(decode(match[1])); const slug = decodeURIComponent(sourceUrl.split("/artists/")[1]?.replace(/\/$/, "") ?? "").toLocaleLowerCase();
-    if (slug && !artists.some((artist) => artist.slug === slug)) artists.push({ name, slug, sourceUrl });
-  }
-  return artists;
-}
-
-function extractPrimaryArtist(html, track) {
-  const anchor = html.indexOf("class=\"article-content\"") >= 0 ? html.slice(html.indexOf("class=\"article-content\""), html.indexOf("class=\"related-posts\"")) : html;
-  const candidates = extractArtist(anchor);
-  const expected = track.artist?.name;
-  const preferred = candidates.find((artist) => normalizeComparable(artist.name) === normalizeComparable(expected)) ?? candidates[0] ?? track.artist;
-  return preferred ? [preferred] : [];
 }
 
 function normalizeArtistSelection(track) {
@@ -142,8 +120,6 @@ function parseEnglishSong(value) {
 function cleanTitle(value = "") { return clean(value).replace(/^(?:\u062f\u0627\u0646\u0644\u0648\u062f\s+)?(?:\u0622\u0647\u0646\u06af|\u0627\u0647\u0646\u06af|\u0645\u0648\u0632\u06cc\u06a9)\s+/u, "").replace(/\s+(?:\u0628\u0627\s+\u0635\u062f\u0627\u06cc|\u0631\u0627\u06cc\u06af\u0627\u0646|\u0628\u0627\s+\u062a\u06a9\u0633\u062a).*$/u, "").trim(); }
 function mergeTrack(old, next) { if (!old) return next; const sources = [...next.sources, ...old.sources].filter((source, index, all) => all.findIndex((current) => current.url === source.url && current.kind === source.kind) === index); return { ...old, ...next, coverUrl: next.coverUrl ?? old.coverUrl, description: next.description ?? old.description, publishedAt: next.publishedAt ?? old.publishedAt, sources }; }
 function parseFolder(url) { try { const parts = decodeURIComponent(new URL(url).pathname).split("/").filter(Boolean); const year = parts.find((part) => /^(?:19|20|14)\d{2}$/.test(part)) ?? null; const index = year ? parts.indexOf(year) : -1; return { root: "Unknown", year, month: index >= 0 ? parts[index + 1] ?? null : null, day: null }; } catch { return { root: "Unknown", year: null, month: null, day: null }; } }
-function basePath(url) { try { const parsed = new URL(url); const parts = parsed.pathname.split("/").filter(Boolean); return `${parsed.origin}/${parts.slice(0, Math.min(parts.length - 1, 4)).join("/")}/`; } catch { return null; } }
-function quality(value, url) { const joined = `${value} ${decode(url)}`; return /320/.test(joined) ? "320kbps" : /128/.test(joined) ? "128kbps" : null; }
 function first(value, pattern) { return (value.match(pattern) ?? [])[1] ?? ""; }
 function clean(value = "") { return decode(value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()); }
 function decode(value = "") { return value.replace(/&#(x[\da-f]+|\d+);/gi, (_, code) => String.fromCodePoint(code[0].toLowerCase() === "x" ? parseInt(code.slice(1), 16) : Number(code))).replace(/&amp;/g, "&").replace(/&#8211;/g, "–").replace(/&nbsp;/g, " "); }

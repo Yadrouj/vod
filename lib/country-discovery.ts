@@ -1,4 +1,5 @@
 import type { VodCard } from "./types";
+import { facetLabel, facetValue } from './catalog-facets.mjs';
 
 export function validCountry(value: string | null | undefined): string | null {
   const code = value?.trim().toUpperCase();
@@ -7,6 +8,11 @@ export function validCountry(value: string | null | undefined): string | null {
 }
 
 export function countryName(code: string, locale = "fa") {
+  // Share pinned country names with catalog filters. Node and browsers ship
+  // different ICU versions (e.g. KR = South Korea vs Korea), which otherwise
+  // replaces the whole landing tree during English-page hydration.
+  const canonical = facetValue('country', code);
+  if (canonical && (locale === 'fa' || locale === 'en')) return facetLabel('country', canonical, locale);
   try { return new Intl.DisplayNames([locale], { type: "region" }).of(code) || code; } catch { return code; }
 }
 
