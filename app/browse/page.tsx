@@ -19,6 +19,7 @@ import {
 import { browseVodIndex, loadOldIranianVodIndex, loadVodIndex, queryString, SECTION_LABELS } from "@/lib/vod-index";
 import { hubForBrowse } from '@/lib/site-navigation';
 import { EntityFaqSection } from '@/components/entity-faq';
+import { facetLabel, facetOptions, facetValue } from '@/lib/catalog-facets.mjs';
 
 type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -91,9 +92,9 @@ export default async function BrowsePage({ searchParams }: Props) {
                   { value: "series", label: t.common.series },
                 ]}
               />
-              <Select name="genre" label={t.browse.genre} value={params.genre ?? "All"} options={withAll(index.filters.genres, locale)} />
-              <Select name="country" label={locale === "fa" ? "کشور" : "Country"} value={params.country ?? "All"} options={withAll(index.filters.countries, locale)} />
-              <Select name="language" label={locale === "fa" ? "زبان" : "Language"} value={params.language ?? "All"} options={withAll(index.filters.languages, locale)} />
+              <Select name="genre" label={t.browse.genre} value={facetValue('genre', params.genre) ?? "All"} options={[{ value: "All", label: t.common.all }, ...facetOptions('genre', index.filters.genres, locale)]} />
+              <Select name="country" label={locale === "fa" ? "کشور" : "Country"} value={facetValue('country', params.country) ?? "All"} options={[{ value: "All", label: t.common.all }, ...facetOptions('country', index.filters.countries, locale)]} />
+              <Select name="language" label={locale === "fa" ? "زبان" : "Language"} value={facetValue('language', params.language) ?? "All"} options={[{ value: "All", label: t.common.all }, ...facetOptions('language', index.filters.languages, locale)]} />
               <Select name="year" label={t.browse.year} value={params.year ?? "All"} options={withAll(index.filters.years, locale)} />
               <Select name="quality" label={t.browse.quality} value={params.quality ?? "All"} options={withAll(index.filters.qualities, locale)} />
               <label>
@@ -122,7 +123,10 @@ export default async function BrowsePage({ searchParams }: Props) {
             <Link aria-current={result.section === "latest-animation" ? "page" : undefined} href="/browse?section=latest-animation">{locale === "fa" ? "انیمیشن‌های جدید" : "New Animation"}</Link>
           </nav></details>
           <div className={styles.activeFilters} aria-label={locale === "fa" ? "فیلترهای فعال" : "Active filters"}>
-            {Object.entries(params).filter(([key, value]) => ["q", "type", "genre", "country", "language", "year", "quality", "minScore"].includes(key) && value && !["all", "All", "0"].includes(value)).map(([key, value]) => <Link key={key} href={`/browse${queryString({ ...params, [key]: undefined, page: 1, batch: undefined })}`} aria-label={`${locale === "fa" ? "حذف فیلتر" : "Remove filter"} ${value}`}><span>{value}</span><span aria-hidden="true">×</span></Link>)}
+            {Object.entries(params).filter(([key, value]) => ["q", "type", "genre", "country", "language", "year", "quality", "minScore"].includes(key) && value && !["all", "All", "0"].includes(value)).map(([key, value]) => {
+              const label = key === 'genre' || key === 'country' || key === 'language' ? facetLabel(key, value, locale) : value;
+              return <Link key={key} href={`/browse${queryString({ ...params, [key]: undefined, page: 1, batch: undefined })}`} aria-label={`${locale === "fa" ? "حذف فیلتر" : "Remove filter"} ${label}`}><span>{label}</span><span aria-hidden="true">×</span></Link>;
+            })}
           </div>
         </div>
       </section>

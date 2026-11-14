@@ -16,6 +16,7 @@ import { matchVodSearch } from "./vod-search-match";
 import { searchText } from "./typo-search";
 import { compareSearchRank, type SearchRankingSignals } from "./vod-search-order";
 import { loadSearchRankingSignals } from "./search-popularity";
+import { facetValues, matchesFacet } from './catalog-facets.mjs';
 
 export type BotSort = "relevance" | "rating" | "year" | "title";
 
@@ -194,8 +195,10 @@ export function botFilterFacets(items: VodCard[], params: BotSearchParams) {
     return countValues(items.filter(item => matchesBotFilters(item, scope)), getter);
   };
   return {
-    genres: facet("genre", item => item.genres), countries: facet("country", item => item.countries),
-    languages: facet("language", item => item.languages), qualities: facet("quality", item => item.qualities),
+    genres: facet("genre", item => facetValues('genre', [...item.genres, ...(item.persianGenres ?? [])])),
+    countries: facet("country", item => facetValues('country', [...item.countries, ...(item.persianCountries ?? [])])),
+    languages: facet("language", item => facetValues('language', [...item.languages, ...(item.persianLanguages ?? [])])),
+    qualities: facet("quality", item => item.qualities),
     years: facet("year", item => item.year ? [String(item.year)] : []).sort((a, b) => Number(b.value) - Number(a.value)),
   };
 }
@@ -438,9 +441,9 @@ function matchesBotFilters(item: VodCard, params: BotSearchParams) {
   // Text eligibility is decided by the shared whole-query matcher, not by an
   // OR of individual word scores (e.g. matching only "bud" in "breakng bud").
   if (params.type !== "all" && normalizeVodType(item.type) !== params.type) return false;
-  if (params.genre && !hasValue(item.genres, params.genre)) return false;
-  if (params.country && !hasValue(item.countries, params.country)) return false;
-  if (params.language && !hasValue(item.languages, params.language)) return false;
+  if (params.genre && !matchesFacet('genre', [...item.genres, ...(item.persianGenres ?? [])], params.genre)) return false;
+  if (params.country && !matchesFacet('country', [...item.countries, ...(item.persianCountries ?? [])], params.country)) return false;
+  if (params.language && !matchesFacet('language', [...item.languages, ...(item.persianLanguages ?? [])], params.language)) return false;
   if (params.quality && !hasValue(item.qualities, params.quality)) return false;
   if (params.year && !params.year.includes("-") && String(item.year ?? "") !== params.year) return false;
   if (params.yearFrom && (item.year ?? 0) < params.yearFrom) return false;

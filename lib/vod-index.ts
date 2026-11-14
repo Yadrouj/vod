@@ -7,6 +7,7 @@ import { matchVodSearch } from "./vod-search-match";
 import { persianTitleOrFallback } from "./title-display";
 import { addMoviezlandProfiles } from "./moviezland-profiles";
 import { cachedFamilyMovieCount, familyMovieReleaseRevision } from './familymovie-release';
+import { catalogFacets, matchesFacet, normalizeCardFacets } from './catalog-facets.mjs';
 
 export const HOME_SECTIONS = [
   "top-imdb",
@@ -78,6 +79,9 @@ function enrichLegacyCards(index: VodCatalogIndex, includeNew = true): VodCatalo
     items: supplemented.items.map(normalizeCardTitle),
     sections: supplemented.sections.map((section) => ({ ...section, items: section.items.map(normalizeCardTitle) })),
   };
+  // Rebuild from the current cards, not stale/raw provider filter lists. This also
+  // fixes existing on-disk indexes without overwriting live archive data.
+  enriched.filters = { ...supplemented.filters, ...catalogFacets(enriched.items) };
   enrichedIndexes.set(index, { revision: familyMovieReleaseRevision(), value: enriched });
   return enriched;
 }
@@ -85,7 +89,7 @@ function enrichLegacyCards(index: VodCatalogIndex, includeNew = true): VodCatalo
 function normalizeCardTitle(item: VodCard): VodCard {
   const enriched = enrichOldIranianCard(item);
   const freshCount = cachedFamilyMovieCount(enriched);
-  return { ...enriched, ...(freshCount !== undefined ? { fullLengthLinksCount: freshCount } : {}), persianTitle: persianTitleOrFallback(enriched) };
+  return normalizeCardFacets({ ...enriched, ...(freshCount !== undefined ? { fullLengthLinksCount: freshCount } : {}), persianTitle: persianTitleOrFallback(enriched) });
 }
 
 export function pickHero(index: VodCatalogIndex): VodCard | null {
@@ -120,9 +124,9 @@ export function browseVodIndex(index: VodCatalogIndex, params: BrowseParams, req
     return (
       matchesQuery &&
       (type === "all" || item.type === type) &&
-      (genre === "All" || item.genres.includes(genre)) &&
-      (country === "All" || item.countries.includes(country)) &&
-      (language === "All" || item.languages.includes(language)) &&
+      (genre.toLowerCase() === "all" || matchesFacet('genre', [...item.genres, ...(item.persianGenres ?? [])], genre)) &&
+      (country.toLowerCase() === "all" || matchesFacet('country', [...item.countries, ...(item.persianCountries ?? [])], country)) &&
+      (language.toLowerCase() === "all" || matchesFacet('language', [...item.languages, ...(item.persianLanguages ?? [])], language)) &&
       (year === "All" || String(item.year) === year) &&
       (quality === "All" || item.qualities.includes(quality)) &&
       (item.imdbRating ?? 0) >= minScore

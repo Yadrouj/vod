@@ -2,6 +2,7 @@ import { writeJsonAtomic } from "./atomic-json.mjs";
 import path from "node:path";
 import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 import { buildOldIranianVodIndex } from "./build-vod-old-iranian-index.mjs";
+import { catalogFacets, normalizeCardFacets } from '../lib/catalog-facets.mjs';
 
 const IN_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
 const OUT_FILE = process.argv[3] || path.join("public", "data", "vod-index.json");
@@ -67,7 +68,7 @@ function normalizeType(type) {
 }
 
 function toCard(item) {
-  return {
+  return normalizeCardFacets({
     id: item.id,
     title: item.title,
     imdbCode: item.imdbCode,
@@ -94,7 +95,7 @@ function toCard(item) {
     persianGenres: item.persianGenres ?? [],
     persianCountries: item.persianCountries ?? [],
     persianLanguages: item.persianLanguages ?? [],
-  };
+  });
 }
 
 function ratingSort(a, b) {
@@ -179,9 +180,7 @@ async function main() {
     updatedAt: archive.updatedAt ?? archive.scrapedAt ?? null,
     curatedSourcesUpdatedAt: archive.curatedSourcesUpdatedAt ?? null,
     filters: {
-      genres: uniqueSorted(items.flatMap((item) => item.genres)),
-      countries: uniqueSorted(items.flatMap((item) => item.countries)),
-      languages: uniqueSorted(items.flatMap((item) => item.languages)),
+      ...catalogFacets(items),
       years: uniqueSorted(items.map((item) => String(item.year ?? ""))).sort((a, b) => Number(b) - Number(a)),
       qualities: uniqueSorted(items.flatMap((item) => item.qualities)).sort(sortQuality),
       groups: uniqueSorted(items.flatMap((item) => item.groups)),

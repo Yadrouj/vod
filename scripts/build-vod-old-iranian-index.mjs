@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { catalogFacets, normalizeCardFacets } from '../lib/catalog-facets.mjs';
 
 const DATA_DIR = path.join(process.cwd(), "public", "data");
 const INPUT_FILE = path.join(DATA_DIR, "vod-index.json");
@@ -10,6 +11,7 @@ const OUTPUT_FILE = path.join(DATA_DIR, "vod-old-iranian.json");
 export function buildOldIranianVodIndex(index) {
   const items = (index.items ?? [])
     .filter((item) => item.source === "old-iranian-archive")
+    .map(normalizeCardFacets)
     .sort(yearSort);
   return {
     sourceUrl: index.sourceUrl,
@@ -30,9 +32,7 @@ export function buildOldIranianVodIndex(index) {
 
 function makeFilters(items) {
   return {
-    genres: uniqueSorted(items.flatMap((item) => item.genres ?? [])),
-    countries: uniqueSorted(items.flatMap((item) => item.countries ?? [])),
-    languages: uniqueSorted(items.flatMap((item) => item.languages ?? [])),
+    ...catalogFacets(items),
     years: uniqueSorted(items.map((item) => String(item.year ?? "")).filter(Boolean)).sort((left, right) => Number(right) - Number(left)),
     qualities: uniqueSorted(items.flatMap((item) => item.qualities ?? [])).sort((left, right) => Number.parseInt(right, 10) - Number.parseInt(left, 10) || left.localeCompare(right)),
     groups: [],
