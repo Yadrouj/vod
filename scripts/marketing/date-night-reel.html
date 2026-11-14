@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<meta charset="utf-8">
+<title>سرونما — الان وقت با هم دیدنه</title>
+<style>
+@font-face{font-family:Reel;src:url('/fonts/regular.ttf');font-weight:400;font-display:block}
+@font-face{font-family:Reel;src:url('/fonts/bold.ttf');font-weight:700;font-display:block}
+@font-face{font-family:Reel;src:url('/fonts/black.ttf');font-weight:950;font-display:block}
+*{box-sizing:border-box}html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:#080b10;color:#faf5e8;font-family:Reel,sans-serif}
+#reel{width:1080px;height:1920px;position:relative;overflow:hidden;isolation:isolate;background:#080b10}
+p,h1,h2{margin:0}.scene{position:absolute;inset:0;overflow:hidden;visibility:hidden;will-change:transform;background:#080b10}
+.brand{position:absolute;top:147px;right:88px;z-index:30;display:flex;align-items:center;gap:14px;font-size:35px;font-weight:950;text-shadow:0 3px 22px #000b}
+.mark{display:inline-block;width:49px;height:56px;mask:url('/brand/mark.svg') center/contain no-repeat;mask-mode:luminance;background:#eed69c}
+.edition{position:absolute;top:166px;left:88px;z-index:30;font:17px Arial,sans-serif;letter-spacing:4px;color:#f6e7c8b3}
+.bg{position:absolute;width:100%;height:100%;inset:0;object-fit:cover;will-change:transform;filter:saturate(.88)}
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,#050a1094 0%,#080b1000 35%,#060a1088 53%,#080b10f5 78%,#080b10)}
+.eyebrow{font-size:29px;font-weight:700;color:#e9cd8e;display:flex;align-items:center;gap:15px}.eyebrow:before{content:'';width:35px;height:2px;background:currentColor}
+.text{position:absolute;right:88px;left:100px;z-index:5;will-change:transform}
+h2{font-size:108px;line-height:1.43;font-weight:950;letter-spacing:-3px}em{font-style:normal;color:#efd18b}
+.sub{font-size:37px;line-height:1.9;color:#ccc9c2;margin-top:25px}.roman{font:25px Arial,sans-serif;letter-spacing:5px;direction:ltr;color:#e7dbc0}
+.corner{position:absolute;top:270px;left:88px;width:58px;height:58px;border-top:2px solid #e4cea7aa;border-left:2px solid #e4cea7aa;z-index:4}
+.vertical-label{position:absolute;top:400px;left:62px;writing-mode:vertical-rl;letter-spacing:5px;font:17px Arial,sans-serif;color:#fff8;z-index:4}
+.split{position:absolute;width:1100px;height:1450px;overflow:hidden;transform:rotate(-10deg);box-shadow:0 0 0 1px #f8e5bf44}
+.split img{width:100%;height:100%;object-fit:cover;transform:scale(1.15)}
+.split.one{left:-245px;top:-190px}.split.one img{object-position:6% center}
+.split.two{right:-280px;top:720px}.split.two img{object-position:55% center}
+#hook .shade{background:linear-gradient(180deg,#070a10b0,#070a1044 22%,#070a10b8 45%,#070a10d8 75%,#070a10)}
+#hook .text{top:620px;right:90px;left:90px;text-align:center}#hook .eyebrow{justify-content:center;margin-bottom:28px}
+#hook h2{font-size:130px;line-height:1.43}#hook .sub{font-size:38px;color:#e5dfd5}
+.scroll-hint{position:absolute;top:1560px;left:0;right:0;text-align:center;font-size:25px;color:#ddcda7;z-index:5;display:flex;align-items:center;justify-content:center;gap:18px}
+.scroll-hint svg{width:30px;height:30px}
+.film .text{top:1090px}.film .eyebrow{margin-bottom:22px}.film h2{font-size:162px;line-height:1.35}.film .roman{margin-top:2px}.film .sub{font-size:40px;margin-top:30px;line-height:1.65}
+#odyssey .bg{object-position:11% 45%;filter:saturate(.88) contrast(1.06)}
+#odyssey .shade{background:linear-gradient(180deg,#110b09a3,#110b0900 23%,#130e111a 37%,#080b10bc 52%,#080b10f5 71%,#080b10 86%)}
+.date-tag{margin-top:30px;display:inline-flex;align-items:center;gap:15px;padding:14px 20px;border:1px solid #e7bc7666;background:#20180fbb;border-radius:13px;font-size:27px;color:#ecd09d}
+.date-tag i{width:8px;height:8px;background:#e7c27c;border-radius:50%}
+.film-number{position:absolute;top:280px;right:92px;display:flex;align-items:baseline;gap:20px;color:#f8e3bc;font:76px Arial,sans-serif;direction:ltr;z-index:4}.film-number span{font-size:19px;letter-spacing:3px}
+.actor{position:absolute;top:800px;right:90px;z-index:4;font-size:31px;color:#f3e6c7;display:flex;align-items:center;gap:16px;border:1px solid #eed4a42b;background:#101013b5;padding:10px 20px;border-radius:100px}.actor:before{content:'';width:25px;height:1px;background:currentColor}
+#hail .bg{object-position:55% center;filter:saturate(.65) contrast(1.07)}
+#hail .shade{background:linear-gradient(180deg,#06101a95,#06101a00 24%,#06101a22 46%,#080c14ed 66%,#080b10 88%)}
+#hail .film-number{color:#b6e2ec}#hail .eyebrow,#hail em{color:#b4e2e7}#hail h2{font-size:125px;line-height:1.35}#hail .actor{color:#cbebee}
+.planet{position:absolute;top:300px;left:-180px;width:450px;height:450px;border:1px solid #abd4e522;border-radius:50%;box-shadow:0 0 100px #6bbac00c;z-index:3}.planet:before{content:'';position:absolute;inset:28px;border:1px solid #abd4e515;border-radius:50%}
+#partner:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 48%,#3c394152,transparent 60%),linear-gradient(135deg,#171112,#080b10)}
+#partner .text{top:298px}#partner h2{font-size:105px}.muted-word{color:#999c9e}.room-window{position:absolute;top:755px;left:116px;width:848px;height:520px;background:#101214;border:1px solid #bca97b55;border-radius:29px;overflow:hidden;box-shadow:0 50px 100px #0009;z-index:4;transform-origin:50% 100%}
+.room-window img{width:100%;display:block;transform:translateY(-75px)}
+.room-top{height:48px;background:#17181c;display:flex;align-items:center;justify-content:space-between;padding:0 24px;color:#c8bda9;font:18px Arial;direction:ltr;border-bottom:1px solid #fff1}
+.room-top i{width:7px;height:7px;border-radius:50%;background:#e7c77e;box-shadow:13px 0 #e7c77e66}
+.people{position:absolute;top:1390px;left:115px;right:115px;display:flex;align-items:center;justify-content:space-between;z-index:4;gap:20px}
+.person{flex-shrink:0;display:flex;align-items:center;justify-content:center;flex-direction:column;width:170px;height:170px;border-radius:50%;border:1px solid #ead29c77;background:linear-gradient(145deg,#342e21,#171b1d);box-shadow:0 0 0 12px #ead29c05;color:#eed59c;font-size:28px;font-weight:700;gap:6px}.person svg{width:43px;height:43px}.person.second{border-color:#c4e6e577;background:linear-gradient(145deg,#1e3538,#16191d);color:#bce2e5}
+.connection{height:2px;background:linear-gradient(90deg,#b6e1e5,#e9c581);position:relative;flex:1}.connection i{position:absolute;top:-8px;left:50%;width:18px;height:18px;background:#f0cf8e;box-shadow:0 0 27px #f0cf8e;border-radius:50%}.link-note{position:absolute;top:1640px;left:90px;right:90px;text-align:center;color:#d5d2c9;font-size:29px;z-index:4}
+#free:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,#88672934,transparent 70%),#090c10}
+.orbit{position:absolute;left:50%;top:820px;transform:translate(-50%,-50%);border:1px solid #eed09c22;border-radius:50%}.orbit.a{width:950px;height:950px}.orbit.b{width:1200px;height:1200px}.orbit.c{width:1550px;height:1550px}
+.orbit.a:after,.orbit.b:after{content:'';position:absolute;left:50%;top:-6px;background:#e7cc8a;width:11px;height:11px;border-radius:50%;box-shadow:0 0 35px #f4d28d}
+#free .text{top:490px;text-align:center;right:88px;left:88px}#free .eyebrow{justify-content:center}#free .giant{font-size:248px;font-weight:950;letter-spacing:-9px;line-height:1.6;color:#f0d18b;text-shadow:0 0 70px #ddbb6830;white-space:nowrap}
+#free .sub{margin-top:2px;font-size:46px;color:#ede4d0}.free-small{position:absolute;top:1260px;left:130px;right:130px;z-index:4;display:flex;align-items:center;justify-content:center;gap:25px;font-size:32px;color:#c8c9c3}.free-small span{padding:13px 27px;border:1px solid #d9c48b44;border-radius:100px;background:#13171a}
+.scope{position:absolute;top:1535px;right:130px;left:130px;text-align:center;font-size:24px;line-height:1.9;color:#b3b1a7;z-index:4}
+#outro:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 53%,#6e593a30,transparent 65%),#090b0f}
+.end-logo{position:absolute;top:330px;left:0;right:0;text-align:center;z-index:4}.end-logo .mark{width:105px;height:122px}
+#outro .text{top:550px;right:84px;left:84px;text-align:center}#outro h2{font-size:130px;line-height:1.45}#outro .sub{font-size:38px;line-height:1.8;margin-top:32px}
+.end-url{position:absolute;top:1235px;left:160px;right:160px;height:115px;display:flex;align-items:center;justify-content:center;gap:30px;border-radius:22px;border:1px solid #d9bc7855;background:#dabf8214;font:54px Arial,sans-serif;letter-spacing:2px;color:#f3d698;direction:ltr;z-index:4}.end-url svg{width:38px;height:38px}
+.end-free{position:absolute;top:1425px;left:0;right:0;text-align:center;font-size:32px;color:#d7c8a4;z-index:4}.end-free b{color:#f2d18c}
+.flash{position:absolute;inset:0;background:#f0d5a5;opacity:0;pointer-events:none;z-index:21}
+.particles{position:absolute;inset:0;pointer-events:none;z-index:9}.particles i{position:absolute;width:3px;height:3px;border-radius:50%;background:#ffd99f;box-shadow:0 0 12px #ffc28488;will-change:transform,opacity}
+.rails{position:absolute;top:280px;bottom:230px;left:24px;width:10px;background:repeating-linear-gradient(180deg,transparent 0 42px,#ffffff0d 42px 59px,transparent 59px 77px);z-index:22;pointer-events:none}
+.progress{position:absolute;top:1755px;left:88px;right:88px;height:2px;background:#f4e8c119;z-index:30;direction:ltr}.progress i{height:100%;display:block;background:#e4c585;width:0}
+.vo-note{position:absolute;top:1797px;right:88px;font-size:17px;color:#c4bca044;z-index:30}
+</style>
+<div id="reel">
+ <section class="scene" id="hook" data-start="0" data-end="4">
+  <div class="split one"><img src="/assets/odyssey.jpg" alt="پوستر رسمی ادیسه"></div><div class="split two"><img src="/assets/hail.jpg" alt="عکس رسمی پروژه هیل مری"></div><div class="shade"></div>
+  <div class="text" data-reveal=".05"><p class="eyebrow">قرارِ بعدی‌تون آماده‌ست؟</p><h2>دو تا فیلم.<br><em>یه قرارِ دونفره!</em></h2><p class="sub">وقتی دلت می‌خواد با نفرِ خودت ببینی.</p></div>
+  <div class="scroll-hint"><span>برای یک شبِ سینمایی</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v18m-6-6 6 6 6-6"/></svg></div>
+ </section>
+ <section class="scene film" id="odyssey" data-start="4" data-end="11">
+  <img class="bg" src="/assets/odyssey.jpg" alt="ادیسه، کریستوفر نولان"><div class="shade"></div><div class="corner"></div><div class="vertical-label">CHRISTOPHER NOLAN · 2026</div>
+  <div class="film-number">01<span>THE NEXT WATCH</span></div><p class="actor" data-reveal=".35">مت دیمون · کریستوفر نولان</p>
+  <div class="text" data-reveal=".15"><p class="eyebrow">حماسه‌ای برای پردهٔ بزرگ</p><h2>ادیسه</h2><p class="roman">THE ODYSSEY</p><p class="sub">یک سفرِ نفس‌گیر.<br>برای برگشتن به خانه.</p><p class="date-tag"><i></i>نسخهٔ دیجیتال رسمی: ۱۷ نوامبر</p></div>
+ </section>
+ <section class="scene film" id="hail" data-start="11" data-end="18">
+  <img class="bg" src="/assets/hail.jpg" alt="رایان گاسلینگ در پروژه هیل مری"><div class="shade"></div><div class="corner"></div><div class="planet"></div><div class="vertical-label">PROJECT HAIL MARY · 2026</div>
+  <div class="film-number">02<span>THE NEXT WATCH</span></div><p class="actor" data-reveal=".35">رایان گاسلینگ</p>
+  <div class="text" data-reveal=".15"><p class="eyebrow">علمی‌تخیلی · ماجراجویی</p><h2>پروژه<br><em>هیل مری</em></h2><p class="roman">PROJECT HAIL MARY</p><p class="sub">یک مأموریتِ غیرممکن.<br>برای نجاتِ زمین.</p></div>
+ </section>
+ <section class="scene" id="partner" data-start="18" data-end="24">
+  <div class="text" data-reveal=".05"><p class="eyebrow">تماشای همزمانِ سرونما</p><h2><span class="muted-word">پارتنرت دوره؟</span><br><em>فاصله مهم نیست.</em></h2><p class="sub">یه لینک بفرست. با هم ببینید.</p></div>
+  <div class="room-window"><div class="room-top"><i></i><span>sarvnema.ir / watch-together</span><span>↗</span></div><img src="/assets/together.png" alt="رابط واقعی ساخت اتاق خصوصی سرونما"></div>
+  <div class="people"><div class="person"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="8" r="4"/><path d="M4 22v-2a8 8 0 0 1 16 0v2"/></svg><span>تو</span></div><span class="connection"><i></i></span><div class="person second"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="m12 21-8-8C-3 6 6-1 12 6 18-1 27 6 20 13Z"/></svg><span>پارتنرت</span></div></div>
+  <p class="link-note" data-reveal=".9">یک اتاق خصوصی. یک قرارِ واقعی.</p>
+ </section>
+ <section class="scene" id="free" data-start="24" data-end="30">
+  <div class="orbit a"></div><div class="orbit b"></div><div class="orbit c"></div>
+  <div class="text" data-reveal=".1"><p class="eyebrow">تماشای همزمان در سرونما</p><p class="giant">رایگانه!</p><p class="sub">قرارِ سینمایی، با نفرِ خودت.</p></div>
+  <div class="free-small" data-reveal=".6"><span>اتاق خصوصی</span><span>لینک دعوت</span><span>پخش همگام</span></div>
+  <p class="scope">رایگان بودن مربوط به قابلیت تماشای همزمان سرونماست؛<br>دسترسی به هر فیلم، تابع شرایط منبع آن است.</p>
+ </section>
+ <section class="scene" id="outro" data-start="30" data-end="36">
+  <div class="end-logo" data-reveal=".1"><span class="mark"></span></div>
+  <div class="text" data-reveal=".15"><h2>الان وقتِ<br><em>با هم دیدنه.</em></h2><p class="sub">سرونما؛ قرارِ سینماییِ<br>تو و پارتنرت.</p></div>
+  <div class="end-url" data-reveal=".6"><span>sarvnema.ir</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></div><p class="end-free" data-reveal=".9">تماشای همزمان · <b>رایگان</b></p>
+ </section>
+ <div class="particles"></div><div class="flash"></div><div class="rails"></div>
+ <div class="brand"><span class="mark"></span><span>سرونما</span></div><div class="edition">WATCH TOGETHER</div>
+ <div class="progress"><i></i></div><div class="vo-note">روایت با صدای مصنوعی فارسی</div>
+</div>
+<script>
+const clamp=v=>Math.max(0,Math.min(1,v)),smooth=v=>{v=clamp(v);return v*v*(3-2*v);},ease=v=>1-Math.pow(1-clamp(v),3);
+const scenes=[...document.querySelectorAll('.scene')],cuts=[4,11,18,24,30];
+for(let i=0;i<45;i++){const dot=document.createElement('i');dot.style.left=((i*173+113)%1080)+'px';dot.style.top=((i*257+91)%1920)+'px';document.querySelector('.particles').append(dot);}
+window.renderFrame=function(t){
+ for(const scene of scenes){
+  const start=Number(scene.dataset.start),end=Number(scene.dataset.end),p=t-start,length=end-start;
+  const enter=start===0?1:smooth((p+.32)/.64),exit=end===36?0:smooth((t-end+.32)/.64),visible=t>=start-.32&&t<end+.32;
+  scene.style.visibility=visible?'visible':'hidden';scene.style.transform=`translateY(${(1-enter-exit)*1920}px)`;
+  scene.style.filter=`blur(${Math.sin(enter*Math.PI)*3+Math.sin(exit*Math.PI)*3}px)`;
+  if(!visible)continue;
+  for(const el of scene.querySelectorAll('[data-reveal]')){const k=ease((p-Number(el.dataset.reveal))/.7);el.style.transform=`translateY(${(1-k)*85-clamp(p/length)*15}px)`;el.style.opacity=k;}
+  const bg=scene.querySelector('.bg');if(bg)bg.style.transform=`translate(${Math.sin(p*.2)*12}px,${-clamp(p/length)*42}px) scale(${1.08+clamp(p/length)*.085})`;
+ }
+ const hookP=clamp(t/4);document.querySelector('.split.one').style.transform=`translateY(${-hookP*65}px) rotate(${-12+hookP*3}deg) scale(${1+hookP*.05})`;
+ document.querySelector('.split.two').style.transform=`translateY(${hookP*50}px) rotate(${-8-hookP*2}deg)`;
+ const roomP=clamp((t-18)/6);document.querySelector('.room-window').style.transform=`perspective(1400px) rotateY(${-8+roomP*11}deg) rotateX(${4-roomP*4}deg) translateY(${-roomP*22}px)`;
+ document.querySelector('.connection i').style.left=(15+(Math.sin((t-18)*2.3)*.5+.5)*70)+'%';
+ for(const [i,orbit]of [...document.querySelectorAll('.orbit')].entries())orbit.style.transform=`translate(-50%,-50%) rotate(${(t-24)*(i%2?-14:18)}deg) scale(${1+Math.sin(t*2+i)*.008})`;
+ let nearest=10;for(const cut of cuts)nearest=Math.min(nearest,Math.abs(t-cut));document.querySelector('.flash').style.opacity=Math.max(0,1-nearest/.08)*.11;
+ for(const [i,dot]of [...document.querySelectorAll('.particles i')].entries()){dot.style.transform=`translate(${Math.sin(t*.4+i)*25}px,${-((t*28+i*51)%240)}px)`;dot.style.opacity=(.12+(Math.sin(t*.7+i)*.5+.5)*.4)*(t>11&&t<18?.45:1);}
+ document.querySelector('.progress i').style.width=(t/36*100)+'%';
+ document.querySelector('.scroll-hint').style.transform=`translateY(${Math.sin(t*3)*9}px)`;
+};
+window.reelReady=Promise.all([document.fonts.ready,...[...document.images].map(img=>img.complete&&img.naturalWidth?Promise.resolve():new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('Missing artwork: '+img.src));}))]);
+window.renderFrame(0);
+</script>
+</html>

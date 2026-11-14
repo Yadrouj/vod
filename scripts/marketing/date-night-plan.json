@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "duration": 36,
+  "fps": 30,
+  "checkedAt": "2026-11-15",
+  "voice": { "name": "fa-IR-FaridNeural", "rate": "+12%", "pitch": "-3Hz", "synthetic": true },
+  "claimScope": "Free refers only to SarvNema's watch-together room feature, not film licences, Internet access or third-party subscriptions.",
+  "films": [
+    {
+      "id": "tt33764258",
+      "title": "The Odyssey",
+      "persianTitle": "ادیسه",
+      "siteUrl": "https://sarvnema.ir/tt33764258",
+      "availability": "Official digital release: 2026-11-17; do not advertise as digitally available on the verification date.",
+      "sourceUrl": "https://www.universalpicturesathome.com/movies/the-odyssey-2026",
+      "imageUrl": "https://images.contentstack.io/v3/assets/blt13adb7e2033fcee5/blte52a903d095cd8b6/6acd0e9e04e8522ff87cfbb4/TheOdyssey_keyart_mobile_3840x2160.jpg?width=2560"
+    },
+    {
+      "id": "tt12042730",
+      "title": "Project Hail Mary",
+      "persianTitle": "پروژه هیل مری",
+      "siteUrl": "https://sarvnema.ir/tt12042730",
+      "availability": "Released; official streaming availability confirmed by Amazon MGM.",
+      "sourceUrl": "https://www.aboutamazon.com/news/entertainment/project-hail-mary-ryan-gosling-amazon-mgm-studios",
+      "imageUrl": "https://assets.aboutamazon.com/11/4d/7389746a44d9b46aea9a73a5c412/about-amazon-inline-project-hail-mary-phm-48854-r-rgb.jpg"
+    }
+  ],
+  "trendEvidence": "https://www.imdb.com/chart/titles/in0000015/",
+  "scenes": [
+    { "id": "hook", "start": 0, "end": 4, "voiceStart": 0.3, "voiceEnd": 3.8, "spoken": "دو تا فیلم. یه قرارِ دونفره!", "caption": "دو تا فیلم.\nیه قرارِ دونفره!" },
+    { "id": "odyssey", "start": 4, "end": 11, "voiceStart": 4.35, "voiceEnd": 10.65, "spoken": "اُدیسه‌ی نولان؛ یک سفرِ نفس‌گیر. نسخهٔ دیجیتال، هفده نوامبر.", "caption": "ادیسهٔ نولان؛ یک سفر نفس‌گیر.\nنسخهٔ دیجیتال رسمی: ۱۷ نوامبر" },
+    { "id": "hail", "start": 11, "end": 18, "voiceStart": 11.35, "voiceEnd": 17.65, "spoken": "پروژهٔ هیل مِری؛ رایان گاسلینگ، و مأموریتِ نجاتِ زمین!", "caption": "پروژه هیل مری؛ رایان گاسلینگ\nو مأموریت نجات زمین!" },
+    { "id": "partner", "start": 18, "end": 24, "voiceStart": 18.35, "voiceEnd": 23.65, "spoken": "پارتنرت دوره؟ یه لینک بفرست؛ با هم، هم‌زمان ببینید!", "caption": "پارتنرت دوره؟ یه لینک بفرست؛\nبا هم، همزمان ببینید!" },
+    { "id": "free", "start": 24, "end": 30, "voiceStart": 24.4, "voiceEnd": 29.5, "spoken": "تماشای هم‌زمان توی سَرو نِما، رایگانه!", "caption": "تماشای همزمان در سرونما\nرایگانه!" },
+    { "id": "outro", "start": 30, "end": 36, "voiceStart": 30.25, "voiceEnd": 35.6, "spoken": "الان وقتِ با هم دیدنه! سَرو نِما؛ قرارِ سینماییِ تو و پارتنرت.", "caption": "الان وقتِ با هم دیدنه!\nسرونما؛ قرار سینمایی تو و پارتنرت." }
+  ]
+}
