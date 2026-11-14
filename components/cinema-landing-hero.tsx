@@ -60,10 +60,13 @@ export function FilmLandingHero({ items, locale }: { items: (VodCard & { popular
         {comingSoon && <p className="coming-soon-notice">{fa ? 'به‌زودی · لینک نسخهٔ کامل هنوز در سرونما موجود نیست' : 'Coming soon · Full-release links are not available yet'}</p>}
         <div className={styles.meta}><b dir="ltr">IMDb {item.imdbRating?.toFixed(1) ?? "—"}</b><span>{item.year}</span><span>{typeLabel(item.type, locale)}</span><span>{item.genres.slice(0, 2).join(" · ")}</span></div>
         <p className={styles.overview} dir="auto">{(fa ? item.persianOverview || item.overview : item.overview) || item.genres.join(" · ")}</p>
-        <div className={styles.actions}>
+        <div className={styles.actions} data-hero-actions data-coming-soon={comingSoon}>
           <Link className={styles.play} href={!comingSoon ? `/watch/${item.imdbCode}` : `/${item.imdbCode}`}><Play size={22} fill="currentColor" />{!comingSoon ? t.common.playOnline : t.common.details}</Link>
-          <Link className={styles.details} href={`/${item.imdbCode}`}><Info size={20} />{t.common.details}</Link>
           {!comingSoon && <WatchTogetherLauncher locale={locale} placement="inline" preset={{ itemId: item.imdbCode, title: displayTitle, posterUrl: item.posterUrl }} />}
+          <Link className={styles.details} href={`/${item.imdbCode}`} aria-label={`${t.common.details} · ${displayTitle}`} title={t.common.details}>
+            <Info size={20} aria-hidden="true" /><span className={styles.detailsLabel}>{t.common.details}</span>
+            {fa ? <ChevronLeft className={styles.detailsArrow} size={12} aria-hidden="true" /> : <ChevronRight className={styles.detailsArrow} size={12} aria-hidden="true" />}
+          </Link>
         </div>
         {trend && <a className={styles.source} href={trend.sourceUrl} target="_blank" rel="noreferrer">{fa ? "رتبهٔ ترند IMDb" : "IMDb trend rank"} #{trend.rank} · {new Intl.DateTimeFormat(fa ? "fa-IR" : "en-US", { month: "short", day: "numeric", timeZone: "Asia/Tehran" }).format(new Date(trend.observedAt))}</a>}
       </div>

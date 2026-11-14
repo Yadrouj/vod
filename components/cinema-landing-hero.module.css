@@ -17,6 +17,7 @@
 .play { background: white; color: #101113; }
 .play:hover { background: #ead080; }
 .details { background: #ffffff15; color: white; backdrop-filter: blur(10px); }
+.detailsArrow { display: none; }
 .source { display: inline-block; color: #c9c6bd; font-size: 11px; margin-top: 22px; text-decoration: none; }
 .bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 22px; }
 .search { display: flex; gap: 12px; align-items: center; width: min(480px, 100%); padding: 6px 12px; border: 1px solid #ffffff28; border-radius: 12px !important; background: #101113b3; backdrop-filter: blur(12px); }
@@ -38,8 +39,18 @@
   .copy h2 { font-size: clamp(28px, 7vw, 44px); margin: 14px 0; }
   .meta { gap: 12px; font-size: 12px; }
   .overview { font-size: 13px; margin: 14px 0; }
-  .actions { gap: 8px; }
-  .actions a, .actions :global(.watch-together-launcher) { padding: 10px 14px; font-size: 12px; }
+  .actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) 48px; gap: 6px; }
+  .actions[data-coming-soon="true"] { grid-template-columns: minmax(0, 1fr) 48px; }
+  .actions > a, .actions > :global(.watch-together-launcher) { width: 100%; min-width: 0; min-height: 48px; padding: 10px 4px; gap: 4px; font-size: clamp(11px, 2.9vw, 12px); white-space: nowrap; }
+  .actions > a > svg { flex-shrink: 0; }
+  .play > svg { width: 18px; height: 18px; }
+  .actions .details { gap: 2px; }
+  .detailsLabel { display: none; }
+  .detailsArrow { display: block; }
+  .actions :global(.watch-together-launcher-icon) { width: 20px; height: 20px; flex: 0 0 20px; }
+  .actions :global(.watch-together-launcher-icon .watch-together-mark) { width: 20px; height: 20px; }
+  .actions :global(.watch-together-launcher-copy strong) { font-size: inherit; line-height: 1.4; white-space: nowrap; }
+  .actions > :global(.watch-together-launcher):hover { transform: none; }
   .source { margin-top: 12px; }
   .bottom { gap: 10px; }
   .search { width: 100%; }
