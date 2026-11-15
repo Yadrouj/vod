@@ -99,13 +99,24 @@ p,h1,h2{margin:0}h2{font-size:120px;font-weight:950;line-height:1.35;letter-spac
 <script>
 const clamp=v=>Math.max(0,Math.min(1,v)),smooth=v=>{v=clamp(v);return v*v*(3-2*v);},ease=v=>1-Math.pow(1-clamp(v),3);
 const scenes=[...document.querySelectorAll('.scene')];
+let totalDuration=30;
+window.configureReel=function(plan){
+ if(plan.scenes.length!==scenes.length)throw Error('Unexpected weekend scene count');
+ for(const [i,scene]of scenes.entries()){
+  const timing=plan.scenes[i];if(timing.id!==scene.id)throw Error('Unexpected weekend scene order');
+  scene.dataset.start=timing.start;scene.dataset.end=timing.end;
+ }
+ totalDuration=plan.duration;
+};
+const sceneStart=id=>Number(document.getElementById(id).dataset.start);
+const sceneLength=id=>Number(document.getElementById(id).dataset.end)-sceneStart(id);
 const palette=['#ff2799','#e9ff55','#46e9ec','#ffffff','#6e32ff'];
 for(let i=0;i<28;i++){const el=document.createElement('i');el.style.left=((i*193+83)%1080)+'px';el.style.top=((i*279+101)%1920)+'px';el.style.background=palette[i%palette.length];document.querySelector('.confetti').append(el);}
 window.renderFrame=function(t){
  const active=scenes.find(s=>t>=Number(s.dataset.start)&&t<Number(s.dataset.end))||scenes.at(-1),ink=['family','together','free'].includes(active.id)?'#281044':'#ffffff';
  for(const el of document.querySelectorAll('.brand,.edition,.progress,.disclosure'))el.style.color=ink;
  for(const [index,scene]of scenes.entries()){
-  const start=Number(scene.dataset.start),end=Number(scene.dataset.end),p=t-start,duration=end-start,enter=start===0?1:smooth((p+.22)/.44),exit=end===30?0:smooth((t-end+.22)/.44);
+  const start=Number(scene.dataset.start),end=Number(scene.dataset.end),p=t-start,duration=end-start,enter=start===0?1:smooth((p+.22)/.44),exit=end===totalDuration?0:smooth((t-end+.22)/.44);
   const visible=t>=start-.22&&t<end+.22;scene.style.visibility=visible?'visible':'hidden';if(!visible)continue;
   const own=scene.dataset.in,next=scenes[index+1]?.dataset.in;let x=0,y=0;
   if(own==='horizontal')x+=(1-enter)*1080;if(own==='vertical')y+=(1-enter)*1920;
@@ -118,11 +129,11 @@ window.renderFrame=function(t){
   for(const [i,el]of [...scene.querySelectorAll('.sticker')].entries())el.style.transform=`rotate(${Math.sin(p*2+i)*3+(scene.id==='family'?5:-5)}deg) scale(${1+Math.sin(p*Math.PI*4)*.012})`;
  }
  const q=t/3;document.querySelector('.photo-card.family').style.transform=`translateY(${-clamp(q)*25}px) rotate(${-9+Math.sin(t*1.7)*2}deg)`;document.querySelector('.photo-card.couple').style.transform=`translateY(${-clamp(q)*40}px) rotate(${8+Math.sin(t*1.8)*2}deg)`;
- const p=clamp((t-13)/6);document.querySelector('.device.left').style.transform=`perspective(1400px) rotateY(${-10+p*14}deg) rotate(${-7+p*3}deg)`;document.querySelector('.device.right').style.transform=`perspective(1400px) rotateY(${8-p*14}deg) rotate(${7-p*3}deg)`;
- document.querySelector('.flying-link').style.transform=`translate(${Math.sin((t-13)*2)*35}px,${Math.cos((t-13)*2)*25}px) rotate(${-8+Math.sin(t*2)*6}deg)`;
- document.querySelector('.free-symbol').style.transform=`rotate(${(t-19)*55}deg)`;document.querySelector('.ticker span').style.transform=`translateX(${(t-24)*80}px)`;
+ const togetherTime=t-sceneStart('together'),p=clamp(togetherTime/sceneLength('together'));document.querySelector('.device.left').style.transform=`perspective(1400px) rotateY(${-10+p*14}deg) rotate(${-7+p*3}deg)`;document.querySelector('.device.right').style.transform=`perspective(1400px) rotateY(${8-p*14}deg) rotate(${7-p*3}deg)`;
+ document.querySelector('.flying-link').style.transform=`translate(${Math.sin(togetherTime*2)*35}px,${Math.cos(togetherTime*2)*25}px) rotate(${-8+Math.sin(t*2)*6}deg)`;
+ document.querySelector('.free-symbol').style.transform=`rotate(${(t-sceneStart('free'))*55}deg)`;document.querySelector('.ticker span').style.transform=`translateX(${(t-sceneStart('outro'))*80}px)`;
  for(const [i,el]of [...document.querySelectorAll('.confetti i')].entries()){el.style.transform=`translate(${Math.sin(t*.7+i)*45}px,${(t*50+i*39)%240-120}px) rotate(${t*40+i*21}deg)`;el.style.opacity=.2+(Math.sin(t+i)*.5+.5)*.45;}
- document.querySelector('.progress i').style.width=(t/30*100)+'%';
+ document.querySelector('.progress i').style.width=(clamp(t/totalDuration)*100)+'%';
 };
 window.reelReady=Promise.all([document.fonts.ready,...[...document.images].map(img=>img.complete&&img.naturalWidth?Promise.resolve():new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('Missing weekend image '+img.src));}))]);
 window.renderFrame(0);

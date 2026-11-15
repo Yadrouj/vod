@@ -1,7 +1,7 @@
 import { writeFile } from 'node:fs/promises';
 
 /** Original bright 120 BPM dance-pop cue; no external songs or samples. */
-export async function createWeekendScore(file, duration = 30, sampleRate = 48000) {
+export async function createWeekendScore(file, duration = 30, sampleRate = 48000, { hype = false, cuts = [3, 8, 13, 19, 24] } = {}) {
   const count = Math.round(duration * sampleRate), left = new Float64Array(count), right = new Float64Array(count), tau = Math.PI * 2;
   let seed = 571122;
   const noise = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 2147483648 - 1; };
@@ -20,11 +20,21 @@ export async function createWeekendScore(file, duration = 30, sampleRate = 48000
     if (n % 2 === 0) for (const [i, hz] of notes.slice(1).entries()) add(start + .25, .62, t => .033 * Math.min(1, t / .005) * Math.exp(-5 * t) * (Math.sin(tau * hz * t) + .28 * Math.sin(tau * hz * 2.002 * t)), (i - 1) * .5);
     const lead = notes[1 + [0, 1, 2, 1, 0, 2, 1, 2][n % 8]] * (n % 4 === 3 ? 2 : 1);
     add(start + .125, .46, t => .033 * Math.min(1, t / .004) * Math.exp(-8 * t) * (Math.sin(tau * lead * t) + .13 * Math.sin(tau * lead * 3 * t)), Math.sin(n) * .55);
+    if (hype) {
+      // More forward offbeat synth, brighter stereo lead and layered claps.
+      add(start + .25, .22, t => .036 * Math.min(1, t / .003) * Math.exp(-11 * t) * (Math.sin(tau * notes[2] * t) + .3 * Math.sin(tau * notes[2] * 3 * t)), -.2);
+      if (n % 2 === 1) for (const off of [0, .013, .027]) add(start + off, .105, t => noise() * .028 * Math.exp(-30 * t), off ? .45 : -.45);
+      if (n % 4 === 3) for (let i = 0; i < 3; i++) add(start + i * .083, .23, t => .027 * Math.exp(-14 * t) * Math.sin(tau * notes[1 + i] * 2 * t), (i - 1) * .65);
+    }
   }
-  for (const cut of [3, 8, 13, 19, 24]) {
+  for (const cut of cuts.filter(cut => Number.isFinite(cut) && cut >= .7 && cut < duration)) {
     let low = 0;
     add(cut - .22, .5, t => { low += .2 * (noise() - low); return .12 * low * Math.sin(Math.PI * t / .5) ** 2; }, -.2);
     for (const [i, hz] of [587.3295, 739.9888, 880].entries()) add(cut + i * .035, .8, t => .034 * Math.exp(-5 * t) * Math.sin(tau * hz * t), (i - 1) * .35);
+    if (hype) {
+      add(cut - .7, .7, t => .026 * Math.sin(Math.PI * t / .7) ** 2 * Math.sin(tau * (240 * t + 450 * t * t)), .4);
+      for (let i = 0; i < 4; i++) add(cut - .5 + i * .125, .07, t => noise() * (.018 + i * .006) * Math.exp(-50 * t), i % 2 ? .5 : -.5);
+    }
   }
   let peak = .01;
   for (let i = 0; i < count; i++) peak = Math.max(peak, Math.abs(left[i]), Math.abs(right[i]));
@@ -36,5 +46,5 @@ export async function createWeekendScore(file, duration = 30, sampleRate = 48000
     output.writeInt16LE(Math.round(Math.tanh(right[i] * gain) * fade * 30000), 46 + i * 4);
   }
   await writeFile(file, output);
-  return { duration, sampleRate, channels: 2, bpm: 120, externalSamples: false, style: 'Original upbeat major-key dance-pop, electronic percussion and beat-synchronized transition chimes' };
+  return { duration, sampleRate, channels: 2, bpm: 120, externalSamples: false, hype, style: hype ? 'Original high-energy dance-pop with layered claps, stereo synth fills, risers and transition impacts' : 'Original upbeat major-key dance-pop, electronic percussion and beat-synchronized transition chimes' };
 }
