@@ -53,6 +53,20 @@ p,h1,h2{margin:0}h2{font-size:120px;font-weight:950;line-height:1.35;letter-spac
 .confetti{position:absolute;inset:0;z-index:22;pointer-events:none;overflow:hidden}.confetti i{position:absolute;width:11px;height:22px;border-radius:3px;will-change:transform,opacity}
 .progress{position:absolute;top:1755px;left:88px;right:88px;height:3px;background:#ffffff44;z-index:30;direction:ltr}.progress i{height:100%;display:block;background:currentColor;width:0}
 .disclosure{position:absolute;top:1810px;left:90px;right:90px;text-align:center;font-size:17px;z-index:30;opacity:.55}
+.punchy .text h2 span{display:block;white-space:nowrap;transform-origin:center}
+.punchy .text h2 span:last-child{color:#e9ff55}
+.punchy #family .text h2 span:last-child,.punchy #together .text h2 span:last-child{color:#6e32ff}
+.punchy #hook .text{top:310px}.punchy #hook h2{font-size:158px;line-height:1.4;letter-spacing:-4px}
+.punchy #hook .sub,.punchy #together .sub,.punchy #outro .sub{display:none}
+.punchy #hook .sticker{top:870px}.punchy .photo-card.family{top:1010px;height:680px}.punchy .photo-card.couple{top:1080px;height:680px}
+.punchy #family .text,.punchy #couple .text{top:280px}.punchy #family h2,.punchy #couple h2{font-size:151px;line-height:1.35;letter-spacing:-3px}
+.punchy #family .text{top:230px}.punchy #family h2{font-size:112px;line-height:1.1}.punchy #family .eyebrow{font-size:24px;margin-bottom:12px}
+.punchy #together .text{top:300px}.punchy #together h2{font-size:130px;line-height:1.45}
+.punchy #free .text{top:440px}.punchy #free .giant{font-size:240px}.punchy #free .sub{font-size:43px}
+.punchy #outro .end-mark{display:none}.punchy #outro .text{top:465px}.punchy #outro h2{font-size:175px;line-height:1.6}
+.punchy #outro .url{top:1130px}.punchy #outro .end-free{top:1350px}
+.punchy .flying-link:after{content:'';position:absolute;inset:-20px;border:4px solid #281044;border-radius:45px;opacity:.4}
+.action-streaks{position:absolute;inset:0;z-index:24;pointer-events:none;opacity:0;background:repeating-linear-gradient(-18deg,transparent 0 160px,#fff8 162px 165px,transparent 167px 320px);transform-origin:center}
 </style>
 <div id="reel">
  <section class="scene" id="hook" data-start="0" data-end="3" data-in="horizontal">
@@ -93,20 +107,35 @@ p,h1,h2{margin:0}h2{font-size:120px;font-weight:950;line-height:1.35;letter-spac
   <p class="end-free" data-reveal=".8">تماشای همزمان · <b>رایگان</b></p>
   <div class="ticker"><span>با هم ببینیم ✦ کنارِ خانواده ✦ کنارِ پارتنر ✦ آخر هفته رو با هم بساز ✦ با هم ببینیم ✦ کنارِ خانواده ✦ کنارِ پارتنر ✦</span></div>
  </section>
- <div class="confetti"></div><div class="brand"><span class="mark"></span><span>سرونما</span></div><div class="edition">WEEKEND MODE</div>
+ <div class="confetti"></div><div class="action-streaks"></div><div class="brand"><span class="mark"></span><span>سرونما</span></div><div class="edition">WEEKEND MODE</div>
  <div class="progress"><i></i></div><p class="disclosure">تصاویر تبلیغاتی و صدای راوی با هوش مصنوعی تولید شده‌اند.</p>
 </div>
 <script>
 const clamp=v=>Math.max(0,Math.min(1,v)),smooth=v=>{v=clamp(v);return v*v*(3-2*v);},ease=v=>1-Math.pow(1-clamp(v),3);
 const scenes=[...document.querySelectorAll('.scene')];
 let totalDuration=30;
+let punchy=false,transitionSeconds=.44,revealSeconds=.55;
 window.configureReel=function(plan){
  if(plan.scenes.length!==scenes.length)throw Error('Unexpected weekend scene count');
  for(const [i,scene]of scenes.entries()){
   const timing=plan.scenes[i];if(timing.id!==scene.id)throw Error('Unexpected weekend scene order');
   scene.dataset.start=timing.start;scene.dataset.end=timing.end;
+  if(timing.display){
+   const heading=scene.querySelector('h2,.giant');heading.replaceChildren();
+   for(const line of timing.display){const span=document.createElement('span');span.textContent=line;heading.append(span);}
+   const eyebrow=scene.querySelector('.eyebrow');if(eyebrow&&timing.eyebrow)eyebrow.textContent=timing.eyebrow;
+  }
  }
  totalDuration=plan.duration;
+ punchy=plan.motion?.style==='punchy';document.body.classList.toggle('punchy',punchy);
+ transitionSeconds=plan.motion?.transitionSeconds||.44;revealSeconds=plan.motion?.revealSeconds||.55;
+ if(punchy){
+  document.querySelector('#free .sub').textContent='یه لینک. یه قرار. بدون هزینهٔ اتاق.';
+  document.querySelector('.edition').textContent='WATCH TOGETHER';
+  for(const line of document.querySelectorAll('.text h2 span')){
+   const available=line.parentElement.clientWidth;if(line.scrollWidth>available)line.style.fontSize=(parseFloat(getComputedStyle(line).fontSize)*available/line.scrollWidth*.98)+'px';
+  }
+ }
 };
 const sceneStart=id=>Number(document.getElementById(id).dataset.start);
 const sceneLength=id=>Number(document.getElementById(id).dataset.end)-sceneStart(id);
@@ -116,24 +145,26 @@ window.renderFrame=function(t){
  const active=scenes.find(s=>t>=Number(s.dataset.start)&&t<Number(s.dataset.end))||scenes.at(-1),ink=['family','together','free'].includes(active.id)?'#281044':'#ffffff';
  for(const el of document.querySelectorAll('.brand,.edition,.progress,.disclosure'))el.style.color=ink;
  for(const [index,scene]of scenes.entries()){
-  const start=Number(scene.dataset.start),end=Number(scene.dataset.end),p=t-start,duration=end-start,enter=start===0?1:smooth((p+.22)/.44),exit=end===totalDuration?0:smooth((t-end+.22)/.44);
+  const start=Number(scene.dataset.start),end=Number(scene.dataset.end),p=t-start,duration=end-start,half=transitionSeconds/2,enter=start===0?1:smooth((p+half)/transitionSeconds),exit=end===totalDuration?0:smooth((t-end+half)/transitionSeconds);
   const visible=t>=start-.22&&t<end+.22;scene.style.visibility=visible?'visible':'hidden';if(!visible)continue;
   const own=scene.dataset.in,next=scenes[index+1]?.dataset.in;let x=0,y=0;
   if(own==='horizontal')x+=(1-enter)*1080;if(own==='vertical')y+=(1-enter)*1920;
   if(next==='horizontal')x-=exit*1080;if(next==='vertical')y-=exit*1920;
   scene.style.transform=`translate3d(${x}px,${y}px,0)`;
   scene.style.clipPath=own==='iris'&&enter<1?`circle(${enter*2300}px at 25% 65%)`:'none';
-  for(const el of scene.querySelectorAll('[data-reveal]')){const k=ease((p-Number(el.dataset.reveal))/.55);el.style.transform=`translateY(${(1-k)*65-clamp(p/duration)*10}px)`;el.style.opacity=k;}
-  const picture=scene.querySelector('.picture,.couple-picture');if(picture)picture.style.transform=`scale(${1.015+clamp(p/duration)*.055}) translateY(${-clamp(p/duration)*15}px)`;
+  for(const el of scene.querySelectorAll('[data-reveal]')){const k=ease((p-Number(el.dataset.reveal)*(punchy?.35:1))/revealSeconds),pop=punchy?1+.08*Math.sin(clamp(p/.45)*Math.PI):1;el.style.transform=`translateY(${(1-k)*(punchy?100:65)-clamp(p/duration)*10}px) scale(${pop})`;el.style.opacity=k;}
+  const picture=scene.querySelector('.picture,.couple-picture');if(picture){const q=clamp(p/duration),zoom=punchy?(q<.52?1.02+q*.22:1.17-(q-.52)*.1):1.015+q*.055;picture.style.transform=`scale(${zoom}) translateY(${-q*(punchy?35:15)}px)`;}
   for(const [i,el]of [...scene.querySelectorAll('.blob')].entries())el.style.transform=`translate(${Math.sin(p*.7+i)*30}px,${Math.cos(p*.65+i)*25}px) rotate(${p*4+i*14}deg)`;
-  for(const [i,el]of [...scene.querySelectorAll('.sticker')].entries())el.style.transform=`rotate(${Math.sin(p*2+i)*3+(scene.id==='family'?5:-5)}deg) scale(${1+Math.sin(p*Math.PI*4)*.012})`;
+  for(const [i,el]of [...scene.querySelectorAll('.sticker')].entries())el.style.transform=`rotate(${Math.sin(p*(punchy?4:2)+i)*(punchy?5:3)+(scene.id==='family'?5:-5)}deg) scale(${1+Math.sin(p*Math.PI*(punchy?5:4))*(punchy?.035:.012)})`;
  }
  const q=t/3;document.querySelector('.photo-card.family').style.transform=`translateY(${-clamp(q)*25}px) rotate(${-9+Math.sin(t*1.7)*2}deg)`;document.querySelector('.photo-card.couple').style.transform=`translateY(${-clamp(q)*40}px) rotate(${8+Math.sin(t*1.8)*2}deg)`;
  const togetherTime=t-sceneStart('together'),p=clamp(togetherTime/sceneLength('together'));document.querySelector('.device.left').style.transform=`perspective(1400px) rotateY(${-10+p*14}deg) rotate(${-7+p*3}deg)`;document.querySelector('.device.right').style.transform=`perspective(1400px) rotateY(${8-p*14}deg) rotate(${7-p*3}deg)`;
- document.querySelector('.flying-link').style.transform=`translate(${Math.sin(togetherTime*2)*35}px,${Math.cos(togetherTime*2)*25}px) rotate(${-8+Math.sin(t*2)*6}deg)`;
+ document.querySelector('.flying-link').style.transform=`translate(${Math.sin(togetherTime*(punchy?4:2))*(punchy?65:35)}px,${Math.cos(togetherTime*(punchy?4:2))*25}px) rotate(${-8+Math.sin(t*2)*6}deg) scale(${punchy?1+Math.sin(togetherTime*Math.PI*5)*.08:1})`;
  document.querySelector('.free-symbol').style.transform=`rotate(${(t-sceneStart('free'))*55}deg)`;document.querySelector('.ticker span').style.transform=`translateX(${(t-sceneStart('outro'))*80}px)`;
  for(const [i,el]of [...document.querySelectorAll('.confetti i')].entries()){el.style.transform=`translate(${Math.sin(t*.7+i)*45}px,${(t*50+i*39)%240-120}px) rotate(${t*40+i*21}deg)`;el.style.opacity=.2+(Math.sin(t+i)*.5+.5)*.45;}
  document.querySelector('.progress i').style.width=(clamp(t/totalDuration)*100)+'%';
+ const nearest=Math.min(...scenes.slice(1).map(scene=>Math.abs(t-Number(scene.dataset.start))));
+ const streak=document.querySelector('.action-streaks');streak.style.opacity=punchy?Math.max(0,1-nearest/.14)*.14:0;streak.style.transform=`translateX(${Math.sin(t*4)*100}px) scale(1.1)`;
 };
 window.reelReady=Promise.all([document.fonts.ready,...[...document.images].map(img=>img.complete&&img.naturalWidth?Promise.resolve():new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('Missing weekend image '+img.src));}))]);
 window.renderFrame(0);

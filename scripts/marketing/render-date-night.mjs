@@ -9,11 +9,12 @@ import { createDateNightScore } from './date-night-score.mjs';
 import { createWeekendScore } from './weekend-score.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const profile = process.argv.includes('--weekend-v2') ? 'weekend-v2' : process.argv.includes('--weekend') ? 'weekend' : 'date-night';
+const profile = process.argv.includes('--weekend-v3') ? 'weekend-v3' : process.argv.includes('--weekend-v2') ? 'weekend-v2' : process.argv.includes('--weekend') ? 'weekend' : 'date-night';
 const slug = `sarvnema-${profile}`;
-const output = path.resolve(root, (profile === 'weekend-v2' ? process.env.WEEKEND_V2_OUTPUT : profile === 'weekend' ? process.env.WEEKEND_OUTPUT : process.env.DATE_NIGHT_OUTPUT) || `.media-cache/marketing/${slug}`);
+const outputEnvs = { 'weekend-v3': 'WEEKEND_V3_OUTPUT', 'weekend-v2': 'WEEKEND_V2_OUTPUT', weekend: 'WEEKEND_OUTPUT', 'date-night': 'DATE_NIGHT_OUTPUT' };
+const output = path.resolve(root, process.env[outputEnvs[profile]] || `.media-cache/marketing/${slug}`);
 const assets = path.join(output, 'assets');
-const plan = JSON.parse(await readFile(profile === 'weekend-v2' ? path.join(output, 'render-plan.json') : path.join(root, `scripts/marketing/${profile}-plan.json`), 'utf8'));
+const plan = JSON.parse(await readFile(/^weekend-v[23]$/.test(profile) ? path.join(output, 'render-plan.json') : path.join(root, `scripts/marketing/${profile}-plan.json`), 'utf8'));
 const fontFiles = plan.fontFamily === 'Alibaba' ? Object.fromEntries(['regular', 'bold', 'black'].map(weight => [weight, path.join(output, 'fonts', `${weight}.ttf`)])) : Object.fromEntries(['regular', 'bold', 'black'].map(weight => [weight, path.join(root, `public/fonts/IRANSansXFaNum-${weight[0].toUpperCase() + weight.slice(1)}.ttf`)]));
 const { duration, fps } = plan;
 const width = 1080, height = 1920, frames = duration * fps;
@@ -67,7 +68,7 @@ try {
     await screenshot({ path: path.join(output, `storyboard-${scene.id}.jpg`), type: 'jpeg', quality: 95 });
     console.log(`STORYBOARD ${scene.id}`);
   }
-  await page.evaluate(() => window.renderFrame(2.3));
+  await page.evaluate(t => window.renderFrame(t), plan.coverTime ?? 2.3);
   await screenshot({ path: path.join(output, `${slug}-cover.jpg`), type: 'jpeg', quality: 96 });
   const stamp = seconds => new Date(seconds * 1000).toISOString().slice(11, 23).replace('.', ',');
   await writeFile(path.join(output, `${slug}-fa.srt`), plan.scenes.map((scene, i) => `${i + 1}\n${stamp(scene.voiceStart)} --> ${stamp(scene.voiceEnd)}\n${scene.caption}\n`).join('\n'), 'utf8');
@@ -85,7 +86,7 @@ try {
       const name = (await readdir(dir)).find(file => /^ffmpeg.*\.exe$/.test(file)); assert.ok(name, 'FFMPEG_BINARY is required'); ffmpeg = path.join(dir, name);
     }
     const scoreFile = path.join(output, `original-${profile}-score.wav`);
-    const soundtrack = profile.startsWith('weekend') ? await createWeekendScore(scoreFile, duration, 48000, { hype: profile === 'weekend-v2', cuts: plan.scenes.slice(1).map(scene => scene.start) }) : await createDateNightScore(scoreFile, duration);
+    const soundtrack = profile.startsWith('weekend') ? await createWeekendScore(scoreFile, duration, 48000, { hype: /^weekend-v[23]$/.test(profile), ...plan.score, cuts: plan.scenes.slice(1).map(scene => scene.start) }) : await createDateNightScore(scoreFile, duration);
     const audioArgs = ['-y', '-hide_banner', '-i', scoreFile];
     const filters = [], timings = [];
     for (const [i, scene] of plan.scenes.entries()) {
@@ -93,7 +94,7 @@ try {
       const probe = await run(ffmpeg, ['-hide_banner', '-i', file, '-f', 'null', '-']);
       const match = probe.match(/Duration: (\d+):(\d+):(\d+\.\d+)/); assert.ok(match, `Narration duration: ${scene.id}`);
       const sourceDuration = Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]);
-      const window = scene.voiceEnd - scene.voiceStart, tempo = Math.max(1, sourceDuration / (window - .06));
+      const window = scene.voiceEnd - scene.voiceStart, tempo = Math.max(plan.narrationTempo || 1, sourceDuration / (window - .06));
       assert.ok(tempo <= 1.28, `Rewrite overlong narration rather than speeding unnaturally: ${scene.id}`);
       audioArgs.push('-i', file);
       const delay = Math.round(scene.voiceStart * 1000);
@@ -131,7 +132,7 @@ try {
     const loudness = await run(ffmpeg, ['-hide_banner', '-i', target, '-vn', '-af', 'loudnorm=I=-16:TP=-1.5:LRA=7:print_format=json', '-f', 'null', '-']);
     const meter = JSON.parse(loudness.match(/\{\s*"input_i"[^}]+\}/)?.[0] || '{}');
     assert.ok(Number(meter.input_tp) <= -1, 'Audio true-peak headroom');
-    await writeFile(path.join(output, 'render-manifest.json'), JSON.stringify({ duration, fps, width, height, frames, bytes: (await stat(target)).size, decodeVerified: true, browserPlaybackVerified: true, faststart: true, color: 'BT.709 limited / yuv420p', fontFamily: plan.fontFamily || 'IRANSansX', narration: { ...plan.voice, synthetic: true, timings }, soundtrack, audio: { integratedLUFS: Number(meter.input_i), truePeakDBTP: Number(meter.input_tp), ducking: true }, sourceManifest: 'source-manifest.json' }, null, 2) + '\n');
+    await writeFile(path.join(output, 'render-manifest.json'), JSON.stringify({ duration, fps, width, height, frames, bytes: (await stat(target)).size, decodeVerified: true, browserPlaybackVerified: true, faststart: true, color: 'BT.709 limited / yuv420p', fontFamily: plan.fontFamily || 'IRANSansX', pronunciation: plan.pronunciation, narration: { ...plan.voice, synthetic: true, timings }, soundtrack, audio: { integratedLUFS: Number(meter.input_i), truePeakDBTP: Number(meter.input_tp), ducking: true }, sourceManifest: 'source-manifest.json' }, null, 2) + '\n');
     console.log(`RENDER COMPLETE ${target}`);
   }
 } finally {

@@ -12,9 +12,10 @@ export function voiceRequest(plan, sceneIndex) {
   assert.equal(plan.voice.gender, 'female');
   const scene = plan.scenes[sceneIndex];
   const options = { seed: 17, language_code: 'fa', voice_settings: { stability: .5, similarity_boost: .75, style: .55, use_speaker_boost: true } };
-  if (sceneIndex) options.previous_text = plan.scenes[sceneIndex - 1].spoken;
-  if (sceneIndex + 1 < plan.scenes.length) options.next_text = plan.scenes[sceneIndex + 1].spoken;
-  return { model: VOICE_MODEL, input: `${scene.audioTags || '[excited]'} ${scene.spoken}`, voice: plan.voice.name, response_format: 'mp3', provider: { options: { elevenlabs: options } } };
+  if (scene.ttsPreviousText) options.previous_text = scene.ttsPreviousText;
+  else if (sceneIndex) options.previous_text = plan.scenes[sceneIndex - 1].ttsText || plan.scenes[sceneIndex - 1].spoken;
+  if (sceneIndex + 1 < plan.scenes.length) options.next_text = plan.scenes[sceneIndex + 1].ttsText || plan.scenes[sceneIndex + 1].spoken;
+  return { model: VOICE_MODEL, input: `${scene.audioTags || '[excited]'} ${scene.ttsText || scene.spoken}`, voice: plan.voice.name, response_format: 'mp3', provider: { options: { elevenlabs: options } } };
 }
 
 export async function requestSpeech(body, key, fetcher = fetch) {
@@ -60,8 +61,45 @@ async function main() {
   console.log(`AUTH CHECK HTTP ${auth.status}`);
   if (!auth.ok) throw Error('OpenRouter authentication failed; no paid generation attempted');
   if (process.argv.includes('--auth-check')) return;
-  const output = path.resolve(root, process.env.WEEKEND_V2_OUTPUT || '.media-cache/marketing/sarvnema-weekend-v2');
+  const v3 = process.argv.includes('--v3');
+  const output = path.resolve(root, (v3 ? process.env.WEEKEND_V3_OUTPUT : process.env.WEEKEND_V2_OUTPUT) || `.media-cache/marketing/sarvnema-weekend-${v3 ? 'v3' : 'v2'}`);
   const plan = JSON.parse(await readFile(path.join(output, 'render-plan.json'), 'utf8'));
+  if (process.argv.includes('--pronunciation-candidates')) {
+    assert.ok(plan.pronunciation, 'Candidate review requires a pronunciation-controlled plan');
+    const texts = ['/sæɾv/ /neˈmɒː/! همین الان شروع کن!', 'Sarv Nema! همین الان شروع کن!', 'سَرو‌نِما! همین الان شروع کن!'];
+    const catalogue = await fetch(`${API}/models?output_modalities=speech`, { signal: AbortSignal.timeout(25_000) }).then(response => response.json());
+    const model = catalogue.data?.find(model => model.id === VOICE_MODEL);
+    assert.ok(model?.supported_voices.includes(plan.voice.name));
+    const estimate = texts.reduce((sum, text) => sum + [...`[excited] ${text}`].length, 0) * Number(model.pricing.prompt);
+    assert.ok(estimate > 0 && estimate <= .05, 'Pronunciation probe TTS estimate must be below $0.05');
+    for (const [i, ttsText] of texts.entries()) {
+      const candidate = structuredClone(plan), scene = candidate.scenes.at(-1); scene.ttsText = ttsText; scene.audioTags = '[excited]';
+      const body = voiceRequest(candidate, candidate.scenes.length - 1);
+      body.provider.options.elevenlabs.previous_text = 'نام این برند از درخت سَرو گرفته شده است.';
+      const clip = await requestSpeech(body, key);
+      const file = `brand-candidate-${i + 1}.mp3`;
+      await writeFile(path.join(output, 'voice', file), clip.bytes);
+      const response = await fetch(`${API}/audio/transcriptions`, { method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'elevenlabs/scribe-v2', input_audio: { data: clip.bytes.toString('base64'), format: 'mp3' } }), signal: AbortSignal.timeout(60_000) });
+      if (!response.ok) throw Error(`Candidate transcription HTTP ${response.status}`);
+      const transcript = await response.json();
+      const record = { model: VOICE_MODEL, voice: plan.voice.name, file, body, generationId: clip.generationId, signature: createHash('sha256').update(JSON.stringify(body)).digest('hex'), transcript: transcript.text, note: 'ASR is a sanity check, not a human phonetic review' };
+      await writeFile(path.join(output, 'voice', `brand-candidate-${i + 1}.json`), JSON.stringify(record, null, 2) + '\n');
+      console.log(JSON.stringify({ candidate: i + 1, ttsText, transcript: transcript.text }));
+    }
+    return;
+  }
+  if (process.argv.includes('--verify-pronunciation')) {
+    // One short independent ASR check, no spelling hint. Not a substitute for human listening.
+    assert.ok(plan.pronunciation, 'Pronunciation check requires a pronunciation-controlled plan');
+    const bytes = await readFile(path.join(output, 'voice', 'outro.mp3'));
+    assert.ok(bytes.length > 1500 && bytes.length < 128_000, 'Check only a short final voice clip');
+    const response = await fetch(`${API}/audio/transcriptions`, { method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'elevenlabs/scribe-v2', input_audio: { data: bytes.toString('base64'), format: 'mp3' } }), signal: AbortSignal.timeout(60_000) });
+    if (!response.ok) throw Error(`Pronunciation transcription HTTP ${response.status}`);
+    const result = await response.json();
+    const record = { model: 'elevenlabs/scribe-v2', text: result.text, usage: result.usage, pronunciation: plan.pronunciation, note: 'Independent unprompted ASR sanity check, not a phonetic or human-listening guarantee' };
+    await writeFile(path.join(output, 'pronunciation-review.json'), JSON.stringify(record, null, 2) + '\n');
+    console.log(JSON.stringify(record)); return;
+  }
   const models = await fetch(`${API}/models?output_modalities=speech`, { signal: AbortSignal.timeout(25_000) }).then(r => r.json());
   const model = models.data?.find(m => m.id === VOICE_MODEL);
   assert.ok(model?.supported_voices.includes(plan.voice.name), 'Requested model and female voice must be advertised by OpenRouter');
@@ -78,7 +116,7 @@ async function main() {
     let cached; try { cached = JSON.parse(await readFile(metadata, 'utf8')); } catch { /* No verified cache. */ }
     if (cached?.signature === signature && (await stat(target).catch(() => null))?.size > 1500) { manifest.push(cached); console.log(`VOICE CACHED ${scene.id}`); continue; }
     const result = await requestSpeech(body, key);
-    const record = { scene: scene.id, model: VOICE_MODEL, provider: 'OpenRouter / ElevenLabs', voice: plan.voice.name, gender: 'female', synthetic: true, text: scene.spoken, audioTags: scene.audioTags, generationId: result.generationId, signature, file: `${scene.id}.mp3` };
+    const record = { scene: scene.id, model: VOICE_MODEL, provider: 'OpenRouter / ElevenLabs', voice: plan.voice.name, gender: 'female', synthetic: true, text: scene.spoken, ttsText: scene.ttsText || scene.spoken, audioTags: scene.audioTags, generationId: result.generationId, signature, file: `${scene.id}.mp3` };
     await writeFile(target, result.bytes); await writeFile(metadata, JSON.stringify(record, null, 2) + '\n');
     manifest.push(record); console.log(`ELEVEN V4 VOICE READY ${scene.id}`);
   }
