@@ -9,7 +9,7 @@ export const VOICE_MODEL = 'elevenlabs/eleven-v4';
 
 export function voiceRequest(plan, sceneIndex) {
   assert.equal(plan.voice.model, VOICE_MODEL, 'This export requires Eleven v4, without model fallback');
-  assert.equal(plan.voice.gender, 'female');
+  assert.ok(['female', 'male'].includes(plan.voice.gender), 'Voice gender must be explicitly declared');
   const scene = plan.scenes[sceneIndex];
   const options = { seed: 17, language_code: 'fa', voice_settings: { stability: .5, similarity_boost: .75, style: .55, use_speaker_boost: true } };
   if (scene.ttsPreviousText) options.previous_text = scene.ttsPreviousText;
@@ -61,9 +61,13 @@ async function main() {
   console.log(`AUTH CHECK HTTP ${auth.status}`);
   if (!auth.ok) throw Error('OpenRouter authentication failed; no paid generation attempted');
   if (process.argv.includes('--auth-check')) return;
-  const v3 = process.argv.includes('--v3');
-  const output = path.resolve(root, (v3 ? process.env.WEEKEND_V3_OUTPUT : process.env.WEEKEND_V2_OUTPUT) || `.media-cache/marketing/sarvnema-weekend-${v3 ? 'v3' : 'v2'}`);
+  const edition = process.argv.includes('--v4') ? 'v4' : process.argv.includes('--v3') ? 'v3' : 'v2';
+  const output = path.resolve(root, process.env[`WEEKEND_${edition.toUpperCase()}_OUTPUT`] || `.media-cache/marketing/sarvnema-weekend-${edition}`);
   const plan = JSON.parse(await readFile(path.join(output, 'render-plan.json'), 'utf8'));
+  if (plan.narration?.mode === 'continuous') {
+    const { generateContinuousVoice } = await import('./openrouter-continuous.mjs');
+    await generateContinuousVoice(output, plan, key); return;
+  }
   if (process.argv.includes('--pronunciation-candidates')) {
     assert.ok(plan.pronunciation, 'Candidate review requires a pronunciation-controlled plan');
     const texts = ['/sæɾv/ /neˈmɒː/! همین الان شروع کن!', 'Sarv Nema! همین الان شروع کن!', 'سَرو‌نِما! همین الان شروع کن!'];
@@ -102,7 +106,7 @@ async function main() {
   }
   const models = await fetch(`${API}/models?output_modalities=speech`, { signal: AbortSignal.timeout(25_000) }).then(r => r.json());
   const model = models.data?.find(m => m.id === VOICE_MODEL);
-  assert.ok(model?.supported_voices.includes(plan.voice.name), 'Requested model and female voice must be advertised by OpenRouter');
+  assert.ok(model?.supported_voices.includes(plan.voice.name), 'Requested model and voice must be advertised by OpenRouter');
   const bodies = plan.scenes.map((_, i) => voiceRequest(plan, i));
   const chars = bodies.reduce((sum, body) => sum + [...body.input].length, 0);
   const estimate = chars * Number(model.pricing.prompt);
@@ -116,11 +120,11 @@ async function main() {
     let cached; try { cached = JSON.parse(await readFile(metadata, 'utf8')); } catch { /* No verified cache. */ }
     if (cached?.signature === signature && (await stat(target).catch(() => null))?.size > 1500) { manifest.push(cached); console.log(`VOICE CACHED ${scene.id}`); continue; }
     const result = await requestSpeech(body, key);
-    const record = { scene: scene.id, model: VOICE_MODEL, provider: 'OpenRouter / ElevenLabs', voice: plan.voice.name, gender: 'female', synthetic: true, text: scene.spoken, ttsText: scene.ttsText || scene.spoken, audioTags: scene.audioTags, generationId: result.generationId, signature, file: `${scene.id}.mp3` };
+    const record = { scene: scene.id, model: VOICE_MODEL, provider: 'OpenRouter / ElevenLabs', voice: plan.voice.name, gender: plan.voice.gender, synthetic: true, text: scene.spoken, ttsText: scene.ttsText || scene.spoken, audioTags: scene.audioTags, generationId: result.generationId, signature, file: `${scene.id}.mp3` };
     await writeFile(target, result.bytes); await writeFile(metadata, JSON.stringify(record, null, 2) + '\n');
     manifest.push(record); console.log(`ELEVEN V4 VOICE READY ${scene.id}`);
   }
-  await writeFile(path.join(voiceDir, 'manifest.json'), JSON.stringify({ model: VOICE_MODEL, voice: plan.voice.name, gender: 'female', synthetic: true, clips: manifest, characters: chars, estimatedUSD: estimate }, null, 2) + '\n');
+  await writeFile(path.join(voiceDir, 'manifest.json'), JSON.stringify({ model: VOICE_MODEL, voice: plan.voice.name, gender: plan.voice.gender, synthetic: true, clips: manifest, characters: chars, estimatedUSD: estimate }, null, 2) + '\n');
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

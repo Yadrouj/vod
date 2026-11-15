@@ -9,12 +9,12 @@ import { createDateNightScore } from './date-night-score.mjs';
 import { createWeekendScore } from './weekend-score.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const profile = process.argv.includes('--weekend-v3') ? 'weekend-v3' : process.argv.includes('--weekend-v2') ? 'weekend-v2' : process.argv.includes('--weekend') ? 'weekend' : 'date-night';
+const profile = process.argv.includes('--weekend-v4') ? 'weekend-v4' : process.argv.includes('--weekend-v3') ? 'weekend-v3' : process.argv.includes('--weekend-v2') ? 'weekend-v2' : process.argv.includes('--weekend') ? 'weekend' : 'date-night';
 const slug = `sarvnema-${profile}`;
-const outputEnvs = { 'weekend-v3': 'WEEKEND_V3_OUTPUT', 'weekend-v2': 'WEEKEND_V2_OUTPUT', weekend: 'WEEKEND_OUTPUT', 'date-night': 'DATE_NIGHT_OUTPUT' };
+const outputEnvs = { 'weekend-v4': 'WEEKEND_V4_OUTPUT', 'weekend-v3': 'WEEKEND_V3_OUTPUT', 'weekend-v2': 'WEEKEND_V2_OUTPUT', weekend: 'WEEKEND_OUTPUT', 'date-night': 'DATE_NIGHT_OUTPUT' };
 const output = path.resolve(root, process.env[outputEnvs[profile]] || `.media-cache/marketing/${slug}`);
 const assets = path.join(output, 'assets');
-const plan = JSON.parse(await readFile(/^weekend-v[23]$/.test(profile) ? path.join(output, 'render-plan.json') : path.join(root, `scripts/marketing/${profile}-plan.json`), 'utf8'));
+const plan = JSON.parse(await readFile(/^weekend-v[234]$/.test(profile) ? path.join(output, 'render-plan.json') : path.join(root, `scripts/marketing/${profile}-plan.json`), 'utf8'));
 const fontFiles = plan.fontFamily === 'Alibaba' ? Object.fromEntries(['regular', 'bold', 'black'].map(weight => [weight, path.join(output, 'fonts', `${weight}.ttf`)])) : Object.fromEntries(['regular', 'bold', 'black'].map(weight => [weight, path.join(root, `public/fonts/IRANSansXFaNum-${weight[0].toUpperCase() + weight.slice(1)}.ttf`)]));
 const { duration, fps } = plan;
 const width = 1080, height = 1920, frames = duration * fps;
@@ -86,10 +86,20 @@ try {
       const name = (await readdir(dir)).find(file => /^ffmpeg.*\.exe$/.test(file)); assert.ok(name, 'FFMPEG_BINARY is required'); ffmpeg = path.join(dir, name);
     }
     const scoreFile = path.join(output, `original-${profile}-score.wav`);
-    const soundtrack = profile.startsWith('weekend') ? await createWeekendScore(scoreFile, duration, 48000, { hype: /^weekend-v[23]$/.test(profile), ...plan.score, cuts: plan.scenes.slice(1).map(scene => scene.start) }) : await createDateNightScore(scoreFile, duration);
+    const soundtrack = profile.startsWith('weekend') ? await createWeekendScore(scoreFile, duration, 48000, { hype: /^weekend-v[234]$/.test(profile), ...plan.score, cuts: plan.scenes.slice(1).map(scene => scene.start) }) : await createDateNightScore(scoreFile, duration);
     const audioArgs = ['-y', '-hide_banner', '-i', scoreFile];
     const filters = [], timings = [];
-    for (const [i, scene] of plan.scenes.entries()) {
+    if (plan.narration?.mode === 'continuous') {
+      const file = path.join(output, 'voice', plan.narration.file);
+      const probe = await run(ffmpeg, ['-hide_banner', '-i', file, '-f', 'null', '-']);
+      const match = probe.match(/Duration: (\d+):(\d+):(\d+\.\d+)/); assert.ok(match);
+      const sourceDuration = Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]);
+      assert.ok(sourceDuration + plan.narration.start < duration - .2, 'Continuous narration must fit without cutting words or artificial acceleration');
+      audioArgs.push('-i', file);
+      const delay = Math.round(plan.narration.start * 1000);
+      filters.push(`[1:a]aresample=48000,highpass=f=80,lowpass=f=12000,acompressor=threshold=0.055:ratio=2.2:attack=8:release=100,loudnorm=I=-18:TP=-3:LRA=7,afade=t=in:d=0.012,adelay=${delay}|${delay}[v0]`);
+      timings.push({ continuous: true, sourceDuration, tempo: 1, start: plan.narration.start, end: sourceDuration + plan.narration.start });
+    } else for (const [i, scene] of plan.scenes.entries()) {
       const file = path.join(output, 'voice', `${scene.id}.mp3`);
       const probe = await run(ffmpeg, ['-hide_banner', '-i', file, '-f', 'null', '-']);
       const match = probe.match(/Duration: (\d+):(\d+):(\d+\.\d+)/); assert.ok(match, `Narration duration: ${scene.id}`);
@@ -101,10 +111,10 @@ try {
       filters.push(`[${i + 1}:a]aresample=48000,highpass=f=90,lowpass=f=10500,acompressor=threshold=0.055:ratio=2.5:attack=8:release=100,loudnorm=I=-18:TP=-3:LRA=6,atempo=${tempo.toFixed(5)},atrim=duration=${window},afade=t=in:d=0.012,adelay=${delay}|${delay}[v${i}]`);
       timings.push({ scene: scene.id, sourceDuration, tempo, start: scene.voiceStart, end: scene.voiceEnd });
     }
-    filters.push(`${plan.scenes.map((_, i) => `[v${i}]`).join('')}amix=inputs=${plan.scenes.length}:normalize=0,apad=whole_dur=${duration},asplit=2[voice][side]`, '[0:a]volume=0.52[music]', '[music][side]sidechaincompress=threshold=0.018:ratio=6:attack=15:release=260[duck]', '[duck][voice]amix=inputs=2:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=7,alimiter=limit=0.84:level=false[mix]');
+    filters.push(`${timings.map((_, i) => `[v${i}]`).join('')}amix=inputs=${timings.length}:normalize=0,apad=whole_dur=${duration},asplit=2[voice][side]`, '[0:a]volume=0.52[music]', '[music][side]sidechaincompress=threshold=0.018:ratio=6:attack=15:release=260[duck]', '[duck][voice]amix=inputs=2:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=7,alimiter=limit=0.84:level=false[mix]');
     const mixed = path.join(output, `${profile}-voice-and-score.wav`);
     await run(ffmpeg, [...audioArgs, '-filter_complex', filters.join(';'), '-map', '[mix]', '-t', String(duration), '-ar', '48000', '-ac', '2', '-c:a', 'pcm_s16le', mixed]);
-    console.log(`NARRATION MIXED: ${plan.scenes.length} Persian ${plan.voice.gender || 'male'} segments; music ducks under speech`);
+    console.log(`NARRATION MIXED: ${timings.length} Persian ${plan.voice.gender || 'male'} take(s); music ducks under speech`);
     const target = path.join(output, `${slug}-fa.mp4`);
     const vf = 'sidedata=mode=delete:type=ICC_PROFILE,scale=in_range=full:out_range=limited:in_color_matrix=bt601:out_color_matrix=bt709,format=yuv420p,setparams=range=limited:color_primaries=bt709:color_trc=bt709:colorspace=bt709';
     encoder = spawn(ffmpeg, ['-y', '-hide_banner', '-loglevel', 'warning', '-f', 'image2pipe', '-vcodec', 'mjpeg', '-framerate', String(fps), '-i', 'pipe:0', '-i', mixed, '-t', String(duration), '-map', '0:v:0', '-map', '1:a:0', '-vf', vf, '-c:v', 'libx264', '-threads', '2', '-preset', 'fast', '-crf', '18', '-profile:v', 'high', '-level:v', '4.1', '-pix_fmt', 'yuv420p', '-color_range', 'tv', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709', '-r', String(fps), '-fps_mode', 'cfr', '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-movflags', '+faststart', '-metadata', `title=${plan.mp4Title || 'SarvNema - Now is the time to watch together'}`, '-metadata', `comment=${plan.mp4Comment || 'Synthetic Persian male narration; original music; public promotional film stills'}`, target], { windowsHide: true, stdio: ['pipe', 'ignore', 'pipe'] });
