@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<meta charset="utf-8">
+<title>سرونما — آخر هفته رو با هم بساز</title>
+<style>
+@font-face{font-family:Reel;src:url('/fonts/regular.ttf');font-weight:400;font-display:block}
+@font-face{font-family:Reel;src:url('/fonts/bold.ttf');font-weight:700;font-display:block}
+@font-face{font-family:Reel;src:url('/fonts/black.ttf');font-weight:950;font-display:block}
+*{box-sizing:border-box}html,body{margin:0;width:1080px;height:1920px;overflow:hidden;font-family:Reel,sans-serif;background:#6e32ff;color:white}
+#reel{position:relative;width:1080px;height:1920px;overflow:hidden;isolation:isolate;background:#6e32ff}
+.scene{position:absolute;inset:0;overflow:hidden;visibility:hidden;will-change:transform,clip-path}
+p,h1,h2{margin:0}h2{font-size:120px;font-weight:950;line-height:1.35;letter-spacing:-3px}em{font-style:normal;color:#e9ff55}
+.text{position:absolute;right:90px;left:90px;z-index:8;will-change:transform}.sub{font-size:37px;line-height:1.8;margin-top:24px}
+.eyebrow{font-size:29px;font-weight:700;margin-bottom:23px;display:flex;align-items:center;gap:15px}.eyebrow:before{content:'';width:26px;height:3px;background:currentColor}
+.brand{position:absolute;top:145px;right:88px;z-index:30;display:flex;gap:13px;align-items:center;font-weight:950;font-size:36px;color:white}
+.mark{display:inline-block;width:48px;height:57px;mask:url('/brand/mark.svg') center/contain no-repeat;mask-mode:luminance;background:currentColor}
+.edition{position:absolute;top:166px;left:88px;z-index:30;font:17px Arial,sans-serif;letter-spacing:5px;color:white;opacity:.8}
+.picture{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;will-change:transform}
+.sticker{position:absolute;z-index:9;display:flex;align-items:center;justify-content:center;gap:14px;border-radius:100px;padding:16px 32px;font-size:32px;font-weight:700;white-space:nowrap;box-shadow:0 14px 0 #23054420;will-change:transform}
+.sticker svg{width:34px;height:34px;flex-shrink:0}.ink{color:#281044}.heart{fill:none;stroke:currentColor;stroke-width:1.8}
+.blob{position:absolute;border-radius:50%;will-change:transform;pointer-events:none}
+#hook{background:#6e32ff}.blob.one{background:#ff2799;left:-300px;top:760px;width:1100px;height:1100px}.blob.two{background:#46e9ec;right:-350px;top:-710px;width:800px;height:800px}
+#hook .text{top:320px;text-align:center}#hook .eyebrow{justify-content:center;color:#e9ff55}#hook h2{font-size:185px;line-height:1.25;letter-spacing:-6px}#hook .sub{font-size:36px}
+.photo-card{position:absolute;overflow:hidden;border:9px solid white;border-radius:45px;box-shadow:0 40px 70px #25065355;z-index:5;will-change:transform}
+.photo-card img{display:block;width:100%;height:100%;object-fit:cover}.photo-card.family{top:1040px;left:65px;width:475px;height:620px;transform:rotate(-10deg)}.photo-card.couple{top:1135px;right:65px;width:475px;height:620px;transform:rotate(10deg)}
+.photo-card.family img{object-position:center 60%}.photo-card.couple img{object-position:center 65%}
+#hook .sticker{top:940px;left:290px;color:#281044;background:#e9ff55;transform:rotate(-7deg)}
+#family{background:#ff6a18;color:#281044}.family-wash{position:absolute;inset:0;background:linear-gradient(180deg,#ff68190d,#ff6a1800 60%,#ff279914);z-index:2}
+#family .text{top:245px}#family h2{font-size:104px}#family .eyebrow{font-size:27px;display:inline-flex;padding:8px 23px;border-radius:100px;background:#e9ff55;color:#281044}
+#family .picture{top:160px;height:1760px;mask-image:linear-gradient(180deg,transparent,#000 8%)}
+#family .sticker{top:1510px;right:130px;background:#46e9ec;color:#281044;transform:rotate(6deg)}
+#couple{background:#7518d4}.couple-picture{position:absolute;left:0;right:0;top:290px;width:100%;height:1630px;object-fit:cover;object-position:center;mask-image:linear-gradient(180deg,transparent,#000 9%);will-change:transform}
+#couple .text{top:275px}#couple h2{font-size:117px}#couple .eyebrow{color:#e9ff55}#couple .sticker{top:1510px;left:135px;background:#ff2799;color:white;transform:rotate(-6deg);border:2px solid #fff8}
+#together{background:#46e9ec;color:#281044}.together-blob{background:#ff2799;left:-330px;top:620px;width:1020px;height:1020px;transform:rotate(35deg);border-radius:27%}
+#together .text{top:280px}#together h2{font-size:115px}#together em{color:#6e32ff}#together .sub{font-size:36px}
+.device{position:absolute;z-index:5;overflow:hidden;border:10px solid #281044;border-radius:40px;background:#281044;box-shadow:0 25px 0 #28104422;will-change:transform}
+.device img{display:block;width:100%;height:100%;object-fit:cover}.device.left{left:75px;top:800px;width:470px;height:620px;transform:rotate(-10deg)}.device.right{right:75px;top:1010px;width:470px;height:620px;transform:rotate(9deg)}
+.device.left img{object-position:center 55%}.device.right img{object-position:center 60%}
+.mini-play{position:absolute;width:85px;height:85px;left:calc(50% - 42px);top:calc(50% - 42px);border-radius:50%;background:#e9ff55e8;display:grid;place-items:center;color:#281044;border:2px solid #fff9}.mini-play svg{width:34px;height:34px;fill:currentColor}
+.flying-link{position:absolute;z-index:9;left:415px;top:1110px;width:185px;height:145px;display:grid;place-items:center;border-radius:35px;color:#281044;background:#e9ff55;border:3px solid #281044;box-shadow:9px 10px 0 #281044;transform:rotate(-7deg)}.flying-link svg{width:75px;height:75px}
+#together .sticker{top:1580px;left:235px;background:white;color:#281044;transform:rotate(-4deg);font-size:28px}
+#free{background:#e9ff55;color:#281044}.free-blob{background:#ff2799;width:800px;height:800px;left:145px;top:420px;border-radius:43% 57% 67% 33%;opacity:.1}
+#free .text{top:440px;text-align:center}#free .eyebrow{justify-content:center}.giant{font-size:240px;font-weight:950;line-height:1.5;letter-spacing:-8px;white-space:nowrap;text-shadow:7px 8px 0 #ff279950}#free .sub{font-size:45px;margin-top:15px}
+.perks{position:absolute;top:1160px;left:105px;right:105px;display:flex;gap:15px;justify-content:center;font-size:29px;z-index:8}.perks span{padding:14px 24px;background:#281044;color:white;border-radius:100px;white-space:nowrap}
+.scope{position:absolute;top:1515px;left:125px;right:125px;text-align:center;font-size:23px;line-height:1.9;color:#281044b0;z-index:8}
+.free-symbol{position:absolute;top:1350px;left:calc(50% - 43px);width:86px;height:86px;color:#6e32ff;z-index:8}.free-symbol svg{width:100%;height:100%}
+#outro{background:linear-gradient(145deg,#ff2799 12%,#ff396f 50%,#ff6a18 100%)}#outro .blob{width:900px;height:900px;right:-480px;top:850px;background:#6e32ff}
+.end-mark{position:absolute;top:320px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:20px;font-size:57px;font-weight:950;z-index:8}.end-mark .mark{width:70px;height:85px}
+#outro .text{top:590px;text-align:center}#outro h2{font-size:125px;line-height:1.42}#outro .sub{font-size:39px;color:#fff5e9}
+.url{position:absolute;top:1240px;left:145px;right:145px;height:120px;border-radius:26px;background:#281044;display:flex;align-items:center;justify-content:center;gap:25px;box-shadow:10px 12px 0 #e9ff55;font:54px Arial,sans-serif;letter-spacing:2px;color:white;z-index:8;direction:ltr}.url svg{width:36px;height:36px}
+.end-free{position:absolute;top:1435px;right:0;left:0;text-align:center;font-size:32px;z-index:8;color:white}.end-free b{color:#e9ff55}
+.ticker{position:absolute;left:-100px;top:1610px;width:1600px;padding:15px 0;background:#e9ff55;color:#281044;font-size:28px;font-weight:700;transform:rotate(-7deg);z-index:6;overflow:hidden;white-space:nowrap;direction:rtl}.ticker span{display:inline-block;letter-spacing:1px;will-change:transform}
+.confetti{position:absolute;inset:0;z-index:22;pointer-events:none;overflow:hidden}.confetti i{position:absolute;width:11px;height:22px;border-radius:3px;will-change:transform,opacity}
+.progress{position:absolute;top:1755px;left:88px;right:88px;height:3px;background:#ffffff44;z-index:30;direction:ltr}.progress i{height:100%;display:block;background:currentColor;width:0}
+.disclosure{position:absolute;top:1810px;left:90px;right:90px;text-align:center;font-size:17px;z-index:30;opacity:.55}
+</style>
+<div id="reel">
+ <section class="scene" id="hook" data-start="0" data-end="3" data-in="horizontal">
+  <div class="blob one"></div><div class="blob two"></div>
+  <div class="text" data-reveal=".02" data-safe><p class="eyebrow">برنامهٔ آخر هفته؟</p><h2>آخرِ<br><em>هفته‌ست!</em></h2><p class="sub">مبل، پاپ‌کورن، آدمایِ خودت.</p></div>
+  <div class="photo-card family"><img src="/assets/family.png" alt="تصویر تبلیغاتی خانواده خیالی در شب فیلم"></div><div class="photo-card couple"><img src="/assets/couple.png" alt="تصویر تبلیغاتی قرار فیلم یک زوج خیالی"></div>
+  <div class="sticker"><svg viewBox="0 0 24 24"><path fill="currentColor" d="m8 4 12 8-12 8z"/></svg>فیلم رو روشن کن!</div>
+ </section>
+ <section class="scene" id="family" data-start="3" data-end="8" data-in="horizontal">
+  <img class="picture" src="/assets/family.png" alt="خانواده خیالی در تصویرسازی اختصاصی تبلیغاتی"><div class="family-wash"></div>
+  <div class="text" data-reveal=".08" data-safe><p class="eyebrow">کنارِ خانواده</p><h2>یه فیلمِ خوب،<br>یه عالمه خنده!</h2></div>
+  <div class="sticker"><svg viewBox="0 0 24 24" class="heart"><path d="M12 21 4 13C-3 6 6-1 12 6 18-1 27 6 20 13Z"/></svg>دورِ هم، بهتره!</div>
+ </section>
+ <section class="scene" id="couple" data-start="8" data-end="13" data-in="iris">
+  <img class="couple-picture" src="/assets/couple.png" alt="زوج خیالی در تصویرسازی اختصاصی تبلیغاتی">
+  <div class="text" data-reveal=".08" data-safe><p class="eyebrow">کنارِ پارتنرت</p><h2>یه قرارِ دونفره،<br><em>با طعمِ سینما!</em></h2></div>
+  <div class="sticker"><svg viewBox="0 0 24 24" class="heart"><path d="M12 21 4 13C-3 6 6-1 12 6 18-1 27 6 20 13Z"/></svg>این سکانس، مالِ شماست.</div>
+ </section>
+ <section class="scene" id="together" data-start="13" data-end="19" data-in="vertical">
+  <div class="blob together-blob"></div>
+  <div class="text" data-reveal=".08" data-safe><p class="eyebrow">تماشای همزمانِ سرونما</p><h2>از هم دورین؟<br><em>با هم ببینین!</em></h2><p class="sub">یه لینک، یه اتاق، یه قرار.</p></div>
+  <div class="device left"><img src="/assets/family.png" alt="نمایش مفهومی تماشای همزمان"><span class="mini-play"><svg viewBox="0 0 24 24"><path d="m8 4 12 8-12 8z"/></svg></span></div>
+  <div class="device right"><img src="/assets/couple.png" alt="نمایش مفهومی تماشای همزمان"><span class="mini-play"><svg viewBox="0 0 24 24"><path d="m8 4 12 8-12 8z"/></svg></span></div>
+  <div class="flying-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m21 3-7 18-4-7-7-4Z"/><path d="m10 14 11-11"/></svg></div>
+  <div class="sticker">لینک رو بفرست؛ با هم ببینید.</div>
+ </section>
+ <section class="scene" id="free" data-start="19" data-end="24" data-in="iris">
+  <div class="blob free-blob"></div>
+  <div class="text" data-reveal=".08" data-safe><p class="eyebrow">تماشای همزمان توی سرونما</p><p class="giant">رایگانه!</p><p class="sub">برای وقت‌گذروندن با آدمایِ خودت.</p></div>
+  <div class="perks"><span>اتاق خصوصی</span><span>لینک دعوت</span><span>پخش همگام</span></div>
+  <div class="free-symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 3v18M3 12h18m-15-6 12 12M6 18 18 6"/></svg></div>
+  <p class="scope">رایگان بودن مربوط به قابلیت تماشای همزمان است؛<br>دسترسی به فیلم‌ها تابع شرایط منبع آن‌هاست.</p>
+ </section>
+ <section class="scene" id="outro" data-start="24" data-end="30" data-in="horizontal">
+  <div class="blob"></div><div class="end-mark" data-reveal=".05"><span class="mark"></span><span>سرونما</span></div>
+  <div class="text" data-reveal=".12" data-safe><h2>آخرِ هفته رو<br><em>با هم بساز!</em></h2><p class="sub">خانواده یا پارتنر؛ انتخاب با تو.</p></div>
+  <div class="url" data-reveal=".45"><span>sarvnema.ir</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 12h16m-7-7 7 7-7 7"/></svg></div>
+  <p class="end-free" data-reveal=".8">تماشای همزمان · <b>رایگان</b></p>
+  <div class="ticker"><span>با هم ببینیم ✦ کنارِ خانواده ✦ کنارِ پارتنر ✦ آخر هفته رو با هم بساز ✦ با هم ببینیم ✦ کنارِ خانواده ✦ کنارِ پارتنر ✦</span></div>
+ </section>
+ <div class="confetti"></div><div class="brand"><span class="mark"></span><span>سرونما</span></div><div class="edition">WEEKEND MODE</div>
+ <div class="progress"><i></i></div><p class="disclosure">تصاویر تبلیغاتی و صدای راوی با هوش مصنوعی تولید شده‌اند.</p>
+</div>
+<script>
+const clamp=v=>Math.max(0,Math.min(1,v)),smooth=v=>{v=clamp(v);return v*v*(3-2*v);},ease=v=>1-Math.pow(1-clamp(v),3);
+const scenes=[...document.querySelectorAll('.scene')];
+const palette=['#ff2799','#e9ff55','#46e9ec','#ffffff','#6e32ff'];
+for(let i=0;i<28;i++){const el=document.createElement('i');el.style.left=((i*193+83)%1080)+'px';el.style.top=((i*279+101)%1920)+'px';el.style.background=palette[i%palette.length];document.querySelector('.confetti').append(el);}
+window.renderFrame=function(t){
+ const active=scenes.find(s=>t>=Number(s.dataset.start)&&t<Number(s.dataset.end))||scenes.at(-1),ink=['family','together','free'].includes(active.id)?'#281044':'#ffffff';
+ for(const el of document.querySelectorAll('.brand,.edition,.progress,.disclosure'))el.style.color=ink;
+ for(const [index,scene]of scenes.entries()){
+  const start=Number(scene.dataset.start),end=Number(scene.dataset.end),p=t-start,duration=end-start,enter=start===0?1:smooth((p+.22)/.44),exit=end===30?0:smooth((t-end+.22)/.44);
+  const visible=t>=start-.22&&t<end+.22;scene.style.visibility=visible?'visible':'hidden';if(!visible)continue;
+  const own=scene.dataset.in,next=scenes[index+1]?.dataset.in;let x=0,y=0;
+  if(own==='horizontal')x+=(1-enter)*1080;if(own==='vertical')y+=(1-enter)*1920;
+  if(next==='horizontal')x-=exit*1080;if(next==='vertical')y-=exit*1920;
+  scene.style.transform=`translate3d(${x}px,${y}px,0)`;
+  scene.style.clipPath=own==='iris'&&enter<1?`circle(${enter*2300}px at 25% 65%)`:'none';
+  for(const el of scene.querySelectorAll('[data-reveal]')){const k=ease((p-Number(el.dataset.reveal))/.55);el.style.transform=`translateY(${(1-k)*65-clamp(p/duration)*10}px)`;el.style.opacity=k;}
+  const picture=scene.querySelector('.picture,.couple-picture');if(picture)picture.style.transform=`scale(${1.015+clamp(p/duration)*.055}) translateY(${-clamp(p/duration)*15}px)`;
+  for(const [i,el]of [...scene.querySelectorAll('.blob')].entries())el.style.transform=`translate(${Math.sin(p*.7+i)*30}px,${Math.cos(p*.65+i)*25}px) rotate(${p*4+i*14}deg)`;
+  for(const [i,el]of [...scene.querySelectorAll('.sticker')].entries())el.style.transform=`rotate(${Math.sin(p*2+i)*3+(scene.id==='family'?5:-5)}deg) scale(${1+Math.sin(p*Math.PI*4)*.012})`;
+ }
+ const q=t/3;document.querySelector('.photo-card.family').style.transform=`translateY(${-clamp(q)*25}px) rotate(${-9+Math.sin(t*1.7)*2}deg)`;document.querySelector('.photo-card.couple').style.transform=`translateY(${-clamp(q)*40}px) rotate(${8+Math.sin(t*1.8)*2}deg)`;
+ const p=clamp((t-13)/6);document.querySelector('.device.left').style.transform=`perspective(1400px) rotateY(${-10+p*14}deg) rotate(${-7+p*3}deg)`;document.querySelector('.device.right').style.transform=`perspective(1400px) rotateY(${8-p*14}deg) rotate(${7-p*3}deg)`;
+ document.querySelector('.flying-link').style.transform=`translate(${Math.sin((t-13)*2)*35}px,${Math.cos((t-13)*2)*25}px) rotate(${-8+Math.sin(t*2)*6}deg)`;
+ document.querySelector('.free-symbol').style.transform=`rotate(${(t-19)*55}deg)`;document.querySelector('.ticker span').style.transform=`translateX(${(t-24)*80}px)`;
+ for(const [i,el]of [...document.querySelectorAll('.confetti i')].entries()){el.style.transform=`translate(${Math.sin(t*.7+i)*45}px,${(t*50+i*39)%240-120}px) rotate(${t*40+i*21}deg)`;el.style.opacity=.2+(Math.sin(t+i)*.5+.5)*.45;}
+ document.querySelector('.progress i').style.width=(t/30*100)+'%';
+};
+window.reelReady=Promise.all([document.fonts.ready,...[...document.images].map(img=>img.complete&&img.naturalWidth?Promise.resolve():new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(Error('Missing weekend image '+img.src));}))]);
+window.renderFrame(0);
+</script>
+</html>

@@ -17,8 +17,10 @@ import edge_tts  # noqa: E402
 
 
 async def main():
-    plan = json.loads((ROOT / "scripts/marketing/date-night-plan.json").read_text(encoding="utf-8"))
-    out = Path(os.environ.get("DATE_NIGHT_OUTPUT", ROOT / ".media-cache/marketing/sarvnema-date-night"))
+    profile = "weekend" if "--weekend" in sys.argv else "date-night"
+    plan = json.loads((ROOT / f"scripts/marketing/{profile}-plan.json").read_text(encoding="utf-8"))
+    variable = "WEEKEND_OUTPUT" if profile == "weekend" else "DATE_NIGHT_OUTPUT"
+    out = Path(os.environ.get(variable, ROOT / f".media-cache/marketing/sarvnema-{profile}"))
     out = out / "voice"
     out.mkdir(parents=True, exist_ok=True)
     manifest = []

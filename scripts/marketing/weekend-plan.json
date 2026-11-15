@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "duration": 30,
+  "fps": 30,
+  "voice": { "name": "fa-IR-FaridNeural", "rate": "+14%", "pitch": "-1Hz", "synthetic": true },
+  "palette": ["#ff2799", "#6e32ff", "#ff6a18", "#46e9ec", "#e9ff55"],
+  "claimScope": "Free refers only to the watch-together feature, not film licences, source access, third-party subscriptions or Internet charges.",
+  "mp4Title": "SarvNema - Your weekend, your people, your movie",
+  "mp4Comment": "Synthetic Persian male narration; original upbeat score; original AI-generated fictional lifestyle models; animated concept demonstration, not actual customers",
+  "instagramCaption": "آخر هفته رو با آدمای خودت بساز! 🍿💜\n\nکنار خانواده، کنار پارتنر، یا حتی وقتی از هم دورین؛ یه فیلم خوب، بهونهٔ خوبیه برای با هم بودن.\n\nتو سرونما اتاق تماشای همزمان بساز، لینک رو بفرست و با هم ببینید. این قابلیت رایگانه!\n\nفیلمت رو متناسب با سن و سلیقهٔ جمع انتخاب کن. رایگان بودن مربوط به قابلیت تماشای همزمان است؛ دسترسی به فیلم‌ها تابع شرایط منبع آن‌هاست.\n\nsarvnema.ir\n\nتصاویر تبلیغاتی و صدای راوی با هوش مصنوعی تولید شده‌اند؛ افراد نمایش‌داده‌شده مدل‌های خیالی‌اند.\n\n#سرونما #آخر_هفته #فیلم_ببینیم #تماشای_همزمان #خانواده #قرار_دونفره #فیلم_و_سریال\n",
+  "scenes": [
+    { "id": "hook", "start": 0, "end": 3, "voiceStart": 0.12, "voiceEnd": 2.85, "spoken": "آخر هفته! بزن بریم!", "caption": "آخر هفته!\nبزن بریم!" },
+    { "id": "family", "start": 3, "end": 8, "voiceStart": 3.3, "voiceEnd": 7.75, "spoken": "کنارِ خانواده؛ یه فیلمِ خوب، یه عالمه خنده!", "caption": "کنار خانواده؛\nیه فیلم خوب، یه عالمه خنده!" },
+    { "id": "couple", "start": 8, "end": 13, "voiceStart": 8.25, "voiceEnd": 12.75, "spoken": "یا کنارِ پارتنرت؛ یه قرارِ دونفره، با طعمِ سینما!", "caption": "یا کنار پارتنرت؛\nیه قرار دونفره، با طعم سینما!" },
+    { "id": "together", "start": 13, "end": 19, "voiceStart": 13.25, "voiceEnd": 18.7, "spoken": "از هم دورین؟ یه لینک بفرستین؛ با هم، هم‌زمان ببینین!", "caption": "از هم دورین؟ یه لینک بفرستین؛\nبا هم، همزمان ببینین!" },
+    { "id": "free", "start": 19, "end": 24, "voiceStart": 19.25, "voiceEnd": 23.7, "spoken": "توی سَرو نِما، تماشای هم‌زمان رایگانه!", "caption": "توی سرونما،\nتماشای همزمان رایگانه!" },
+    { "id": "outro", "start": 24, "end": 30, "voiceStart": 24.2, "voiceEnd": 29.65, "spoken": "این آخرِ هفته، وقتِ با هم دیدنه! سَرو نِما؛ کنارِ آدمایِ خودت.", "caption": "این آخر هفته، وقت با هم دیدنه!\nسرونما؛ کنار آدمای خودت." }
+  ]
+}
