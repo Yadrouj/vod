@@ -94,16 +94,25 @@ test("a library-only update invalidates full, landing, home and singer caches", 
   t.after(async () => { process.chdir(cwd); t.mock.restoreAll(); await rm(root, { recursive: true, force: true }); });
   const { loadMusicIndex, loadMusicLandingIndex, loadMusicHomeIndex, loadMusicArtistIndex } = await import("../../lib/music");
   const loaders = [loadMusicIndex, loadMusicLandingIndex, loadMusicHomeIndex, loadMusicArtistIndex];
-  for (const load of loaders) assert.equal((await load()).tracks.length, 1);
-  const updated = { ...empty, updatedAt: "2026-09-29", tracks: [track(1), track(2)] };
+  // Shipped publisher bundles legitimately coexist with the temporary library.
+  // Check the fixture's IDs and count delta, not the entire editorial catalog.
+  const snapshots = await Promise.all(loaders.map(load => load()));
+  for (const snapshot of snapshots) {
+    assert.ok(snapshot.tracks.some(item => item.id === 'melodify-1'));
+    assert.ok(!snapshot.tracks.some(item => item.id === 'melodify-2'));
+  }
+  const latest = Math.max(...snapshots.map(snapshot => Date.parse(snapshot.updatedAt)));
+  const updated = { ...empty, updatedAt: new Date(latest + 86_400_000).toISOString(), tracks: [track(1), track(2)] };
   const file = path.join(folder, "melodify-library.json");
   await writeFile(file, JSON.stringify(updated));
   const now = Date.now() + 31_000;
   await utimes(file, new Date(now), new Date(now));
   t.mock.method(Date, "now", () => now);
-  for (const load of loaders) {
+  for (const [position, load] of loaders.entries()) {
     const result = await load();
-    assert.equal(result.tracks.length, 2);
+    assert.equal(result.tracks.length, snapshots[position].tracks.length + 1);
+    assert.equal(result.tracks.filter(item => item.id === 'melodify-1').length, 1);
+    assert.equal(result.tracks.filter(item => item.id === 'melodify-2').length, 1);
     assert.equal(result.updatedAt, updated.updatedAt);
   }
 });

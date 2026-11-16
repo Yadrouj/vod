@@ -25,7 +25,8 @@ test("music relay preserves Safari byte ranges, bounds HEAD probes, rejects HTML
     const url = "https://sarvnema.ir/api/music/media?" + new URLSearchParams({ id: "fixture", url: source.url });
     const response = await GET(new Request(url, { headers: { Range: "bytes=0-1" } }));
     assert.equal(response.status, 206); assert.equal(response.headers.get("Content-Type"), "audio/mpeg");
-    assert.equal(response.headers.get("Accept-Ranges"), "bytes"); assert.match(response.headers.get("Cache-Control")!, /no-store/);
+    // Song caching is intentional; partial responses must remain browser-private.
+    assert.equal(response.headers.get("Accept-Ranges"), "bytes"); assert.equal(response.headers.get("Cache-Control"), "private, max-age=604800, no-transform");
     assert.equal((await response.arrayBuffer()).byteLength, 2);
     const head = await HEAD(new Request(url, { method: "HEAD" }));
     assert.equal(head.status, 200); assert.equal(head.headers.get("Content-Length"), "9999"); assert.equal(head.headers.get("Content-Range"), null);

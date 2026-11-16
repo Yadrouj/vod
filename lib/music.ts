@@ -6,6 +6,7 @@ import { mergeMelodifyCatalog, withRecoveredMusicSources } from "./music-library
 import { searchText, TypoSearchIndex, type SearchMatches } from "./typo-search";
 import type { MusicArtist, MusicArtistIndex, MusicIndex, MusicLandingIndex, MusicTrack } from "@/lib/music-types";
 import { sousanLibrary } from './sousan-collection';
+import { susanRoshanRelease } from './susan-roshan-collection';
 import { MusicRelatedIndex } from './music-related-index';
 import musicReleaseData from './data/media-refresh-2026-11-14-music.json';
 import { applyMusicReleaseBundle, type MusicReleaseBundle } from './bundled-music-release';
@@ -49,7 +50,7 @@ export async function loadMusicIndex(): Promise<MusicIndex> {
         cache.value = Promise.all([
           readFile(DATA_FILE, "utf8").then((data) => JSON.parse(data) as MusicIndex),
           loadMelodifyCatalog(libraryInfo?.mtimeMs),
-        ]).then(([base, melodify]) => mergeMelodifyCatalog(applyMusicReleaseBundle(base, musicReleaseBundle), melodify));
+        ]).then(([base, melodify]) => applyMusicReleaseBundle(mergeMelodifyCatalog(applyMusicReleaseBundle(base, musicReleaseBundle), melodify), susanRoshanRelease));
       }
       return await cache.value;
     } catch {
@@ -391,7 +392,7 @@ async function loadCompactMusicIndex<T extends MusicLandingIndex | MusicArtistIn
         compactCache.value = Promise.all([
           readFile(file, "utf8").then((data) => JSON.parse(data) as T),
           loadMelodifyCatalog(libraryInfo?.mtimeMs),
-        ]).then(([base, melodify]) => mergeMelodifyCatalog(applyMusicReleaseBundle(base, musicReleaseBundle), melodify));
+        ]).then(([base, melodify]) => applyMusicReleaseBundle(mergeMelodifyCatalog(applyMusicReleaseBundle(base, musicReleaseBundle), melodify), susanRoshanRelease));
       }
       return await compactCache.value;
     } catch {

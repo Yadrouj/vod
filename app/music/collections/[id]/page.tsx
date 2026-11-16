@@ -28,7 +28,12 @@ export default async function CollectionPage({ params, searchParams }: Props) {
   const requestedPage = Number(query.page);
   const page = Number.isFinite(requestedPage) ? Math.min(pageCount, Math.max(1, Math.floor(requestedPage) || 1)) : 1;
   const pageHref = (value: number) => `/music/collections/${encodeURIComponent(id)}?page=${value}`;
-  return <main className={`shell ${styles.page}`} dir="rtl"><div className="wrap"><Link href="/music/collections">← همهٔ مجموعه‌ها</Link><h1>{playlist.title}</h1><p>{playlist.description}</p><MusicArtistPlaylist artistName={playlist.title} tracks={tracks.slice((page - 1) * 80, page * 80)} />{pageCount > 1 && <nav className={styles.tools} aria-label="صفحه‌بندی پلی‌لیست">
+  return <main className={`shell ${styles.page}`} dir="rtl"><div className="wrap"><Link href="/music/collections">← همهٔ مجموعه‌ها</Link><h1>{playlist.title}</h1><p>{playlist.description}</p>
+    {(playlist.publisher || playlist.artistSlug) && <nav className={styles.tools} aria-label="خواننده و ناشر مجموعه">
+      {playlist.artistSlug && <Link href={`/music/artists/${encodeURIComponent(playlist.artistSlug)}`}>همهٔ آثار این خواننده</Link>}
+      {playlist.publisher && <a href={playlist.publisher.url} target="_blank" rel="noreferrer">لینک ناشر: {playlist.publisher.name} ↗</a>}
+    </nav>}
+    <MusicArtistPlaylist artistName={playlist.title} tracks={tracks.slice((page - 1) * 80, page * 80)} />{pageCount > 1 && <nav className={styles.tools} aria-label="صفحه‌بندی پلی‌لیست">
     {page > 1 && <Link href={pageHref(page - 1)}>← قبلی</Link>}
     <span>صفحهٔ {page.toLocaleString("fa-IR")} از {pageCount.toLocaleString("fa-IR")}</span>
     {page < pageCount && <Link href={pageHref(page + 1)}>بعدی →</Link>}
