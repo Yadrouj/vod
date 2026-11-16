@@ -1,13 +1,14 @@
 import { findVodItem, normalizeVodType } from "@/lib/catalog";
 import { buildSeasonSummaries, expandSeasonDownloads, movieDownloadSources } from "@/lib/downloads";
-import { checkRateLimit, clientIp, publicCacheHeaders, rateLimitedResponse, rateLimitHeaders, TtlLruCache } from "@/lib/runtime-cache";
+import { checkRateLimit, clientIp, rateLimitedResponse, rateLimitHeaders, TtlLruCache } from "@/lib/runtime-cache";
+import { downloadResponseHeaders, downloadResponseLifetime } from '@/lib/download-cache';
 
 type Props = {
   params: Promise<{ id: string }>;
 };
 
 export const dynamic = "force-dynamic";
-const downloadResponseCache = new TtlLruCache<string, object>(300, 15 * 60_000);
+const downloadResponseCache = new TtlLruCache<string, { payload: object; signed: boolean; expiresAt: number }>(300, 15 * 60_000);
 
 export async function GET(request: Request, { params }: Props) {
   const { id } = await params;
@@ -19,9 +20,9 @@ export async function GET(request: Request, { params }: Props) {
 
   const cached = downloadResponseCache.get(cacheKey);
   if (cached) {
-    return Response.json(cached, {
+    return Response.json(cached.payload, {
       headers: {
-        ...publicCacheHeaders({ browserSeconds: 30, edgeSeconds: 600 }),
+        ...downloadResponseHeaders(cached),
         ...rateLimitHeaders(rate),
         "X-SarvNema-Cache": "HIT",
       },
@@ -30,6 +31,8 @@ export async function GET(request: Request, { params }: Props) {
 
   const item = await findVodItem(id);
   if (!item) return Response.json({ error: "Title not found" }, { status: 404 });
+  const policy = downloadResponseLifetime(item.links);
+  const remember = (payload: object) => downloadResponseCache.set(cacheKey, { payload, signed: policy.signed, expiresAt: Date.now() + policy.ttlMs }, policy.ttlMs);
 
   const season = requestedSeason;
   const seasons = buildSeasonSummaries(item.links);
@@ -40,10 +43,10 @@ export async function GET(request: Request, { params }: Props) {
       type: "movie",
       files: movieDownloadSources(item.links),
     };
-    downloadResponseCache.set(cacheKey, payload);
+    const entry = remember(payload);
     return Response.json(payload, {
       headers: {
-        ...publicCacheHeaders({ browserSeconds: 30, edgeSeconds: 600 }),
+        ...downloadResponseHeaders(entry),
         ...rateLimitHeaders(rate),
         "X-SarvNema-Cache": "MISS",
       },
@@ -57,10 +60,10 @@ export async function GET(request: Request, { params }: Props) {
     seasons,
     ...downloads,
   };
-  downloadResponseCache.set(cacheKey, payload);
+  const entry = remember(payload);
   return Response.json(payload, {
     headers: {
-      ...publicCacheHeaders({ browserSeconds: 30, edgeSeconds: 600 }),
+      ...downloadResponseHeaders(entry),
       ...rateLimitHeaders(rate),
       "X-SarvNema-Cache": "MISS",
     },

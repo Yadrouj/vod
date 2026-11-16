@@ -60,16 +60,21 @@ export function stableMediaKey(link) {
   return `${link.sourceProvider}:${url.hostname.toLowerCase()}${decodeURIComponent(url.pathname).toLowerCase()}:${link.season ?? ""}:${link.episode ?? ""}`;
 }
 
-export function normalizeDownload(download, { provider, pageUrl, now = Date.now() }) {
+export function normalizeDownload(download, { provider, pageUrl, now = Date.now(), minTtlMs = 6 * 60 * 60_000 }) {
+  if (!download || typeof download !== 'object') return null;
   const url = publicUrl(download.url, pageUrl);
   if (!url || download.dead === true) return null;
   const parsed = new URL(url);
   const name = decodeURIComponent(parsed.pathname.split("/").at(-1) || "");
   if (!/\.(?:mkv|mp4|m4v|webm|m3u8)$/i.test(name)
     || /(?:^|[. _/-])(?:trailer|teaser|promo|preview|blank)(?:[. _/-]|$)/i.test(name)) return null;
-  const expiry = Number(parsed.searchParams.get("expires") || parsed.searchParams.get("Expires") || 0);
+  const rawExpiry = parsed.searchParams.get("expires") ?? parsed.searchParams.get("Expires");
+  const expiry = rawExpiry === null ? 0 : Number(rawExpiry);
+  if (rawExpiry !== null && (!Number.isSafeInteger(expiry) || expiry <= 0 || !Number.isFinite(new Date(expiry * 1000).valueOf()))) return null;
   // Do not remove signatures or import already-expired/very short-lived URLs.
-  if (expiry && expiry * 1000 < now + 6 * 60 * 60_000) return null;
+  // Archive imports need a long lifetime. Just-in-time playback/download refreshes
+  // can accept shorter public signatures without weakening the nightly import rule.
+  if (expiry && expiry * 1000 < now + Math.max(60_000, minTtlMs)) return null;
   const pair = parseSeasonEpisode(name);
   const positive = (value, fallback) => Number.isInteger(Number(value)) && Number(value) > 0 ? Number(value) : fallback;
   const season = positive(download.season, pair.season);

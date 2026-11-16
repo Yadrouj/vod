@@ -27,7 +27,17 @@ test("expired media, trailers, private addresses and application installers are 
   const options = { provider: source.id, pageUrl: source.url, now };
   for (const url of ["https://media.example/Film.mp4?expires=1", "https://media.example/Film.Trailer.mp4", "https://media.example/app.apk", "http://127.0.0.1/private.mkv", "https://user:password@media.example/Film.mkv", "http://[::1]/film.mkv"]) assert.equal(normalizeDownload({ url }, options), null);
   assert.equal(normalizeDownload({ ...download, dead: true }, options), null);
+  for (const expires of ['invalid', '-1', '0', '99999999999999999999']) assert.equal(normalizeDownload({ url: `https://media.example/Film.mp4?expires=${expires}` }, options), null);
+  assert.equal(normalizeDownload(null, options), null);
   assert.equal(publicUrl("javascript:alert(1)", source.url), null);
+});
+
+test('on-demand signatures under six hours are accepted only with an explicit short refresh window', () => {
+  const url = `https://media.example/Film.S01E02.720p.mkv?md5=fresh&expires=${Math.floor(now / 1000) + 4 * 3600}`;
+  const options = { provider: source.id, pageUrl: source.url, now };
+  assert.equal(normalizeDownload({ url }, options), null, 'nightly imports retain their six-hour safety window');
+  assert.equal(normalizeDownload({ url }, { ...options, minTtlMs: 120_000 }).url, url);
+  assert.equal(normalizeDownload({ url: url.replace(/expires=\d+/, `expires=${Math.floor(now / 1000) + 30}`) }, { ...options, minTtlMs: 120_000 }), null);
 });
 test("matching uses the full title, type and year, never the source user rating as IMDb", () => {
   const detail = { id: "source-1", title: "House", year: "2004", type: "series", avgRating: 10, downloads: [download] };

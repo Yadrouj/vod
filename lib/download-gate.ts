@@ -1,6 +1,6 @@
 export const DOWNLOAD_GATE_PATH = "/download/continue";
 
-export type DownloadGateInput = { url: string; title?: string; quality?: string; musicId?: string; compact?: boolean };
+export type DownloadGateInput = { url: string; title?: string; quality?: string; musicId?: string; itemId?: string; compact?: boolean };
 
 function encodeCompact(value: string) {
   const bytes = new TextEncoder().encode(value);
@@ -25,11 +25,12 @@ export function isDownloadUrl(value: string) {
   }
 }
 
-export function downloadGateUrl({ url, title, quality, musicId, compact = false }: DownloadGateInput) {
+export function downloadGateUrl({ url, title, quality, musicId, itemId, compact = false }: DownloadGateInput) {
   if (!isDownloadUrl(url)) return "#";
   const params = compact ? new URLSearchParams({ u: encodeCompact(url) }) : new URLSearchParams({ url });
   if (title?.trim()) params.set("title", title.trim());
   if (quality?.trim()) params.set("quality", quality.trim());
   if (musicId?.trim()) params.set("musicId", musicId.trim());
+  if (itemId?.trim()) params.set("itemId", itemId.trim());
   return `${DOWNLOAD_GATE_PATH}?${params.toString()}`;
 }

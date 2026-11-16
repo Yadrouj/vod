@@ -16,7 +16,7 @@ export function DownloadButton({ href, label, title = label, quality, itemId, po
   const getSnapshot = useCallback(() => readHistory().some((item) => item.href === href), [href]);
   const visited = useSyncExternalStore(subscribe, getSnapshot, () => false);
   const restricted = contentRestriction({ itemId, title, url: href });
-  const gateHref = restricted ? restrictionUrl() : downloadGateUrl({ url: href, title, quality: quality || label.split("·").slice(1).join("·").trim() });
+  const gateHref = restricted ? restrictionUrl() : downloadGateUrl({ url: href, title, itemId, quality: quality || label.split("·").slice(1).join("·").trim() });
 
   const markDownloaded = () => {
     const history = readHistory();

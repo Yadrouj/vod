@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./download-gate.module.css";
 
-type DownloadGateProps = { url: string; title: string; quality: string; locale: "fa" | "en"; attachment?: boolean; delivery?: string };
+type DownloadGateProps = { url: string; title: string; quality: string; locale: "fa" | "en"; attachment?: boolean; delivery?: string; refreshed?: boolean };
 type Status = "waiting" | "queued" | "sending" | "sent" | "failed";
 
-export function DownloadGate({ url, title, quality, locale, attachment = false, delivery }: DownloadGateProps) {
+export function DownloadGate({ url, title, quality, locale, attachment = false, delivery, refreshed = false }: DownloadGateProps) {
   const fa = locale === "fa";
   const [seconds, setSeconds] = useState(5);
   const [status, setStatus] = useState<Status>("waiting");
@@ -77,6 +77,7 @@ export function DownloadGate({ url, title, quality, locale, attachment = false, 
     <section className={styles.card} aria-live="polite">
       <div className={styles.emoji} aria-hidden="true">🦉</div>
       <p className={styles.eyebrow}>{fa ? "دروازهٔ دانلود سرونما" : "SarvNema download gate"}</p>
+      {refreshed && <p className={styles.eyebrow}>{fa ? 'لینک موقت از ناشر تازه شد؛ همان فایل و کیفیت انتخابی شما' : 'Publisher link refreshed; same file and quality'}</p>}
       <h1>{delivery ? (fa ? "دریافت فایل در تلگرام" : "Receive your file in Telegram") : seconds > 0 ? (fa ? "دانلود شما در راه است…" : "Your download is getting ready…") : (fa ? "لینک دانلود آماده است" : "Your download is ready")}</h1>
       <p className={styles.message}>{delivery ? deliveryMessage : seconds > 0 ? (fa ? "جغد سرونما دارد فایل را بسته‌بندی می‌کند؛ پنج ثانیه مهمان ما باش!" : "Our little owl is wrapping your file. Stay for five seconds!") : (fa ? "درخواست دانلود فرستاده شد. اگر شروع نشد، دکمهٔ زیر را بزنید؛ در مرورگر داخلی تلگرام می‌توانید صفحه را در مرورگر گوشی باز کنید." : "Download requested. If it didn't start, use the button below or open this page in your phone's browser.")}</p>
       <div className={styles.media}><strong dir="auto">{title}</strong>{quality && <span dir="auto">{fa ? "کیفیت" : "Quality"}: {quality}</span>}</div>

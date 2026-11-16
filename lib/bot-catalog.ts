@@ -212,7 +212,7 @@ export async function getBotTitleDetail(id: string, options: { season?: number |
   const includeDownloads = options.includeDownloads || Boolean(options.season);
   const maxFiles = clamp(Math.floor(options.maxFiles ?? 12), 1, 80);
   const firstFile = item.links[0] ? movieDownloadSources([item.links[0]])[0] : null;
-  const bestFile = firstFile ? serializeDownload(firstFile, origin, item.title) : null;
+  const bestFile = firstFile ? serializeDownload(firstFile, origin, item.title, item.imdbCode) : null;
 
   const detail: {
     service: string;
@@ -236,8 +236,8 @@ export async function getBotTitleDetail(id: string, options: { season?: number |
 
   if (type === "movie") {
     detail.movieFiles = includeDownloads
-      ? movieDownloadSources(item.links).slice(0, maxFiles).map((file) => serializeDownload(file, origin, item.title))
-      : movieDownloadSources(item.links).slice(0, 5).map((file) => serializeDownload(file, origin, item.title));
+      ? movieDownloadSources(item.links).slice(0, maxFiles).map((file) => serializeDownload(file, origin, item.title, item.imdbCode))
+      : movieDownloadSources(item.links).slice(0, 5).map((file) => serializeDownload(file, origin, item.title, item.imdbCode));
     return detail;
   }
 
@@ -250,7 +250,7 @@ export async function getBotTitleDetail(id: string, options: { season?: number |
 
   if (includeDownloads) {
     const expanded = await expandSeasonDownloads(item, selectedSeason);
-    detail.episodes = expanded.episodes.map((episode) => serializeEpisode(episode, maxFiles, origin, item.title));
+    detail.episodes = expanded.episodes.map((episode) => serializeEpisode(episode, maxFiles, origin, item.title, item.imdbCode));
   }
 
   return detail;
@@ -344,7 +344,7 @@ function titleActions(item: VodItem, origin: string) {
   };
 }
 
-function serializeEpisode(episode: EpisodeDownload, maxFiles: number, origin: string, title: string) {
+function serializeEpisode(episode: EpisodeDownload, maxFiles: number, origin: string, title: string, itemId: string) {
   return {
     season: episode.season,
     episode: episode.episode,
@@ -352,25 +352,25 @@ function serializeEpisode(episode: EpisodeDownload, maxFiles: number, origin: st
     title: episode.title,
     summary: compactText(episode.summary, 260),
     imageUrl: episode.imageUrl ? absoluteUrl(origin, episode.imageUrl) : null,
-    files: episode.files.slice(0, maxFiles).map((file) => serializeDownload(file, origin, `${title} · ${episode.code}`)),
+    files: episode.files.slice(0, maxFiles).map((file) => serializeDownload(file, origin, `${title} · ${episode.code}`, itemId)),
     telegram: {
       text: `${episode.code} - ${episode.title}`,
       buttons: episode.files.slice(0, Math.min(maxFiles, 10)).map((file) => ({
         text: [file.quality, file.size].filter(Boolean).join(" / ") || file.name,
-        url: absoluteUrl(origin, downloadGateUrl({ url: file.url, compact: true, title: `${title} · ${episode.code}`, quality: file.quality ?? file.name })),
+        url: absoluteUrl(origin, downloadGateUrl({ url: file.url, compact: true, title: `${title} · ${episode.code}`, itemId, quality: file.quality ?? file.name })),
       })),
     },
   };
 }
 
-function serializeDownload(file: DownloadSource | EpisodeFile, origin: string, title: string) {
+function serializeDownload(file: DownloadSource | EpisodeFile, origin: string, title: string, itemId: string) {
   const quality = file.quality ?? ("label" in file ? file.label : file.name);
   return {
     label: "label" in file ? file.label : file.name,
     name: "name" in file ? file.name : file.fileName ?? file.label,
     // Bot clients must never receive the archive URL directly. The site gate
     // keeps the download copy, quality and five-second acknowledgement flow.
-    url: absoluteUrl(origin, downloadGateUrl({ url: file.url, compact: true, title, quality: quality ?? undefined })),
+    url: absoluteUrl(origin, downloadGateUrl({ url: file.url, compact: true, title, itemId, quality: quality ?? undefined })),
     quality: file.quality,
     group: file.group,
     release: file.release,
