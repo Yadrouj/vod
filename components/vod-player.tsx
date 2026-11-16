@@ -29,6 +29,7 @@ export function VodPlayer({
   isSeries = false,
   locale = DEFAULT_LOCALE,
   initialSource,
+  tvMode = false,
 }: {
   title: string;
   itemId?: string;
@@ -37,6 +38,7 @@ export function VodPlayer({
   isSeries?: boolean;
   locale?: Locale;
   initialSource?: string;
+  tvMode?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerFrameRef = useRef<HTMLDivElement>(null);
@@ -67,6 +69,7 @@ export function VodPlayer({
   const [fullscreen, setFullscreen] = useState(false);
   const [muted, setMuted] = useState(false);
   const lastSavedAt = useRef(0);
+  const tvAutoplay = useRef(tvMode);
   const [failedSourceUrls, setFailedSourceUrls] = useState<Set<string>>(new Set());
   const playableSources = useMemo(
     () => playableLinks(links, { isSeries, title, includeAlternateFiles: true }),
@@ -329,6 +332,9 @@ export function VodPlayer({
         className={`${styles.player} pro-player ${paused ? "is-paused" : "is-playing"} ${controlsShowing ? "is-controls-visible" : "is-controls-hidden"}`}
         dir="ltr"
         tabIndex={0}
+        data-tv-initial={tvMode || undefined}
+        data-tv-focus={tvMode ? "player" : undefined}
+        data-tv-player={tvMode || undefined}
         aria-label={locale === "fa" ? "پلیر ویدئو؛ فاصله برای پخش، جهت‌ها برای جابه‌جایی" : "Video player: Space to play, arrows to seek"}
       >
         <video
@@ -338,7 +344,7 @@ export function VodPlayer({
           src={sourceReady ? playbackUrl : undefined}
           poster={posterUrl ?? undefined}
           playsInline
-          preload={sourceReady ? "metadata" : "none"}
+          preload={sourceReady ? tvMode ? "auto" : "metadata" : "none"}
           onLoadStart={() => setBuffering(true)}
           onLoadedMetadata={(event) => {
             setMediaError(0);
@@ -365,7 +371,8 @@ export function VodPlayer({
           }}
           onCanPlay={(event) => {
             setBuffering(false);
-            if (playAfterSourceReadyRef.current) {
+            if (playAfterSourceReadyRef.current || tvAutoplay.current) {
+              tvAutoplay.current = false;
               playAfterSourceReadyRef.current = false;
               attemptPlay(event.currentTarget);
             }
@@ -433,6 +440,7 @@ export function VodPlayer({
         </div>
 
         <MediaPlayerControls
+          tvMode={tvMode}
           mediaKey={mediaKey}
           frameRef={playerFrameRef} mediaRef={videoRef} paused={paused} time={time} duration={duration} buffered={buffered}
           rate={Number(speed)} onRate={value => updateSpeed(String(value))} onPlay={togglePlay} onSeek={value => seek(String(value))}

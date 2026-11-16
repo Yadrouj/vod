@@ -44,6 +44,7 @@ async function allEntries(): Promise<SitemapEntry[]> {
     entry("/browse", vodUpdatedAt, 0.9, "daily"),
     ...Object.values(CATALOG_HUBS).map(hub => entry(hub.href, vodUpdatedAt, 0.9, 'daily')),
     entry('/developers', vodUpdatedAt, 0.6, 'monthly'),
+    entry('/apps', vodUpdatedAt, 0.7, 'monthly'),
     entry("/kids", vodUpdatedAt, 0.8, "weekly"),
     entry("/kids/learn", vodUpdatedAt, 0.75, "weekly"),
     entry("/music", musicUpdatedAt, 0.95, "daily"),

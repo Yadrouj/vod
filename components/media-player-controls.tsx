@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { Captions, Check, ChevronLeft, ChevronRight, Keyboard, ListVideo, Maximize, Minimize, Monitor, Pause, PictureInPicture2, Play, Settings, SkipForward, Volume2, VolumeX, X } from "lucide-react";
+import { Captions, Check, ChevronLeft, ChevronRight, Keyboard, ListVideo, Maximize, Minimize, Monitor, Pause, PictureInPicture2, Play, RotateCcw, RotateCw, Settings, SkipForward, Volume2, VolumeX, X } from "lucide-react";
 import { ResponsiveDialog } from "./responsive-dialog";
 import type { Locale } from "@/lib/i18n";
 import styles from "./media-player-controls.module.css";
@@ -17,6 +17,7 @@ type Props = {
   onSubtitles?: () => void; onEpisodes?: () => void; onNext?: () => void;
   onVisibility?: (visible: boolean) => void; panelOpen?: boolean; extras?: ReactNode;
   mediaKey?: string;
+  tvMode?: boolean;
 };
 const rates = [.25, .5, .75, 1, 1.25, 1.5, 1.75, 2];
 export function mediaTime(value: number) {
@@ -29,6 +30,7 @@ export function mediaTime(value: number) {
 export function MediaPlayerControls(props: Props) {
   const { frameRef, mediaRef, paused, time, duration, rate, onPlay, onSeek, onRate, onFullscreen, fullscreen, sources, source, onSource, settingsOpen, onSettings, onSubtitles, onEpisodes, onNext, extras, audio = false, locale = "en", canPlay = true, canSeek = true, canSource = true, canRate = true, panelOpen = false } = props;
   const fa = locale === "fa";
+  const tvMode = props.tvMode ?? false;
   const label = (en: string, persian: string) => fa ? persian : en;
   const [visible, setVisible] = useState(true);
   const [volume, setVolume] = useState(1);
@@ -78,7 +80,7 @@ export function MediaPlayerControls(props: Props) {
     reveal();
   }
   function skip(amount: number) { seek((mediaRef.current?.currentTime ?? time) + amount); announce(`${amount > 0 ? "+" : "−"}${Math.abs(amount)} s`); }
-  function play() { if (canPlay) { onPlay(); announce(paused ? label("Play", "پخش") : label("Pause", "توقف")); } reveal(); }
+  function play() { if (canPlay) { onPlay(); announce(paused ? label("Play", "پخش") : label("Pause", "توقف")); } if (tvMode) frameRef.current?.focus({ preventScroll: true }); reveal(); }
   function setSound(value: number) {
     const media = mediaRef.current;
     if (!media) return;
@@ -123,20 +125,28 @@ export function MediaPlayerControls(props: Props) {
     const buffer = () => setBuffered(media.duration > 0 && media.buffered.length ? media.buffered.end(media.buffered.length - 1) / media.duration * 100 : 0);
     const pipChange = () => setPip(document.pictureInPictureElement === media);
     sound(); buffer();
-    setCanPip(!audio && Boolean(document.pictureInPictureEnabled));
-    setCanCast(Boolean("webkitShowPlaybackTargetPicker" in media || ("remote" in media && (media as HTMLVideoElement).remote)));
+    setCanPip(!tvMode && !audio && Boolean(document.pictureInPictureEnabled));
+    setCanCast(!tvMode && Boolean("webkitShowPlaybackTargetPicker" in media || ("remote" in media && (media as HTMLVideoElement).remote)));
     media.addEventListener("volumechange", sound); media.addEventListener("progress", buffer);
     media.addEventListener("enterpictureinpicture", pipChange); media.addEventListener("leavepictureinpicture", pipChange);
     return () => { media.removeEventListener("volumechange", sound); media.removeEventListener("progress", buffer); media.removeEventListener("enterpictureinpicture", pipChange); media.removeEventListener("leavepictureinpicture", pipChange); };
-  }, [mediaRef, source, audio, props.mediaKey]);
+  }, [mediaRef, source, audio, props.mediaKey, tvMode]);
   useEffect(() => {
     const frame = frameRef.current;
     if (!frame) return;
     const move = (event: PointerEvent) => { if (event.pointerType === "mouse") reveal(); };
+    const remoteControls = () => {
+      reveal();
+      requestAnimationFrame(() => (frame.querySelector<HTMLElement>('[data-player-recovery] button:not(:disabled)') ?? frame.querySelector<HTMLElement>('[data-player-controls] button:not(:disabled)'))?.focus({ preventScroll: true }));
+    };
     const key = (event: KeyboardEvent) => {
       if (event.key === "Escape") { onSettings(false); setTheater(false); return; }
       if ((event.target as HTMLElement).closest("button, input, select, textarea, a, dialog, [data-camera-user], [contenteditable=true]") || event.ctrlKey || event.metaKey || event.altKey || panelOpen) return;
       const k = event.key.toLowerCase();
+      if (tvMode && ((k === "mediaplay" && !mediaRef.current?.paused) || (k === "mediapause" && mediaRef.current?.paused))) { event.preventDefault(); return; }
+      if (tvMode && ["enter", "mediaplaypause", "mediaplay", "mediapause"].includes(k)) { event.preventDefault(); play(); return; }
+      if (tvMode && ["mediafastforward", "mediarewind"].includes(k)) { event.preventDefault(); skip(k === "mediarewind" ? -10 : 10); return; }
+      if (tvMode && k.startsWith("arrow")) { event.preventDefault(); remoteControls(); return; }
       if (![" ", "k", "j", "l", "arrowleft", "arrowright", "arrowup", "arrowdown", "f", "m", "c", "i", "t", "home", "end", ".", ",", ">", "<", "?", "n"].includes(k) && !/^\d$/.test(k)) return;
       event.preventDefault(); reveal();
       if (k === " " || k === "k") play();
@@ -155,8 +165,8 @@ export function MediaPlayerControls(props: Props) {
       if (k === "n" && event.shiftKey && canPlay) onNext?.();
       if (k === "?") { setMenu("keys"); onSettings(true); }
     };
-    frame.addEventListener("pointermove", move); frame.addEventListener("keydown", key);
-    return () => { frame.removeEventListener("pointermove", move); frame.removeEventListener("keydown", key); };
+    frame.addEventListener("pointermove", move); frame.addEventListener("keydown", key); frame.addEventListener("sarvnema:tv-controls", remoteControls);
+    return () => { frame.removeEventListener("pointermove", move); frame.removeEventListener("keydown", key); frame.removeEventListener("sarvnema:tv-controls", remoteControls); };
   });
   useEffect(() => { reveal(); }, [paused, settingsOpen, panelOpen, source, reveal]);
   useEffect(() => {
@@ -212,28 +222,31 @@ export function MediaPlayerControls(props: Props) {
           onKeyDown={event => {
             if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) { event.preventDefault(); seek(event.key === "Home" ? 0 : event.key === "End" ? safeDuration : time + (event.key === "ArrowLeft" ? -5 : 5)); }
             if (event.key === " " || event.key === "k") { event.preventDefault(); play(); }
-            if (event.key === "ArrowUp" || event.key === "ArrowDown") { event.preventDefault(); setSound(volume + (event.key === "ArrowUp" ? .05 : -.05)); }
+            if (!tvMode && (event.key === "ArrowUp" || event.key === "ArrowDown")) { event.preventDefault(); setSound(volume + (event.key === "ArrowUp" ? .05 : -.05)); }
           }} onKeyUp={commit} />
       </div>
       <div className={styles.row}>
         <div className={styles.group}>
           {button(paused ? label("Play (k)", "پخش (k)") : label("Pause (k)", "توقف (k)"), paused ? <Play fill="currentColor" /> : <Pause fill="currentColor" />, play, { disabled: !canPlay })}
+          {tvMode && button(label("Back 10 seconds", "۱۰ ثانیه عقب"), <RotateCcw />, () => skip(-10), { disabled: !canSeek })}
+          {tvMode && button(label("Forward 10 seconds", "۱۰ ثانیه جلو"), <RotateCw />, () => skip(10), { disabled: !canSeek })}
           {onNext && button(label("Next episode (Shift+N)", "قسمت بعدی (Shift+N)"), <SkipForward fill="currentColor" />, onNext, { desktop: true, disabled: !canPlay })}
           <div className={styles.volume}>{button(muted ? label("Unmute (m)", "وصل صدا (m)") : label("Mute (m)", "قطع صدا (m)"), muted || !volume ? <VolumeX /> : <Volume2 />, mute)}<input aria-label={label("Volume", "صدا")} type="range" min="0" max="1" step=".05" value={muted ? 0 : volume} onChange={event => setSound(Number(event.target.value))} /></div>
           <span className={styles.time}>{mediaTime(position)}<span> / {mediaTime(safeDuration)}</span></span>
         </div>
         <div className={styles.group}>
           {onSubtitles && button(label("Subtitles (c)", "زیرنویس (c)"), <Captions />, onSubtitles)}
+          {tvMode && onEpisodes && button(label("Episodes", "قسمت‌ها"), <ListVideo />, onEpisodes)}
           {button(label("Settings", "تنظیمات"), <Settings />, () => { setMenu("main"); onSettings(!settingsOpen); }, { settings: true, pressed: settingsOpen })}
-          {canPip && button(label("Miniplayer (i)", "تصویر در تصویر (i)"), <PictureInPicture2 />, () => void picture(), { desktop: true, pressed: pip })}
-          {!audio && button(label("Theater mode (t)", "حالت سینما (t)"), <Monitor />, () => setTheater(value => !value), { desktop: true, pressed: theater })}
+          {canPip && !tvMode && button(label("Miniplayer (i)", "تصویر در تصویر (i)"), <PictureInPicture2 />, () => void picture(), { desktop: true, pressed: pip })}
+          {!audio && !tvMode && button(label("Theater mode (t)", "حالت سینما (t)"), <Monitor />, () => setTheater(value => !value), { desktop: true, pressed: theater })}
           {button(fullscreen ? label("Exit fullscreen (f)", "خروج از تمام‌صفحه (f)") : label("Fullscreen (f)", "تمام‌صفحه (f)"), fullscreen ? <Minimize /> : <Maximize />, onFullscreen)}
         </div>
       </div>
       {extras && <div className={styles.extras}>{extras}</div>}
     </div>
-    <ResponsiveDialog mobileOnly open={settingsOpen} onClose={() => onSettings(false)} title={label("Playback settings", "تنظیمات پخش")} dir={fa ? "rtl" : "ltr"} closeLabel={label("Close settings", "بستن تنظیمات")} theme={audio ? "music" : "cinema"}>
-      <section className={styles.settings} data-player-settings data-player-ui="true" dir={fa ? "rtl" : "ltr"} onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); onSettings(false); } }}>
+    <ResponsiveDialog mobileOnly={!tvMode} open={settingsOpen} onClose={() => onSettings(false)} title={label("Playback settings", "تنظیمات پخش")} dir={fa ? "rtl" : "ltr"} closeLabel={label("Close settings", "بستن تنظیمات")} theme={audio ? "music" : "cinema"}>
+      <section className={styles.settings} data-player-settings data-tv-menu={tvMode ? menu : undefined} data-player-ui="true" dir={fa ? "rtl" : "ltr"} onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); onSettings(false); } }}>
         <header>{menu !== "main" && button(label("Back", "بازگشت"), <ChevronLeft />, () => setMenu("main"))}<strong>{menu === "quality" ? label("Quality & source", "کیفیت و منبع") : menu === "speed" ? label("Playback speed", "سرعت پخش") : menu === "keys" ? label("Keyboard shortcuts", "میانبرهای صفحه‌کلید") : label("Settings", "تنظیمات")}</strong>{button(label("Close settings", "بستن تنظیمات"), <X />, () => onSettings(false))}</header>
         {menu === "main" && <>
           <button disabled={!canSource} onClick={() => setMenu("quality")}><span>{label("Quality & source", "کیفیت و منبع")}</span><small>{sources.find(s => s.value === source)?.label}</small><ChevronRight /></button>

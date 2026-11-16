@@ -1,0 +1,7 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="320dp" android:height="180dp" android:viewportWidth="320" android:viewportHeight="180">
+  <path android:fillColor="#090B10" android:pathData="M0,0h320v180h-320z" />
+  <path android:fillColor="#F2D080" android:pathData="M80,25C108,51 120,75 113,99C108,119 95,130 80,134C65,130 52,119 47,99C40,75 52,51 80,25Z" />
+  <path android:fillColor="#090B10" android:pathData="M73,67L101,82L73,98Z" />
+  <!-- Full SARVNEMA / TV lettering; code-native preview artwork. -->
+  <path android:strokeColor="#FFFFFF" android:strokeWidth="2.6" android:fillColor="#00000000" android:pathData="M149,67H136V78H149V89H136M156,89L163,67L170,89M159,81H167M178,89V67H190V78H178M184,78L193,89M199,67L206,89L213,67M221,89V67L235,89V67M256,67H243V89H256M243,78H253M264,89V67L273,80L282,67V89M289,89L296,67L303,89M292,81H300M192,111H218M205,111V139M233,111L245,139L257,111" />
+</vector>
