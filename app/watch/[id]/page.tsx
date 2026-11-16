@@ -1,7 +1,7 @@
 import { decodedParams } from "@/lib/route-params";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { VodPlayer } from "@/components/vod-player";
@@ -56,6 +56,11 @@ export default async function WatchPage({ params, searchParams }: Props) {
   const resume = query?.resume;
   const item = await findVodItem(id);
   if (!item) notFound();
+  if (id !== item.imdbCode) {
+    const preserved = new URLSearchParams();
+    for (const [key, value] of Object.entries(query || {})) for (const part of Array.isArray(value) ? value : value === undefined ? [] : [value]) preserved.append(key, part);
+    permanentRedirect(`/watch/${encodeURIComponent(item.imdbCode)}${preserved.size ? `?${preserved}` : ''}`);
+  }
   if (contentRestriction(item)) return <ContentRestrictionNotice locale={locale} />;
 
   const isSeries = normalizeVodType(item.type) === "series";

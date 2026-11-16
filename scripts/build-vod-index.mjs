@@ -1,8 +1,10 @@
 import { writeJsonAtomic } from "./atomic-json.mjs";
 import path from "node:path";
+import { readFile } from 'node:fs/promises';
 import { streamVodArchiveItems } from "./vod-json-stream.mjs";
 import { buildOldIranianVodIndex } from "./build-vod-old-iranian-index.mjs";
 import { catalogFacets, normalizeCardFacets } from '../lib/catalog-facets.mjs';
+import { createVodIdentityRegistry, dedupeVodCards, planVodIdentities, vodIdentityDescriptor } from '../lib/vod-identity.mjs';
 
 const IN_FILE = process.argv[2] || path.join("public", "data", "vod-catalog.json");
 const OUT_FILE = process.argv[3] || path.join("public", "data", "vod-index.json");
@@ -168,10 +170,18 @@ function sortQuality(a, b) {
 }
 
 async function main() {
-  const items = [];
+  const cards = [], descriptors = [];
   const archive = await streamVodArchiveItems(IN_FILE, async (item) => {
-    items.push(toCard(item));
+    cards.push(toCard(item));
+    descriptors.push(vodIdentityDescriptor(item));
   });
+  const priorFile = path.join(path.dirname(OUT_FILE), 'vod-identities.json');
+  const previous = JSON.parse(await readFile(priorFile, 'utf8').catch(error => {
+    if (error.code !== 'ENOENT') throw error;
+    return readFile(new URL('../lib/data/vod-duplicate-groups.json', import.meta.url), 'utf8');
+  }));
+  const registry = createVodIdentityRegistry(planVodIdentities(descriptors, previous));
+  const items = dedupeVodCards(cards, registry);
   const index = {
     sourceUrl: archive.sourceUrl,
     totalTitles: items.length,

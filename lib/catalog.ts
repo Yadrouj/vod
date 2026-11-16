@@ -14,6 +14,8 @@ import { exactPublisherPageMapping } from './moviezland-page-match.mjs';
 import { refreshFamilyMovieRelease } from './familymovie-release';
 import videoReleaseData from './data/media-refresh-2026-11-14-vod.json';
 import { mergeVideoRelease, type VideoReleaseBundle } from './bundled-video-release';
+import { loadVodIdentities } from './vod-identities';
+import { mergeVodDuplicateItems, vodIdentityId } from './vod-identity.mjs';
 const videoReleaseBundle = videoReleaseData as unknown as VideoReleaseBundle;
 
 const DATA_DIR = path.resolve(process.env.VOD_DATA_DIR || path.join(process.cwd(), "public", "data"));
@@ -39,9 +41,19 @@ async function loadArchiveFile(): Promise<VodArchive> {
 }
 
 export const findVodItem = cache(async (id: string): Promise<VodItem | null> => {
-  const item = mergeVideoRelease(await findVodTitleFile(id) || moviezlandProfile(id), id, videoReleaseBundle);
+  const registry = await loadVodIdentities();
+  const canonical = registry.canonicalId(id);
+  const group = registry.group(id);
+  const members = [...new Set([canonical, ...(group?.memberIds || [])])];
+  const records = (await Promise.all(members.map(async member => {
+    const raw = mergeVideoRelease(await findVodTitleFile(member) || moviezlandProfile(member), member, videoReleaseBundle);
+    // Source updates may still be keyed by a legacy alias. Apply them before union.
+    return raw ? applyVerifiedAlternativeSources(await applyVerifiedDonyayeLinks(raw)) : null;
+  }))).filter((record): record is VodItem => Boolean(record));
+  const primary = records.find(record => vodIdentityId(record) === canonical) || records[0];
+  const item = primary ? records.reduce((merged, record) => record === primary ? merged : mergeVodDuplicateItems(merged, record), primary) : null;
   if (!item) return null;
-  const enriched = enrichMoviezlandProfile(enrichOldIranianFilm(item));
+  const enriched = enrichMoviezlandProfile(enrichOldIranianFilm(group ? { ...item, id: canonical, imdbCode: canonical } : item));
   const publisherMatch = movielandzByImdb.get(enriched.imdbCode);
   const mapped = await applyDownloadBaseToItem({
     ...enriched,

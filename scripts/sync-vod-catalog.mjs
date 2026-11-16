@@ -319,6 +319,7 @@ async function main() {
       await replaceDirectory(titlesDir, path.join(DATA_DIR, "titles"));
       for (const [sourcePath, targetName] of [
         [titleMapFile, "title-map.json"],
+        [path.join(path.dirname(titleMapFile), 'vod-identities.json'), 'vod-identities.json'],
         [indexFile, "vod-index.json"],
         [homeFile, "vod-home.json"],
         [peopleFile, "vod-people.json"],

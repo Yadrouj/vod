@@ -10,6 +10,7 @@ import { cachedFamilyMovieCount, familyMovieReleaseRevision } from './familymovi
 import { catalogFacets, matchesFacet, normalizeCardFacets } from './catalog-facets.mjs';
 import videoReleaseData from './data/media-refresh-2026-11-14-vod.json';
 import { applyVideoReleaseIndex, type VideoReleaseBundle } from './bundled-video-release';
+import { canonicalVodIndex, loadVodIdentities, type VodIdentityRegistry } from './vod-identities';
 const videoReleaseBundle = videoReleaseData as unknown as VideoReleaseBundle;
 
 export const HOME_SECTIONS = [
@@ -53,30 +54,30 @@ const FILE_CHECK_INTERVAL_MS = Math.max(5_000, Number(process.env.VOD_DATA_CHECK
 const indexCache: FileCache<VodCatalogIndex> = {};
 const homeIndexCache: FileCache<VodCatalogIndex> = {};
 const oldIranianIndexCache: FileCache<VodCatalogIndex> = {};
-const enrichedIndexes = new WeakMap<VodCatalogIndex, { revision: string; value: VodCatalogIndex }>();
+const enrichedIndexes = new WeakMap<VodCatalogIndex, { revision: string; registry: VodIdentityRegistry; value: VodCatalogIndex }>();
 
 export async function loadVodIndex(): Promise<VodCatalogIndex> {
-  const index = await loadFreshJson(path.join(DATA_DIR, "vod-index.json"), indexCache);
-  return enrichLegacyCards(index);
+  const [index, registry] = await Promise.all([loadFreshJson(path.join(DATA_DIR, "vod-index.json"), indexCache), loadVodIdentities()]);
+  return enrichLegacyCards(index, true, registry);
 }
 
 export async function loadVodHomeIndex(): Promise<VodCatalogIndex> {
-  return loadFreshJson(path.join(DATA_DIR, "vod-home.json"), homeIndexCache)
-    .then(enrichLegacyCards)
+  return Promise.all([loadFreshJson(path.join(DATA_DIR, "vod-home.json"), homeIndexCache), loadVodIdentities()])
+    .then(([index, registry]) => enrichLegacyCards(index, true, registry))
     .catch(() => loadVodIndex());
 }
 
 /** Avoid parsing the complete 21k-title catalog for the 901-title classic collection. */
 export async function loadOldIranianVodIndex(): Promise<VodCatalogIndex> {
-  return loadFreshJson(path.join(DATA_DIR, "vod-old-iranian.json"), oldIranianIndexCache)
-    .then(index => enrichLegacyCards(index, false))
+  return Promise.all([loadFreshJson(path.join(DATA_DIR, "vod-old-iranian.json"), oldIranianIndexCache), loadVodIdentities()])
+    .then(([index, registry]) => enrichLegacyCards(index, false, registry))
     .catch(() => loadVodIndex());
 }
 
-function enrichLegacyCards(index: VodCatalogIndex, includeNew = true): VodCatalogIndex {
+function enrichLegacyCards(index: VodCatalogIndex, includeNew: boolean, registry: VodIdentityRegistry): VodCatalogIndex {
   const cached = enrichedIndexes.get(index);
-  if (cached?.revision === familyMovieReleaseRevision()) return cached.value;
-  const supplemented = addMoviezlandProfiles(applyVideoReleaseIndex(index, videoReleaseBundle, includeNew), includeNew);
+  if (cached?.revision === familyMovieReleaseRevision() && cached.registry === registry) return cached.value;
+  const supplemented = canonicalVodIndex(addMoviezlandProfiles(applyVideoReleaseIndex(index, videoReleaseBundle, includeNew), includeNew), registry);
   const enriched = {
     ...supplemented,
     items: supplemented.items.map(normalizeCardTitle),
@@ -90,7 +91,7 @@ function enrichLegacyCards(index: VodCatalogIndex, includeNew = true): VodCatalo
     const selected = selectSection(enriched.items, section.id);
     return { ...section, total: fullIndex ? selected.length : Math.max(section.total, selected.length), items: selected.slice(0, section.items.length || 15) };
   });
-  enrichedIndexes.set(index, { revision: familyMovieReleaseRevision(), value: enriched });
+  enrichedIndexes.set(index, { revision: familyMovieReleaseRevision(), registry, value: enriched });
   return enriched;
 }
 

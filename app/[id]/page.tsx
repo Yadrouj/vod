@@ -1,7 +1,7 @@
 import { decodedParams } from "@/lib/route-params";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { ArrowDown, ArrowUpLeft, Clock3, Film, Play, Star } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { DeferredBackgroundVideo } from "@/components/deferred-background-video";
@@ -42,8 +42,10 @@ export default async function DetailPage({ params }: Props) {
   const locale = await getLocale();
   const fa = locale === "fa";
   const t = getDictionary(locale);
-  const item = await findVodItem((await decodedParams(params)).id);
+  const requestedId = (await decodedParams(params)).id;
+  const item = await findVodItem(requestedId);
   if (!item) notFound();
+  if (requestedId !== item.imdbCode) permanentRedirect(`/${encodeURIComponent(item.imdbCode)}`);
 
   const isSeries = normalizeVodType(item.type) === "series";
   const downloads = titleDownloadLinks(item.links);
