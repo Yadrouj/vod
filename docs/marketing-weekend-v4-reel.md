@@ -1,5 +1,9 @@
 # Weekend reel v4 — user script, continuous male commercial narration
 
+**Approved narrator:** the user selected this voice for future ads on 2026-11-16.
+Reuse the [saved Brian voice preset](marketing-approved-voice.md), including its
+brand pronunciation and delivery settings.
+
 Uses the user's six approved Persian lines exactly in `spoken`/narration text,
 including «با هم ببینید» and «تماشای همزمان اونم رایگان». The final dotted pause
 is represented by an ellipsis in speech input, not read as punctuation. Human

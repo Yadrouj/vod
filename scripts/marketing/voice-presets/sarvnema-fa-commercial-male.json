@@ -1,0 +1,48 @@
+{
+  "id": "sarvnema-fa-commercial-male",
+  "label": "SarvNema approved Persian commercial narrator",
+  "approvedOn": "2026-11-16",
+  "approvedBy": "user",
+  "voice": {
+    "provider": "openrouter",
+    "model": "elevenlabs/eleven-v4",
+    "name": "brian",
+    "gender": "male",
+    "synthetic": true
+  },
+  "responseFormat": "mp3",
+  "generationOptions": {
+    "seed": 17,
+    "language_code": "fa",
+    "voice_settings": {
+      "stability": 0.5,
+      "similarity_boost": 0.75,
+      "style": 0.55,
+      "use_speaker_boost": true
+    }
+  },
+  "pronunciation": {
+    "brand": "سرونما",
+    "romanization": "sarv-nema",
+    "ipa": "/sæɾv/ /neˈmɒː/",
+    "meaning": "sarv = cypress tree; no conjunction or extra vowel between sarv and nema"
+  },
+  "delivery": {
+    "mode": "continuous",
+    "postprocessTempo": 1,
+    "tone": "Warm, lightly playful male Persian commercial narration; expressive but understandable",
+    "tags": ["[curious]", "[playfully]", "[excited]", "[confident]", "[rushed]", "[warmly]"],
+    "guidance": "Use one continuous take. Vary pace by phrase, preserve punctuation and short sentence pauses; warm brand mention, then a short pause before the CTA. Do not add joke words or laughter, stitch sentence clips, remove internal pauses or uniformly speed up the recording.",
+    "referenceSentencePauseSeconds": [0.28, 0.52],
+    "referenceBrandToCtaPauseSeconds": 0.48
+  },
+  "reference": {
+    "sourceAudio": ".media-cache/marketing/sarvnema-weekend-v4/voice/narration.mp3",
+    "archivedAudio": ".media-cache/marketing/voice-presets/sarvnema-fa-commercial-male/reference.mp3",
+    "archivedRequest": ".media-cache/marketing/voice-presets/sarvnema-fa-commercial-male/reference-request.json",
+    "audioSha256": "6c24f94a7c940631dec64d801c6a8d3fd651dc3f40ff2e55334c8327b597b81d",
+    "requestSha256": "344a2e189b65ab6d9db6cc8a5de2ab056b52ae1a8c68c3370b4a0c24706664b6",
+    "generationId": "gen-tts-1794765408-xzz9dlrgunOpj64v99jj"
+  },
+  "limitations": "New wording and provider updates can change a synthetic performance even with the same seed/settings. The preserved recording is the exact approved reference. No voice cloning or ChatGPT application voice setting is involved. Reference binaries stay local, outside Git."
+}

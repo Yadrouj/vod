@@ -11,11 +11,11 @@ export function voiceRequest(plan, sceneIndex) {
   assert.equal(plan.voice.model, VOICE_MODEL, 'This export requires Eleven v4, without model fallback');
   assert.ok(['female', 'male'].includes(plan.voice.gender), 'Voice gender must be explicitly declared');
   const scene = plan.scenes[sceneIndex];
-  const options = { seed: 17, language_code: 'fa', voice_settings: { stability: .5, similarity_boost: .75, style: .55, use_speaker_boost: true } };
+  const options = structuredClone(plan.voice.generationOptions || { seed: 17, language_code: 'fa', voice_settings: { stability: .5, similarity_boost: .75, style: .55, use_speaker_boost: true } });
   if (scene.ttsPreviousText) options.previous_text = scene.ttsPreviousText;
   else if (sceneIndex) options.previous_text = plan.scenes[sceneIndex - 1].ttsText || plan.scenes[sceneIndex - 1].spoken;
   if (sceneIndex + 1 < plan.scenes.length) options.next_text = plan.scenes[sceneIndex + 1].ttsText || plan.scenes[sceneIndex + 1].spoken;
-  return { model: VOICE_MODEL, input: `${scene.audioTags || '[excited]'} ${scene.ttsText || scene.spoken}`, voice: plan.voice.name, response_format: 'mp3', provider: { options: { elevenlabs: options } } };
+  return { model: VOICE_MODEL, input: `${scene.audioTags || '[excited]'} ${scene.ttsText || scene.spoken}`, voice: plan.voice.name, response_format: plan.voice.responseFormat || 'mp3', provider: { options: { elevenlabs: options } } };
 }
 
 export async function requestSpeech(body, key, fetcher = fetch) {
