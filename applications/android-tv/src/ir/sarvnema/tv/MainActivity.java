@@ -102,7 +102,7 @@ public final class MainActivity extends Activity {
         LinearLayout panel = new LinearLayout(this); panel.setOrientation(LinearLayout.VERTICAL);
         panel.setGravity(android.view.Gravity.CENTER); panel.setPadding(64, 48, 64, 48);
         panel.setBackgroundColor(Color.rgb(9, 11, 16));
-        TextView title = new TextView(this); title.setText("SarvNema TV"); title.setTextSize(30); title.setTextColor(Color.rgb(242, 208, 128)); panel.addView(title);
+        TextView title = new TextView(this); title.setText(R.string.app_name); title.setTextSize(30); title.setTextColor(Color.rgb(242, 208, 128)); panel.addView(title);
         TextView body = new TextView(this); body.setText(message); body.setTextColor(Color.WHITE); body.setTextSize(20); body.setPadding(0, 24, 0, 24); panel.addView(body);
         Button retry = new Button(this); retry.setText("Try again"); retry.setMinHeight(64); panel.addView(retry);
         retry.setOnClickListener(v -> { root.removeView(panel); errorView = null; web.loadUrl(HOME); web.requestFocus(); });

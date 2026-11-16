@@ -4,6 +4,11 @@ This is an original SarvNema ten-foot interface inspired by familiar streaming
 patterns, not a Netflix clone or an affiliated product. It uses the existing
 catalog, search ranking/correction, media delivery, subtitle and recovery engines.
 
+The launcher display name is **سرونما** and the application ID remains
+`ir.sarvnema.tv`. The icon/name now come from the same `android-common/res` assets
+as the mobile edition (`ir.sarvnema.app`), using the exact site logo rather than a
+separate approximation. The shared SDK builder is called by the existing script.
+
 ## What is implemented
 
 | Route | Purpose |
@@ -118,7 +123,8 @@ fullscreen Back, remote media keys, long series, suspend/resume and offline retr
 
 1. Android TV device feedback, compatibility matrix and signed release.
 2. Optional TV pairing/watch-together and voice search after explicit UX/privacy work.
-3. Android/iOS mobile shells, downloads policy and store releases as separate tasks.
+3. The [Android mobile WebView](../android-mobile/README.md) is now implemented;
+   physical-device release checks, iOS and store publication remain separate steps.
 
 Reference design/platform rules: [TV navigation](https://developer.android.com/training/tv/get-started/navigation),
 [TV layouts](https://developer.android.com/training/tv/playback/compose/layouts),
