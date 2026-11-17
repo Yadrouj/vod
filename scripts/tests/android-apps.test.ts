@@ -2,13 +2,31 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync, mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import path from "node:path";
-import { appReleaseUrl } from "../../lib/app-releases";
+import { appReleaseUrl, bundledAppReleases } from "../../lib/app-releases";
 import { BRAND_SLOGAN_FA } from "../../lib/brand";
 
 test("release buttons accept only explicit credential-free HTTPS URLs", () => {
   assert.equal(appReleaseUrl(" https://sarvnema.ir/apps/releases/mobile.apk "), "https://sarvnema.ir/apps/releases/mobile.apk");
   for (const value of [undefined, null, "", "/missing.apk", "http://cdn.example/a.apk", "javascript:alert(1)", "https://user:secret@cdn.example/a.apk", "https://cdn.example/a.apk#fake"]) assert.equal(appReleaseUrl(value), null);
+});
+
+test("bundled preview downloads exist, match their checksums and native versions, and contain no signing keys", () => {
+  for (const [edition, release] of Object.entries(bundledAppReleases)) {
+    const url = new URL(release.url);
+    assert.equal(url.origin, "https://sarvnema.ir");
+    assert.match(url.pathname, /^\/apps\/releases\/sarvnema-(?:android|tv)-[\d.]+-preview\.apk$/);
+    assert.equal(appReleaseUrl(release.url), release.url);
+    const bytes = readFileSync(path.join("public", url.pathname));
+    assert.equal(bytes.length, release.bytes);
+    assert.equal(bytes.subarray(0, 2).toString(), "PK", "an APK is a ZIP, not an HTML error");
+    assert.equal(createHash("sha256").update(bytes).digest("hex"), release.sha256);
+    const manifest = readFileSync(`applications/android-${edition === "mobile" ? "mobile" : "tv"}/AndroidManifest.xml`, "utf8");
+    assert.ok(manifest.includes(`package="${release.packageId}"`));
+    assert.ok(manifest.includes(`android:versionName="${release.version}"`));
+    assert.doesNotMatch(bytes.toString("latin1"), /\.keystore|\.jks|BEGIN (?:RSA |EC )?PRIVATE KEY/);
+  }
 });
 
 test("both installable apps have the SarvNema name and one canonical adaptive icon, with distinct package IDs", () => {

@@ -1,4 +1,6 @@
-/** A download is advertised only when an operator has hosted a real signed APK. */
+export { default as bundledAppReleases } from "./data/android-app-releases.json";
+
+/** Optional operator override; bundled previews are real, debug-signed APKs. */
 export function appReleaseUrl(value: string | undefined | null): string | null {
   if (!value?.trim()) return null;
   try {

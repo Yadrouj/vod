@@ -16,6 +16,11 @@ mark/name/slogan, real loading progress and an eased reveal only when the first
 page is ready to draw. It includes TV-sized typography, remote focus protection,
 offline/slow retry and disabled-animation support. Preview 0.3.0, versionCode 3.
 
+Both debug-signed previews can be downloaded from `/apps`, explicitly marked as
+test builds, with versioned first-party files and SHA-256 metadata. See the
+[distribution notes](../android-mobile/README.md#public-distribution--apps-page).
+Physical-device validation and final store signing are still release gates.
+
 | Route | Purpose |
 | --- | --- |
 | `/apps` | Public applications page, setup instructions, honest release status |

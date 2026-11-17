@@ -66,18 +66,25 @@ under `.media-cache/`. This artifact is debug-signed, **not a store release**.
 
 ## Public distribution / apps page
 
-The `/apps` page has separate mobile and TV cards. After physical-device validation
-and production signing, host the actual APKs over HTTPS and set the site variables:
+The `/apps` page has separate mobile and TV cards. At the owner's request, real
+debug-signed previews are bundled at versioned first-party HTTPS URLs under
+`public/apps/releases/` (mobile 0.2.0, TV 0.3.0). The page explicitly labels them
+experimental, not store releases. Package/version/size/SHA-256 are recorded in
+`lib/data/android-app-releases.json` and checked against the APKs by tests. Only
+the APKs are published; private keystores remain ignored under `.media-cache/`.
+
+After physical-device validation and production signing, host the final APKs
+over HTTPS and optionally override the bundled downloads with site variables:
 
 ```dotenv
 ANDROID_MOBILE_APK_URL=https://your-release-host/sarvnema-android.apk
 ANDROID_TV_APK_URL=https://your-release-host/sarvnema-tv.apk
 ```
 
-Download buttons appear only for valid configured HTTPS release URLs. Debug builds
-are not silently uploaded or advertised as production releases. The mobile APK
-opens the existing production homepage; the new TV interface and applications page
-still need the normal website deployment workflow before they are live.
+Only valid credential-free HTTPS overrides are accepted. The mobile APK opens
+the existing production homepage; shipping new web routes and download files still
+requires the normal website deployment workflow. Never overwrite a versioned APK:
+add a new filename and update the manifest for each release.
 
 Official references: [WebView URI validation](https://developer.android.com/privacy-and-security/risks/unsafe-uri-loading),
 [fullscreen/file chooser callbacks](https://developer.android.com/reference/android/webkit/WebChromeClient),
