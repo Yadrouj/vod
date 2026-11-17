@@ -453,6 +453,7 @@ export function VodPlayer({
         />
         {itemId && (
           <PlayerSubtitles
+            key={`${itemId}:${active?.season || ''}:${active?.episode || ''}`}
             locale={locale}
             videoRef={videoRef}
             itemId={itemId}
@@ -460,6 +461,9 @@ export function VodPlayer({
             sourceKey={mediaKey}
             sourceLabel={sources[activeIndex]?.label ?? ""}
             sourceSubtitleUrl={active?.subtitleUrl ?? null}
+            sourceSubtitles={active?.subtitles}
+            sourceGroup={active?.group}
+            season={active?.season} episode={active?.episode}
             open={subtitlesOpen}
             onClose={() => setSubtitlesOpen(false)}
           />

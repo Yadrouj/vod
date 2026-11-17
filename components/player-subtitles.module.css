@@ -20,15 +20,24 @@
 .listHeading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .listHeading strong { font-size: 14px; }
 .listHeading small { color: #aaa; font-weight: 400; }
+.listHeading > div { display: grid; gap: 6px; min-width: 0; }
+.listHeading > div > small { font-size: 11px; line-height: 1.8; overflow-wrap: anywhere; }
 .listHeading button { display: grid; place-items: center; padding: 10px; }
 .filters { display: flex; gap: 8px; }
 .filters button { flex: 1; font-size: 13px; }
+.filters small { margin-inline-start: 6px; opacity: .65; font-size: 11px; }
 .options { display: grid; gap: 6px; }
 .options > button { display: flex; gap: 12px; align-items: center; text-align: start; padding: 12px; width: 100%; min-height: 68px; }
 .options > button > svg { flex: 0 0 20px; }
 .options > button > span { flex: 1; display: grid; min-width: 0; gap: 4px; }
 .options strong { font-size: 14px; overflow-wrap: anywhere; }
 .options small { font-size: 12px; color: #a7aba7; line-height: 1.7; overflow-wrap: anywhere; }
+.options small { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.importBox { display: grid; gap: 12px; padding: 14px; border: 1px solid #e8ca7040; background: #e8ca7007; border-radius: 14px !important; min-width: 0; }
+.importBox > strong { font-size: 12px; font-weight: 500; color: #c5c8c5; }
+.fileUpload { display: flex; align-items: center; justify-content: center; gap: 12px; border-style: dashed !important; min-height: 72px !important; }
+.fileUpload span { display: grid; gap: 6px; }
+.fileUpload small { color: #a7aba7; font-size: 11px; }
 .note, .warning { margin: 0; font-size: 12px; line-height: 1.9; }
 .note { color: #a9afa9; }
 .customLink { border-top: 1px solid #ffffff16; padding-top: 8px; }

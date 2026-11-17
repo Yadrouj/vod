@@ -1,0 +1,5 @@
+.panel > details > summary { cursor: pointer; min-height: 48px; padding-block: 12px; font-size: 1.05rem; font-weight: 700; }
+.panel p { line-height: 1.9; font-size: .85rem; }
+.filters { display: flex; gap: 8px; margin-block: 16px; }
+.filters button { min-height: 44px; padding: 8px 22px; border: 1px solid #ffffff25; background: #ffffff05; color: inherit; border-radius: 12px !important; cursor: pointer; font: inherit; }
+.filters button[aria-pressed=true] { border-color: #e8ca7080; background: #e8ca7019; color: #e8ca70; }

@@ -1,11 +1,11 @@
-import { unzipSync } from "fflate";
 import { checkRateLimit, clientIp, publicCacheHeaders, rateLimitedResponse, rateLimitHeaders } from "@/lib/runtime-cache";
 import { decodeSubtitleBytes, normalizeSubtitleToVtt } from "@/lib/subtitle-format";
+import { unpackSubtitle, MAX_SUBTITLE_BYTES } from '@/lib/subtitle-package';
+import { subtitleLanguage } from '@/lib/subtitle-matching';
 
 export const dynamic = "force-dynamic";
 
 const MAX_COMPRESSED_BYTES = 4 * 1024 * 1024;
-const MAX_SUBTITLE_BYTES = 2 * 1024 * 1024;
 const MAX_REDIRECTS = 4;
 const TRUSTED_HOSTS = new Set([
   "subzone.ir",
@@ -19,19 +19,29 @@ export async function GET(request: Request) {
   const rate = checkRateLimit(`subtitle-track:${clientIp(request)}`, 30, 60_000);
   if (!rate.allowed) return rateLimitedResponse(rate);
 
-  const remoteUrl = new URL(request.url).searchParams.get("url")?.trim();
+  const params = new URL(request.url).searchParams;
+  const remoteUrl = params.get("url")?.trim();
   if (!remoteUrl) return Response.json({ error: "Subtitle URL is required." }, { status: 400 });
+  const language = subtitleLanguage(params.get('language'));
+  const positive = (name: string) => { const value = params.get(name); return value === null ? null : /^\d{1,3}$/.test(value) && Number(value) > 0 ? Number(value) : NaN; };
+  const season = positive('season'), episode = positive('episode');
+  if (params.has('language') && !language || Number.isNaN(season) || Number.isNaN(episode) || episode && !season) return Response.json({ error: 'Only Persian/English and a valid season/episode are supported.' }, { status: 400 });
 
   try {
     const response = await fetchTrustedSubtitle(remoteUrl);
     const declaredSize = Number(response.headers.get("content-length") ?? 0);
     if (declaredSize > MAX_COMPRESSED_BYTES) throw new SubtitleRequestError("Subtitle package is too large.", 413);
 
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    if (bytes.byteLength > MAX_COMPRESSED_BYTES) throw new SubtitleRequestError("Subtitle package is too large.", 413);
+    const reader = response.body?.getReader(), chunks: Uint8Array[] = []; let total = 0;
+    try {
+      while (reader) { const { value, done } = await reader.read(); if (done) break; total += value.length; if (total > MAX_COMPRESSED_BYTES) throw new SubtitleRequestError('Subtitle package is too large.', 413); chunks.push(value); }
+    } finally { await reader?.cancel(); }
+    const bytes = new Uint8Array(Buffer.concat(chunks));
     const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
     const fileName = fileNameFromResponse(response) || fileNameFromUrl(response.url) || "subtitle.srt";
-    const subtitle = isZip(bytes, contentType, fileName) ? extractSubtitle(bytes) : { bytes, fileName };
+    let subtitle: { bytes: Uint8Array; fileName: string };
+    try { subtitle = unpackSubtitle(bytes, fileName, { language, season, episode }, contentType); }
+    catch (error) { throw new SubtitleRequestError(error instanceof Error ? error.message : 'No matching subtitle file.', 422); }
     if (subtitle.bytes.byteLength > MAX_SUBTITLE_BYTES) throw new SubtitleRequestError("Subtitle file is too large.", 413);
 
     const text = decodeSubtitleBytes(subtitle.bytes);
@@ -41,6 +51,7 @@ export async function GET(request: Request) {
     return new Response(vtt, {
       headers: {
         "Content-Type": "text/vtt; charset=utf-8",
+        ...(language ? { 'X-Subtitle-Language': language } : {}),
         "Content-Disposition": `inline; filename="${safeFileName(subtitle.fileName.replace(/\.[^.]+$/, ".vtt"))}"`,
         ...publicCacheHeaders({ browserSeconds: 3600, edgeSeconds: 86_400 }),
         ...rateLimitHeaders(rate),
@@ -66,11 +77,12 @@ async function fetchTrustedSubtitle(value: string) {
     });
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
+      await response.body?.cancel();
       if (!location) throw new SubtitleRequestError("Subtitle redirect is incomplete.", 502);
       target = trustedUrl(new URL(location, target).toString());
       continue;
     }
-    if (!response.ok) throw new SubtitleRequestError(`Subtitle provider returned ${response.status}.`, response.status === 404 ? 404 : 502);
+    if (!response.ok) { await response.body?.cancel(); throw new SubtitleRequestError(`Subtitle provider returned ${response.status}.`, response.status === 404 ? 404 : 502); }
     return response;
   }
   throw new SubtitleRequestError("Subtitle redirected too many times.", 502);
@@ -83,39 +95,13 @@ function trustedUrl(value: string) {
   } catch {
     throw new SubtitleRequestError("Subtitle URL is invalid.", 400);
   }
-  if (!TRUSTED_HOSTS.has(url.hostname.toLowerCase()) || !["http:", "https:"].includes(url.protocol)) {
+  if (!TRUSTED_HOSTS.has(url.hostname.toLowerCase()) || !["http:", "https:"].includes(url.protocol) || url.username || url.password || url.port) {
     throw new SubtitleRequestError("This subtitle host is not trusted.", 403);
   }
   if (url.hostname.toLowerCase() === "sr1.moviesho.com" && !SUBTITLE_FILE.test(url.pathname)) {
     throw new SubtitleRequestError("Only subtitle files can be loaded from this source.", 403);
   }
-  url.username = "";
-  url.password = "";
   return url;
-}
-
-function extractSubtitle(archive: Uint8Array) {
-  const files = unzipSync(archive, {
-    filter: (file) => SUBTITLE_FILE.test(file.name) && file.originalSize > 0 && file.originalSize <= MAX_SUBTITLE_BYTES,
-  });
-  const entries = Object.entries(files)
-    .filter(([name, bytes]) => SUBTITLE_FILE.test(name) && bytes.byteLength > 0)
-    .sort(([leftName, leftBytes], [rightName, rightBytes]) => fileScore(rightName, rightBytes) - fileScore(leftName, leftBytes));
-  const selected = entries[0];
-  if (!selected) throw new SubtitleRequestError("No supported subtitle was found inside the package.", 422);
-  return { fileName: selected[0], bytes: selected[1] };
-}
-
-function fileScore(name: string, bytes: Uint8Array) {
-  const lower = name.toLowerCase();
-  const format = lower.endsWith(".vtt") ? 50 : lower.endsWith(".srt") ? 40 : lower.endsWith(".ass") || lower.endsWith(".ssa") ? 30 : 10;
-  const language = /farsi|persian|\.fa\b/.test(lower) ? 30 : /english|\.en\b/.test(lower) ? 15 : 0;
-  const penalty = /sample|forced|commentary|sdh|hearing/.test(lower) ? 20 : 0;
-  return format + language - penalty + Math.min(20, bytes.byteLength / 20_000);
-}
-
-function isZip(bytes: Uint8Array, contentType: string, fileName: string) {
-  return contentType.includes("zip") || fileName.toLowerCase().endsWith(".zip") || bytes[0] === 0x50 && bytes[1] === 0x4b;
 }
 
 function fileNameFromResponse(response: Response) {
