@@ -4,6 +4,7 @@ import { readFileSync, mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { appReleaseUrl } from "../../lib/app-releases";
+import { BRAND_SLOGAN_FA } from "../../lib/brand";
 
 test("release buttons accept only explicit credential-free HTTPS URLs", () => {
   assert.equal(appReleaseUrl(" https://sarvnema.ir/apps/releases/mobile.apk "), "https://sarvnema.ir/apps/releases/mobile.apk");
@@ -50,4 +51,50 @@ test("native URL policy executes on the JDK, including hostile URI cases", t => 
   const output = path.resolve(".media-cache/android-app-tests/java"); mkdirSync(output, { recursive: true });
   execFileSync(javac, ["--release", "8", "-d", output, "applications/android-common/src/ir/sarvnema/shell/UrlPolicy.java", "applications/android-common/tests/UrlPolicySpec.java"], { stdio: "pipe" });
   assert.match(execFileSync(java, ["-cp", output, "UrlPolicySpec"], { encoding: "utf8" }), /PASS: URL policy/);
+});
+
+test("both native editions have one shared branded startup and explicit Persian launcher/activity names", () => {
+  const resources = readFileSync("applications/android-common/res/values/brand.xml", "utf8");
+  assert.ok(resources.includes(`<string name="brand_slogan">${BRAND_SLOGAN_FA}</string>`), "same slogan as the website");
+  const layout = readFileSync("applications/android-common/res/layout/startup_screen.xml", "utf8");
+  for (const tag of ["startup_brand", "startup_mark", "startup_progress", "startup_status"]) assert.ok(layout.includes(`android:tag="${tag}"`));
+  assert.match(layout, /@string\/app_name/); assert.match(layout, /@string\/brand_slogan/);
+  assert.match(layout, /@drawable\/brand_foreground/);
+  assert.match(layout, /<ScrollView/); assert.match(layout, /android:fillViewport="true"/);
+  assert.match(layout, /android:layoutDirection="rtl"/); assert.match(layout, /android:accessibilityLiveRegion="polite"/);
+  for (const [variant, id] of [["android-mobile", "app"], ["android-tv", "tv"]]) {
+    const manifest = readFileSync(`applications/${variant}/AndroidManifest.xml`, "utf8");
+    assert.match(manifest, /android:theme="@style\/SarvNema"/);
+    assert.match(manifest, /<activity[^>]+android:label="@string\/app_name"/);
+    assert.equal([...manifest.matchAll(/<activity\s/g)].length, 1, "no separate splash Activity or duplicate launch");
+    const java = readFileSync(`applications/${variant}/src/ir/sarvnema/${id}/MainActivity.java`, "utf8");
+    for (const value of ["StartupScreen.handoffSystemSplash(this)", "setTitle(R.string.app_name)", "new StartupScreen(", "startup.pageStarted()", "startup.pageFinished()", "startup.progress(value)", "startup.pause()", "startup.resume()", "startup.cancel()"])
+      assert.ok(java.includes(value), `${variant}: ${value}`);
+    assert.doesNotMatch(java, /onPageCommitVisible/, "first committed response is too early to dismiss startup");
+  }
+  const modernTheme = readFileSync("applications/android-common/res/values-v31/styles.xml", "utf8");
+  assert.match(modernTheme, /android:windowSplashScreenBackground/);
+  assert.match(modernTheme, /@drawable\/brand_foreground/);
+  const tv = readFileSync("applications/android-tv/src/ir/sarvnema/tv/MainActivity.java", "utf8");
+  assert.match(tv, /if \(errorView == null && \(startup == null \|\| !startup\.blocksInput\(\)\)\) web\.requestFocus\(\)/, "late page-finished must not steal focus from native retry");
+  assert.match(tv, /if \(errorView != null \|\| \(startup != null && startup\.blocksInput\(\)\)\) return true/, "media keys cannot start hidden playback during startup/error");
+});
+
+test("startup uses actual render readiness, bounded waiting and accessible lifecycle-safe motion", () => {
+  const java = readFileSync("applications/android-common/src/ir/sarvnema/shell/StartupScreen.java", "utf8");
+  for (const value of ["document.readyState==='complete'", "document.querySelector('main')", "document.fonts.status==='loaded'", "postVisualStateCallback", "state.reveal(id)", "ValueAnimator.areAnimatorsEnabled()", "isFinishing()", "isDestroyed()", "onTimeout.run()", "handler.removeCallbacksAndMessages(null)", "web.setImportantForAccessibility", "web.setDescendantFocusability"])
+    assert.ok(java.includes(value), value);
+  assert.match(java, /SLOW_MS = 8000, TIMEOUT_MS = 35000/);
+  const navigation = java.split("public void pageStarted()")[1].split("public void progress(")[0];
+  assert.doesNotMatch(navigation, /scheduleDeadline|removeCallbacksAndMessages/, "redirects cannot reset the overall deadline");
+  assert.doesNotMatch(java, /addJavascriptInterface|setVisibility\(View\.(?:GONE|INVISIBLE)\)|Thread\.sleep|setStartDelay/, "no blank hidden WebView, privileged bridge or artificial minimum wait");
+});
+
+test("native startup state executes redirect, load/error, retry and teardown regressions on the JDK", t => {
+  const home = process.env.JAVA_HOME || (process.platform === "win32" ? path.join(process.env.ProgramFiles || "C:/Program Files", "Android/Android Studio/jbr") : "");
+  const executable = (name: string) => home ? path.join(home, "bin", `${name}${process.platform === "win32" ? ".exe" : ""}`) : name;
+  try { execFileSync(executable("javac"), ["-version"], { stdio: "pipe" }); } catch { t.skip("JDK unavailable; run in the Android build environment"); return; }
+  const output = path.resolve(".media-cache/android-app-tests/startup"); mkdirSync(output, { recursive: true });
+  execFileSync(executable("javac"), ["--release", "8", "-d", output, "applications/android-common/src/ir/sarvnema/shell/StartupState.java", "applications/android-common/tests/StartupStateSpec.java"], { stdio: "pipe" });
+  assert.match(execFileSync(executable("java"), ["-cp", output, "StartupStateSpec"], { encoding: "utf8" }), /PASS: startup state \(23 checks\)/);
 });

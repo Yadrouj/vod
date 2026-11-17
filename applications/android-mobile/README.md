@@ -24,6 +24,9 @@ under `.media-cache/`. This artifact is debug-signed, **not a store release**.
 
 ## Implemented native integration
 
+- Shared [branded startup](../android-common/STARTUP.md): Persian launcher/task
+  name, logo/slogan, real progress and first-render-gated animated reveal; native
+  slow/offline retry and reduced-motion support. Preview 0.2.0, versionCode 2.
 - A browser-backed app without an address bar; site navigation remains inside it.
 - System-bar/cutout/keyboard insets; soft-keyboard resize, loading indicator and
   branded connection-error/retry screen.

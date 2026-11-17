@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <dimen name="startup_logo_size">144dp</dimen>
+  <dimen name="startup_title_size">44sp</dimen>
+  <dimen name="startup_slogan_size">21sp</dimen>
+  <dimen name="startup_status_size">17sp</dimen>
+  <dimen name="startup_spacing">32dp</dimen>
+</resources>

@@ -11,6 +11,11 @@ separate approximation. The shared SDK builder is called by the existing script.
 
 ## What is implemented
 
+The [shared native startup](../android-common/STARTUP.md) now shows the SarvNema
+mark/name/slogan, real loading progress and an eased reveal only when the first
+page is ready to draw. It includes TV-sized typography, remote focus protection,
+offline/slow retry and disabled-animation support. Preview 0.3.0, versionCode 3.
+
 | Route | Purpose |
 | --- | --- |
 | `/apps` | Public applications page, setup instructions, honest release status |
