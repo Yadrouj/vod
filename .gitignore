@@ -55,6 +55,8 @@ data/mcp/
 data/telegram-deliveries/
 data/telegram-channel/
 .media-cache/
+public/data/glorytoon-downloads.json
+public/data/glorytoon-downloads.json.*.tmp
 data/discovery/
 data/search-popularity/
 public/data/vod-sync-status.json

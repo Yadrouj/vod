@@ -47,6 +47,8 @@
     "scrape-curated-vod": "node scripts/scrape-curated-vod-sources.mjs",
     "merge-curated-vod": "node scripts/merge-curated-vod-source.mjs",
     "scrape-public-vod": "node scripts/refresh-public-vod.mjs",
+    "scrape-glorytoon": "node scripts/scrape-glorytoon.mjs",
+    "test:glorytoon": "node --test scripts/tests/glorytoon-source.test.mjs",
     "scrape-public-vod:full": "node scripts/refresh-public-vod.mjs --full",
     "scrape-f2my": "node scripts/scrape-f2my-catalog.mjs",
     "merge-f2my": "node scripts/merge-f2my-source.mjs",

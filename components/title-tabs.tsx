@@ -13,6 +13,8 @@ import { trailerPlayback } from "@/lib/title-presentation";
 import styles from "./title-about.module.css";
 import { titleSynopsis } from "@/lib/title-synopsis";
 import { localizedTitle } from "@/lib/title-display";
+import { PublisherDownloads } from './publisher-downloads';
+import type { PublisherDownload } from '@/lib/publisher-download-types';
 
 export type TitleTabsItem = Pick<VodItem,
   | "title"
@@ -45,6 +47,7 @@ type TitleTabsProps = {
   isSeries: boolean;
   seasons: SeasonSummary[];
   movieFiles: DownloadSource[];
+  publisherDownloads?: PublisherDownload[];
   playbackUrls?: string[];
   episodePlayback?: Record<string, string>;
   locale?: Locale;
@@ -64,6 +67,7 @@ export function TitleTabs({
   isSeries,
   seasons,
   movieFiles,
+  publisherDownloads = [],
   playbackUrls = [],
   episodePlayback = {},
   locale = DEFAULT_LOCALE,
@@ -139,6 +143,7 @@ export function TitleTabs({
       {active === "about" && <AboutTab item={item} locale={locale} isSeries={isSeries} />}
       {active === "episodes" && (
         <section className="title-tab-panel">
+          <PublisherDownloads downloads={publisherDownloads} itemId={item.imdbCode} title={localizedTitle(item, locale)} locale={locale} />
           {!!item.youtubeVideos?.length && <section className={styles.watchSources} aria-label={locale === "fa" ? "منابع تماشای فیلم" : "Film watch sources"}>
             <h2>{locale === "fa" ? "تماشای فیلم در یوتیوب" : "Watch on YouTube"}</h2>
             <p>{locale === "fa" ? "این لینک‌ها برای تماشا در منبع هستند، نه دانلود مستقیم. دسترسی و امکان پخش ممکن است با کشور یا وضعیت ویدئو تغییر کند." : "These are source watch pages, not direct downloads. Availability can vary by region and video status."}</p>

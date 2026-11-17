@@ -29,6 +29,7 @@ import { contentRestriction } from '@/lib/content-restrictions.mjs';
 import { RestrictedTitleActions } from '@/components/restricted-title-actions';
 import { EntityFaqSection } from '@/components/entity-faq';
 import { vodFaqs } from '@/lib/entity-seo';
+import { getGlorytoonDownloads } from '@/lib/glorytoon-source-store';
 
 type Props = { params: Promise<{ id: string }> };
 export const revalidate = 300;
@@ -46,6 +47,7 @@ export default async function DetailPage({ params }: Props) {
   const item = await findVodItem(requestedId);
   if (!item) notFound();
   if (requestedId !== item.imdbCode) permanentRedirect(`/${encodeURIComponent(item.imdbCode)}`);
+  const publisherDownloads = await getGlorytoonDownloads(item);
 
   const isSeries = normalizeVodType(item.type) === "series";
   const downloads = titleDownloadLinks(item.links);
@@ -136,7 +138,7 @@ export default async function DetailPage({ params }: Props) {
         </div>
       </section>
       <main className={styles.content}>
-        <TitleTabs key={item.imdbCode} item={toTitleTabsItem(item)} isSeries={isSeries} seasons={seasons} movieFiles={movieFiles} playbackUrls={playable.map(link => link.url)} episodePlayback={Object.fromEntries([...playable].reverse().filter(link => link.season && link.episode).map(link => [`${link.season}:${link.episode}`, link.url]))} locale={locale} />
+        <TitleTabs key={item.imdbCode} item={toTitleTabsItem(item)} isSeries={isSeries} seasons={seasons} movieFiles={movieFiles} publisherDownloads={publisherDownloads} playbackUrls={playable.map(link => link.url)} episodePlayback={Object.fromEntries([...playable].reverse().filter(link => link.season && link.episode).map(link => [`${link.season}:${link.episode}`, link.url]))} locale={locale} />
         <EntityFaqSection items={vodFaqs(item)} />
       </main>
       <nav className={styles.mobileDock} aria-label={fa ? "دسترسی سریع پخش و دانلود" : "Quick playback and downloads"}>

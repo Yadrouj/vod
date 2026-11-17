@@ -1,0 +1,16 @@
+.panel { margin-block: 0 24px; padding: clamp(16px, 3vw, 24px); border: 1px solid #d7bb692e; border-radius: 20px; background: #d7bb6909; }
+.panel h2 { margin: 0 0 8px; font-size: 1.1rem; }
+.panel p { margin: 0 0 18px; color: #b2b0a6; font-size: .85rem; line-height: 1.9; }
+.list { display: grid; gap: 12px; }
+.file { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 14px; background: #ffffff05; border: 1px solid #ffffff0c; min-width: 0; }
+.icon { flex: 0 0 auto; color: #e9cf7d; }
+.info { display: grid; gap: 7px; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.info strong { font-size: .95rem; }
+.info small { color: #b2b0a6; font-size: .78rem; line-height: 1.8; }
+.info a { display: inline-flex; align-items: center; gap: 5px; width: fit-content; color: #e9cf7d; font-size: .8rem; min-height: 32px; }
+.file > a { flex: 0 0 auto; min-height: 44px; }
+@media (max-width: 600px) {
+  .file { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; padding: 14px; }
+  .icon { align-self: start; padding-top: 2px; }
+  .file > a { grid-column: 1 / -1; justify-content: center; width: 100%; min-width: 0; }
+}
