@@ -8,10 +8,8 @@ import { persianTitleOrFallback } from "./title-display";
 import { addMoviezlandProfiles } from "./moviezland-profiles";
 import { cachedFamilyMovieCount, familyMovieReleaseRevision } from './familymovie-release';
 import { catalogFacets, matchesFacet, normalizeCardFacets } from './catalog-facets.mjs';
-import videoReleaseData from './data/media-refresh-2026-11-14-vod.json';
-import { applyVideoReleaseIndex, type VideoReleaseBundle } from './bundled-video-release';
+import { applyCurrentVideoReleaseIndex } from './current-video-release';
 import { canonicalVodIndex, loadVodIdentities, type VodIdentityRegistry } from './vod-identities';
-const videoReleaseBundle = videoReleaseData as unknown as VideoReleaseBundle;
 
 export const HOME_SECTIONS = [
   "top-imdb",
@@ -77,7 +75,7 @@ export async function loadOldIranianVodIndex(): Promise<VodCatalogIndex> {
 function enrichLegacyCards(index: VodCatalogIndex, includeNew: boolean, registry: VodIdentityRegistry): VodCatalogIndex {
   const cached = enrichedIndexes.get(index);
   if (cached?.revision === familyMovieReleaseRevision() && cached.registry === registry) return cached.value;
-  const supplemented = canonicalVodIndex(addMoviezlandProfiles(applyVideoReleaseIndex(index, videoReleaseBundle, includeNew), includeNew), registry);
+  const supplemented = canonicalVodIndex(addMoviezlandProfiles(applyCurrentVideoReleaseIndex(index, includeNew), includeNew), registry);
   const enriched = {
     ...supplemented,
     items: supplemented.items.map(normalizeCardTitle),

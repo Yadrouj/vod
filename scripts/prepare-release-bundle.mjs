@@ -97,13 +97,32 @@ export function compatibleMusicAttribution(track, candidates) {
   return candidates.some(candidate => [...identities(candidate)].some(value => actual.has(value)));
 }
 
+/** A many-song landing page is a playlist, not one track by a fictional singer. */
+export function isIndividualMusicRelease(track) {
+  const generic = /^(?:different artist|various artists?|unknown artist|خوانندگان مختلف|هنرمندان مختلف|نامشخص)$/i;
+  const artists = [...(track.artists || []), ...(track.artist ? [track.artist] : [])];
+  if (artists.some(artist => !generic.test(normalizeComparable(artist.name || artist.slug)))) return true;
+  const files = new Set((track.sources || []).map(source => {
+    try {
+      const name = decodeURIComponent(new URL(source.url).pathname.split('/').pop());
+      return normalizeComparable(name.replace(/\.(?:mp3|m4a|aac|flac|wav|mp4|webm)$/i, '')
+        .replace(/(?:[\s._-]+|[\[(])(?:128|192|256|320)(?:kbps|k)?[\])]?$/i, ''));
+    } catch { return source.url; }
+  }));
+  return files.size <= 1;
+}
+
 async function main() {
   const day = process.argv.find(arg => arg.startsWith('--date='))?.slice(7);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day || '')) throw new Error('Use --date=YYYY-MM-DD');
   const root = `.media-cache/refresh-${day}`;
   const observedAt = new Date().toISOString();
-  const incoming = combineVideoSources(await Promise.all(['public/source.json', 'curated-source.json', 'series-source.json'].map(file => read(path.join(root, file), { items: [] }))));
-  const baseIndex = await read('public/data/vod-index.json', { items: [] });
+  const option = name => process.argv.find(arg => arg.startsWith(`${name}=`))?.slice(name.length + 1);
+  const incoming = combineVideoSources(await Promise.all(['public/source.json', 'curated-source.json', 'series-source.json', 'f2my-source.json'].map(file => read(path.join(root, file), { items: [] }))));
+  // A previous release may already be visible through an overlay while the large
+  // raw/LFS archive is intentionally untouched. Match against that effective
+  // snapshot so yesterday's additions aren't counted or attributed as new again.
+  const baseIndex = await read(option('--video-baseline') || 'public/data/vod-index.json', { items: [] });
   const { selected: video, heldBack } = selectVideoUpdates(incoming, baseIndex.items);
   const known = new Set(baseIndex.items.map(idOf));
   const videoReport = { titles: video.length, movies: video.filter(item => !/series/i.test(item.type)).length,
@@ -122,6 +141,9 @@ async function main() {
 
   const musicSources = await Promise.all(['music/meloobit-source.json', 'music/musics-fa-checked.json', 'roz-source.json'].map(file => read(path.join(root, file), { tracks: [] })));
   const candidates = [...new Map(musicSources.flatMap(source => Array.isArray(source) ? source : source.tracks || []).map(track => [track.id, track])).values()];
+  const compilations = candidates.filter(track => !isIndividualMusicRelease(track))
+    .map(track => ({ id: track.id, title: track.title, sourceUrl: track.sourceUrl,
+      reason: 'Multi-song listing with generic artist attribution; keep as a playlist candidate, not an individual release' }));
   if (process.argv.includes('--reuse-verified')) {
     const previous = new Map((await read(path.join(root, 'music-verification.json'), [])).map(check => [check.url, check]));
     for (const track of candidates) track.sources = track.sources.map(source => {
@@ -129,8 +151,8 @@ async function main() {
       return checked?.available && Date.now() - Date.parse(checked.checkedAt) < 86400000 ? { ...source, available: true, checkedAt: checked.checkedAt } : source;
     });
   }
-  const verified = await verifyMusicSources(candidates);
-  const base = await read('public/data/music-index.json', { tracks: [], artists: [] });
+  const verified = await verifyMusicSources(candidates.filter(isIndividualMusicRelease));
+  const base = await read(option('--music-baseline') || 'public/data/music-index.json', { tracks: [], artists: [] });
   const combined = mergeMeloobitTracks(base.tracks, verified.tracks);
   const incomingUrls = new Set(verified.tracks.flatMap(track => track.sources.map(source => source.url)));
   const oldById = new Map(base.tracks.map(track => [track.id, track]));
@@ -151,10 +173,12 @@ async function main() {
   await writeJsonAtomic(`lib/data/media-refresh-${day}-vod.json`, { version: 1, observedAt, items: video, newTitleIds: video.filter(item => !known.has(idOf(item))).map(idOf) });
   await writeJsonAtomic(`lib/data/media-refresh-${day}-music.json`, { version: 1, observedAt, tracks, artists, newTrackIds });
   const report = { observedAt, video: videoReport, music: { candidates: candidates.length, verified: tracks.length, added: newTrackIds.length,
-    enriched: tracks.length - newTrackIds.length, artists: artists.length, heldBackAttributions: heldBackMusic.length, mediaChecked: verified.checks.length, mediaAvailable: verified.checks.filter(check => check.available).length } };
+    enriched: tracks.length - newTrackIds.length, artists: artists.length, heldBackAttributions: heldBackMusic.length,
+    heldBackCompilations: compilations.length, mediaChecked: verified.checks.length, mediaAvailable: verified.checks.filter(check => check.available).length } };
   await writeJsonAtomic(path.join(root, 'music-verification.json'), verified.checks);
   await writeJsonAtomic(path.join(root, 'held-back-video-identities.json'), heldBack);
   await writeJsonAtomic(path.join(root, 'held-back-music-attributions.json'), heldBackMusic);
+  await writeJsonAtomic(path.join(root, 'held-back-music-compilations.json'), compilations);
   await writeJsonAtomic(path.join(root, 'summary.json'), report);
   console.log(JSON.stringify(report, null, 2));
 }

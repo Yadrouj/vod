@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { combineVideoSources, compatibleMusicAttribution, selectVideoUpdates, verifyMusicSources } from '../prepare-release-bundle.mjs';
+import { combineVideoSources, compatibleMusicAttribution, isIndividualMusicRelease, selectVideoUpdates, verifyMusicSources } from '../prepare-release-bundle.mjs';
 import { mergeMeloobitTracks } from '../meloobit-source.mjs';
 
 const track = (id, url) => ({ id, title: 'Song', persianTitle: 'آهنگ', kind: 'track', artist: { name: 'Singer', slug: 'singer', sourceUrl: 'https://publisher.test/' }, artists: [{ name: 'Singer', slug: 'singer', sourceUrl: 'https://publisher.test/' }], sourceUrl: 'https://publisher.test/song/', sources: [{ url, kind: 'download', provider: 'meloobit' }] });
@@ -50,4 +50,13 @@ test('a stale sidebar singer is not propagated over checked primary-article attr
   const unrelated = { ...original, artist: { ...original.artist, name: 'Another Singer', slug: 'another-singer' }, artists: [{ ...original.artist, name: 'Another Singer', slug: 'another-singer' }] };
   assert.equal(compatibleMusicAttribution(original, [original]), true);
   assert.equal(compatibleMusicAttribution(original, [unrelated]), false);
+});
+
+test('generic-artist multi-song lists stay out of single releases, but one mix in two bitrates remains valid', () => {
+  const mix = { ...track('mix','https://cdn.test/Weekend%20Mix%20(128).mp3'), artist:{ name:'Different Artist' }, artists:[{ name:'Different Artist' }], sources:[
+    { url:'https://cdn.test/Weekend%20Mix%20(128).mp3' }, { url:'https://cdn.test/Weekend%20Mix%20(320).mp3' },
+  ] };
+  assert.equal(isIndividualMusicRelease(mix), true);
+  assert.equal(isIndividualMusicRelease({ ...mix, sources:[...mix.sources,{url:'https://cdn.test/Another%20Singer%20-%20Other%20Song.mp3'}] }), false);
+  assert.equal(isIndividualMusicRelease(track('song','https://cdn.test/Song.mp3')), true);
 });

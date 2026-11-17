@@ -12,11 +12,9 @@ import { enrichMoviezlandProfile, moviezlandProfile } from './moviezland-profile
 import movielandzMatches from './data/movielandz-donyaye-match.json';
 import { exactPublisherPageMapping } from './moviezland-page-match.mjs';
 import { refreshFamilyMovieRelease } from './familymovie-release';
-import videoReleaseData from './data/media-refresh-2026-11-14-vod.json';
-import { mergeVideoRelease, type VideoReleaseBundle } from './bundled-video-release';
+import { mergeCurrentVideoRelease } from './current-video-release';
 import { loadVodIdentities } from './vod-identities';
 import { mergeVodDuplicateItems, vodIdentityId } from './vod-identity.mjs';
-const videoReleaseBundle = videoReleaseData as unknown as VideoReleaseBundle;
 
 const DATA_DIR = path.resolve(process.env.VOD_DATA_DIR || path.join(process.cwd(), "public", "data"));
 const FILE_CHECK_INTERVAL_MS = Math.max(5_000, Number(process.env.VOD_DATA_CHECK_INTERVAL_MS || 30_000));
@@ -46,7 +44,7 @@ export const findVodItem = cache(async (id: string): Promise<VodItem | null> => 
   const group = registry.group(id);
   const members = [...new Set([canonical, ...(group?.memberIds || [])])];
   const records = (await Promise.all(members.map(async member => {
-    const raw = mergeVideoRelease(await findVodTitleFile(member) || moviezlandProfile(member), member, videoReleaseBundle);
+    const raw = mergeCurrentVideoRelease(await findVodTitleFile(member) || moviezlandProfile(member), member);
     // Source updates may still be keyed by a legacy alias. Apply them before union.
     return raw ? applyVerifiedAlternativeSources(await applyVerifiedDonyayeLinks(raw)) : null;
   }))).filter((record): record is VodItem => Boolean(record));

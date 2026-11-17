@@ -8,9 +8,8 @@ import type { MusicArtist, MusicArtistIndex, MusicIndex, MusicLandingIndex, Musi
 import { sousanLibrary } from './sousan-collection';
 import { susanRoshanRelease } from './susan-roshan-collection';
 import { MusicRelatedIndex } from './music-related-index';
-import musicReleaseData from './data/media-refresh-2026-11-14-music.json';
-import { applyMusicReleaseBundle, type MusicReleaseBundle } from './bundled-music-release';
-const musicReleaseBundle = musicReleaseData as unknown as MusicReleaseBundle;
+import { applyCurrentMusicReleases } from './current-music-release';
+import { applyMusicReleaseBundle } from './bundled-music-release';
 
 const DATA_FILE = path.join(process.cwd(), "public", "data", "music-index.json");
 const LANDING_DATA_FILE = path.join(process.cwd(), "public", "data", "music-landing.json");
@@ -50,7 +49,7 @@ export async function loadMusicIndex(): Promise<MusicIndex> {
         cache.value = Promise.all([
           readFile(DATA_FILE, "utf8").then((data) => JSON.parse(data) as MusicIndex),
           loadMelodifyCatalog(libraryInfo?.mtimeMs),
-        ]).then(([base, melodify]) => applyMusicReleaseBundle(mergeMelodifyCatalog(applyMusicReleaseBundle(base, musicReleaseBundle), melodify), susanRoshanRelease));
+        ]).then(([base, melodify]) => applyMusicReleaseBundle(mergeMelodifyCatalog(applyCurrentMusicReleases(base), melodify), susanRoshanRelease));
       }
       return await cache.value;
     } catch {
@@ -392,7 +391,7 @@ async function loadCompactMusicIndex<T extends MusicLandingIndex | MusicArtistIn
         compactCache.value = Promise.all([
           readFile(file, "utf8").then((data) => JSON.parse(data) as T),
           loadMelodifyCatalog(libraryInfo?.mtimeMs),
-        ]).then(([base, melodify]) => applyMusicReleaseBundle(mergeMelodifyCatalog(applyMusicReleaseBundle(base, musicReleaseBundle), melodify), susanRoshanRelease));
+        ]).then(([base, melodify]) => applyMusicReleaseBundle(mergeMelodifyCatalog(applyCurrentMusicReleases(base), melodify), susanRoshanRelease));
       }
       return await compactCache.value;
     } catch {
