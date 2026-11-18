@@ -36,11 +36,17 @@ export function TVShell({ children, locale }: { children: ReactNode; locale: Loc
     const place = (fallback = false) => {
       if (focused) return;
       const elements = focusable(shell);
-      const target = elements.find(el => el.dataset.tvFocus === saved) ?? shell.querySelector<HTMLElement>('[data-tv-initial]') ?? (fallback ? elements[0] : null);
-      if (target) { focused = true; target.focus({ preventScroll: true }); }
+      const preferred = elements.find(el => el.dataset.tvFocus === saved) ?? elements.find(el => el.hasAttribute('data-tv-initial'));
+      const target = preferred ?? (fallback ? elements[0] : null);
+      if (target) {
+        target.focus({ preventScroll: true });
+        // A temporary sidebar focus must not lock out content still streaming in.
+        // Pointer/remote interaction below still cancels automatic placement.
+        if (preferred && document.activeElement === target) focused = true;
+      }
     };
     const observer = new MutationObserver(() => place());
-    observer.observe(shell, { childList: true, subtree: true });
+    observer.observe(shell, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'inert', 'aria-hidden'] });
     const timer = setTimeout(() => place(true), 2000);
     place();
     const interacted = () => { focused = true; };

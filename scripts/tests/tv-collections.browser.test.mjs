@@ -12,6 +12,23 @@ test('TV collections expose real totals, local view-all routes and keyboard-frie
   const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, serviceWorkers: 'block' });
   const errors = [];
   try {
+    // Model a streamed target arriving after the shell's 2-second fallback.
+    // The initial action must eventually receive focus without user interaction.
+    await context.addInitScript(() => {
+      const style = document.createElement('style');
+      style.textContent = '[data-tv-initial]{visibility:hidden!important}';
+      const observer = new MutationObserver(() => {
+        if (document.head && !style.isConnected) document.head.appendChild(style);
+        if (document.documentElement?.dataset.tv === 'true') {
+          observer.disconnect();
+          setTimeout(() => {
+            style.remove();
+            document.querySelector('.tv-main')?.appendChild(document.createComment('delayed TV target ready'));
+          }, 3500);
+        }
+      });
+      observer.observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-tv'] });
+    });
     // Do not download external media merely to validate remote navigation.
     await context.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
     const page = await context.newPage(); page.on('pageerror', error => errors.push(error.message));
