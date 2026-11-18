@@ -25,6 +25,10 @@ export default async function TVHomePage() {
         <p className="tv-remote-hint">{fa ? "جهت‌ها برای انتخاب · OK برای ورود · بازگشت برای یک مرحله قبل" : "Arrows to explore · OK to select · Back to return"}</p>
       </div>
     </section>
+    <section id="collections" className="tv-collection-nav" aria-label={fa ? 'دسته‌بندی‌های سرونما' : 'SarvNema collections'}>
+      <h2>{fa ? 'امشب از کجا شروع کنیم؟' : 'Where shall we start tonight?'}</h2>
+      <nav>{rows.filter(row => row.href).map(row => <Link key={row.id} href={row.href!} prefetch={false} data-tv-focus={`collection-nav-${row.id}`}><span>{row.title}</span><small>{row.total.toLocaleString(locale)}</small></Link>)}</nav>
+    </section>
     <div className="tv-shelves"><TVContinue locale={locale} />{rows.map(row => <TVRail key={row.id} {...row} locale={locale} />)}</div>
   </>;
 }

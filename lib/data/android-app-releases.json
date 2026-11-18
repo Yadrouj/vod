@@ -1,16 +1,16 @@
 {
   "mobile": {
-    "url": "https://sarvnema.ir/apps/releases/sarvnema-android-0.2.0-preview.apk",
-    "version": "0.2.0-preview",
     "packageId": "ir.sarvnema.app",
-    "bytes": 33642,
-    "sha256": "5ad6e8c21e3d3b566cda7a570e328fda3b9a5fbd0041b75ead77e9a42b061e9c"
+    "url": "https://sarvnema.ir/apps/releases/sarvnema-android-0.3.0-preview.apk",
+    "version": "0.3.0-preview",
+    "bytes": 390566,
+    "sha256": "254342ad046e2b85249dbad07cedf37c41b7b6c7a303946af9c370fdd04e0b6b"
   },
   "tv": {
-    "url": "https://sarvnema.ir/apps/releases/sarvnema-tv-0.3.0-preview.apk",
-    "version": "0.3.0-preview",
     "packageId": "ir.sarvnema.tv",
-    "bytes": 29620,
-    "sha256": "eb8d95faca0139dc70cb84a55546e7a6da5b7d30d1ce71672d5b5cfdda8bdcda"
+    "url": "https://sarvnema.ir/apps/releases/sarvnema-tv-0.4.0-preview.apk",
+    "version": "0.4.0-preview",
+    "bytes": 386544,
+    "sha256": "893399548a6ba3330f1eb1317b2981af4709d38227163290e3218700f74ed649"
   }
 }

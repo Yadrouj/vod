@@ -40,6 +40,17 @@ html[data-tv] body { margin:0; background:#090b10; overflow-x:hidden }
 .tv-shelves { padding-block-end:6vh }
 .tv-rail { margin:0; padding:15px 4vw 24px; scroll-margin-block:4vh }
 .tv-rail h2 { margin-block-end:12px }
+.tv-rail-heading { display:flex; justify-content:space-between; align-items:center; gap:24px; margin-block-end:10px }
+.tv-rail-heading h2 { margin:0 }
+.tv-rail-heading>a { display:flex; align-items:center; gap:12px; min-height:56px; padding:10px 16px; border-radius:10px; color:var(--tv-gold); font-size:.75em; white-space:nowrap }
+.tv-rail-heading>a small { padding:2px 9px; border-radius:8px; background:#f2d08015; font-size:.9em }
+.tv-collection-nav { padding:20px 4vw 30px; scroll-margin-block:5vh }
+.tv-collection-nav>nav { display:flex; overflow-x:auto; gap:18px; padding:12px 10px 22px; margin-inline:-10px; scrollbar-width:thin; scrollbar-color:#454957 transparent; scroll-padding-inline:12px }
+.tv-collection-nav a { display:flex; align-items:center; gap:16px; flex:none; min-height:64px; border:1px solid #ffffff26; border-radius:14px; padding:14px 22px; background:#ffffff07; font-size:.8em }
+.tv-collection-nav a small { color:var(--tv-gold); font-size:.85em }
+.tv-collection-page { padding:4vh 4vw 6vh }
+.tv-collection-page>.tv-page-heading { margin-block:30px }
+.tv-collection-page .tv-card { width:100%; min-width:0 }
 .tv-rail-track { display:flex; gap:24px; overflow-x:auto; overscroll-behavior-inline:contain; padding:14px 10px 25px; margin-inline:-10px; scroll-padding-inline:15px; scrollbar-width:thin; scrollbar-color:#454957 transparent }
 .tv-card { display:block; width:clamp(150px,13.5vw,240px); flex:none; border-radius:9px; transition:transform 140ms ease; scroll-margin-inline:25px }
 .tv-card:focus-visible { transform:scale(1.035) }

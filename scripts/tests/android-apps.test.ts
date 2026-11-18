@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFileSync, mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { unzipSync } from 'fflate';
 import path from "node:path";
 import { appReleaseUrl, bundledAppReleases } from "../../lib/app-releases";
 import { BRAND_SLOGAN_FA } from "../../lib/brand";
@@ -22,6 +23,14 @@ test("bundled preview downloads exist, match their checksums and native versions
     assert.equal(bytes.length, release.bytes);
     assert.equal(bytes.subarray(0, 2).toString(), "PK", "an APK is a ZIP, not an HTML error");
     assert.equal(createHash("sha256").update(bytes).digest("hex"), release.sha256);
+    const archive = unzipSync(bytes);
+    for (const name of ['startup_scene_01.webp', 'startup_scene_02.webp', 'startup_scene_03.webp', 'alibaba_black.ttf', 'alibaba_regular.ttf']) {
+      const entry = Object.keys(archive).find(key => key.endsWith('/' + name));
+      assert.ok(entry, `${release.packageId}: bundled ${name}`);
+      const folder = name.endsWith('.ttf') ? 'font' : 'drawable-nodpi';
+      assert.deepEqual(Buffer.from(archive[entry]), readFileSync(`applications/android-common/res/${folder}/${name}`));
+    }
+    assert.ok(Buffer.from(archive['classes.dex']).includes(Buffer.from('CinematicBackdrop')));
     const manifest = readFileSync(`applications/android-${edition === "mobile" ? "mobile" : "tv"}/AndroidManifest.xml`, "utf8");
     assert.ok(manifest.includes(`package="${release.packageId}"`));
     assert.ok(manifest.includes(`android:versionName="${release.version}"`));
@@ -106,6 +115,39 @@ test("startup uses actual render readiness, bounded waiting and accessible lifec
   const navigation = java.split("public void pageStarted()")[1].split("public void progress(")[0];
   assert.doesNotMatch(navigation, /scheduleDeadline|removeCallbacksAndMessages/, "redirects cannot reset the overall deadline");
   assert.doesNotMatch(java, /addJavascriptInterface|setVisibility\(View\.(?:GONE|INVISIBLE)\)|Thread\.sleep|setStartDelay/, "no blank hidden WebView, privileged bridge or artificial minimum wait");
+});
+
+test("cinematic startup bundles three small offline scenes and real Persian font resources", async () => {
+  const layout = readFileSync('applications/android-common/res/layout/startup_screen.xml', 'utf8');
+  assert.match(layout, /ir\.sarvnema\.shell\.CinematicBackdrop/);
+  assert.match(layout, /@font\/alibaba_black/); assert.match(layout, /@font\/alibaba_regular/);
+  for (const weight of ['black', 'regular']) assert.deepEqual(readFileSync(`applications/android-common/res/font/alibaba_${weight}.ttf`), readFileSync(`public/fonts/alibaba-${weight}.ttf`));
+  const { default: sharp } = await import('sharp');
+  for (let i = 1; i <= 3; i++) {
+    const bytes = readFileSync(`applications/android-common/res/drawable-nodpi/startup_scene_0${i}.webp`);
+    assert.ok(bytes.length < 160000);
+    const metadata = await sharp(bytes).metadata();
+    assert.equal(metadata.width, 1280); assert.equal(metadata.height, 720);
+  }
+  const backdrop = readFileSync('applications/android-common/src/ir/sarvnema/shell/CinematicBackdrop.java', 'utf8');
+  assert.match(backdrop, /newSingleThreadExecutor/); assert.match(backdrop, /Bitmap\.Config\.RGB_565/);
+  assert.match(backdrop, /postDelayed\(this, 33\)/); assert.match(backdrop, /loader\.shutdownNow\(\)/);
+  assert.match(backdrop, /volatile boolean released/);
+  assert.doesNotMatch(backdrop, /https?:\/\/|MediaPlayer|VideoView|\.recycle\(/);
+  const controller = readFileSync('applications/android-common/src/ir/sarvnema/shell/StartupScreen.java', 'utf8');
+  assert.match(controller, /mark\.setClipBounds/); assert.match(controller, /cinema\.pauseMotion\(\)/);
+  assert.match(controller, /smallestScreenWidthDp >= 600 \? 520 : 420/);
+  assert.match(controller, /UI_MODE_TYPE_TELEVISION/);
+  assert.match(readFileSync('applications/android-common/res/values-television/startup.xml', 'utf8'), /60sp/);
+});
+
+test("cinematic timing math runs scene-transition and long-uptime checks on the JDK", t => {
+  const home = process.env.JAVA_HOME || (process.platform === 'win32' ? path.join(process.env.ProgramFiles || 'C:/Program Files', 'Android/Android Studio/jbr') : '');
+  const executable = (name: string) => home ? path.join(home, 'bin', `${name}${process.platform === 'win32' ? '.exe' : ''}`) : name;
+  try { execFileSync(executable('javac'), ['-version'], { stdio: 'pipe' }); } catch { t.skip('JDK unavailable'); return; }
+  const output = path.resolve('.media-cache/android-app-tests/motion'); mkdirSync(output, { recursive: true });
+  execFileSync(executable('javac'), ['--release', '8', '-d', output, 'applications/android-common/src/ir/sarvnema/shell/StartupMotion.java', 'applications/android-common/tests/StartupMotionSpec.java'], { stdio: 'pipe' });
+  assert.match(execFileSync(executable('java'), ['-cp', output, 'StartupMotionSpec'], { encoding: 'utf8' }), /PASS: startup motion/);
 });
 
 test("native startup state executes redirect, load/error, retry and teardown regressions on the JDK", t => {

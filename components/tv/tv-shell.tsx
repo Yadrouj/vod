@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, Clapperboard, History, Home, Search } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, Clapperboard, History, Home, LayoutGrid, Search } from "lucide-react";
 import { nextTVFocus, type TVDirection } from "@/lib/tv-navigation";
 import type { Locale } from "@/lib/i18n";
 
@@ -18,6 +18,8 @@ function focusable(root: ParentNode) {
 
 export function TVShell({ children, locale }: { children: ReactNode; locale: Locale }) {
   const pathname = usePathname(), router = useRouter();
+  const query = useSearchParams();
+  const focusKey = pathname.startsWith('/tv/collection/') ? `${pathname}?page=${query.get('page') || '1'}` : pathname;
   const root = useRef<HTMLDivElement>(null);
   const watch = pathname.startsWith("/tv/watch/");
   const fa = locale === "fa";
@@ -29,7 +31,7 @@ export function TVShell({ children, locale }: { children: ReactNode; locale: Loc
     const shell = root.current;
     if (!shell) return;
     let saved = "";
-    try { saved = sessionStorage.getItem(`tv-focus:${pathname}`) || ""; } catch { /* Storage is optional. */ }
+    try { saved = sessionStorage.getItem(`tv-focus:${focusKey}`) || ""; } catch { /* Storage is optional. */ }
     let focused = false;
     const place = (fallback = false) => {
       if (focused) return;
@@ -45,11 +47,11 @@ export function TVShell({ children, locale }: { children: ReactNode; locale: Loc
     shell.addEventListener("pointerdown", interacted); shell.addEventListener("keydown", interacted);
     const remember = (event: FocusEvent) => {
       const element = event.target as HTMLElement;
-      if (element.dataset.tvFocus) try { sessionStorage.setItem(`tv-focus:${pathname}`, element.dataset.tvFocus); } catch { /* Optional. */ }
+      if (element.dataset.tvFocus) try { sessionStorage.setItem(`tv-focus:${focusKey}`, element.dataset.tvFocus); } catch { /* Optional. */ }
     };
     shell.addEventListener("focusin", remember);
     return () => { clearTimeout(timer); observer.disconnect(); shell.removeEventListener("focusin", remember); shell.removeEventListener("pointerdown", interacted); shell.removeEventListener("keydown", interacted); };
-  }, [pathname]);
+  }, [focusKey]);
   useEffect(() => {
     const back = (event: Event) => {
       const dialog = [...document.querySelectorAll<HTMLDialogElement>('dialog[open]')].at(-1);
@@ -99,6 +101,7 @@ export function TVShell({ children, locale }: { children: ReactNode; locale: Loc
         {[
           { href: "/tv/search", label: fa ? "جستجو" : "Search", icon: <Search /> },
           { href: "/tv", label: fa ? "خانه" : "Home", icon: <Home /> },
+          { href: "/tv#collections", label: fa ? "دسته‌بندی‌ها" : "Collections", icon: <LayoutGrid /> },
           { href: "/tv#continue", label: fa ? "ادامهٔ تماشا" : "Continue", icon: <History /> },
         ].map(item => <Link key={item.href} href={item.href} data-tv-focus={`nav-${item.href}`} aria-current={pathname === item.href ? "page" : undefined}>{item.icon}<span>{item.label}</span></Link>)}
       </nav>

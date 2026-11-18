@@ -2,14 +2,17 @@
 <resources>
   <string name="app_name">سرونما</string>
   <string name="brand_slogan">هر داستان، در یک قاب روشن</string>
-  <string name="startup_loading">در حال آماده‌سازی سرونما…</string>
+  <string name="startup_loading">داریم صحنه را آماده می‌کنیم…</string>
+  <string name="startup_eyebrow">فیلم · سریال · موسیقی</string>
   <string name="startup_slow">کمی بیشتر طول کشید؛ در حال اتصال…</string>
   <string name="startup_failed">ارتباط برقرار نشد. اینترنت را بررسی کن و دوباره امتحان کن.</string>
   <string name="startup_retry">تلاش دوباره</string>
   <color name="icon_background">#090B10</color>
   <color name="brand_accent">#F2D080</color>
-  <dimen name="startup_logo_size">108dp</dimen>
-  <dimen name="startup_title_size">36sp</dimen>
+  <dimen name="startup_logo_size">116dp</dimen>
+  <dimen name="startup_halo_size">164dp</dimen>
+  <dimen name="startup_meter_width">176dp</dimen>
+  <dimen name="startup_title_size">48sp</dimen>
   <dimen name="startup_slogan_size">16sp</dimen>
   <dimen name="startup_status_size">13sp</dimen>
   <dimen name="startup_spacing">24dp</dimen>

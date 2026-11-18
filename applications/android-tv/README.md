@@ -14,7 +14,7 @@ separate approximation. The shared SDK builder is called by the existing script.
 The [shared native startup](../android-common/STARTUP.md) now shows the SarvNema
 mark/name/slogan, real loading progress and an eased reveal only when the first
 page is ready to draw. It includes TV-sized typography, remote focus protection,
-offline/slow retry and disabled-animation support. Preview 0.3.0, versionCode 3.
+offline/slow retry and disabled-animation support. Preview 0.4.0, versionCode 4.
 
 Both debug-signed previews can be downloaded from `/apps`, explicitly marked as
 test builds, with versioned first-party files and SHA-256 metadata. See the
@@ -26,6 +26,7 @@ Physical-device validation and final store signing are still release gates.
 | `/apps` | Public applications page, setup instructions, honest release status |
 | `/tv` | Cinematic home, real catalog rails, local continue-watching history |
 | `/tv/search` | Persian/English search, spelling suggestions, type/genre/year/IMDb filters, remote keyboard |
+| `/tv/collection/:id` | Full, paginated collection; latest films/series, Persian dubbing, Turkish/Indian/Iranian/Korean cinema, anime, animation and documentaries |
 | `/tv/title/:id` | Title, original name, season/episode → version → descending quality selection |
 | `/tv/watch/:id` | Direct playback, timeline, ±10s, source/retry, subtitles, speed and fullscreen |
 
@@ -44,6 +45,15 @@ in the main sitemap. Catalog/media restrictions also apply to TV playback.
   At TV Home, the Android shell asks before exiting.
 - Search supports native text entry and an optional Persian/English remote keyboard.
 - Progress is device-local; it is not account/cloud synchronization.
+- The homepage now uses the complete compact index, not a sampled homepage file.
+  Fourteen themed collections each show up to 16 previews, a real total and a
+  first-party **View all** route with 24-title pages. Empty collections are hidden.
+  Country matching uses canonical metadata, not a film name or dubbing language.
+  Latest releases sort by year, high-rating shelves by IMDb; fresh-dub ordering
+  uses source/catalog updates, not an invented dub release date. Copyright
+  restrictions and awaiting-link labels remain in force.
+- Collection focus is remembered per page; changing a collection page restores
+  a usable remote focus target rather than leaving focus behind the viewport.
 
 ## Run the website first
 

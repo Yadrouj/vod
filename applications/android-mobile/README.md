@@ -26,7 +26,7 @@ under `.media-cache/`. This artifact is debug-signed, **not a store release**.
 
 - Shared [branded startup](../android-common/STARTUP.md): Persian launcher/task
   name, logo/slogan, real progress and first-render-gated animated reveal; native
-  slow/offline retry and reduced-motion support. Preview 0.2.0, versionCode 2.
+  slow/offline retry and reduced-motion support. Preview 0.3.0, versionCode 3.
 - A browser-backed app without an address bar; site navigation remains inside it.
 - System-bar/cutout/keyboard insets; soft-keyboard resize, loading indicator and
   branded connection-error/retry screen.
@@ -68,7 +68,7 @@ under `.media-cache/`. This artifact is debug-signed, **not a store release**.
 
 The `/apps` page has separate mobile and TV cards. At the owner's request, real
 debug-signed previews are bundled at versioned first-party HTTPS URLs under
-`public/apps/releases/` (mobile 0.2.0, TV 0.3.0). The page explicitly labels them
+`public/apps/releases/` (mobile 0.3.0, TV 0.4.0). The page explicitly labels them
 experimental, not store releases. Package/version/size/SHA-256 are recorded in
 `lib/data/android-app-releases.json` and checked against the APKs by tests. Only
 the APKs are published; private keystores remain ignored under `.media-cache/`.
