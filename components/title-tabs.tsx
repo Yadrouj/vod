@@ -9,7 +9,7 @@ import { PosterCard, type PosterCardData } from "@/components/poster-card";
 import { DEFAULT_LOCALE, getDictionary, interpolate, type Locale, typeLabel } from "@/lib/i18n";
 import type { DownloadSource, SeasonSummary } from "@/lib/downloads";
 import type { VodItem } from "@/lib/types";
-import { trailerPlayback } from "@/lib/title-presentation";
+import { trailerPlayback, imdbTrailerPage, hasPlayableTrailer } from "@/lib/title-presentation";
 import styles from "./title-about.module.css";
 import { titleSynopsis } from "@/lib/title-synopsis";
 import { localizedTitle } from "@/lib/title-display";
@@ -204,7 +204,7 @@ function AboutTab({ item, locale, isSeries }: { item: TitleTabsItem; locale: Loc
         <PanelHead
           title={t.title.trailersPictures}
           note={interpolate(t.title.trailersPicturesNote, {
-            trailers: item.imdbVideos?.length ?? 0,
+            trailers: item.imdbVideos?.filter(video => hasPlayableTrailer(video)).length ?? 0,
             pictures: (item.imdbImages?.length ?? 0) + (item.movieshoImages?.length ?? 0),
           })}
         />
@@ -258,7 +258,7 @@ function PanelHead({ title, note }: { title: string; note: string }) {
 }
 
 function MediaCarousel({ item, locale }: { item: TitleTabsItem; locale: Locale }) {
-  const videos = item.imdbVideos?.slice(0, 10) ?? [];
+  const videos = item.imdbVideos?.filter(video => hasPlayableTrailer(video)).slice(0, 10) ?? [];
   const images = item.imdbImages?.slice(0, 20) ?? [];
   const sourceImages = item.movieshoImages?.slice(0, 20) ?? [];
   const media: GalleryMedia[] = [
@@ -269,7 +269,13 @@ function MediaCarousel({ item, locale }: { item: TitleTabsItem; locale: Locale }
       .map((image, index) => ({ id: `moviesho-image-${index}-${image.url}`, type: "image" as const, title: image.caption ?? item.title, url: image.url })),
   ];
   if (!media.length && (item.backdropUrl ?? item.posterUrl)) media.push({ id: "fallback", type: "image", title: item.title, url: item.backdropUrl ?? item.posterUrl! });
-  return <InteractiveMediaGallery items={media} locale={locale} />;
+  const sourcePage = imdbTrailerPage(item);
+  return <>
+    <InteractiveMediaGallery items={media} locale={locale} />
+    {sourcePage && <a className={styles.trailerSource} href={sourcePage} target="_blank" rel="noopener noreferrer">
+      {locale === "fa" ? "تماشای تریلرها در IMDb ↗" : "Watch trailers on IMDb ↗"}
+    </a>}
+  </>;
 }
 
 function CastRail({ item }: { item: TitleTabsItem }) {

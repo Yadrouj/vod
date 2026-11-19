@@ -23,6 +23,7 @@ export const DEFAULT_SCRAPER_DASHBOARD_CONFIG = {
     source("news", "خبر و اخبار سینما", "https://www.imdb.com/news/movie/", "scrape-vod-news.mjs"),
     source("iran-box-office", "گیشهٔ ایران و قیمت بلیت", "https://samfaa.ir/", "refresh-iran-box-office.mjs"),
     source("imdb-trending", "ترند IMDb", "https://www.imdb.com/chart/moviemeter/", "refresh-imdb-trending.mjs"),
+    source("imdb-trailers", "تریلر ۱۰۰ فیلم جدید و محبوب", "https://www.imdb.com/trailers/", "refresh-imdb-trailers.mjs"),
     source("video", "کاتالوگ فیلم و سریال", "https://dls2.aparatchi-dlcenter.top/DonyayeSerial/donyaye_serial_all_archive.html", "sync-vod-catalog.mjs"),
     source("f2my", "فیلم و سریال F2MY", "https://www.f2my.top/", "scrape-f2my-catalog.mjs"),
     source("curated-video", "منابع منتخب ویدیویی", "https://www.moviesho.com/", "refresh-curated-vod.mjs"),
@@ -98,7 +99,7 @@ export function sanitizeScraperDashboardConfig(value) {
   const unique = [...new Map(sources.map((item) => [item.id, item])).values()];
   const schedule = normalizeSchedule(input.schedule, fallback.schedule);
   // Upgrade older saved settings without losing disabled sources or custom hours.
-  for (const id of ['iran-box-office', 'imdb-trending']) {
+  for (const id of ['iran-box-office', 'imdb-trending', 'imdb-trailers']) {
     if (!unique.some(item => item.id === id)) unique.push({ ...fallback.sources.find(item => item.id === id), startHour: schedule.startHour, endHour: schedule.endHour, days: [...schedule.days] });
   }
   if (!unique.some(item => item.id === 'meloobit')) unique.push({ ...fallback.sources.find(item => item.id === 'meloobit'), startHour: schedule.startHour, endHour: schedule.endHour, days: [...schedule.days] });

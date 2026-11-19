@@ -19,6 +19,8 @@ test('older saved dashboards gain daily editorial sources without changing exist
   assert.equal(config.sources.find(source => source.id === 'imdb-trending').enabled, false);
   assert.deepEqual(config.sources.find(source => source.id === 'iran-box-office').days, [0, 2]);
   assert.equal(config.sources.find(source => source.id === 'iran-box-office').startHour, 4);
+  assert.equal(config.sources.find(source => source.id === 'imdb-trailers').startHour, 4);
+  assert.deepEqual(config.sources.find(source => source.id === 'imdb-trailers').days, [0, 2]);
   assert.equal(sanitizeScraperDashboardConfig(config).sources.filter(source => source.id === 'iran-box-office').length, 1);
 });
 

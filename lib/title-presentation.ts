@@ -1,24 +1,9 @@
 import type { VodItem, VodLink } from "./types";
 import { isVerifiedPublisherPreview } from './publisher-previews.mjs';
+import { videoUrlExpired } from './imdb-trailer-data.mjs';
+export { videoUrlExpired, imdbTrailerPage, hasPlayableTrailer } from './imdb-trailer-data.mjs';
 
 /** Unsigned URLs have no expiration. Never interpret a missing parameter as 0. */
-export function videoUrlExpired(value: string, now = Date.now()) {
-  try {
-    const url = new URL(value);
-    if (!/^https?:$/.test(url.protocol)) return true;
-    const params = new Map([...url.searchParams].map(([key, val]) => [key.toLowerCase(), val]));
-    const expires = params.get("expires") ?? params.get("exp");
-    if (expires && Number.isFinite(Number(expires))) return Number(expires) * 1000 <= now + 60_000;
-    const signedAt = params.get("x-amz-date");
-    const lifetime = params.get("x-amz-expires");
-    if (signedAt && lifetime && /^\d{8}T\d{6}Z$/.test(signedAt)) {
-      const date = signedAt.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/, "$1-$2-$3T$4:$5:$6Z");
-      return Date.parse(date) + Number(lifetime) * 1000 <= now + 60_000;
-    }
-    return false;
-  } catch { return true; }
-}
-
 export function trailerPlayback(video: NonNullable<VodItem["imdbVideos"]>[number], now = Date.now()) {
   return (video.playback_urls ?? [])
     .filter((file) => !videoUrlExpired(file.url, now)

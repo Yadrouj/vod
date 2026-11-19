@@ -15,6 +15,7 @@ import { refreshFamilyMovieRelease } from './familymovie-release';
 import { mergeCurrentVideoRelease } from './current-video-release';
 import { loadVodIdentities } from './vod-identities';
 import { mergeVodDuplicateItems, vodIdentityId } from './vod-identity.mjs';
+import { applyRefreshedImdbTrailers } from './imdb-trailer-store';
 
 const DATA_DIR = path.resolve(process.env.VOD_DATA_DIR || path.join(process.cwd(), "public", "data"));
 const FILE_CHECK_INTERVAL_MS = Math.max(5_000, Number(process.env.VOD_DATA_CHECK_INTERVAL_MS || 30_000));
@@ -51,7 +52,7 @@ export const findVodItem = cache(async (id: string): Promise<VodItem | null> => 
   const primary = records.find(record => vodIdentityId(record) === canonical) || records[0];
   const item = primary ? records.reduce((merged, record) => record === primary ? merged : mergeVodDuplicateItems(merged, record), primary) : null;
   if (!item) return null;
-  const enriched = enrichMoviezlandProfile(enrichOldIranianFilm(group ? { ...item, id: canonical, imdbCode: canonical } : item));
+  const enriched = await applyRefreshedImdbTrailers(enrichMoviezlandProfile(enrichOldIranianFilm(group ? { ...item, id: canonical, imdbCode: canonical } : item)));
   const publisherMatch = movielandzByImdb.get(enriched.imdbCode);
   const mapped = await applyDownloadBaseToItem({
     ...enriched,
