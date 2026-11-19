@@ -22,3 +22,31 @@ test("exact media URL can preserve an ID after a metadata correction without sha
   const result = preserveMusicIdentities([old], current);
   assert.deepEqual(result[0].idAliases, ["old"]);
 });
+
+test('a shared playlist URL cannot swallow a different song or its download variants', () => {
+  const shared = { url: 'https://media.example/playlist.mp3' };
+  const old = { id: 'mashhoor', kind: 'track', title: 'مشهور', matchKey: 'babak mashhoor', sources: [shared, { url: 'https://media.example/mashhoor.mp3' }] };
+  const current = { id: 'shahre-sholoogh', kind: 'track', title: 'Shahre Sholoogh', matchKey: 'babak shahre sholoogh', sources: [shared], idAliases: [old.id] };
+  const result = preserveMusicIdentities([old], [current]);
+  assert.equal(result.length, 2);
+  assert.deepEqual(result.find(x => x.id === old.id).sources, old.sources);
+  assert.equal(result[0].idAliases, undefined);
+});
+
+test('numbered mixes remain distinct even when a provider stripped numbers from matchKey', () => {
+  const before = [12, 13].map(n => ({ id: `fusion-${n}`, kind: 'track', title: `Fusion ${n}`, matchKey: 'leeroy fusion', sources: [] }));
+  const incoming = [{ id: 'fusion', kind: 'track', title: 'Fusion', matchKey: 'leeroy fusion', sources: [] }];
+  const result = preserveMusicIdentities(before, incoming);
+  assert.equal(result.length, 3);
+  assert.deepEqual(result.map(x => x.id), ['fusion', 'fusion-12', 'fusion-13']);
+});
+
+test('genuine cross-provider matches keep every original source and repeated merges are stable', () => {
+  const old = { id: 'old', kind: 'track', title: 'Song', matchKey: 'artist song', sources: [{ url: 'https://a.example/a.mp3' }] };
+  const next = { id: 'new', kind: 'track', title: 'Song', matchKey: old.matchKey, sources: [{ url: 'https://b.example/b.mp3' }] };
+  const result = preserveMusicIdentities([old], [next]);
+  assert.equal(result.length, 1); assert.equal(result[0].sources.length, 2);
+  assert.deepEqual(result[0].idAliases, ['old']);
+  assert.deepEqual(preserveMusicIdentities([old], result), result);
+  assert.equal(next.sources.length, 1);
+});
