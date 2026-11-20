@@ -16,6 +16,7 @@ type Suggestion = {
   href?: string;
   trackCount?: number;
   title: string;
+  persianTitle?: string | null;
   imdbCode: string;
   year: number | null;
   type: string;
@@ -73,31 +74,33 @@ export function SearchSuggest({
   const boxRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const keyboardSelection = useRef(false);
   const listId = useId();
   const router = useRouter();
   const t = getDictionary(locale);
   const searchable = query.trim().length >= 2;
   const menuOpen = open && searchable;
   const visibleItems = items.slice(0, maxItems);
+  const onlyMusicMatches = includeMusic && visibleItems.length > 0 && visibleItems.every(item => item.type === "artist" || item.type === "Track" || item.type === "Music video");
   const [portalPosition, setPortalPosition] = useState<CSSProperties | null>(null);
   const copy = locale === "fa"
     ? {
         close: "بستن جستجو",
         clear: "پاک کردن",
         heading: "نتیجه‌های پیشنهادی",
-        order: cinemaSearch ? "امتیاز IMDb · پرجست‌وجو · رأی و ترند IMDb" : "خواننده‌ها و آثار · مرتبط‌ترین‌ها",
+        order: cinemaSearch ? "نزدیکی نام · امتیاز IMDb · سال ساخت" : "خواننده‌ها و آثار · مرتبط‌ترین‌ها",
         empty: "یک بخش دیگر از نام، نام انگلیسی یا کد IMDb را امتحان کن.",
         hint: "نام فیلم، سریال یا کد IMDb را بنویس",
-        viewAll: "دیدن همه نتیجه‌ها",
+        viewAll: includeMusic ? "همهٔ نتایج فیلم و سریال" : "دیدن همه نتیجه‌ها",
       }
     : {
         close: "Close search",
         clear: "Clear",
         heading: "Best matches",
-        order: cinemaSearch ? "IMDb rating · popular searches · IMDb votes & trends" : "Newest first",
+        order: cinemaSearch ? "Title match · IMDb · release year" : "Artists & tracks · best matches",
         empty: "Try another part of the name, an English title or an IMDb ID.",
         hint: "Search by title, series or IMDb ID",
-        viewAll: "View all results",
+        viewAll: includeMusic ? "All film & series results" : "View all results",
       };
 
   useEffect(() => {
@@ -113,7 +116,7 @@ export function SearchSuggest({
       if (cinemaSearch) {
         params.set("type", effectiveKind);
         // Keep old grouped responses in browser/edge caches off the new URL.
-        params.set("sort", "imdb-popular-trends-v1");
+        params.set("sort", "title-imdb-year-v2");
       }
       if (endpoint.split("?")[0] === "/api/music/search") params.set("includeArtists", "1");
       type SuggestResponse = { items?: Suggestion[]; artists?: Suggestion[]; corrections?: string[]; matchedQuery?: string };
@@ -169,7 +172,7 @@ export function SearchSuggest({
   }, [cinemaSearch, endpoint, effectiveKind, includeMusic, locale, maxItems, query, searchable]);
 
   useEffect(() => {
-    if (activeIndex >= 0) document.getElementById(`${listId}-${activeIndex}`)?.scrollIntoView({ block: "nearest" });
+    if (activeIndex >= 0 && keyboardSelection.current) document.getElementById(`${listId}-${activeIndex}`)?.scrollIntoView({ block: "nearest" });
   }, [activeIndex, listId]);
 
   useEffect(() => {
@@ -301,9 +304,11 @@ export function SearchSuggest({
     if (!visibleItems.length || !menuOpen) return;
     if (event.key === "ArrowDown") {
       event.preventDefault();
+      keyboardSelection.current = true;
       setActiveIndex((current) => (current + 1) % visibleItems.length);
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
+      keyboardSelection.current = true;
       setActiveIndex((current) => (current <= 0 ? visibleItems.length - 1 : current - 1));
     } else if (event.key === "Enter" && activeIndex >= 0) {
       event.preventDefault();
@@ -349,13 +354,14 @@ export function SearchSuggest({
           <Fragment key={item.imdbCode}>
           {!cinemaSearch && (index === 0 || (visibleItems[index - 1].type === "artist") !== (item.type === "artist")) && <div className="suggest-type-heading" role="presentation">{item.type === "artist" ? (locale === "fa" ? "خواننده‌ها" : "Artists") : (locale === "fa" ? "آثار" : "Tracks")}</div>}
           <Link
+            prefetch={false}
             id={`${listId}-${index}`}
             key={item.imdbCode}
-            className={`suggest-item ${activeIndex === index ? "is-active" : ""}`}
+            className={`suggest-item ${styles.resultRow} ${activeIndex === index ? "is-active" : ""}`}
             href={suggestionHref(item)}
             role="option"
             aria-selected={activeIndex === index}
-            onMouseEnter={() => setActiveIndex(index)}
+            onMouseMove={() => { keyboardSelection.current = false; setActiveIndex(index); }}
             onClick={() => { recordSelection(item); closeSearch(); onNavigate?.(); }}
           >
             {item.posterUrl ? (
@@ -369,15 +375,15 @@ export function SearchSuggest({
               <span className="suggest-poster-fallback" aria-hidden="true">{item.title.slice(0, 1)}</span>
             )}
             <span className="suggest-result-copy">
-              <strong>{item.title}</strong>
+              <strong><bdi>{locale === "fa" && item.persianTitle || item.title}</bdi></strong>
               <small>
-                {[item.trackCount != null ? `${item.trackCount.toLocaleString(locale)} ${locale === "fa" ? "اثر" : "tracks"}` : item.year ?? "-", item.artists?.[0], item.type === "artist" ? null : typeLabel(item.type, locale), item.imdbRating ? `${t.common.imdb} ${item.imdbRating.toFixed(1)}` : null]
-                  .filter(Boolean)
-                  .join(" / ")}
+                {item.year && <bdi>{item.year}</bdi>}
+                {item.trackCount != null ? <span>{item.trackCount.toLocaleString(locale)} {locale === "fa" ? "اثر" : "tracks"}</span> : item.type !== "artist" && <span>{typeLabel(item.type, locale)}</span>}
+                {item.artists?.[0] && <bdi>{item.artists[0]}</bdi>}
+                {locale === "fa" && item.persianTitle && item.persianTitle !== item.title && <bdi className={styles.originalTitle}>{item.title}</bdi>}
               </small>
             </span>
-            {item.isFresh && <span className="suggest-fresh">{locale === "fa" ? `تازه ${item.year ?? ""}` : `NEW ${item.year ?? ""}`}</span>}
-            <ArrowUpRight className="suggest-result-arrow" size={17} aria-hidden="true" />
+            {item.imdbRating ? <span className={styles.rating} dir="ltr">IMDb <b>{item.imdbRating.toFixed(1)}</b></span> : <ArrowUpRight className="suggest-result-arrow" size={17} aria-hidden="true" />}
           </Link>
           </Fragment>
         ))}
@@ -385,8 +391,8 @@ export function SearchSuggest({
       </div>
 
       {visibleItems.length > 0 && (
-        <Link className="suggest-view-all" href={`${viewAllHref(query.trim())}${cinemaSearch && effectiveKind !== "all" ? `&type=${effectiveKind}` : ""}`} onClick={() => { closeSearch(); onNavigate?.(); }}>
-          <span>{copy.viewAll}</span>
+        <Link prefetch={false} className="suggest-view-all" href={onlyMusicMatches ? `/music?q=${encodeURIComponent(query.trim())}` : `${viewAllHref(query.trim())}${cinemaSearch && effectiveKind !== "all" ? `&type=${effectiveKind}` : ""}`} onClick={() => { closeSearch(); onNavigate?.(); }}>
+          <span>{onlyMusicMatches ? (locale === "fa" ? "همهٔ نتایج موسیقی" : "All music results") : copy.viewAll}</span>
           <ArrowUpRight size={17} aria-hidden="true" />
         </Link>
       )}

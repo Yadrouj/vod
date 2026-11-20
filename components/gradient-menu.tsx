@@ -6,7 +6,7 @@ import { CategoryExplorer } from "./category-explorer";
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { LandingActivity } from "@/components/landing-activity";
-import { LandingSearchLauncher } from "@/components/lazy-discovery-search";
+import { LandingSearchLauncher } from "@/components/discovery-search";
 import { formatNumber, getDictionary, type Locale } from "@/lib/i18n";
 import { PRIMARY_SECTIONS } from "@/lib/site-navigation";
 import styles from "./gradient-menu.module.css";
@@ -60,7 +60,7 @@ export function GradientMenu({
       <LandingSearchLauncher
         locale={locale}
         className={styles.search}
-        text={<span className={`sr-only ${styles.searchLabel}`}>{locale === "fa" ? "جستجو" : "Search"}</span>}
+        text={<><span className={`sr-only ${styles.searchLabel}`}>{locale === "fa" ? "جستجو" : "Search"}</span><kbd aria-hidden="true" className={styles.searchKey}>/</kbd></>}
       />
       <LanguageToggle locale={locale} />
       <Link className={`hover-button ${styles.archive}`} href="/browse" aria-current={isCurrent("/browse") ? "page" : undefined}>

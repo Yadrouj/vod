@@ -9,6 +9,7 @@ import { loadSearchRankingSignals } from "./search-popularity";
 
 type Suggestion = {
   title: string;
+  persianTitle: string | null;
   imdbCode: string;
   year: number | null;
   type: string;
@@ -46,6 +47,7 @@ export async function searchSuggestions(query: string, limit = 8, kind: SearchKi
   const items = selectRankedSuggestions(matches.items, limit, kind, matches.matchedQuery || query, signals)
     .map((item) => ({
       title: item.title,
+      persianTitle: item.persianTitle ?? null,
       imdbCode: item.imdbCode,
       year: item.year,
       type: item.type,

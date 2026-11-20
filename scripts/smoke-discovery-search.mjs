@@ -53,11 +53,11 @@ try {
     await dialog.waitFor({ state: "detached" });
     assert.ok(await trigger.evaluate(el => el === document.activeElement), "Focus returns to the search launcher");
     await trigger.click();
-    await dialog.getByRole("button", { name: "hoise", exact: true }).click(); await resultsReady();
-    assert.equal(await input.inputValue(), "hoise");
+    await dialog.getByRole("button", { name: "House", exact: true }).click(); await resultsReady();
+    assert.equal(await input.inputValue(), "House");
     await dialog.locator(".suggest-clear").click();
-    await dialog.getByRole("button", { name: "hoise", exact: true }).click(); await resultsReady();
-    assert.equal(await input.inputValue(), "hoise", "Repeated example buttons still work");
+    await dialog.getByRole("button", { name: "House", exact: true }).click(); await resultsReady();
+    assert.equal(await input.inputValue(), "House", "Repeated example buttons still work");
     await dialog.getByRole("button", { name: "سریال", exact: true }).click(); await resultsReady();
     assert.ok((await dialog.locator(".suggest-item").allTextContents()).every(text => text.includes("سریال")), "Series category filters results");
     await dialog.getByRole("button", { name: "بستن جستجو", exact: true }).click();

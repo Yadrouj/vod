@@ -11,9 +11,9 @@ assert.ok(news.items.some(item=>item.source==="خبر فوری" || item.source==
 assert.equal(news.boxOffice.metric,"weekly-sales");assert.equal(news.boxOffice.rows.length,5);
 const magazine=JSON.parse(await readFile("public/data/magazine.json","utf8"));
 assert.equal(magazine.articles.length,30);assert.equal(new Set(magazine.articles.map(a=>a.slug)).size,30);
-const suggest=await (await fetch(`${origin}/api/suggest?q=house&suggest=spelling-v3&sort=imdb-popular-trends-v1&limit=20`)).json();
+const suggest=await (await fetch(`${origin}/api/suggest?q=house&sort=title-imdb-year-v2&limit=20`)).json();
 assert.ok(suggest.items.length>1);
-assert.ok(suggest.items.every((item,i)=>!i || (suggest.items[i-1].imdbRating??-1)>=(item.imdbRating??-1)));
+assert.equal(suggest.items[0].imdbCode,"tt0412142");
 const archive=await(await fetch(`${origin}/api/archive?q=house&offset=0`)).json();
 assert.equal(archive.items[0].id,suggest.items[0].imdbCode);
 const sitemapResponse=await fetch(`${origin}/mag/sitemap.xml`);assert.equal(sitemapResponse.status,200);

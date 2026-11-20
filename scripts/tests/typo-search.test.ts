@@ -93,22 +93,39 @@ test("submitted browse and suggestions share typo matches, IMDb ordering and typ
   assert.deepEqual(matchVodSearch(items, "tt0412143").items, []);
 });
 
-test("IMDb is first across film/series, ahead of recency or exact-name preference", () => {
+test("exact mixed-kind titles precede longer prefixes and incidental substrings", () => {
   const old=card("House","old","series",9.1),fresh=card("House","fresh","movie",7.1),higher=card("House","higher","series",8.5),part=card("House of Dust","part","movie",9.9),substring=card("The Lighthouse","substring","movie",10);
   old.year=2004;fresh.year=higher.year=2026;part.year=2027;substring.year=2028;
   const items=[substring,part,old,fresh,higher];
-  const expected=["substring","part","old","higher","fresh"];
+  const expected=["old","higher","fresh","part","substring"];
   assert.deepEqual(selectRankedSuggestions(items,10,"all","House").map(i=>i.imdbCode),expected);
   assert.deepEqual(browseVodIndex({items} as VodCatalogIndex,{q:"hoise"}).items.map(i=>i.imdbCode),expected);
   assert.deepEqual(selectRankedSuggestions(items,10,"series","House").map(i=>i.imdbCode),["old","higher"]);
 });
 
 test("equal IMDb ratings use real search selections, vote count, and current trends in that order", () => {
-  const one=card("House","one","series",8),two=card("House of Dust","two","movie",8),three=card("House of Cards","three","series",8),four=card("House Again","four","movie",9);
+  const one=card("House","one","series",8),two=card("House","two","movie",8),three=card("House","three","series",8),four=card("House","four","movie",9);
   one.imdbVotes=1000;two.imdbVotes=300;three.imdbVotes=300;
   const items=[one,two,three,four];
   const signals={searches:{two:10,three:10},trends:{three:1,two:2}};
   assert.deepEqual(selectRankedSuggestions(items,10,"all","house",signals).map(i=>i.imdbCode),["four","three","two","one"]);
   assert.deepEqual(browseVodIndex({items} as VodCatalogIndex,{q:"hoise"},30,signals).items.map(i=>i.imdbCode),["four","three","two","one"]);
   assert.deepEqual(selectRankedSuggestions(items,10,"series","house",signals).map(i=>i.imdbCode),["three","one"]);
+});
+
+test("unfinished titles ignore articles and balance a close IMDb score with release year", () => {
+  const year = new Date().getUTCFullYear();
+  const editions = [
+    { ...card("2001: A Space Odyssey", "space", "movie", 9.1), year: 1968 },
+    { ...card("The Odyssey", "classic", "series", 8.5), year: 1997 },
+    { ...card("The Odyssey", "new", "movie", 8.3), year, persianTitle: "ادیسه" },
+    { ...card("Odyssey", "unrated", "movie", 0), year, imdbRating: null },
+  ];
+  for (const q of ["odysse", "odyssey", "the odysse"]) {
+    const matched = matchVodSearch(editions, q);
+    const ids = selectRankedSuggestions(matched.items, 10, "all", q).map(i => i.imdbCode);
+    assert.equal(ids[0], "new");
+    assert.deepEqual(browseVodIndex({ items: editions } as VodCatalogIndex, { q }).items.map(i => i.imdbCode), ids);
+  }
+  assert.equal(browseVodIndex({ items: editions } as VodCatalogIndex, { q: "ادیسه" }).items[0].imdbCode, "new");
 });

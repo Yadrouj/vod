@@ -12,8 +12,8 @@ const suggest = async (q, type = 'all') => {
 for (const [query, expected] of [['hoise', 'House'], ['huose', 'House'], ['breking bad', 'Breaking Bad'], ['breakingbad', 'Breaking Bad']]) {
   const result = await suggest(query);
   assert.equal(result.mode, 'similar'); assert.equal(result.matchedQuery, expected);
-  assert.ok(result.items.every((item, i) => i === 0 || (result.items[i - 1].imdbRating ?? -1) >= (item.imdbRating ?? -1)));
-  console.log(`PASS API: ${query} → ${expected}; IMDb descending`);
+  assert.equal(result.items[0].title, expected);
+  console.log(`PASS API: ${query} → ${expected} first`);
 }
 const expected = await suggest('hoise');
 assert.equal(expected.items[0].imdbCode, 'tt0412142');
@@ -36,8 +36,8 @@ try {
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto(origin, { waitUntil: 'domcontentloaded' });
-    if (width !== 1440) await page.locator('.app-nav-search').click();
-    const selector = width === 1440 ? '.film-landing-search input[role="combobox"]' : '.app-search-dialog[open] input[role="combobox"]';
+    await page.locator(width === 1440 ? 'header.gradient-menu [aria-keyshortcuts="/"]' : '.app-nav-search').click();
+    const selector = 'dialog[open] [data-discovery-search] input[role="combobox"]';
     await page.waitForFunction(selector => {
       const input = document.querySelector(selector);
       return input && Object.keys(input).some(key => key.startsWith('__reactProps$') && typeof input[key]?.onChange === 'function');

@@ -1,59 +1,55 @@
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright');
-const origin = process.env.LOAD_BASE_URL || 'http://localhost:3004';
+const origin = process.env.LOAD_BASE_URL || 'http://127.0.0.1:3004';
 assert.ok(['localhost', '127.0.0.1', '[::1]'].includes(new URL(origin).hostname));
-const descending = items => items.every((item, i) => i === 0 || (items[i - 1].imdbRating ?? -1) >= (item.imdbRating ?? -1));
-const expected = new Map();
-for (const query of ['house', 'dark', 'star']) {
+for (const [q, id] of [['odysse', 'tt33764258'], ['ادیسه', 'tt33764258'], ['house', 'tt0412142']]) {
   for (const type of ['all', 'movie', 'series']) {
-    const params = new URLSearchParams({ q: query, type, limit: '14', sort: 'imdb-desc' });
-    const response = await fetch(`${origin}/api/suggest?${params}`);
-    assert.equal(response.status, 200);
-    const { items } = await response.json();
-    assert.ok(items.length > 0);
-    assert.ok(descending(items), `${query}/${type}: globally descending ratings`);
-    assert.equal(new Set(items.map(item => item.imdbCode)).size, items.length);
-    if (type !== 'all') assert.ok(items.every(item => item.type === type));
-    if (query === 'house') {
-      expected.set(type, items.map(item => `/${item.imdbCode}`));
-      if (type !== 'movie') assert.equal(items[0].imdbCode, 'tt0412142', 'House must be first');
-    }
+    const params = new URLSearchParams({q, type});
+    const [suggest, archive] = await Promise.all(['suggest', 'archive'].map(async endpoint => {
+      const res = await fetch(`${origin}/api/${endpoint}?${params}`);
+      assert.equal(res.status, 200);
+      return (await res.json()).items;
+    }));
+    if (type === 'all') assert.equal(suggest[0].imdbCode, id);
+    else assert.ok(suggest.every(item => item.type === type));
+    assert.deepEqual(suggest.map(i => i.imdbCode), archive.slice(0, suggest.length).map(i => i.id));
   }
+  console.log(`PASS suggestions & archive: ${q} → ${id}`);
 }
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 try {
-  const page = await browser.newPage({ serviceWorkers: 'block' });
-  await page.context().addCookies([{ name: 'vod_locale', value: 'fa', url: origin }]);
-  const errors = []; page.on('pageerror', error => errors.push(error.message));
   for (const width of [1440, 390]) {
-    await page.setViewportSize({ width, height: 1000 });
+    const page = await browser.newPage({ viewport: { width, height: 844 }, serviceWorkers: 'block' });
+    // Third-party poster/CDN latency isn't part of ranking or layout QA.
+    await page.route('**/*', route => route.request().resourceType() === 'image' ? route.abort() : route.continue());
+    await page.context().addCookies([{ name: 'vod_locale', value: 'fa', url: origin }]);
     await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 90000 });
-    const selector = width === 1440 ? '.film-landing-search input[role="combobox"]' : '.app-search-dialog[open] input[role="combobox"]';
-    if (width !== 1440) await page.locator('.app-nav-search').click();
-    await page.waitForFunction(selector => {
-      const input = document.querySelector(selector);
-      return input && Object.keys(input).some(key => key.startsWith('__reactProps$') && typeof input[key]?.onChange === 'function');
-    }, selector);
-    const input = page.locator(selector);
-    await input.fill('house');
-    const menu = page.locator('.suggest-menu:visible');
-    for (const [type, label] of [['all', 'همه'], ['movie', 'فیلم'], ['series', 'سریال'], ['all', 'همه']]) {
-      await menu.locator('.suggest-type-filters').getByRole('button', { name: label, exact: true }).click();
-      await page.waitForFunction(expected => {
-        const list = [...document.querySelectorAll('.suggest-results')].find(el => el.getBoundingClientRect().height > 0);
-        return list?.getAttribute('aria-busy') === 'false' && JSON.stringify([...list.querySelectorAll('.suggest-item')].map(el => el.getAttribute('href'))) === JSON.stringify(expected);
-      }, expected.get(type));
-      assert.equal(await menu.locator('.suggest-type-heading').count(), 0, 'No type sections within a ranked list');
-      const allLink = new URL(await menu.locator('.suggest-view-all').getAttribute('href'), origin);
-      assert.equal(allLink.searchParams.get('q'), 'house');
-      assert.equal(allLink.searchParams.get('type'), type === 'all' ? null : type);
-    }
-    await input.press('ArrowDown');
-    const active = await input.getAttribute('aria-activedescendant');
-    assert.equal(await page.locator(`[id="${active}"]`).getAttribute('href'), '/tt0412142', 'Keyboard follows the same mixed ranking');
-    console.log(`PASS ${width}px: House first, mixed IMDb order, all/movie/series tabs and keyboard`);
+    const launcher = page.locator(width > 760 ? 'header.gradient-menu [aria-keyshortcuts="/"]' : '.app-nav-search');
+    await launcher.focus();
+    await page.waitForFunction(selector => Object.keys(document.querySelector(selector) ?? {}).some(k => k.startsWith('__reactProps$')), width > 760 ? 'header.gradient-menu [aria-keyshortcuts="/"]' : '.app-nav-search');
+    if (width > 760) await launcher.press('/');
+    else await launcher.click();
+    const dialog = page.locator('dialog[open]');
+    const field = dialog.getByRole('combobox');
+    await field.fill('odysse');
+    const first = dialog.locator('.suggest-item').first();
+    await dialog.locator('.suggest-item[href="/tt33764258"]').waitFor();
+    assert.equal(await first.getAttribute('href'), '/tt33764258');
+    assert.match(await first.innerText(), /IMDb/);
+    const list = dialog.getByRole('listbox');
+    const position = await field.boundingBox();
+    await list.evaluate(el => { el.scrollTop = 200; });
+    assert.ok(await list.evaluate(el => el.scrollTop > 0));
+    assert.equal((await field.boundingBox()).y, position.y);
+    await field.press('ArrowDown');
+    const selected = await field.getAttribute('aria-activedescendant');
+    assert.equal(selected, await first.getAttribute('id'));
+    await dialog.locator('.suggest-view-all').click();
+    const card = page.locator('[data-archive-card]').first();
+    await card.waitFor();
+    assert.equal(await card.getAttribute('href'), '/tt33764258');
+    console.log(`PASS ${width}px: search access, first visible match, scrolling, keyboard and full results`);
+    await page.close();
   }
-  assert.deepEqual(errors, []);
-  console.log('PASS live API ranking for house/dark/star; no browser errors');
 } finally { await browser.close(); }

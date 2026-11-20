@@ -1,8 +1,7 @@
 "use client";
 
-import { Film, Grid2X2, Music2, Search, Sparkles, Tv } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
+import { Film, Grid2X2, Music2, Search, Tv } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { ResponsiveDialog } from "./responsive-dialog";
 import { SearchSuggest } from "./search-suggest";
@@ -11,9 +10,23 @@ import styles from "./discovery-search.module.css";
 
 type Category = "all" | "movie" | "series" | "music";
 
-export function LandingSearchLauncher({ locale }: { locale: Locale }) {
+export function LandingSearchLauncher({ locale, className, text }: { locale: Locale; className?: string; text?: ReactNode }) {
   const [open, setOpen] = useState(false);
-  return <><button className={styles.trigger} type="button" aria-label={locale === "fa" ? "جستجو" : "Search"} title={locale === "fa" ? "جستجو" : "Search"} aria-haspopup="dialog" onClick={() => setOpen(true)}><Search size={22} /></button>{open && <DiscoverySearchDialog locale={locale} onClose={() => setOpen(false)} />}</>;
+  const trigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    function shortcut(event: KeyboardEvent) {
+      if (event.key !== "/" || event.defaultPrevented || event.repeat || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.target instanceof Element && event.target.closest('input,textarea,select,[contenteditable]:not([contenteditable=false]),[role=textbox]')) return;
+      if (!trigger.current?.getClientRects().length || document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]')) return;
+      event.preventDefault();
+      trigger.current.focus();
+      setOpen(true);
+    }
+    document.addEventListener("keydown", shortcut);
+    return () => document.removeEventListener("keydown", shortcut);
+  }, []);
+  const label = locale === "fa" ? "جستجو" : "Search";
+  return <><button ref={trigger} className={[styles.trigger, className].filter(Boolean).join(" ")} type="button" aria-label={label} title={label} aria-keyshortcuts="/" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}><Search size={22} aria-hidden="true" />{text}</button>{open && <DiscoverySearchDialog locale={locale} onClose={() => setOpen(false)} />}</>;
 }
 
 export function DiscoverySearchDialog({ locale, onClose, initialCategory = "all" }: { locale: Locale; onClose: () => void; initialCategory?: Category }) {
@@ -27,16 +40,9 @@ export function DiscoverySearchDialog({ locale, onClose, initialCategory = "all"
   const categories = <div className={styles.categories} role="group" aria-label={fa ? "نوع محتوا" : "Content type"}>{options.map(({ id, label, icon: Icon }) => <button key={id} type="button" aria-pressed={category === id} onClick={() => setCategory(id)}><Icon size={20} /><span>{label}</span></button>)}</div>;
   return <ResponsiveDialog className={styles.dialog} open onClose={onClose} initialFocus="input[role=combobox]" title={fa ? "جست‌وجوی سرونما" : "Search SarvNema"} description={fa ? "فیلم، سریال و موسیقی؛ املای دقیق هم لازم نیست." : "Films, series and music. Close spelling works too."} dir={fa ? "rtl" : "ltr"} closeLabel={fa ? "بستن جستجو" : "Close search"} theme={music ? "music" : "cinema"}>
     <div className={styles.search} data-discovery-search data-searching={query.trim().length >= 2}>
-      <div className={styles.spotlight}>
-        <span className={styles.spotlightKicker}><Sparkles size={14} />{fa ? "جست‌وجوی هوشمند سرونما" : "SarvNema smart search"}</span>
-        <strong>{fa ? "اسمش دقیق یادت نیست؟" : "Can’t quite remember the title?"}</strong>
-        <span>{fa ? "املای ناقص، عنوان فارسی یا انگلیسی و کد IMDb هم قابل جست‌وجوست." : "Misspellings, Persian or English titles, and IMDb codes are welcome."}</span>
-      </div>
       <form role="search" action={music ? "/music" : "/browse"} onSubmit={event => { event.preventDefault(); router.push(browseHref); onClose(); }}>
         <SearchSuggest key={`${category}:${exampleVersion}`} filters={categories} defaultValue={query} onQueryChange={setQuery} onNavigate={onClose} contained locale={locale} fixedKind={category === "movie" || category === "series" ? category : "all"} includeMusic={category === "all"} endpoint={music ? "/api/music/search" : "/api/suggest"} placeholder={fa ? (music ? "نام آهنگ یا خواننده…" : "اسمش رو اینجا بنویس…") : music ? "Song or artist…" : "Start typing a title…"} hrefForItem={music ? item => `/music/${item.imdbCode}` : undefined} viewAllHref={music ? q => `/music?q=${encodeURIComponent(q)}` : undefined} maxItems={16} />
-        {query.trim().length < 2 && <div className={styles.empty}><Search size={28} /><strong>{fa ? "هر چیزی از اسمش یادت هست بنویس" : "A little of the name is enough"}</strong><p>{fa ? "فارسی یا انگلیسی؛ املای نزدیک را هم پیدا می‌کنیم." : "English or Persian. We’ll help with the spelling."}</p><div className={styles.examples} aria-label={fa ? "امتحان جستجو" : "Try a search"}>{(music ? ["Mahasti", "Shadmehr"] : ["hoise", "breakng bud", "Stranger Things"]).map(value=><button type="button" key={value} dir="ltr" onClick={()=>{setQuery(value);setExampleVersion(version=>version+1);}}>{value}</button>)}</div></div>}
-        <button className={styles.submit} type="submit">{fa ? (category === "all" ? "همهٔ نتایج فیلم و سریال" : "نمایش همهٔ نتایج") : category === "all" ? "All film & series results" : "View all results"}</button>
-        {category === "all" && query.trim().length >= 2 && <Link className={styles.musicLink} href={`/music?q=${encodeURIComponent(query.trim())}`} onClick={onClose}>{fa ? "همهٔ نتایج موسیقی" : "All music results"}</Link>}
+        {query.trim().length < 2 && <div className={styles.empty}><strong>{fa ? "برای شروع امتحان کن" : "Try a search"}</strong><div className={styles.examples}>{(music ? ["مهستی", "Shadmehr"] : ["ادیسه", "House", "Breaking Bad"]).map(value=><button type="button" key={value} dir="auto" onClick={()=>{setQuery(value);setExampleVersion(version=>version+1);}}>{value}</button>)}</div></div>}
       </form>
     </div>
   </ResponsiveDialog>;

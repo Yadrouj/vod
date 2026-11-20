@@ -7,8 +7,8 @@ variants, diacritics, digits and Latin accents normalize consistently.
 
 For `hoise`, the live catalog suggests `House`, `horse` and `Noise`. The strongest
 candidate supplies results; other interpretations remain clickable alternatives,
-not unrelated high-rated titles mixed into the main list. Cinema results stay
-globally IMDb-descending; movie/series tabs filter that pool. Music retains its
+not unrelated high-rated titles mixed into the main list. Cinema ranks close
+title matches by IMDb and release year; movie/series tabs filter that pool. Music retains its
 title/artist relevance, popularity and year ordering.
 
 The original input is never silently changed. The dropdown and browse page say
@@ -25,7 +25,7 @@ Multiword candidates must be real contiguous title phrases, matching every input
 word in order. An index of words to titles narrows the candidate pool before
 whole-phrase validation, so frequent individual words cannot displace a closer
 title. Exact matching phrases still win; bot search ranks relevance within the
-resolved phrase, while the website retains global IMDb ordering.
+resolved phrase using the same default comparator as the website.
 
 ## Limits and caching
 
@@ -40,7 +40,7 @@ resolved phrase, while the website retains global IMDb ordering.
   letters; no word is discarded. Singleword candidates retain bounded expansion.
 - Immutable catalog snapshots invalidate indexes. Music's dictionary is built
   only when needed for a search, not for ordinary music landing requests.
-- Suggestion requests include `suggest=spelling-v1` to avoid old cached responses.
+- Cinema suggestion requests version the ranking with `sort=title-imdb-year-v2` to avoid old cached responses.
 
 ## Checks
 
@@ -53,4 +53,4 @@ node scripts/smoke-search-imdb.mjs
 Browser checks require the local server (`LOAD_BASE_URL`, default port 3004) and
 Playwright (`PLAYWRIGHT_MODULE` when installed outside this repository). They test
 the real catalog, desktop/mobile correction chips, keyboard use, original input,
-submitted searches, type filters and retained IMDb ordering.
+submitted searches, type filters and title/IMDb/year ordering.

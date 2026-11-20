@@ -51,12 +51,14 @@ for (const engine of engines) {
       });
       await context.route("**/api/music/search?*", route => route.fulfill({ json: { items: items.slice(0, 8).map(item => ({ ...item, imdbCode: `music-${item.imdbCode}`, type: "Track" })), artists: [] } }));
       const page = await context.newPage();
+      await page.route("**/*", route => route.request().resourceType() === "image" ? route.abort() : route.fallback());
       page.setDefaultTimeout(12000);
       page.setDefaultNavigationTimeout(60000);
       const errors = []; page.on("pageerror", error => errors.push(error.message));
       try {
         await page.goto(origin, { waitUntil: "domcontentloaded" });
         const launcher = page.locator(".app-nav-search");
+        await page.waitForFunction(() => Object.keys(document.querySelector(".app-nav-search") ?? {}).some(k => k.startsWith("__reactProps$")));
         await launcher.focus();
         await launcher.click();
         const dialog = page.locator("dialog[open]").filter({ has: page.locator("[data-discovery-search]") });
@@ -153,7 +155,7 @@ for (const engine of engines) {
         throw error;
       } finally { await context.close(); }
     }
-    // Desktop retains the introductory design and normal dialog scrolling.
+    // Desktop exposes examples alongside the focused input.
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: "block" });
     await context.addCookies([{ name: "vod_locale", value: "fa", url: origin }]);
     const page = await context.newPage();
@@ -161,9 +163,9 @@ for (const engine of engines) {
     await page.locator('.gradient-menu button[aria-haspopup="dialog"]').filter({ has: page.locator('svg.lucide-search') }).click();
     const desktop = page.locator("dialog[open]");
     assert.ok((await desktop.boundingBox()).width < 700);
-    assert.ok(await desktop.getByText("اسمش دقیق یادت نیست؟", { exact: true }).isVisible());
+    assert.ok(await desktop.getByRole("button", { name: "ادیسه", exact: true }).isVisible());
     await context.close();
-    reports.push({ engine, desktopUnchanged: true });
+    reports.push({ engine, desktopExamples: true });
   } finally { await browser.close(); }
 }
 console.log(JSON.stringify(reports, null, 2));

@@ -36,11 +36,9 @@ There is no claim of a live connection to Samfa.
 Typo recovery still selects a real, whole-phrase candidate set, never dropping a
 misspelled word. Matching movie and series results share one ranking:
 
-1. Valid IMDb rating, descending (unrated titles last).
-2. Real local selections of search results over seven Tehran dates.
-3. IMDb vote count.
-4. Fresh direct IMDb popularity-chart rank, when available.
-5. Title relevance, release year and stable ID as deterministic tie-breakers.
+1. Match the IMDb ID or whole Persian/original title first (ignoring an initial English article). Nearly finished whole titles precede partial mentions in longer titles.
+2. Within a match tier, use IMDb rating with a bonus of up to 0.5 points for releases in the last five years. An unrated title follows rated peers; no synthetic rating is displayed.
+3. Break ties by release year, real local selections over seven Tehran dates, IMDb vote count, fresh IMDb popularity-chart rank and stable ID.
 
 No site popularity figures are invented. An empty counter starts at zero. The
 browser records an actual selected film/series result, not a keystroke, prefetch,

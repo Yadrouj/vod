@@ -1,3 +1,13 @@
+:global(.suggest-results) :global(.suggest-item).resultRow {
+  display: flex; align-items: center; gap: 10px; text-align: start;
+}
+:global(.suggest-results) .resultRow :is(img, :global(.suggest-poster-fallback)) { order: 0; flex-shrink: 0; }
+.resultRow :global(.suggest-result-copy) { flex: 1; min-width: 0; }
+.resultRow :global(.suggest-result-copy) small { display: flex; align-items: baseline; gap: .6em; min-width: 0; }
+.originalTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rating { flex: 0 0 auto; color: #f0d588; font: 11px/1.4 system-ui, sans-serif; border: 1px solid #ebcf762b; border-radius: 6px; padding: 3px 6px; }
+.rating b { font-variant-numeric: tabular-nums; }
+
 /* Standalone search (browse / mini app). Contained dialog search has its own
    layout; portal suggestions on desktop keep their existing anchored design. */
 @media (max-width: 700px) {

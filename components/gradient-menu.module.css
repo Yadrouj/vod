@@ -1,7 +1,9 @@
 /* Keep the mobile DOM and its legacy layout intact. All chrome below is desktop-only.
    Header-qualified selectors also win over legacy global chrome rules regardless
    of CSS chunk order. !important is limited to properties already forced globally. */
+.searchKey { display: none; }
 @media (min-width: 761px) {
+  .searchKey { display: inline-block; margin-inline-start: 5px; padding: 0 5px; border: 1px solid #ffffff40; border-radius: 4px; color: #ddd; font-size: 12px; }
   header.header:global(.gradient-menu) {
     --header-accent: #ebcf88;
     --header-edge: rgba(255, 255, 255, 0.14);
