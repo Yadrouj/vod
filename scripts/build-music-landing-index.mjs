@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { writeJsonAtomic } from "./atomic-json.mjs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { compareMusicFreshness } from "../lib/music-freshness.mjs";
 
 const DATA_DIR = path.join(process.cwd(), "public", "data");
 const INPUT_FILE = path.join(DATA_DIR, "music-index.json");
@@ -189,9 +190,10 @@ function artistKey(value) {
 }
 
 function pickDiverse(items, limit) {
+  const now = Date.now();
   const ordered = [...items]
     .filter((track) => (track.sources ?? []).some((source) => source.kind === "stream" && source.available !== false))
-    .sort((left, right) => Number(Boolean(right.coverUrl)) - Number(Boolean(left.coverUrl)) || String(right.publishedAt ?? "").localeCompare(String(left.publishedAt ?? "")) || String(left.id).localeCompare(String(right.id)));
+    .sort((left, right) => compareMusicFreshness(left, right, now));
   const selected = [];
   const usedArtists = new Set();
   const usedCovers = new Set();

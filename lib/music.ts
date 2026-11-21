@@ -10,6 +10,7 @@ import { susanRoshanRelease } from './susan-roshan-collection';
 import { MusicRelatedIndex } from './music-related-index';
 import { applyCurrentMusicReleases } from './current-music-release';
 import { applyMusicReleaseBundle } from './bundled-music-release';
+import { compareMusicFreshness } from './music-freshness.mjs';
 
 const DATA_FILE = path.join(process.cwd(), "public", "data", "music-index.json");
 const LANDING_DATA_FILE = path.join(process.cwd(), "public", "data", "music-landing.json");
@@ -177,13 +178,11 @@ export function resolveMusicSearch(index: MusicIndex, query: string, kind = "all
 }
 
 export function selectMusicShelfTracks(tracks: MusicTrack[], limit = 15) {
+  const now = Date.now();
   const playable = [...tracks]
     .map(normalizeMusicTrack)
     .filter((track) => track.sources.some((source) => source.kind === "stream" && source.available !== false))
-    .sort((left, right) => (
-      Number(Boolean(right.coverUrl)) - Number(Boolean(left.coverUrl))
-      || (right.publishedAt ?? "").localeCompare(left.publishedAt ?? "")
-    ));
+    .sort((left, right) => compareMusicFreshness(left, right, now));
   // Archive imports often contain generic "Various Artists"/unknown entries
   // with a shared catalogue cover. Prefer named performers whenever the shelf
   // has enough of them, while retaining that fallback for sparse categories.

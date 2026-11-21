@@ -29,8 +29,7 @@ import { FILM_LANDING_SEO, landingJsonLd } from "@/lib/landing-seo";
 import { titleMetadata } from "@/lib/seo";
 import { loadVodHomeIndex, loadVodIndex, selectVodSection } from "@/lib/vod-index";
 import { categoryCounts, categoryCardBuckets } from "@/lib/category-counts";
-import { matchWeeklyPicks, recentlyUpdatedTitles } from "@/lib/home-discovery";
-import weeklyPicks from "@/public/data/imdb-weekly-picks.json";
+import { weeklyDiscovery, recentlyUpdatedTitles } from "@/lib/home-discovery";
 import { DiscoveryUpdateStrip } from "@/components/discovery-update-strip";
 import { loadImdbTrending, loadHeroArtwork } from "@/lib/imdb-trending";
 import { rankDiscovery } from "@/lib/discovery-ranking";
@@ -73,6 +72,7 @@ export default async function HomePage() {
     megaSections,
     wideItems,
     weeklyTitles,
+    weeklyBasis,
     updatedTitles,
   } = await buildHomePageData(locale);
 
@@ -110,7 +110,7 @@ export default async function HomePage() {
           description={locale === "fa" ? `${(news.daily?.count ?? 0).toLocaleString("fa-IR")} خبر در انتخاب روزانه؛ تازه‌های آرشیو و محبوب‌های IMDb، یک‌جا برای انتخاب راحت‌تر.` : "Daily news, archive updates and IMDb's weekly picks."}
           updatedAt={news.daily?.checkedAt || news.generatedAt}
           links={[{ href: "#popular-imdb", label: locale === "fa" ? "محبوب‌های IMDb" : "IMDb picks" }, { href: "/updates", label: locale === "fa" ? "فیلم و قسمت‌های به‌روز" : "Archive updates" }, { href: "#daily-news", label: locale === "fa" ? "خبرهای تازه" : "Latest news" }, { href: "/music", label: locale === "fa" ? "تازه‌های موسیقی" : "Music" }]} />
-        {weeklyTitles.length > 0 && <section id="popular-imdb"><HomeRail section={makeSection("imdb-weekly", locale === "fa" ? "محبوب‌های موجود در سرونما" : "Popular on SarvNema", locale === "fa" ? "فیلم و سریال‌های محبوب موجود در آرشیو؛ ادامهٔ انتخاب‌ها را همین‌جا در سرونما ببین." : "Popular titles in our catalogue. Explore more without leaving SarvNema.", weeklyTitles, "/browse?sort=rating")} locale={locale} /></section>}
+        {weeklyTitles.length > 0 && <section id="popular-imdb" data-weekly-basis={weeklyBasis}><HomeRail section={makeSection("imdb-weekly", locale === "fa" ? (weeklyBasis === "imdb" ? "محبوب‌های امروز IMDb در سرونما" : weeklyBasis === "catalog-week" ? "پیشنهادهای این هفته" : "پیشنهادهایی برای دیدن") : "This week's watchlist", locale === "fa" ? (weeklyBasis === "imdb" ? "از تازه‌ترین جدول محبوبیت IMDb؛ با لینک صفحهٔ خود اثر در سرونما." : "انتخاب از آرشیو به‌روزشده، با توجه به امتیاز و تعداد رأی IMDb؛ نه جدول زندهٔ محبوبیت.") : "Available catalogue picks using IMDb ratings and vote counts. Not a live chart unless indicated.", weeklyTitles, "/browse?minScore=7")} locale={locale} /></section>}
         {updatedTitles.length > 0 && <HomeRail section={makeSection("recently-updated", locale === "fa" ? "تازه به‌روزشده در آرشیو" : "Recently updated", locale === "fa" ? "به ترتیب آخرین تغییر ثبت‌شدهٔ منابع؛ تاریخ به‌روزرسانی با سال انتشار اثر متفاوت است." : "Ordered by actual source/catalog update time, not release year.", updatedTitles, "/updates")} locale={locale} />}
         {freshLandingRails.map((section) => <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />)}
         <ReleaseUpdatesRail items={newEpisodes} variant="episodes" locale={locale} generatedAt={updates.generatedAt} asOf={updates.asOf} />
@@ -170,10 +170,10 @@ async function computeHomePageData(locale: Locale) {
   const t = getDictionary(locale);
   const seen = new Set<string>();
   const signals = { trends: trending, audience };
-  const weeklyAge = Date.now() - Date.parse(weeklyPicks.publishedAt);
-  const weeklyTitles = weeklyAge >= 0 && weeklyAge < 30 * 86400_000 ? matchWeeklyPicks(catalog.items, weeklyPicks.entries) : [];
+  const weekly = weeklyDiscovery(catalog.items.filter(isLandingReady), trending);
+  const weeklyTitles = weekly.items;
   const updatedTitles = recentlyUpdatedTitles(catalog.items);
-  const discovery = rankDiscovery([...index.items, ...trending.filter(item => item.popularity.current)].filter(isLandingReady), signals, 80);
+  const discovery = rankDiscovery([...weeklyTitles, ...updatedTitles, ...trending.filter(item => item.popularity.current)].filter(isLandingReady), signals, 80);
   const trendMap = new Map(trending.map(item => [item.imdbCode, item.popularity]));
   // The lead frame is deliberately separate from personalised discovery: it
   // follows the rank order in IMDb's MOVIEmeter and TVmeter charts. This keeps
@@ -230,7 +230,7 @@ async function computeHomePageData(locale: Locale) {
       locale === "fa" ? `فیلم‌های ${currentYear}` : `${currentYear} Movies`,
       locale === "fa" ? "فیلم‌های تازه و به‌روزشده در آرشیو سرونما" : "Fresh movies and recently updated files in the SarvNema archive.",
       uniqueCards(
-        index.items
+        catalog.items
           .filter((item) => item.type === "movie" && item.year === currentYear && isLandingReady(item))
           .sort(yearSort),
       ).slice(0, 60),
@@ -241,7 +241,7 @@ async function computeHomePageData(locale: Locale) {
       t.home.sections["recent-trailers"].title,
       t.home.sections["recent-trailers"].subtitle,
       uniqueCards(
-        index.items
+        catalog.items
           .filter((item) => item.backdropUrl && (item.year ?? 0) >= 2020 && isLandingReady(item))
           .sort(yearSort)
       ).slice(0, 60),
@@ -252,7 +252,7 @@ async function computeHomePageData(locale: Locale) {
       t.home.sections["latest-series"].title,
       t.home.sections["latest-series"].subtitle,
       uniqueCards(
-        index.items
+        catalog.items
           .filter((item) => item.type === "series" && isLandingReady(item))
           .sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || b.linksCount - a.linksCount)
       ).slice(0, 60),
@@ -301,6 +301,7 @@ async function computeHomePageData(locale: Locale) {
     megaSections,
     wideItems,
     weeklyTitles,
+    weeklyBasis: weekly.basis,
     updatedTitles,
   };
 }

@@ -1,12 +1,29 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { matchWeeklyPicks, recentlyUpdatedTitles } from "../../lib/home-discovery";
+import { matchWeeklyPicks, recentlyUpdatedTitles, weeklyDiscovery } from "../../lib/home-discovery";
+import type { TrendingTitle } from "../../lib/imdb-trending";
 import type { VodCard } from "../../lib/types";
 
 const card = (id: string, title: string, year: number, type = "movie") => ({ id, imdbCode: id, title, year, type, linksCount: 2, genres: [], posterUrl: "/test.jpg", imdbRating: 8 } as unknown as VodCard);
 test("weekly picks never mix remakes or movie and series titles, nor invent pages", () => {
   const items = [card("old", "Carrie", 1976), card("series", "Carrie", 2026, "series"), card("movie", "Carrie", 2013)];
   assert.deepEqual(matchWeeklyPicks(items, [{ title: "Carrie", year: 2026, type: "series", rank: 3 }, { title: "Absent", year: 2026, type: "movie", rank: 1 }]).map(t => t.imdbCode), ["series"]);
+});
+test("weekly picks read current catalogue updates without re-dating an unavailable chart", () => {
+  const now = Date.parse("2026-11-21T10:00:00Z");
+  const fresh = Array.from({ length: 5 }, (_, n) => ({ ...card(`fresh-${n}`, `Film ${n}`, 2026), catalogUpdatedAt: "2026-11-20T10:00:00Z" }));
+  const items = [...fresh, { ...card("old", "Classic", 1980), imdbRating: 10 }, { ...card("future", "Future", 2027), catalogUpdatedAt: "2026-12-01T00:00:00Z" }];
+  const pick = weeklyDiscovery(items, [], now);
+  assert.equal(pick.basis, "catalog-week");
+  assert.deepEqual(new Set(pick.items.map(i => i.imdbCode)), new Set(fresh.map(i => i.imdbCode)));
+  assert.equal(weeklyDiscovery(items, [], now + 10 * 86400000).basis, "catalog");
+});
+test("current chart picks match live IDs, never resurrect a missing or unavailable title", () => {
+  const now = Date.parse("2026-11-21T10:00:00Z"), items = Array.from({length: 5}, (_, n) => card(`id${n}`, `Title ${n}`, 2026));
+  const trends = items.map((i, n) => ({ ...i, popularity: { rank: n + 1, current: true, observedAt: "2026-11-21T08:00:00Z", kind: "movie", sourceUrl: "https://www.imdb.com/chart/moviemeter/" } })) as TrendingTitle[];
+  assert.equal(weeklyDiscovery(items, trends, now).basis, "imdb");
+  assert.notEqual(weeklyDiscovery(items, trends, now + 2 * 86400000).basis, "imdb");
+  assert.equal(weeklyDiscovery(items.filter(i => i.imdbCode !== "id1"), trends, now).items.some(i => i.imdbCode === "id1"), false);
 });
 test("updated shelves use real timestamps, not release years or future dates", () => {
   const items = [{ ...card("a", "Old film updated today", 1980), catalogUpdatedAt: "2026-11-10T01:00:00Z" },

@@ -1,4 +1,25 @@
 import type { VodCard } from "./types";
+import type { TrendingTitle } from "./imdb-trending";
+import { rankDiscovery } from "./discovery-ranking";
+
+/** Live catalogue selection, not a build-time import or a fabricated IMDb chart. */
+export function weeklyDiscovery(items: VodCard[], trends: TrendingTitle[], now = Date.now(), limit = 18) {
+  const eligible = items.filter(item => item.linksCount > 0 && (item.posterUrl || item.backdropUrl));
+  const byId = new Map(eligible.map(item => [item.imdbCode, item]));
+  const direct = trends.filter(item => {
+    const age = now - Date.parse(item.popularity.observedAt);
+    return item.popularity.current && age >= 0 && age < 86400_000 && byId.has(item.imdbCode);
+  }).map(item => byId.get(item.imdbCode)!);
+  if (direct.length >= 4) return { items: direct.slice(0, limit), basis: "imdb" as const };
+  const week = eligible.filter(item => {
+    const age = now - Date.parse(item.catalogUpdatedAt || item.sourceUpdatedAt || "");
+    return age >= 0 && age <= 7 * 86400_000;
+  });
+  const year = new Date(now).getUTCFullYear();
+  const pool = week.length >= 4 ? week : eligible.filter(item => (item.year ?? 0) >= year - 1 && (item.year ?? 0) <= year);
+  const ranked = rankDiscovery(pool, { now }, limit);
+  return { items: ranked.length ? ranked : rankDiscovery(eligible, { now }, limit), basis: week.length >= 4 ? "catalog-week" as const : "catalog" as const };
+}
 
 type WeeklyEntry = { title: string; year: number; type: string; rank: number };
 /** Match the published weekly list without inventing absent title pages. */

@@ -96,17 +96,18 @@ export default async function MusicPage({ searchParams }: Props) {
     artists: new Set(index.tracks.flatMap((track) => normalizeMusicTrack(track).artists.map((artist) => artist.slug))).size,
     videos: index.tracks.filter((track) => track.kind === "video").length,
   };
-  const artistOfMoment = index.artists.find((artist) => artistTrackCount(artist) >= 8) ?? index.artists[0];
+  const featuredArtists = pickFeaturedArtists(index.artists, 12);
+  const artistOfMoment = featuredArtists.find(artist => index.tracks.some(track => track.artists.some(ref => ref.slug === artist.slug))) ?? index.artists[0];
   const artistTracks = artistOfMoment
     ? selectMusicShelfTracks(index.tracks.filter((track) => track.artists.some((artist) => artist.slug === artistOfMoment.slug)), MUSIC_SHELF_SIZE)
     : [];
-  const featuredArtists = pickFeaturedArtists(index.artists, 12);
   // Music-video artwork is generally larger and more reliable than the tiny
   // archive thumbnails, so it leads the visual hero while the shelves keep
   // their chronological catalog order.
-  const heroSourceTracks = hasFilter && tracks.length ? tracks : [...libraryArrivals, ...weeklyTracks, ...recentVideos, ...remixes, ...recentTracks];
+  const heroSourceTracks = hasFilter && tracks.length ? tracks : [...weeklyTracks, ...recentVideos, ...recentTracks, ...remixes, ...libraryArrivals];
+  const heroSeen = new Set<string>();
   const heroTracks: MusicHeroTrack[] = [...heroSourceTracks]
-    .sort((left, right) => Number(Boolean(right.coverUrl)) - Number(Boolean(left.coverUrl)))
+    .filter(track => { if (heroSeen.has(track.id)) return false; heroSeen.add(track.id); return true; })
     .slice(0, 8)
     .map((track) => ({
       id: track.id,
@@ -181,11 +182,11 @@ export default async function MusicPage({ searchParams }: Props) {
               ))}
             </nav>
             <MusicPlaylistLeaderboard />
-            {topClassics.length > 0 && <MusicShelf eyebrow={"\u0622\u0631\u0634\u06cc\u0648 \u062e\u0627\u0637\u0631\u0647\u200c\u0647\u0627"} title={"\u0645\u0648\u0633\u06cc\u0642\u06cc \u0642\u062f\u06cc\u0645\u06cc \u0641\u0627\u0631\u0633\u06cc"} tracks={topClassics} viewAll="/music?category=%D9%85%D9%88%D8%B3%DB%8C%D9%82%DB%8C%20%D9%82%D8%AF%DB%8C%D9%85%DB%8C%20%D9%81%D8%A7%D8%B1%D8%B3%DB%8C" preload />}
             {weeklyTracks.length > 0 && <MusicShelf eyebrow="همین هفته" title="تازه‌های این هفته" tracks={weeklyTracks} viewAll="/music?fresh=week" preload />}
             {currentYearTracks.length > 0 && <MusicShelf eyebrow={`${currentYear} • تازه رسیده`} title={`انتشارهای ${currentYear}`} tracks={currentYearTracks} viewAll={`/music?year=${currentYear}`} preload />}
             {remixes.length > 0 && <MusicShelf eyebrow={REMIX_CATEGORY} title={REMIX_CATEGORY} tracks={remixes} viewAll={`/music?category=${encodeURIComponent(REMIX_CATEGORY)}`} />}
             <MusicShelf eyebrow="تازه از آرشیو" title="جدیدترین آهنگ‌ها" tracks={recentTracks} viewAll="/music?kind=track" preload />
+            {topClassics.length > 0 && <MusicShelf eyebrow="آرشیو خاطره‌ها" title="موسیقی قدیمی فارسی" tracks={topClassics} viewAll={`/music?category=${encodeURIComponent("موسیقی قدیمی فارسی")}`} />}
             {artistOfMoment && <MusicShelf eyebrow="انتخاب امروز" title={`گلچین ${artistOfMoment.name}`} tracks={artistTracks} viewAll={`/music/artists/${encodeURIComponent(artistOfMoment.slug)}`} />}
             {recentVideos.length > 0 && <MusicShelf eyebrow="تصویر و صدا" title="موزیک‌ویدیوهای تازه" tracks={recentVideos} viewAll="/music?kind=video" />}
             {foreign.length > 0 && <MusicShelf eyebrow="برای کشف بیشتر" title="موسیقی خارجی" tracks={foreign} viewAll="/music?q=موسیقی%20خارجی" />}
@@ -237,7 +238,7 @@ function isMusicReleasedThisWeek(track: { publishedAt: string | null; folder: { 
 }
 
 function pickFeaturedArtists<T extends { slug: string; trackIds: string[]; trackCount?: number; profileImageUrl?: string | null; coverUrl: string | null }>(artists: T[], limit: number) {
-  const day = new Date().toISOString().slice(0, 10);
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tehran" }).format(new Date());
   const pool = artists
     .filter((artist) => artistTrackCount(artist) > 1)
     .sort((left, right) => (
