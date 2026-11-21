@@ -7,6 +7,8 @@ import {
   readStoredEpisodeImage,
   storeEpisodeImage,
 } from "@/lib/episode-metadata";
+import { parseTmdbImageUrl } from "@/lib/tmdb-image-path.mjs";
+import { resolveTmdbImage } from "@/lib/tmdb-mirror";
 
 type Props = {
   params: Promise<{ id: string; season: string; episode: string }>;
@@ -31,7 +33,13 @@ export async function GET(_request: Request, { params }: Props) {
   let bytes: Uint8Array | null = await readStoredEpisodeImage(file);
   if (!bytes) {
     const source = await findEpisodeImageSource(id, seasonNumber, episodeNumber);
-    if (source) bytes = await storeEpisodeImage(source, file);
+    // This host cannot reach TMDB; its stills come from the MinIO mirror.
+    const tmdb = source ? parseTmdbImageUrl(source) : null;
+    if (tmdb) {
+      const mirrored = await resolveTmdbImage(tmdb.size, tmdb.file);
+      if (mirrored.kind === "image") bytes = mirrored.bytes;
+    }
+    if (!bytes && source) bytes = await storeEpisodeImage(source, file);
   }
   const type = bytes && episodeImageType(bytes);
   if (!bytes || !type) {

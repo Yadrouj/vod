@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { WatchTogetherLauncher } from "@/components/watch-together-launcher";
 import type { Locale } from "@/lib/i18n";
 import type { PartyPublicRoom } from "@/lib/watch-party-types";
+import { mirroredImageUrl } from "@/lib/image-url";
 
 type Mode = "listen" | "watch";
 
@@ -52,7 +53,7 @@ export function PublicPartyRooms({ mode, locale, limit = 6 }: { mode: Mode; loca
     </header>
     {loading ? <div className="public-party-rooms-loading">{fa ? "اتاق‌های زنده را چک می‌کنیم…" : "Checking live rooms…"}</div> : rooms.length ? <div className="public-party-rooms-grid">
       {rooms.map((room) => <Link href={`/watch-together/${room.roomId}`} className="public-party-room-card" key={room.roomId}>
-        <span className="public-party-room-art" style={room.posterUrl ? { backgroundImage: `url("${room.posterUrl}")` } : undefined}>{listening ? <Headphones size={22} /> : <Play size={22} fill="currentColor" />}</span>
+        <span className="public-party-room-art" style={room.posterUrl ? { backgroundImage: `url("${mirroredImageUrl(room.posterUrl)}")` } : undefined}>{listening ? <Headphones size={22} /> : <Play size={22} fill="currentColor" />}</span>
         <div className="public-party-room-copy"><strong>{room.title}</strong><small>{room.sharedAudio ? (fa ? `${room.sharedAudio.name} فایل شخصی پخش می‌کند` : `${room.sharedAudio.name} is streaming local audio`) : room.artistName || (room.paused ? (fa ? "آمادهٔ شروع" : "Ready to start") : (fa ? "در حال پخش" : "Playing now"))}</small></div>
         <span className="public-party-room-presence"><UsersRound size={14} /> {room.participantCount.toLocaleString(fa ? "fa-IR" : "en-US")}</span>
         <span className="public-party-room-join">{listening ? <Volume2 size={15} /> : <DoorOpen size={15} />} {fa ? "پیوستن" : "Join"}</span>

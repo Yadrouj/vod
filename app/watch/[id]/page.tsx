@@ -24,6 +24,7 @@ import { validPublisherPlayer } from "@/lib/publisher-player";
 import { PublisherFilmPlayer } from "@/components/publisher-film-player";
 import { contentRestriction } from '@/lib/content-restrictions.mjs';
 import { ContentRestrictionNotice } from '@/components/content-restriction-notice';
+import { mirroredImageUrl } from "@/lib/image-url";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -118,7 +119,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
           </details>
         </section>
         <aside className={styles.sidebar}>
-          {item.posterUrl && <Link href={`/${item.imdbCode}`} className={styles.posterLink}><img src={item.posterUrl} alt={displayTitle} loading="lazy" decoding="async" /><span>{locale === "fa" ? "صفحه فیلم و همه نسخه‌ها" : "Title details & all versions"}</span></Link>}
+          {item.posterUrl && <Link href={`/${item.imdbCode}`} className={styles.posterLink}><img src={mirroredImageUrl(item.posterUrl)} alt={displayTitle} loading="lazy" decoding="async" /><span>{locale === "fa" ? "صفحه فیلم و همه نسخه‌ها" : "Title details & all versions"}</span></Link>}
           <h2>{locale === "fa" ? "پخش و دانلود" : "Watch & download"}</h2>
           <p>{locale === "fa" ? "کیفیت و قسمت را از تنظیمات پلیر تغییر دهید. اگر منبع باز نشد، لینک‌ها و نسخه‌های دیگر را بررسی کنید." : "Change quality and episode in player settings. If a source fails, check alternative versions."}</p>
           <Link className={styles.downloadLink} href={`/${item.imdbCode}#downloads`}>{locale === "fa" ? "همه کیفیت‌ها و قسمت‌ها" : "All qualities & episodes"} ↗</Link>

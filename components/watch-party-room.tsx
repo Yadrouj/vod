@@ -19,7 +19,7 @@ import { PlayerSubtitles } from "@/components/player-subtitles";
 import { ResponsiveDialog, useMobilePlayer } from "@/components/responsive-dialog";
 import { WatchTogetherMark } from "@/components/watch-together-mark";
 import { BRAND_MARK } from "@/lib/brand";
-import { sizedImageUrl } from "@/lib/image-url";
+import { mirroredImageUrl, sizedImageUrl } from "@/lib/image-url";
 import { showAppMessage } from "@/lib/app-messages";
 import type { SubtitleSelection } from "@/lib/subtitle-types";
 import { inferPersonalMediaKind, isSupportedPersonalMediaFile, type PersonalMediaFields, type PersonalMediaKind, type PersonalMediaMode } from "@/lib/watch-party-personal-media";
@@ -589,7 +589,7 @@ export function WatchPartyRoom({ roomId }: { roomId: string }) {
         {isListeningRoom ? (
           <>
             <audio ref={audioRef} key={`${playbackUrl}:${sourceRevision}`} src={playbackUrl} preload="auto" onLoadStart={handleMediaLoadStart} onWaiting={() => setMediaBuffering(true)} onStalled={() => setMediaBuffering(true)} onLoadedMetadata={handleLoadedMetadata} onError={handleMediaError} onTimeUpdate={(event) => { setPlayerTime(event.currentTarget.currentTime); }} onSeeked={finishRemoteSeek} onCanPlay={handleMediaCanPlay} />
-            <div className="party-listening-art" style={playback.media.posterUrl ? { backgroundImage: `url(${playback.media.posterUrl})` } : undefined} aria-hidden="true"><div>{playback.media.posterUrl ? <img src={playback.media.posterUrl} alt="" /> : <Disc3 size={84} />}</div></div>
+            <div className="party-listening-art" style={playback.media.posterUrl ? { backgroundImage: `url(${mirroredImageUrl(playback.media.posterUrl)})` } : undefined} aria-hidden="true"><div>{playback.media.posterUrl ? <img src={mirroredImageUrl(playback.media.posterUrl)} alt="" /> : <Disc3 size={84} />}</div></div>
             <div className="party-listening-copy" data-player-ui="true"><span>LISTEN TOGETHER · LIVE SYNC</span><h2>{playback.media.title}</h2><p>{playback.media.artistName || playback.media.details?.credits?.map((credit) => credit.name).join(" · ") || "Shared music room"}</p><small>{snapshot.participants.filter((item) => item.connected).length} people in the room · {playback.paused ? "paused" : "playing together"}</small></div>
             <div className="party-listening-wave" aria-hidden="true">{Array.from({ length: 32 }, (_, index) => <i key={index} style={{ "--wave": `${28 + (index * 19) % 72}%`, "--delay": `${index * -0.07}s` } as React.CSSProperties} />)}</div>
           </>

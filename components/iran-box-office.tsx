@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- Primary-source posters, without a runtime image proxy. */
 import type { DailyBoxOfficeMetric, IranBoxOfficeView, CinemaTicketPrice } from '@/lib/iran-box-office';
 import styles from './iran-box-office.module.css';
+import { mirroredImageUrl } from "@/lib/image-url";
 
 const number = (value: number, digits = 0) => value.toLocaleString('fa-IR', { maximumFractionDigits: digits });
 function money(value: number) {
@@ -57,7 +58,7 @@ export function IranBoxOffice({ data }: { data: IranBoxOfficeView | null }) {
         {comparison && usable.dailyStatus?.state === 'retained' && <p className={styles.stale}>دریافت مقایسهٔ تازه ناموفق بود؛ مقایسهٔ قبلی با تاریخ اصلی حفظ شده است.</p>}
       </div>
       <ol className={styles.leaders} aria-label="صدرنشین‌های فروش تجمیعی">{usable.films.slice(0, 4).map(film => <li className={styles.film} key={film.id}>
-        <div className={styles.poster}>{film.posterUrl ? <img src={film.posterUrl} width={180} height={270} alt={`پوستر ${film.title}`} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <span>پوستر در دسترس نیست</span>}<b aria-label={`رتبهٔ ${number(film.rank)}`}>{number(film.rank)}</b></div>
+        <div className={styles.poster}>{film.posterUrl ? <img src={mirroredImageUrl(film.posterUrl)} width={180} height={270} alt={`پوستر ${film.title}`} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <span>پوستر در دسترس نیست</span>}<b aria-label={`رتبهٔ ${number(film.rank)}`}>{number(film.rank)}</b></div>
         <div className={styles.filmCopy}><h3>{film.title}</h3><p>{film.directors.join('، ') || 'کارگردان ثبت نشده'}</p><strong>{money(film.cumulativeToman)}</strong><span className={styles.admissions}>{number(film.admissions)} بلیت</span>
           <div className={styles.daily}><span>تغییر فروش روزانه</span><Growth metric={metrics.get(film.id)} /></div>{film.ticketPrice && <TicketPrice value={film.ticketPrice} />}</div>
       </li>)}</ol>

@@ -45,8 +45,10 @@ test("embeds are restricted to exact reviewed resources", () => {
 });
 test("menu uses a valid small backdrop size and bounded alternate sources", () => {
   const urls = categoryImageCandidates({ backdropUrl: "https://image.tmdb.org/t/p/original/back.jpg", posterUrl: "https://image.tmdb.org/t/p/w500/poster.jpg" });
-  assert.equal(urls[0], "https://image.tmdb.org/t/p/w300/back.jpg");
-  assert.ok(urls.includes("https://image.tmdb.org/t/p/w300/poster.jpg"));
+  assert.equal(urls[0], "/media/tmdb/w300/back.jpg");
+  assert.ok(urls.includes("/media/tmdb/w300/poster.jpg"));
+  assert.ok(urls.includes("/media/tmdb/original/back.jpg"));
+  assert.ok(urls.every(url => !url.includes("image.tmdb.org")));
   assert.ok(urls.length <= 4);
   assert.deepEqual(categoryImageCandidates({ backdropUrl: "javascript:bad", posterUrl: null }), []);
   assert.equal(categoryImageCandidates({ backdropUrl: "https://example.com/a.jpg", posterUrl: "https://example.com/a.jpg" }).length, 1);

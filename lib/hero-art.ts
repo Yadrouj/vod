@@ -1,5 +1,5 @@
 import type { VodCard } from "@/lib/types";
-import { sizedImageUrl } from "@/lib/image-url";
+import { mirroredImageUrl, sizedImageUrl } from "@/lib/image-url";
 
 // This module is also imported by the client carousel. Runtime file access and
 // credentials belong in the refresh script / server loader, never here.
@@ -38,6 +38,6 @@ export function heroImageSrc(url: string, width: number) {
   // Keep original landscape files for large desktop screens. The normal image
   // helper caps TMDB at 1280px, which is useful for rails but softens a
   // full-width 1440px hero.
-  if (/^https:\/\/image\.tmdb\.org\//i.test(url)) return url;
+  if (/^https:\/\/image\.tmdb\.org\//i.test(url)) return mirroredImageUrl(url);
   return sizedImageUrl(url, width) ?? url;
 }

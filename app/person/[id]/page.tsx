@@ -15,6 +15,7 @@ import { localizedTitle } from '@/lib/title-display';
 import { StructuredData } from '@/components/structured-data';
 import { EntityFaqSection } from '@/components/entity-faq';
 import type { Metadata } from 'next';
+import { mirroredImageUrl } from "@/lib/image-url";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -68,7 +69,7 @@ export default async function PersonPage({ params }: Props) {
             <div className="person-profile-column">
               <div className="person-title">
                 {person.imageUrl ? (
-                  <img src={person.imageUrl} alt={person.name} />
+                  <img src={mirroredImageUrl(person.imageUrl)} alt={person.name} />
                 ) : (
                   <span className="person-fallback">{person.name.slice(0, 1)}</span>
                 )}
@@ -106,7 +107,7 @@ export default async function PersonPage({ params }: Props) {
                     key={`${person.id}-${item.imdbCode}`}
                     href={`/${item.imdbCode}`}
                     className="person-work-card"
-                    style={item.posterUrl ? { backgroundImage: `url(${item.posterUrl})` } : undefined}
+                    style={item.posterUrl ? { backgroundImage: `url(${mirroredImageUrl(item.posterUrl)})` } : undefined}
                   >
                     <span className="person-work-shade" />
                     <span className="person-work-copy">

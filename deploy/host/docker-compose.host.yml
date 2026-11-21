@@ -30,6 +30,10 @@ services:
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
       VOD_DATA_DIR: /app/public/data
+      # Self-hosted TMDB images (/media/tmdb/...), see docs/tmdb-image-mirror.md.
+      # Credentials come from MINIO_ROOT_USER / MINIO_ROOT_PASSWORD in .env.local.
+      TMDB_MIRROR_ENDPOINT: http://vod-minio:9000
+      TMDB_MIRROR_BUCKET: sarvnema-tmdb
       # Without this Node caps the heap at half of mem_limit, and the catalogue outgrew that.
       NODE_OPTIONS: --max-old-space-size=${APP_HEAP_MB:-2304}
     # Loopback only: the host nginx is the single public entry point.
@@ -50,6 +54,31 @@ services:
     # Leaves room for the co-tenant sites on this 2-core box.
     mem_limit: ${APP_MEMORY_LIMIT:-3g}
     cpus: 1.5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Object storage for the TMDB image mirror (bucket `sarvnema-tmdb`, anonymous
+  # read). Only the app reaches it over the compose network; the loopback port
+  # is for the upload tunnel (ssh -L 19000:127.0.0.1:19000 parspack1).
+  # The image is the registry mirror already present on parspack1, which
+  # cannot pull from Docker Hub.
+  minio:
+    image: docker.arvancloud.ir/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    container_name: vod-minio
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    env_file:
+      - path: ../../.env.local
+        required: false
+    ports:
+      - "127.0.0.1:19000:9000"
+    volumes:
+      - vod_minio_data:/data
+    mem_limit: 512m
+    cpus: 0.5
     logging:
       driver: json-file
       options:
@@ -116,5 +145,6 @@ services:
   # Telegram bot and channel run on 62.83.32.47: docs/telegram-remote-server.md
 
 volumes:
+  vod_minio_data:
   vod_episode_images:
   vod_imdb_cache:

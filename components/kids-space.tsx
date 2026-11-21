@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { KIDS_AGES, KIDS_CATEGORIES, KIDS_RESOURCES, KIDS_STORAGE_KEY, kidsEmbedUrl, kidsVisible, parseKidsSettings, safeKidsUrl, sessionSeconds, type KidsAge, type KidsCategory, type KidsItem, type KidsSettings } from "@/lib/kids";
 import styles from "./kids-space.module.css";
+import { mirroredImageUrl } from "@/lib/image-url";
 
 async function hashPin(pin: string, salt: string) {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, ["deriveBits"]);
@@ -154,7 +155,7 @@ export function KidsSpace({ items, learning = false }: { items: KidsItem[]; lear
         <button className={styles.art} onClick={() => choose(item)} aria-label={`${parent ? "پیش‌نمایش" : "شروع"} ${item.title}`}>
           {/* Only explicitly shortlisted or approved covers, never the adult feed. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {item.poster ? <img src={item.poster} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <span aria-hidden="true">{KIDS_CATEGORIES.find(c => c[0] === item.categories[0])?.[2] || "🌟"}</span>}<b>{item.kind === "activity" ? "بازی کنیم" : parent ? "پیش‌نمایش" : "پخش"} ▶</b>
+          {item.poster ? <img src={mirroredImageUrl(item.poster)} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <span aria-hidden="true">{KIDS_CATEGORIES.find(c => c[0] === item.categories[0])?.[2] || "🌟"}</span>}<b>{item.kind === "activity" ? "بازی کنیم" : parent ? "پیش‌نمایش" : "پخش"} ▶</b>
         </button><div className={styles.cardBody}><small>{item.kind === "activity" ? "بازی داخلی" : item.kind === "audio" ? "صوت" : item.categories.includes("series") ? "سریال" : "فیلم"} · {item.ages.join("، ").replaceAll("-", " تا ")} سال</small><h3>{item.title}</h3>
           {parent && <><p>{item.note}</p><small>{item.provider}</small>{item.kind !== "activity" && <label className={styles.approve}><input type="checkbox" checked={settings!.approved.includes(item.id)} onChange={e => save({ ...settings!, approved: e.target.checked ? [...new Set([...settings!.approved, item.id])] : settings!.approved.filter(id => id !== item.id) })} /> بررسی کردم؛ برای کودک من مجاز است</label>}</>}
         </div></article>)}</div>}

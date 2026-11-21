@@ -5,6 +5,7 @@ import { tvHome } from "@/lib/tv-catalog";
 import { appReleaseUrl, bundledAppReleases } from "@/lib/app-releases";
 import { BrandLogo } from "@/components/brand-logo";
 import styles from "./apps.module.css";
+import { mirroredImageUrl } from "@/lib/image-url";
 
 export const metadata = titleMetadata({
   title: "اپلیکیشن سرونما | اندروید موبایل و Android TV",
@@ -32,9 +33,9 @@ export default async function ApplicationsPage() {
           <div className={styles.screen}>{hero?.backdrop && <img className={styles.screenArt} src={hero.backdrop} alt="" fetchPriority="high" />}<div className={styles.screenShade} />
             <div className={styles.screenBrand}><img src="/brand/sarvnema-mark.svg" width="22" height="28" alt="" />سرونما <span>TV</span></div>
             <div className={styles.screenCopy}><span>وقتِ یک داستان خوب</span><h2>{hero?.title || "سینما، نزدیک‌تر از همیشه"}</h2><span className={styles.demoPlay}><CirclePlay size={18} />شروع تماشا</span></div>
-            <div className={styles.demoRail}>{posters.map((item, i) => <img key={`${item.id}-${i}`} src={item.poster!} alt="" loading="lazy" width="100" height="150" />)}</div>
+            <div className={styles.demoRail}>{posters.map((item, i) => <img key={`${item.id}-${i}`} src={mirroredImageUrl(item.poster!)} alt="" loading="lazy" width="100" height="150" />)}</div>
           </div><div className={styles.screenStand} />
-          <div className={styles.phone} aria-label="پیش‌نمایش چیدمان نسخهٔ موبایل"><div className={styles.phoneCamera} /><div className={styles.phoneBrand}><img src="/brand/sarvnema-mark.svg" alt="" width="20" height="24" /><strong>سرونما</strong><Search size={16} /></div><div className={styles.phoneHero}>{hero?.backdrop && <img src={hero.backdrop} alt="" />}<div /><strong>{hero?.title || "داستان بعدی تو"}</strong><span><CirclePlay size={13} />پخش آنلاین</span></div><h3>برای تماشای بعدی</h3><div className={styles.phoneRail}>{posters.slice(0, 3).map((item, i) => <img key={`${item.id}-${i}`} src={item.poster!} alt="" width="60" height="90" />)}</div><div className={styles.phoneNav}><MonitorPlay /><Search /><Smartphone /></div></div>
+          <div className={styles.phone} aria-label="پیش‌نمایش چیدمان نسخهٔ موبایل"><div className={styles.phoneCamera} /><div className={styles.phoneBrand}><img src="/brand/sarvnema-mark.svg" alt="" width="20" height="24" /><strong>سرونما</strong><Search size={16} /></div><div className={styles.phoneHero}>{hero?.backdrop && <img src={mirroredImageUrl(hero.backdrop)} alt="" />}<div /><strong>{hero?.title || "داستان بعدی تو"}</strong><span><CirclePlay size={13} />پخش آنلاین</span></div><h3>برای تماشای بعدی</h3><div className={styles.phoneRail}>{posters.slice(0, 3).map((item, i) => <img key={`${item.id}-${i}`} src={mirroredImageUrl(item.poster!)} alt="" width="60" height="90" />)}</div><div className={styles.phoneNav}><MonitorPlay /><Search /><Smartphone /></div></div>
           <p className={styles.previewLabel}>پیش‌نمایش چیدمان · تصویرها و عنوان‌ها از آرشیو واقعی سرونما</p>
         </div>
       </section>

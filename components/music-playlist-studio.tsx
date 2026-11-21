@@ -6,6 +6,7 @@ import { MusicPlayer } from "@/components/music-player";
 import { getMusicCommunityProfile, postPlaylistAction } from "@/lib/music-community-client";
 import type { CommunityPlaylistSummary } from "@/lib/community-playlist-types";
 import type { MusicTrack } from "@/lib/music-types";
+import { mirroredImageUrl } from "@/lib/image-url";
 
 const STORAGE_KEY = "sarvnema-music-playlists";
 
@@ -240,7 +241,7 @@ export function MusicPlaylistStudio() {
           </div>
         </header>
         <label className="music-playlist-search"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="نام آهنگ، خواننده یا بخشی از عنوان را جست‌وجو کن…" /></label>
-        {results.length > 0 && <div className="music-playlist-results">{results.map((result) => <button type="button" onClick={() => addTrack(result.imdbCode)} key={result.imdbCode}>{result.posterUrl ? <img src={result.posterUrl} alt="" /> : <span />}<i><strong>{result.title}</strong><small>{result.artists?.join(" · ") || result.type}</small></i><Plus size={16} /></button>)}</div>}
+        {results.length > 0 && <div className="music-playlist-results">{results.map((result) => <button type="button" onClick={() => addTrack(result.imdbCode)} key={result.imdbCode}>{result.posterUrl ? <img src={mirroredImageUrl(result.posterUrl)} alt="" /> : <span />}<i><strong>{result.title}</strong><small>{result.artists?.join(" · ") || result.type}</small></i><Plus size={16} /></button>)}</div>}
         {notice && <p className="music-playlist-notice" role="status">{notice}</p>}
         {playerTrack ? <MusicPlayer key={`${active.id}:${playerTrack.id}`} track={playerTrack} queue={tracks.slice(1)} /> : <div className="music-playlist-empty"><Shuffle size={22} /><strong>پلی‌لیستت آمادهٔ ساختن است.</strong><span>آهنگ‌ها را جست‌وجو و اضافه کن؛ پخش پشت‌سرهم، shuffle و repeat داخل پلیر در دسترس‌اند.</span></div>}
         {tracks.length > 0 && <ol className="music-playlist-tracks">{tracks.map((track, index) => <li key={track.id}>{track.coverUrl ? <img src={track.coverUrl} alt="" /> : <span />}<em>{String(index + 1).padStart(2, "0")}</em><div><strong>{track.persianTitle || track.title}</strong><small>{track.artists.map((artist) => artist.name).join(" · ")}</small></div><button type="button" onClick={() => updateActive({ trackIds: active.trackIds.filter((id) => id !== track.id) })} aria-label="حذف از پلی‌لیست"><Trash2 size={15} /></button></li>)}</ol>}

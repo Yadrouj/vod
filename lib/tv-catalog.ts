@@ -7,7 +7,7 @@ import { heroBackdropUrl } from "./hero-art";
 import { contentRestriction } from "./content-restrictions.mjs";
 import { titleSynopsis } from "./title-synopsis";
 import { isAwaitingTitleLinks } from "./title-availability";
-import { sizedImageUrl } from "./image-url";
+import { mirroredImageUrl, sizedImageUrl } from "./image-url";
 import type { VodCard, VodItem } from "./types";
 import type { Locale } from "./i18n";
 import type { TVCard } from "./tv-types";
@@ -15,7 +15,7 @@ import type { TVCard } from "./tv-types";
 export function tvCard(item: VodCard | VodItem, locale: Locale): TVCard {
   return {
     id: item.imdbCode || item.id, title: localizedTitle(item, locale), original: item.title,
-    poster: sizedImageUrl(item.posterUrl, 400), backdrop: heroBackdropUrl({ ...item, posterUrl: item.posterUrl ?? null, backdropUrl: item.backdropUrl ?? null }),
+    poster: sizedImageUrl(item.posterUrl, 400), backdrop: mirroredImageUrl(heroBackdropUrl({ ...item, posterUrl: item.posterUrl ?? null, backdropUrl: item.backdropUrl ?? null })),
     year: item.year, rating: item.imdbRating, series: /series|tv/i.test(item.type),
     overview: (titleSynopsis(item, locale) || "").slice(0, 420),
     available: !contentRestriction(item) && ("linksCount" in item ? !isAwaitingTitleLinks(item) : item.links.length > 0),

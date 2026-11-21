@@ -1,4 +1,11 @@
+import { mirroredTmdbUrl } from "./tmdb-image-path.mjs";
+
 const IMDB_HOST = "m.media-amazon.com";
+
+/** TMDB is filtered for our visitors: serve it from the same-origin MinIO mirror. */
+export function mirroredImageUrl<T extends string | null | undefined>(value: T): T {
+  return (typeof value === "string" ? mirroredTmdbUrl(value) : value) as T;
+}
 
 export function sizedImageUrl(value: string | null | undefined, width: number) {
   if (!value) return null;
@@ -11,8 +18,9 @@ export function sizedImageUrl(value: string | null | undefined, width: number) {
     if (/image\.tmdb\.org$/i.test(url.hostname)) {
       const tmdbWidth = nearestTmdbWidth(width);
       url.pathname = url.pathname.replace(/\/(?:original|w\d+)\//, `/${tmdbWidth}/`);
-      return url.toString();
+      return mirroredTmdbUrl(url.toString());
     }
+    if (/media\.themoviedb\.org$/i.test(url.hostname)) return mirroredTmdbUrl(value);
   } catch {
     return value;
   }

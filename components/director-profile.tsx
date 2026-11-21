@@ -9,6 +9,7 @@ import type { VodCard } from '@/lib/types';
 import styles from './creator-profiles.module.css';
 import { EntityFaqSection } from './entity-faq';
 import { directorFaqs } from '@/lib/entity-seo';
+import { mirroredImageUrl } from "@/lib/image-url";
 
 export function DirectorProfileView({ profile }: { profile: DirectorProfile }) {
   const directed = new Set(profile.directedIds);
@@ -40,7 +41,7 @@ export function DirectorProfileView({ profile }: { profile: DirectorProfile }) {
 
 function Works({works}:{works:VodCard[]}) {
   return <div className={styles.works}>{works.map(work=><Link className={styles.work} href={`/${work.imdbCode}`} key={work.imdbCode} data-director-work>
-    {work.posterUrl && <img src={work.posterUrl} alt={work.persianTitle || work.title} loading="lazy" decoding="async" />}
+    {work.posterUrl && <img src={mirroredImageUrl(work.posterUrl)} alt={work.persianTitle || work.title} loading="lazy" decoding="async" />}
     <strong>{work.persianTitle || work.title}</strong><small>{work.year || '—'} · {work.type==='series'?'سریال':'فیلم'}{work.imdbRating ? ` · IMDb ${work.imdbRating.toFixed(1)}` : ''}</small>
     <small>{work.qualities.length ? work.qualities.join(' · ') : 'اطلاعات اثر و وضعیت دسترسی'}</small>
   </Link>)}</div>;

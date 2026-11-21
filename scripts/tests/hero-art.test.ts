@@ -43,5 +43,6 @@ test("hero keeps a distinct landscape backdrop", () => {
 test("hero preserves original landscape art for desktop", () => {
   const original = "https://images.hdqwalls.com/download/backdrop-3440x1440.jpg";
   assert.equal(heroImageSrc(original, 1920), original);
-  assert.equal(heroImageSrc(art.url, 1920), art.url);
+  // TMDB keeps its original size but is served from the same-origin mirror.
+  assert.equal(heroImageSrc(art.url, 1920), "/media/tmdb/original/landscape.jpg");
 });

@@ -1,4 +1,4 @@
-import { sizedImageUrl } from "./image-url";
+import { mirroredImageUrl, sizedImageUrl } from "./image-url";
 
 export function categoryImageCandidates(item: { backdropUrl: string | null; posterUrl: string | null }): string[] {
   return [...new Set([item.backdropUrl, item.posterUrl].flatMap(raw => {
@@ -10,7 +10,9 @@ export function categoryImageCandidates(item: { backdropUrl: string | null; post
       const small = url.hostname === "image.tmdb.org"
         ? raw.replace(/\/(?:original|w\d+)\//, "/w300/")
         : sizedImageUrl(raw, 360);
-      return small === raw ? [raw] : [small!, raw];
+      const full = mirroredImageUrl(raw);
+      const preview = url.hostname === "image.tmdb.org" ? mirroredImageUrl(small) : small;
+      return preview === full ? [full] : [preview!, full];
     } catch { return []; }
   }))];
 }
