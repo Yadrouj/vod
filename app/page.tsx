@@ -121,7 +121,7 @@ export default async function HomePage() {
         ))}
         <FocusRail items={midBanners} locale={locale} />
         <WideRailComponent items={wideItems} locale={locale} />
-        <MusicRail tracks={music.tracks} />
+        <MusicRail tracks={music.tracks} locale={locale} />
         <PublicPartyRooms mode="watch" locale={locale} />
         <AiSearchPanel locale={locale} initialQuery={aiPrompt} initialResults={initialAiResults} />
         {remainingLandingRails.map((section) => (

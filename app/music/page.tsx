@@ -24,6 +24,8 @@ import { loadMoodPlaylists } from "@/lib/mood-playlists";
 import { MusicCategoryNav } from "@/components/music-category-nav";
 import { selectLibraryArrivals } from "@/lib/music-library-merge";
 import { mirroredImageUrl } from "@/lib/image-url";
+import {requestedMusic,selectedPublisherTracks,publisherMusicCollections} from '@/lib/musicdel-selections';
+import {FeaturedListening} from '@/components/featured-listening';
 
 const REMIX_CATEGORY = "\u0631\u06cc\u0645\u06cc\u06a9\u0633";
 const REMIX_DESCRIPTION = "\u0631\u06cc\u0645\u06cc\u06a9\u0633\u200c\u0647\u0627\u06cc \u0634\u0627\u062f\u060c \u067e\u0627\u062f\u06a9\u0633\u062a \u0648 \u0627\u0646\u062a\u062e\u0627\u0628\u200c\u0647\u0627\u06cc \u062a\u0627\u0632\u0647";
@@ -105,7 +107,7 @@ export default async function MusicPage({ searchParams }: Props) {
   // archive thumbnails, so it leads the visual hero while the shelves keep
   // their chronological catalog order.
   const iranianTracks = index.tracks.filter(track=>track.kind==='track' && track.coverUrl && track.artists.some(artist=>/محسن یگانه|معین|هایده|مهستی|بهنام بانی|ابی|داریوش|شادمهر|رضا بهرام|شجریان|آرون افشار|سوسن|حمیرا|اشوان/.test(artist.name)));
-  const heroSourceTracks = hasFilter && tracks.length ? tracks : [...iranianTracks, ...weeklyTracks, ...recentTracks];
+  const heroSourceTracks = hasFilter && tracks.length ? tracks : [...requestedMusic, ...iranianTracks, ...weeklyTracks, ...recentTracks];
   const heroSeen = new Set<string>();
   const heroTracks: MusicHeroTrack[] = [...heroSourceTracks]
     .filter(track => { if (heroSeen.has(track.id)) return false; heroSeen.add(track.id); return true; })
@@ -147,6 +149,7 @@ export default async function MusicPage({ searchParams }: Props) {
       </section>
 
       <section className="wrap music-content music-landing-content">
+        {!hasFilter && <FeaturedListening tracks={requestedMusic}/>}
         {!hasFilter && <DiscoveryUpdateStrip music title="تازه بشنو، راحت‌تر کشف کن"
           description={`${(hosted?.tracks.length ?? 0).toLocaleString("fa-IR")} فایل در آرشیو میزبانی‌شده؛ پلی‌لیست‌های سبک‌محور و صفحهٔ هنرمندان. تازه‌اضافه‌شده به معنی تازه‌منتشرشده نیست.`}
           updatedAt={hosted?.updatedAt || index.updatedAt}
@@ -168,6 +171,7 @@ export default async function MusicPage({ searchParams }: Props) {
           </>
         ) : (
           <>
+            <MusicShelf eyebrow="از لینک‌های عمومی ناشر · تازه‌اضافه‌شده به سرونما" title="تازه‌های ترکی و ریمیکس" tracks={selectedPublisherTracks.filter(t=>!requestedMusic.some(x=>x.id===t.id))} viewAll={'/music/collections/'+publisherMusicCollections[0].id} preload />
             {moodIndex && moodIndex.playlists.length > 0 && <MoodCollectionsPreview playlists={moodIndex.playlists} />}
             <MusicShelf eyebrow="اضافه‌شده به سرونما · دسته‌بندی با تگ‌ها" title="تازه‌های آرشیو" tracks={libraryArrivals} viewAll="/music?added=library" preload />
             <PublicPartyRooms mode="listen" locale={locale} />

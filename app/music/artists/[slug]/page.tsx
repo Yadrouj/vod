@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { MusicArtistCard } from "@/components/music-artist-card";
+import {AlbumPlayButton} from "@/components/album-play-button";
 import { MusicArtistPlaylist } from "@/components/music-artist-playlist";
 import { MusicHorizontalRail } from "@/components/music-horizontal-rail";
 import { StructuredData } from "@/components/structured-data";
@@ -69,20 +70,21 @@ export default async function MusicArtistPage({ params, searchParams }: { params
             <p>هنرمند · آرشیو موسیقی سرونما</p>
             <h1>{artist.name}</h1>
             {profile && profile.name !== artist.name && <p lang="en" dir="ltr">{profile.name}</p>}
-            <span>{allTracks.length.toLocaleString("fa-IR")} اثر · {activeCategory ? `فیلتر: ${activeCategory}` : artistCategories.slice(0, 4).join("، ") || "موسیقی"}</span>
-            <div className="music-artist-hero-meta"><a href="#artist-tracks">{allTracks.length ? 'شنیدن آهنگ‌ها ↓' : 'وضعیت آرشیو ↓'}</a><Link href="/music/artists">همهٔ هنرمندان</Link>{profile && <Link href="/music/artists/top-100">۱۰۰ صدای برجسته</Link>}<a href={artist.profileSourceUrl || artist.sourceUrl} target="_blank" rel="noreferrer">منبع معرفی ↗</a></div>
+            <span>{allTracks.length.toLocaleString("fa-IR")} اثر · {activeCategory ? `فیلتر: ${activeCategory}` : 'آهنگ‌ها و موزیک‌ویدیوها'}</span>
+            <div className="music-artist-hero-meta">{allTracks.length ? <AlbumPlayButton/> : <a href="#artist-tracks">وضعیت آرشیو</a>}</div>
           </div>
         </header>
-        {artistCategories.length > 0 && <nav className={artistStyles.categories} aria-label="دسته‌بندی‌های این خواننده">
+        {artistCategories.length > 0 && <details className={artistStyles.categoryDetails} open={Boolean(activeCategory)}><summary>فیلتر بر اساس دسته‌بندی</summary><nav className={artistStyles.categories} aria-label="دسته‌بندی‌های این خواننده">
           <Link className={!activeCategory ? artistStyles.categoryActive : undefined} href={artistPath}>همهٔ آهنگ‌ها <small>{allTracks.length.toLocaleString("fa-IR")}</small></Link>
           {artistCategories.map((category) => <Link className={activeCategory === category ? artistStyles.categoryActive : undefined} href={`${artistPath}?category=${encodeURIComponent(category)}`} key={category}>
             {category} <small>{categoryCounts.get(category)?.toLocaleString("fa-IR")}</small>
           </Link>)}
-        </nav>}
+        </nav></details>}
+        {allTracks.length > 0 ? <MusicArtistPlaylist key={`${artist.slug}-${page}-${activeCategory}`} artistName={artist.name} tracks={tracks.slice((page - 1) * 50, page * 50)} showAlbumAction={false} /> : <section id="artist-tracks" className={creatorStyles.bio}><h2>هنوز اثری در آرشیو سرونما نداریم</h2><p>معرفی و کاور آثار را در پایین ببینید. تا زمانی که فایلِ معتبری در آرشیو ثبت نشود، دکمهٔ پخش یا دانلود نمایش نمی‌دهیم.</p></section>}
         {profile && <CreatorProfileBio profile={profile} />}
-        {allTracks.length > 0 ? <MusicArtistPlaylist key={`${artist.slug}-${page}-${activeCategory}`} artistName={artist.name} tracks={tracks.slice((page - 1) * 50, page * 50)} /> : <section id="artist-tracks" className={creatorStyles.bio}><h2>هنوز اثری در آرشیو سرونما نداریم</h2><p>معرفی و کاور آثار را در پایین ببینید. تا زمانی که فایلِ معتبری در آرشیو ثبت نشود، دکمهٔ پخش یا دانلود نمایش نمی‌دهیم.</p></section>}
         {profile && <SingerRecordings recordings={singerRecordings(profile, allTracks)} />}
         <EntityFaqSection items={artistFaqs(artist, allTracks.length)} />
+        <nav className={styles.tools} aria-label="معرفی هنرمند"><Link href="/music/artists">همهٔ هنرمندان</Link>{profile&&<Link href="/music/artists/top-100">۱۰۰ صدای برجسته</Link>}<a href={artist.profileSourceUrl||artist.sourceUrl} target="_blank" rel="noreferrer">منبع معرفی</a></nav>
         {pages > 1 && <nav className={styles.tools} aria-label="صفحه‌بندی آهنگ‌ها">
           {page > 1 && <Link href={pageHref(page - 1)}>← قبلی</Link>}
           <span>صفحهٔ {page.toLocaleString("fa")} از {pages.toLocaleString("fa")}</span>

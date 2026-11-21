@@ -12,6 +12,7 @@ import { downloadGateUrl } from "@/lib/download-gate";
 import { compatibleMediaIndex, nextUntriedMusicSource } from "@/lib/media-compatibility";
 import { useMediaWarmup } from './use-media-warmup';
 import { mirroredImageUrl } from "@/lib/image-url";
+import albumStyles from './album-library.module.css';
 
 const PLAYBACK_KEY = "sarvnema-music-playback";
 const LIKES_KEY = "sarvnema-music-likes";
@@ -28,6 +29,7 @@ export function MusicPlayerEngine({
   immersive = false,
   inline = false,
   preview = false,
+  albumMode = false,
   settings,
   onActivate,
   onReady,
@@ -42,6 +44,7 @@ export function MusicPlayerEngine({
   inline?: boolean;
   /** Render the complete controls without owning media or interrupting playback. */
   preview?: boolean;
+  albumMode?: boolean;
   settings?: MusicPlaybackSettings;
   onActivate?: (track: MusicTrack, settings: MusicPlaybackSettings) => void;
   onReady?: () => void;
@@ -179,6 +182,12 @@ export function MusicPlayerEngine({
   useEffect(() => {
     if (!playRequest || playRequest === handledPlayRequest.current) return;
     handledPlayRequest.current = playRequest;
+    const requestedIndex=library.findIndex(item=>item.id===track.id);
+    if(requestedIndex>=0&&requestedIndex!==activeIndex){
+      autoplayTrackId.current=track.id;
+      queueMicrotask(()=>setActiveIndex(requestedIndex));
+      return;
+    }
     autoplayTrackId.current = activeTrack.id;
 
     const player = media.current;
@@ -197,7 +206,7 @@ export function MusicPlayerEngine({
     }
 
     return () => player.removeEventListener("canplay", start);
-  }, [activeTrack.id, playRequest, mediaKey]);
+  }, [activeTrack.id, playRequest, mediaKey, library, track.id, activeIndex]);
 
   useEffect(() => {
     let saved: string | null = null;
@@ -391,7 +400,7 @@ export function MusicPlayerEngine({
   }
 
   return (
-    <section className={`music-player music-player-pro ${hasVideo ? "music-player-video" : "music-player-audio"}`} dir="auto">
+    <section className={`music-player music-player-pro ${hasVideo ? "music-player-video" : "music-player-audio"} ${albumMode ? albumStyles.album : ''}`} dir="auto">
       {hasVideo ? (
         <div className="music-player-video-stage">
           {preview ? <div className="music-player-video-frame" style={{ background: `#020203 url(${JSON.stringify(activeTrack.coverUrl ?? "")}) center / contain no-repeat` }} /> : <video data-analytics-media="video" data-analytics-id={`music:${activeTrack.id}`} data-analytics-provider={source?.provider || "unknown"} key={mediaKey} ref={media as RefObject<HTMLVideoElement>} className="music-player-video-frame" poster={mirroredImageUrl(activeTrack.coverUrl ?? undefined)} preload="metadata" playsInline src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={handleLoadedMetadata} onCanPlay={() => { setSourceIssue(""); setTerminalError(false); }} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} />}

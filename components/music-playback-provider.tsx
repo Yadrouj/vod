@@ -10,7 +10,7 @@ import type { MusicPlaybackSettings } from "./music-player-engine";
 import styles from "./music-refresh.module.css";
 import playbackStyles from "./music-playback.module.css";
 
-export type MusicPlaybackRequest = { track: MusicTrack; queue?: MusicTrack[]; playRequest?: number; lyricsAutoOpen?: boolean; onTrackPlay?: (track: MusicTrack) => void; settings?: MusicPlaybackSettings };
+export type MusicPlaybackRequest = { track: MusicTrack; queue?: MusicTrack[]; playRequest?: number; lyricsAutoOpen?: boolean; onTrackPlay?: (track: MusicTrack) => void; settings?: MusicPlaybackSettings; albumMode?: boolean };
 const Engine = lazy(() => import("./music-player-engine").then(module => ({ default: module.MusicPlayerEngine })));
 type PlayerSlot = { pathname: string; trackId: string };
 const PlaybackContext = createContext<{
