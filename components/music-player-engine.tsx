@@ -382,12 +382,12 @@ export function MusicPlayerEngine({
     <section className={`music-player music-player-pro ${hasVideo ? "music-player-video" : "music-player-audio"}`} dir="auto">
       {hasVideo ? (
         <div className="music-player-video-stage">
-          {preview ? <div className="music-player-video-frame" style={{ background: `#020203 url(${JSON.stringify(activeTrack.coverUrl ?? "")}) center / contain no-repeat` }} /> : <video key={mediaKey} ref={media as RefObject<HTMLVideoElement>} className="music-player-video-frame" poster={mirroredImageUrl(activeTrack.coverUrl ?? undefined)} preload="metadata" playsInline src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={handleLoadedMetadata} onCanPlay={() => { setSourceIssue(""); setTerminalError(false); }} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} />}
+          {preview ? <div className="music-player-video-frame" style={{ background: `#020203 url(${JSON.stringify(activeTrack.coverUrl ?? "")}) center / contain no-repeat` }} /> : <video data-analytics-media="video" data-analytics-id={`music:${activeTrack.id}`} data-analytics-provider={source?.provider || "unknown"} key={mediaKey} ref={media as RefObject<HTMLVideoElement>} className="music-player-video-frame" poster={mirroredImageUrl(activeTrack.coverUrl ?? undefined)} preload="metadata" playsInline src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={handleLoadedMetadata} onCanPlay={() => { setSourceIssue(""); setTerminalError(false); }} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} />}
           <button className={`music-video-play-overlay ${playing ? "is-playing" : ""}`} type="button" onClick={togglePlayback} aria-label={playing ? "Pause video" : "Play video"}>{playing ? <Pause size={23} fill="currentColor" /> : <Play size={25} fill="currentColor" />}</button>
           <span className="music-video-quality">{source.quality || "Video"}</span>
         </div>
       ) : !preview ? (
-        <audio key={mediaKey} ref={media as RefObject<HTMLAudioElement>} preload="metadata" src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={handleLoadedMetadata} onCanPlay={() => { setSourceIssue(""); setTerminalError(false); }} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} />
+        <audio data-analytics-media="audio" data-analytics-id={`music:${activeTrack.id}`} data-analytics-provider={source?.provider || "unknown"} key={mediaKey} ref={media as RefObject<HTMLAudioElement>} preload="metadata" src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={handleLoadedMetadata} onCanPlay={() => { setSourceIssue(""); setTerminalError(false); }} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} />
       ) : null}
 
       <div className="music-player-shell">

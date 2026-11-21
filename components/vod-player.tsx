@@ -339,6 +339,9 @@ export function VodPlayer({
         aria-label={locale === "fa" ? "پلیر ویدئو؛ فاصله برای پخش، جهت‌ها برای جابه‌جایی" : "Video player: Space to play, arrows to seek"}
       >
         <video
+          data-analytics-media="video"
+          data-analytics-id={itemId}
+          data-analytics-provider={active ? sourceHost(active) : undefined}
           ref={videoRef}
           key={mediaKey}
           className="player"

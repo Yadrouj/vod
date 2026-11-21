@@ -62,5 +62,6 @@ public/data/glorytoon-downloads.json
 public/data/glorytoon-downloads.json.*.tmp
 data/discovery/
 data/search-popularity/
+data/analytics/
 public/data/vod-sync-status.json
 public/data/episode-metadata/index.json

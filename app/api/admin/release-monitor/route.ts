@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { mkdir, open, readFile, rename, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { isAdminRequest } from '@/lib/admin-auth';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,11 +11,7 @@ const CONTROL_FILE = path.join(process.cwd(), "data", "release-monitor-admin.jso
 const LOG_FILE = path.join(process.cwd(), ".media-cache", "daily-release-bot", "worker.log");
 
 function isAuthorized(request: Request) {
-  const requiredToken = process.env.SARVNEMA_ADMIN_TOKEN?.trim();
-  if (requiredToken) return request.headers.get("x-admin-token") === requiredToken;
-  if (process.env.NODE_ENV !== "production") return true;
-  const host = request.headers.get("host") || "";
-  return /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(host);
+  return isAdminRequest(request);
 }
 
 function unauthorized() {

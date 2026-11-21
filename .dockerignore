@@ -16,6 +16,7 @@ data/telegram-channel/
 .deploy-backups/
 data/media-import-backups/
 data/mcp/
+data/analytics/
 public/data/titles.old/
 public/data/title-map.old.json
 public/data/vod-catalog.json.tmp-*

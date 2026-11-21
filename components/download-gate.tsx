@@ -25,6 +25,7 @@ export function DownloadGate({ url, title, quality, locale, attachment = false, 
   useEffect(() => {
     if (delivery || seconds > 0 || triggered.current) return;
     triggered.current = true;
+    window.dispatchEvent(new Event('sarvnema:download-handoff'));
     if (attachment) link.current?.click();
     else window.location.replace(url);
   }, [seconds, url, attachment, delivery]);

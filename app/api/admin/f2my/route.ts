@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { isAdminRequest } from '@/lib/admin-auth';
 import { loadSourceLinkRegistry, saveSourceLinkBase } from "@/lib/source-link-settings";
 
 export const runtime = "nodejs";
@@ -75,11 +76,7 @@ function isProcessAlive(pid: unknown) {
 }
 
 function isAuthorized(request: Request) {
-  const requiredToken = process.env.SARVNEMA_ADMIN_TOKEN?.trim();
-  if (requiredToken) return request.headers.get("x-admin-token") === requiredToken;
-  if (process.env.NODE_ENV !== "production") return true;
-  const host = request.headers.get("host") || "";
-  return /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(host);
+  return isAdminRequest(request);
 }
 
 function unauthorized() {

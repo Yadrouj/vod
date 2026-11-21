@@ -1,0 +1,54 @@
+import Link from "next/link";
+import { cookies } from 'next/headers';
+import { ADMIN_COOKIE, validAdminSession } from '@/lib/admin-auth';
+import { BrandLogo } from "@/components/brand-logo";
+import { BaseUrlAdmin } from "@/components/base-url-admin";
+import { F2myScraperAdmin } from "@/components/f2my-scraper-admin";
+import { ReleaseMonitorAdmin } from "@/components/release-monitor-admin";
+import { LanguageToggle } from "@/components/language-toggle";
+import { getDictionary } from "@/lib/i18n";
+import { loadDownloadSettings, rewriteDownloadUrl } from "@/lib/download-settings";
+import { getLocale } from "@/lib/server-locale";
+
+export const dynamic = "force-dynamic";
+
+const SAMPLE_URL =
+  "https://dls7.aparatchi-dlcenter.top/DonyayeSerial/series2/tt0903747/SoftSub/S01/720p.BluRay/Breaking.Bad.S01E01.720p.BluRay.SoftSub.Unknown.DonyayeSerial.mkv";
+
+export default async function AdminPage() {
+  if(!validAdminSession((await cookies()).get(ADMIN_COOKIE)?.value))return null;
+  const locale = await getLocale();
+  const t = getDictionary(locale);
+  const settings = await loadDownloadSettings();
+
+  return (
+    <main className="shell">
+      <section className="browse-hero">
+        <div className="wrap">
+          <header className="topbar">
+            <BrandLogo locale={locale} compact />
+            <div className="topbar-actions">
+              <LanguageToggle locale={locale} />
+              <Link className="chip" href="/admin">تحلیل محصول</Link>
+              <Link className="chip" href="/admin/scrapers">داشبورد اسکریپرها</Link>
+              <Link className="chip" href="/">{t.common.backHome}</Link>
+            </div>
+          </header>
+        </div>
+      </section>
+
+      <section className="section wrap">
+        <BaseUrlAdmin
+          initialBaseUrl={settings.baseUrl}
+          initialArchiveUrl={settings.archiveUrl}
+          updatedAt={settings.updatedAt}
+          sampleBefore={SAMPLE_URL}
+          sampleAfter={rewriteDownloadUrl(SAMPLE_URL, settings.baseUrl)}
+          locale={locale}
+        />
+        <F2myScraperAdmin />
+        <ReleaseMonitorAdmin />
+      </section>
+    </main>
+  );
+}

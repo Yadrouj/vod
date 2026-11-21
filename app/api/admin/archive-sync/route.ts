@@ -2,11 +2,13 @@ import { execFile } from "node:child_process";
 import path from "node:path";
 import { promisify } from "node:util";
 import { DEFAULT_ARCHIVE_URL, saveDownloadBaseUrl } from "@/lib/download-settings";
+import { isAdminRequest, PRIVATE_HEADERS } from '@/lib/admin-auth';
 
 export const dynamic = "force-dynamic";
 const execFileAsync = promisify(execFile);
 
 export async function POST(request: Request) {
+  if(!isAdminRequest(request))return Response.json({error:'unauthorized'},{status:401,headers:PRIVATE_HEADERS});
   try {
     const body = (await request.json()) as { archiveUrl?: string; baseUrl?: string };
     const archiveUrl = body.archiveUrl?.trim() || DEFAULT_ARCHIVE_URL;

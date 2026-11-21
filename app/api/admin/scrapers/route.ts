@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { isAdminRequest } from '@/lib/admin-auth';
 import { DAILY_JOBS } from "../../../../scripts/maintenance-policy.mjs";
 import { DEFAULT_SCRAPER_DASHBOARD_CONFIG, readScraperDashboardConfig, sanitizeScraperDashboardConfig, writeScraperDashboardConfig } from "../../../../scripts/scraper-dashboard-config.mjs";
 
@@ -24,11 +25,7 @@ const statusFiles: Record<string, string[]> = {
 type JsonRecord = Record<string, unknown>;
 
 function isAuthorized(request: Request) {
-  const requiredToken = process.env.SARVNEMA_ADMIN_TOKEN?.trim();
-  if (requiredToken) return request.headers.get("x-admin-token") === requiredToken;
-  if (process.env.NODE_ENV !== "production") return true;
-  const host = request.headers.get("host") || "";
-  return /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(host);
+  return isAdminRequest(request);
 }
 
 function unauthorized() { return Response.json({ error: "Admin token required." }, { status: 401 }); }
