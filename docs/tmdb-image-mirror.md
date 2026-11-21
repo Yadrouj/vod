@@ -54,8 +54,12 @@ through `sarvnema.ir/media/tmdb/...`.
 The server can't download from TMDB, so the copy runs from a laptop that can:
 
 ```bash
-# 1. List what the live catalog references (runs on the server's data)
-ssh parspack1 'docker exec vod-app node scripts/mirror-tmdb-images.mjs --list' > tmdb-images.txt
+# 1. List what the live catalog references. Use a throwaway, memory-capped
+#    container: never run this inside the live vod-app (the catalog is ~3 GB).
+ssh parspack1 'cd /home/ubuntu/vod && docker run --rm --network none -m 768m --cpus 0.5 \
+  -v $PWD/public/data:/app/public/data:ro -v $PWD/data:/app/data:ro -v $PWD/content:/app/content:ro \
+  -v $PWD/scripts:/app/scripts:ro -v $PWD/lib:/app/lib:ro -e VOD_DATA_DIR=/app/public/data \
+  vod-app node scripts/mirror-tmdb-images.mjs --list' > tmdb-images.txt
 
 # 2. Tunnel MinIO to the laptop (keep it open)
 ssh -N -L 19000:127.0.0.1:19000 parspack1

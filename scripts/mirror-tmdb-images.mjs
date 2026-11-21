@@ -141,7 +141,7 @@ async function main() {
   }));
   const roots = typeof args.roots === "string"
     ? args.roots.split(",")
-    : [process.env.VOD_DATA_DIR || "public/data", "data", "content"];
+    : [process.env.VOD_DATA_DIR || "public/data", "data", "content", "lib/data"];
 
   if (args.list) {
     const keys = await scan(roots);
