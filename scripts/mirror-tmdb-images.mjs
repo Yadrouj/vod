@@ -12,7 +12,8 @@
 //          node scripts/mirror-tmdb-images.mjs --input=tmdb-images.txt
 //
 // Resumable: objects already in the bucket are skipped.
-import { readdir, readFile, stat } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { s3EnsurePublicBucket, s3PublicUrl, s3PutObject } from "../lib/s3-lite.mjs";
 import { parseTmdbImageUrl, tmdbImageType, tmdbObjectKey, tmdbUpstreamUrl } from "../lib/tmdb-image-path.mjs";
@@ -50,12 +51,32 @@ async function* jsonFiles(dir) {
   }
 }
 
+// `"key": "https://image.tmdb.org/t/p/..."`; the key decides which sizes to store.
+const URL_IN_TEXT = /(?:"([A-Za-z0-9_]{1,40})"\s*:\s*)?"(https?:(?:\\?\/){2}(?:image\.tmdb\.org|media\.themoviedb\.org)(?:\\?\/[^"\\/]+){4})"/g;
+
+/** Regex scan of raw JSON text, so huge catalog files never get parsed in memory. */
+export function scanTmdbText(text, found = new Set()) {
+  for (const match of text.matchAll(URL_IN_TEXT)) {
+    const parsed = parseTmdbImageUrl(match[2].replace(/\\\//g, "/"));
+    if (parsed) for (const size of sizesForReference(match[1] || "", parsed.size)) found.add(tmdbObjectKey(size, parsed.file));
+  }
+  return found;
+}
+
+async function scanFile(file, found) {
+  let carry = "";
+  for await (const chunk of createReadStream(file, { encoding: "utf8", highWaterMark: 4 * 1024 * 1024 })) {
+    const text = carry + chunk;
+    scanTmdbText(text, found);
+    carry = text.slice(-1024); // a URL split across chunks is caught next round
+  }
+}
+
 async function scan(roots) {
   const found = new Set();
   for (const root of roots) {
     for await (const file of jsonFiles(root)) {
-      if ((await stat(file)).size > 512 * 1024 * 1024) continue;
-      try { collectTmdbImages(JSON.parse(await readFile(file, "utf8")), found); } catch { /* not JSON we can use */ }
+      try { await scanFile(file, found); } catch { /* unreadable file */ }
     }
   }
   return [...found].sort();

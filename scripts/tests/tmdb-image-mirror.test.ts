@@ -3,7 +3,7 @@ import test from "node:test";
 import { mirroredImageUrl, sizedImageUrl } from "@/lib/image-url";
 import { mirroredTmdbUrl, parseTmdbImageUrl, tmdbFallbackSizes, tmdbImageType } from "@/lib/tmdb-image-path.mjs";
 import { resetTmdbUpstreamCooldown, resolveTmdbImage, type TmdbMirrorConfig } from "@/lib/tmdb-mirror";
-import { collectTmdbImages, sizesForReference } from "../mirror-tmdb-images.mjs";
+import { collectTmdbImages, scanTmdbText, sizesForReference } from "../mirror-tmdb-images.mjs";
 
 const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x46, 0, 1, 2, 3]);
 const config: TmdbMirrorConfig = { endpoint: "http://minio.test:9000", bucket: "sarvnema-tmdb", accessKey: "k", secretKey: "s", upstream: true };
@@ -68,4 +68,11 @@ test("mirror script lists the sizes the site requests", () => {
   assert.deepEqual(sizesForReference("imageUrl", "w454_and_h254_face"), ["w454_and_h254_face"]);
   const found = collectTmdbImages({ items: [{ posterUrl: "https://image.tmdb.org/t/p/w342/p1.jpg", backdropUrl: "https://image.tmdb.org/t/p/original/b1.jpg" }], other: "https://example.com/x.jpg" });
   assert.deepEqual([...found].sort(), ["w1280/b1.jpg", "w300/b1.jpg", "w500/p1.jpg"]);
+});
+
+test("streaming text scan matches the JSON walk, including escaped slashes and bare array items", () => {
+  const doc = { items: [{ posterUrl: "https://image.tmdb.org/t/p/w342/p1.jpg", backdropUrl: "https://image.tmdb.org/t/p/original/b1.jpg" }], gallery: ["https://image.tmdb.org/t/p/w185/g1.jpg"] };
+  const text = JSON.stringify(doc, null, 2) + '{"posterUrl":"https:\\/\\/image.tmdb.org\\/t\\/p\\/w342\\/esc1.jpg"}';
+  const found = [...scanTmdbText(text)].sort();
+  assert.deepEqual(found, ["w1280/b1.jpg", "w300/b1.jpg", "w500/esc1.jpg", "w500/g1.jpg", "w500/p1.jpg"]);
 });
