@@ -12,7 +12,7 @@ test("pages never reference TMDB directly", () => {
   assert.equal(sizedImageUrl("https://image.tmdb.org/t/p/w342/abc123.jpg", 400), "/media/tmdb/w500/abc123.jpg");
   assert.equal(sizedImageUrl("https://image.tmdb.org/t/p/original/abc123.jpg", 1280), "/media/tmdb/w1280/abc123.jpg");
   assert.equal(mirroredImageUrl("https://media.themoviedb.org/t/p/w454_and_h254_face/still.jpg"), "/media/tmdb/w454_and_h254_face/still.jpg");
-  assert.equal(mirroredImageUrl("https://m.media-amazon.com/images/M/x.jpg"), "https://m.media-amazon.com/images/M/x.jpg");
+  assert.equal(mirroredImageUrl("https://m.media-amazon.com/images/M/x.jpg"), "/media/img/m.media-amazon.com/images/M/x.jpg");
   assert.equal(mirroredImageUrl(null), null);
 });
 

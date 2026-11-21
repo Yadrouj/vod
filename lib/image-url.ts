@@ -1,10 +1,16 @@
-import { mirroredTmdbUrl } from "./tmdb-image-path.mjs";
+import { mirroredUrl } from "./image-mirror-path.mjs";
 
 const IMDB_HOST = "m.media-amazon.com";
+// A fixed set keeps the mirror from storing a copy per arbitrary pixel width.
+const IMDB_WIDTHS = [160, 320, 480, 720, 1080, 1440, 1920];
 
-/** TMDB is filtered for our visitors: serve it from the same-origin MinIO mirror. */
+/**
+ * External images are filtered or slow for our visitors: serve TMDB and every
+ * allow-listed image host from the same-origin MinIO mirror (/media/tmdb,
+ * /media/img). Other URLs, and videos, pass through unchanged.
+ */
 export function mirroredImageUrl<T extends string | null | undefined>(value: T): T {
-  return (typeof value === "string" ? mirroredTmdbUrl(value) : value) as T;
+  return (typeof value === "string" ? mirroredUrl(value) : value) as T;
 }
 
 export function sizedImageUrl(value: string | null | undefined, width: number) {
@@ -12,19 +18,23 @@ export function sizedImageUrl(value: string | null | undefined, width: number) {
   try {
     const url = new URL(value);
     if (url.hostname === IMDB_HOST) {
-      url.pathname = url.pathname.replace(/\._V1_[^/]*(?=\.[a-z0-9]+$)/i, `._V1_QL75_UX${Math.max(120, Math.round(width))}_`);
-      return url.toString();
+      url.pathname = url.pathname.replace(/\._V1_[^/]*(?=\.[a-z0-9]+$)/i, `._V1_QL75_UX${nearestImdbWidth(width)}_`);
+      return mirroredUrl(url.toString());
     }
     if (/image\.tmdb\.org$/i.test(url.hostname)) {
       const tmdbWidth = nearestTmdbWidth(width);
       url.pathname = url.pathname.replace(/\/(?:original|w\d+)\//, `/${tmdbWidth}/`);
-      return mirroredTmdbUrl(url.toString());
+      return mirroredUrl(url.toString());
     }
-    if (/media\.themoviedb\.org$/i.test(url.hostname)) return mirroredTmdbUrl(value);
   } catch {
     return value;
   }
-  return value;
+  return mirroredUrl(value);
+}
+
+function nearestImdbWidth(width: number) {
+  const wanted = Math.max(120, Math.round(width));
+  return IMDB_WIDTHS.find((candidate) => candidate >= wanted) ?? IMDB_WIDTHS.at(-1)!;
 }
 
 function nearestTmdbWidth(width: number) {

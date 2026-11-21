@@ -10,6 +10,7 @@ import { notFound } from "next/navigation";
 import styles from "./music-detail.module.css";
 import { EntityFaqSection } from '@/components/entity-faq';
 import { musicFaqs } from '@/lib/entity-seo';
+import { mirroredImageUrl } from "@/lib/image-url";
 
 export const revalidate = 300;
 
@@ -45,7 +46,7 @@ export default async function MusicDetailPage({ params }: { params: Promise<{ id
             <div className={styles.tracks}>
               {more.map((item) => (
                 <Link key={item.id} href={`/music/${item.id}`}>
-                  {item.coverUrl && <img src={item.coverUrl} alt="" />}
+                  {item.coverUrl && <img src={mirroredImageUrl(item.coverUrl)} alt="" />}
                   <span><strong>{item.persianTitle || item.title}</strong><small>{item.artists.map(artist => artist.name).join(" · ")}</small></span>
                 </Link>
               ))}

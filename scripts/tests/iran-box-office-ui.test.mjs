@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { selectIranBoxOffice } from '../../lib/iran-box-office.ts';
+import { mirroredUrl } from '../../lib/image-mirror-path.mjs';
 const require = createRequire(import.meta.url);
 require.extensions['.css'] = module => { module.exports = {}; };
 const { IranBoxOffice } = await import('../../components/iran-box-office.tsx');
@@ -17,7 +18,7 @@ test('real primary-source posters, cumulative admissions and dated growth render
   const html = render(view);
   assert.match(html, /id="iran-box-office"/); assert.match(html, /data-iran-box-office/); assert.match(html, /سینمای ایران، به روایت گیشه/);
   assert.match(html, /فروش تجمیعی/); assert.match(html, /تعداد بلیت/); assert.match(html, /تغییر روزانه، نه تغییر فروش تجمیعی/);
-  assert.ok(html.includes(snapshot.films[0].title)); assert.ok(html.includes(snapshot.films[0].posterUrl.replace(/&/g, '&amp;')));
+  assert.ok(html.includes(snapshot.films[0].title)); assert.ok(html.includes(mirroredUrl(snapshot.films[0].posterUrl).replace(/&/g, '&amp;'))); // posters are served from the same-origin image mirror
   assert.match(html, /فروش امروزِ ناتمام/);
 });
 

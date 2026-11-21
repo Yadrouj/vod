@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getMusicCommunityProfile, postPlaylistAction } from "@/lib/music-community-client";
 import type { CommunityPlaylistSummary } from "@/lib/community-playlist-types";
 import type { MusicTrack } from "@/lib/music-types";
+import { mirroredImageUrl } from "@/lib/image-url";
 
 const STARRED_KEY = "sarvnema-community-playlist-stars";
 
@@ -69,7 +70,7 @@ export function MusicPlaylistLeaderboard({ limit = 6 }: { limit?: number }) {
       {items.map((playlist, index) => {
         const cover = covers[playlist.trackIds[0]];
         return <Link href={`/music/playlists/${playlist.id}`} className={`music-community-card is-rank-${index + 1}`} key={playlist.id} onClick={() => { void postPlaylistAction({ action: "engage", id: playlist.id, viewerId: getMusicCommunityProfile().id, kind: "click" }); }}>
-          <span className="music-community-art" style={cover ? { backgroundImage: `url("${cover}")` } : undefined}><i>{String(index + 1).padStart(2, "0")}</i><b><ListMusic size={15} /></b></span>
+          <span className="music-community-art" style={cover ? { backgroundImage: `url("${mirroredImageUrl(cover)}")` } : undefined}><i>{String(index + 1).padStart(2, "0")}</i><b><ListMusic size={15} /></b></span>
           <div className="music-community-copy"><strong>{playlist.title}</strong><small>{playlist.owner.name} · {playlist.trackIds.length.toLocaleString("fa-IR")} آهنگ</small></div>
           <div className="music-community-metrics"><button className={starredIds.has(playlist.id) ? "is-starred" : ""} type="button" onClick={(event) => void toggleStar(event, playlist.id)} aria-label="ستاره‌دادن به پلی‌لیست"><Star size={15} fill={starredIds.has(playlist.id) ? "currentColor" : "none"} /> {playlist.starCount.toLocaleString("fa-IR")}</button><span title="پخش‌ها"><Play size={13} fill="currentColor" /> {playlist.plays.toLocaleString("fa-IR")}</span><span title="بازدیدها"><UsersRound size={13} /> {playlist.clicks.toLocaleString("fa-IR")}</span></div>
         </Link>;

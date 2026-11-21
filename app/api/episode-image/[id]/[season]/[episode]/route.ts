@@ -7,6 +7,8 @@ import {
   readStoredEpisodeImage,
   storeEpisodeImage,
 } from "@/lib/episode-metadata";
+import { parseMirrorableImageUrl } from "@/lib/image-mirror-path.mjs";
+import { resolveExternalImage } from "@/lib/image-mirror";
 import { parseTmdbImageUrl } from "@/lib/tmdb-image-path.mjs";
 import { resolveTmdbImage } from "@/lib/tmdb-mirror";
 
@@ -33,13 +35,19 @@ export async function GET(_request: Request, { params }: Props) {
   let bytes: Uint8Array | null = await readStoredEpisodeImage(file);
   if (!bytes) {
     const source = await findEpisodeImageSource(id, seasonNumber, episodeNumber);
-    // This host cannot reach TMDB; its stills come from the MinIO mirror.
+    // This host cannot reach TMDB or TVMaze; stills come from the MinIO mirror,
+    // which also stores reachable providers (TheTVDB) on first view.
     const tmdb = source ? parseTmdbImageUrl(source) : null;
+    const external = !tmdb && source ? parseMirrorableImageUrl(source) : null;
     if (tmdb) {
       const mirrored = await resolveTmdbImage(tmdb.size, tmdb.file);
       if (mirrored.kind === "image") bytes = mirrored.bytes;
+    } else if (external) {
+      const mirrored = await resolveExternalImage(external.href);
+      if (mirrored.kind === "image") bytes = mirrored.bytes;
     }
-    if (!bytes && source) bytes = await storeEpisodeImage(source, file);
+    // The mirror already tried the provider; only unknown hosts use the old path.
+    if (!bytes && source && !tmdb && !external) bytes = await storeEpisodeImage(source, file);
   }
   const type = bytes && episodeImageType(bytes);
   if (!bytes || !type) {

@@ -15,6 +15,7 @@ import { titleSynopsis } from "@/lib/title-synopsis";
 import { localizedTitle } from "@/lib/title-display";
 import { PublisherDownloads } from './publisher-downloads';
 import type { PublisherDownload } from '@/lib/publisher-download-types';
+import { mirroredImageUrl } from "@/lib/image-url";
 
 export type TitleTabsItem = Pick<VodItem,
   | "title"
@@ -285,7 +286,7 @@ function CastRail({ item }: { item: TitleTabsItem }) {
         const content = (
           <>
             {credit.name_image_url ? (
-              <img src={credit.name_image_url} alt={credit.name_text} loading="lazy" decoding="async" />
+              <img src={mirroredImageUrl(credit.name_image_url)} alt={credit.name_text} loading="lazy" decoding="async" />
             ) : (
               <span className="cast-fallback">{credit.name_text.slice(0, 1)}</span>
             )}

@@ -4,13 +4,14 @@ import { getLocale } from "@/lib/server-locale";
 import { tvHome } from "@/lib/tv-catalog";
 import { TVRail } from "@/components/tv/tv-cards";
 import { TVContinue } from "@/components/tv/tv-continue";
+import { mirroredImageUrl } from "@/lib/image-url";
 
 export default async function TVHomePage() {
   const locale = await getLocale(), fa = locale === "fa";
   const { hero, rows } = await tvHome(locale);
   return <>
     <section className="tv-hero">
-      {hero?.backdrop && <img className="tv-backdrop" src={hero.backdrop} alt="" fetchPriority="high" decoding="async" />}
+      {hero?.backdrop && <img className="tv-backdrop" src={mirroredImageUrl(hero.backdrop)} alt="" fetchPriority="high" decoding="async" />}
       <div className="tv-hero-shade" />
       <div className="tv-hero-copy">
         <span className="tv-eyebrow">SARVNEMA · {fa ? "سینما، روی صفحهٔ بزرگ تو" : "MADE FOR YOUR BIG SCREEN"}</span>

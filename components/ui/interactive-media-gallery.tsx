@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 import { useState } from "react";
-import { sizedImageUrl } from "@/lib/image-url";
+import { mirroredImageUrl, sizedImageUrl } from "@/lib/image-url";
 
 export type GalleryMedia = { id: string; type: "image" | "video"; title: string; desc?: string; url: string; poster?: string };
 
@@ -40,9 +40,9 @@ export function InteractiveMediaGallery({ items, locale = "en" }: { items: Galle
           <button type="button" className="interactive-media-close" onClick={() => setSelected(null)} aria-label="Close"><X size={18} /></button>
           <div className="interactive-media-lightbox" onClick={(event) => event.stopPropagation()}>
             {selected.type === "video" ? (
-              <video src={selected.url} poster={selected.poster} controls autoPlay playsInline preload="metadata" />
+              <video src={selected.url} poster={mirroredImageUrl(selected.poster)} controls autoPlay playsInline preload="metadata" />
             ) : (
-              <img src={selected.url} alt={selected.title} />
+              <img src={mirroredImageUrl(selected.url)} alt={selected.title} />
             )}
             <strong>{selected.title}</strong>
           </div>

@@ -5,6 +5,7 @@ import { Info, Play, Star } from "lucide-react";
 import type { TVCard, TVVersion } from "@/lib/tv-types";
 import type { Locale } from "@/lib/i18n";
 import { releaseKindLabels, sortedQualities, type ReleaseKind } from "@/lib/release-options";
+import { mirroredImageUrl } from "@/lib/image-url";
 
 export function TVTitle({ item, versions, locale, restricted }: { item: TVCard; versions: TVVersion[]; locale: Locale; restricted: boolean }) {
   const fa = locale === "fa", text = (en: string, persian: string) => fa ? persian : en;
@@ -22,7 +23,7 @@ export function TVTitle({ item, versions, locale, restricted }: { item: TVCard; 
   const available = versions.length > 0 && !restricted;
   return <>
     <section className="tv-title-hero">
-      {item.backdrop && <img className="tv-backdrop" src={item.backdrop} alt="" fetchPriority="high" />}
+      {item.backdrop && <img className="tv-backdrop" src={mirroredImageUrl(item.backdrop)} alt="" fetchPriority="high" />}
       <div className="tv-hero-shade" />
       <div className="tv-title-copy"><span className="tv-eyebrow">{item.series ? "SARVNEMA SERIES" : "SARVNEMA CINEMA"}</span><h1>{item.title}</h1>
         {item.original !== item.title && <p className="tv-original" dir="auto">{item.original}</p>}

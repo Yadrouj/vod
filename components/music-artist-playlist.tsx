@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { MusicPlayer } from "@/components/music-player";
 import type { MusicTrack } from "@/lib/music-types";
 import styles from "./music-refresh.module.css";
+import { mirroredImageUrl } from "@/lib/image-url";
 
 export function MusicArtistPlaylist({ artistName, tracks }: { artistName: string; tracks: MusicTrack[] }) {
   const [selectedId, setSelectedId] = useState(tracks[0]?.id ?? "");
@@ -37,7 +38,7 @@ export function MusicArtistPlaylist({ artistName, tracks }: { artistName: string
             return <li className={active ? "is-active" : ""} key={track.id}>
               <button type="button" onClick={() => selectTrack(track)} aria-current={active ? "true" : undefined}>
                 <i>{String(index + 1).padStart(2, "0")}</i>
-                {track.coverUrl ? <img src={track.coverUrl} alt="" loading="lazy" decoding="async" onError={event => { event.currentTarget.style.opacity = "0"; }} /> : <span className="artist-track-art" />}
+                {track.coverUrl ? <img src={mirroredImageUrl(track.coverUrl)} alt="" loading="lazy" decoding="async" onError={event => { event.currentTarget.style.opacity = "0"; }} /> : <span className="artist-track-art" />}
                 <span className="artist-track-copy"><strong>{track.persianTitle || track.title}</strong><small>{track.artists.map((item) => item.name).join(" · ") || artistName}</small></span>
                 <em>{track.album?.title || track.category}</em>
                 <span className="artist-track-play"><Play size={16} fill="currentColor" /></span>

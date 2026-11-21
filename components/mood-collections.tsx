@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { MoodPlaylist } from "@/lib/mood-playlists";
 import { musicPlaylistGroups, musicPlaylistKind, playlistKinds } from "./music-playlist-groups";
 import styles from "./mood-collections.module.css";
+import { mirroredImageUrl } from "@/lib/image-url";
 
 const scopes: Record<string, string> = { tags: "تگ‌های آرشیو جدید", archive: "آرشیو", mix: "ترکیبی", persian: "ایرانی و فارسی", styles: "سبک‌ها", years: "سال انتشار", turkish: "ترکی", korean: "کره‌ای", international: "بین‌المللی", video: "ویدیو" };
 
@@ -45,7 +46,7 @@ function PlaylistCard({ playlist }: { playlist: MoodPlaylist }) {
   const kind = musicPlaylistKind(playlist);
   return <Link href={`/music/collections/${encodeURIComponent(playlist.id)}`} prefetch={false} className={styles.card}>
     <div className={styles.covers}>
-      {playlist.covers.slice(0, 4).map(url => <img src={url} alt="" key={url} loading="lazy" decoding="async" />)}
+      {playlist.covers.slice(0, 4).map(url => <img src={mirroredImageUrl(url)} alt="" key={url} loading="lazy" decoding="async" />)}
       <span><ListMusic size={20} /></span>
     </div>
     <span className={styles.badge}>{playlistKinds[kind]}</span>

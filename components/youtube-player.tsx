@@ -6,6 +6,7 @@ import { contentRestriction, restrictionMessage } from "@/lib/content-restrictio
 import type { YouTubeSource } from "@/lib/old-iranian-media";
 import { canonicalYouTubeUrl, youtubeDownloadGuide, YOINKS_REPOSITORY, YOINKS_VERSION } from "./youtube-download-guide";
 import styles from "./youtube-player.module.css";
+import { mirroredImageUrl } from "@/lib/image-url";
 
 function YouTubeDownloadGuidance({ source, title }: { source: YouTubeSource; title: string }) {
   const fieldId = useId();
@@ -105,7 +106,7 @@ export function YouTubePlayer({ source, title }: { source: YouTubeSource; title:
           <button
             type="button"
             className="youtube-player-poster"
-            style={{ backgroundImage: `url(${JSON.stringify(source.thumbnailUrl)})` }}
+            style={{ backgroundImage: `url(${JSON.stringify(mirroredImageUrl(source.thumbnailUrl))})` }}
             onClick={() => setStarted(true)}
             aria-label={`Play ${title} on YouTube`}
           >

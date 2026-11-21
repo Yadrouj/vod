@@ -18,6 +18,7 @@ import { CreatorPortrait } from '@/components/creator-portrait';
 import creatorStyles from '@/components/creator-profiles.module.css';
 import { EntityFaqSection } from '@/components/entity-faq';
 import { artistFaqs } from '@/lib/entity-seo';
+import { mirroredImageUrl } from "@/lib/image-url";
 
 export const revalidate = 300;
 
@@ -63,7 +64,7 @@ export default async function MusicArtistPage({ params, searchParams }: { params
       <section className="wrap">
         <Link href="/music" className="music-back"><ArrowLeft size={16} /> بازگشت به موسیقی</Link>
         <header className="music-artist-hero music-artist-hero-spotify">
-          {profile ? <CreatorPortrait src={profile.imageUrl} name={profile.nameFa} eager /> : <div className="music-artist-hero-art" style={artwork ? { backgroundImage: `url(${artwork})` } : undefined}>{!artwork && artist.name.slice(0, 1)}</div>}
+          {profile ? <CreatorPortrait src={profile.imageUrl} name={profile.nameFa} eager /> : <div className="music-artist-hero-art" style={artwork ? { backgroundImage: `url(${mirroredImageUrl(artwork)})` } : undefined}>{!artwork && artist.name.slice(0, 1)}</div>}
           <div className="music-artist-hero-copy">
             <p>هنرمند · آرشیو موسیقی سرونما</p>
             <h1>{artist.name}</h1>

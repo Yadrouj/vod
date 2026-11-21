@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { MagazineSeriesGuide as Guide } from '@/lib/magazine-types';
 import styles from './magazine.module.css';
+import { mirroredImageUrl } from "@/lib/image-url";
 
 export function MagazineSeriesGuide({ guide, id }: { guide: Guide; id: string }) {
   const seasons = [...new Set(guide.episodes.map(row => row.season))];
@@ -11,7 +12,7 @@ export function MagazineSeriesGuide({ guide, id }: { guide: Guide; id: string })
   return <>
     <section id="series-cast"><h2>بازیگران و پروفایل آن‌ها در سرونما</h2>
       <div className={styles.seriesCast}>{guide.cast.map(person => <Link key={person.id} href={`/person/${person.id}`}>
-        {person.image && <img src={person.image} alt="" width={64} height={80} loading="lazy" decoding="async" />}
+        {person.image && <img src={mirroredImageUrl(person.image)} alt="" width={64} height={80} loading="lazy" decoding="async" />}
         <span><strong dir="auto">{person.name}</strong><small>پروفایل و آثار مرتبط ←</small></span>
       </Link>)}</div>
     </section>

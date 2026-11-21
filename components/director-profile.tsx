@@ -17,7 +17,7 @@ export function DirectorProfileView({ profile }: { profile: DirectorProfile }) {
   const related = profile.works.filter(work => !directed.has(work.imdbCode));
   return <main className={`shell ${styles.page}`} dir="rtl" data-director-profile={profile.id}><div className="wrap">
     <header className={styles.top}><BrandLogo locale="fa" compact /><Link href="/people/directors">۱۰۰ کارگردان برجسته</Link></header>
-    <section className={styles.hero}><CreatorPortrait src={profile.imageUrl} name={profile.nameFa} eager />
+    <section className={styles.hero}><CreatorPortrait src={mirroredImageUrl(profile.imageUrl)} name={profile.nameFa} eager />
       <div><span className={styles.eyebrow}>کارگردان · انتخاب تحریریهٔ سرونما</span><h1>{profile.nameFa}</h1><p lang="en" dir="ltr">{profile.name}</p>
         <p>{profile.works.length.toLocaleString('fa-IR')} اثر مرتبط در آرشیو</p>
         <div className={styles.links}><a href="#directed">آثار کارگردانی‌شده</a><a href="#related">دیگر ارتباط‌ها</a><Link href="/people">همهٔ عوامل</Link></div>

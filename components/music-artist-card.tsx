@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpLeft, MicVocal } from "lucide-react";
 import type { MusicArtist } from "@/lib/music-types";
+import { mirroredImageUrl } from "@/lib/image-url";
 
 export function MusicArtistCard({ artist, priority = false }: { artist: MusicArtist; priority?: boolean }) {
   const artwork = artist.profileImageUrl || artist.coverUrl;
@@ -15,7 +16,7 @@ export function MusicArtistCard({ artist, priority = false }: { artist: MusicArt
         </span>
         {artwork && (
           <img
-            src={artwork}
+            src={mirroredImageUrl(artwork)}
             alt={title}
             loading={priority ? "eager" : "lazy"}
             fetchPriority={priority ? "high" : "auto"}

@@ -4,11 +4,12 @@ import { useState } from "react";
 import { Star } from "lucide-react";
 import type { TVCard } from "@/lib/tv-types";
 import type { Locale } from "@/lib/i18n";
+import { mirroredImageUrl } from "@/lib/image-url";
 
 export function TVPoster({ item, locale, focusId, initial }: { item: TVCard; locale: Locale; focusId?: string; initial?: boolean }) {
   const [failed, setFailed] = useState(false);
   return <Link href={`/tv/title/${encodeURIComponent(item.id)}`} prefetch={false} className="tv-card" data-tv-initial={initial || undefined} data-tv-focus={focusId || item.id} aria-label={`${item.title} · ${item.rating ? `IMDb ${item.rating}` : ""}`}>
-    <div className="tv-card-art">{item.poster && !failed ? <img src={item.poster} alt="" loading="lazy" decoding="async" width="240" height="360" onError={() => setFailed(true)} /> : <span>{item.title}</span>}
+    <div className="tv-card-art">{item.poster && !failed ? <img src={mirroredImageUrl(item.poster)} alt="" loading="lazy" decoding="async" width="240" height="360" onError={() => setFailed(true)} /> : <span>{item.title}</span>}
       {item.rating != null && <span className="tv-rating"><Star size={14} fill="currentColor" />{item.rating.toFixed(1)}</span>}
       {!item.available && <small className="tv-card-soon">{locale === "fa" ? "منتظر لینک" : "Awaiting links"}</small>}
     </div>

@@ -11,6 +11,7 @@ import { musicPartyMedia } from "@/lib/watch-party-music";
 import { downloadGateUrl } from "@/lib/download-gate";
 import { compatibleMediaIndex, nextUntriedMusicSource } from "@/lib/media-compatibility";
 import { useMediaWarmup } from './use-media-warmup';
+import { mirroredImageUrl } from "@/lib/image-url";
 
 const PLAYBACK_KEY = "sarvnema-music-playback";
 const LIKES_KEY = "sarvnema-music-likes";
@@ -381,7 +382,7 @@ export function MusicPlayerEngine({
     <section className={`music-player music-player-pro ${hasVideo ? "music-player-video" : "music-player-audio"}`} dir="auto">
       {hasVideo ? (
         <div className="music-player-video-stage">
-          {preview ? <div className="music-player-video-frame" style={{ background: `#020203 url(${JSON.stringify(activeTrack.coverUrl ?? "")}) center / contain no-repeat` }} /> : <video key={mediaKey} ref={media as RefObject<HTMLVideoElement>} className="music-player-video-frame" poster={activeTrack.coverUrl ?? undefined} preload="metadata" playsInline src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={handleLoadedMetadata} onCanPlay={() => { setSourceIssue(""); setTerminalError(false); }} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} />}
+          {preview ? <div className="music-player-video-frame" style={{ background: `#020203 url(${JSON.stringify(activeTrack.coverUrl ?? "")}) center / contain no-repeat` }} /> : <video key={mediaKey} ref={media as RefObject<HTMLVideoElement>} className="music-player-video-frame" poster={mirroredImageUrl(activeTrack.coverUrl ?? undefined)} preload="metadata" playsInline src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={handleLoadedMetadata} onCanPlay={() => { setSourceIssue(""); setTerminalError(false); }} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} />}
           <button className={`music-video-play-overlay ${playing ? "is-playing" : ""}`} type="button" onClick={togglePlayback} aria-label={playing ? "Pause video" : "Play video"}>{playing ? <Pause size={23} fill="currentColor" /> : <Play size={25} fill="currentColor" />}</button>
           <span className="music-video-quality">{source.quality || "Video"}</span>
         </div>
@@ -390,7 +391,7 @@ export function MusicPlayerEngine({
       ) : null}
 
       <div className="music-player-shell">
-        <div className={`music-player-art ${playing ? "is-spinning" : ""}`} style={activeTrack.coverUrl ? { backgroundImage: `url(${activeTrack.coverUrl})` } : undefined} />
+        <div className={`music-player-art ${playing ? "is-spinning" : ""}`} style={activeTrack.coverUrl ? { backgroundImage: `url(${mirroredImageUrl(activeTrack.coverUrl)})` } : undefined} />
         <div className="music-player-now" dir="auto"><span>{activeTrack.kind === "video" ? "موزیک‌ویدیو" : playing ? "در حال پخش" : "آهنگ"}</span><strong>{activeTrack.persianTitle || activeTrack.title}</strong><small>{activeTrack.artists.map((artist, index) => <span key={artist.slug}>{index > 0 && " · "}<Link href={`/music/artists/${encodeURIComponent(artist.slug)}`}>{artist.name}</Link></span>)}</small><button className={`music-lyrics-toggle ${lyricsOpen ? "is-active" : ""}`} type="button" onClick={() => { setQueueOpen(false); setSettingsOpen(false); setLyricsOpen((value) => !value); }}><Captions size={14} /> متن آهنگ</button></div>
         <button className={`music-icon-button ${liked ? "is-active" : ""}`} type="button" onClick={toggleLiked} aria-label={liked ? "Remove from liked songs" : "Add to liked songs"}><Heart size={18} fill={liked ? "currentColor" : "none"} /></button>
         {(() => { const downloadSource = activeTrack.sources.find((item) => item.kind === "download") ?? source; return <a className="music-download" href={downloadGateUrl({ url: downloadSource.url, musicId: activeTrack.id, title: activeTrack.title, quality: downloadSource.quality || downloadSource.label })} target="_blank" rel="noreferrer"><Download size={16} /> دانلود</a>; })()}
@@ -428,7 +429,7 @@ export function MusicPlayerEngine({
           <button type="button" onClick={() => setMuted(value => !value)}>{muted ? "وصل‌کردن صدا" : "بی‌صدا کردن"}</button>
         </div>
       </ResponsiveDialog>
-      {(queueOpen || (immersive && !mobile)) && <ResponsiveDialog open mobileOnly onClose={() => setQueueOpen(false)} title="صف پخش" description={`${library.length.toLocaleString("fa-IR")} آهنگ`} theme="music" closeLabel="بستن صف پخش"><aside className="music-player-queue" aria-label="Listening queue"><header><span><ListMusic size={16} /><strong>صف پخش</strong><small>{library.length.toLocaleString("fa-IR")} آهنگ</small></span>{!immersive && <button className="music-icon-button" type="button" onClick={() => setQueueOpen(false)} aria-label="Close queue"><X size={16} /></button>}</header><ol>{library.map((item, index) => <li className={index === activeIndex ? "is-active" : ""} key={item.id}><button type="button" onClick={() => chooseTrack(index, true)}>{item.coverUrl ? <img src={item.coverUrl} alt="" loading="lazy" /> : <span />}{index === activeIndex && playing ? <i className="music-equalizer"><b /><b /><b /></i> : <em>{String(index + 1).padStart(2, "0")}</em>}<span><strong>{item.persianTitle || item.title}</strong><small>{item.artists.map((artist) => artist.name).join(" · ")}</small></span></button></li>)}</ol></aside></ResponsiveDialog>}
+      {(queueOpen || (immersive && !mobile)) && <ResponsiveDialog open mobileOnly onClose={() => setQueueOpen(false)} title="صف پخش" description={`${library.length.toLocaleString("fa-IR")} آهنگ`} theme="music" closeLabel="بستن صف پخش"><aside className="music-player-queue" aria-label="Listening queue"><header><span><ListMusic size={16} /><strong>صف پخش</strong><small>{library.length.toLocaleString("fa-IR")} آهنگ</small></span>{!immersive && <button className="music-icon-button" type="button" onClick={() => setQueueOpen(false)} aria-label="Close queue"><X size={16} /></button>}</header><ol>{library.map((item, index) => <li className={index === activeIndex ? "is-active" : ""} key={item.id}><button type="button" onClick={() => chooseTrack(index, true)}>{item.coverUrl ? <img src={mirroredImageUrl(item.coverUrl)} alt="" loading="lazy" /> : <span />}{index === activeIndex && playing ? <i className="music-equalizer"><b /><b /><b /></i> : <em>{String(index + 1).padStart(2, "0")}</em>}<span><strong>{item.persianTitle || item.title}</strong><small>{item.artists.map((artist) => artist.name).join(" · ")}</small></span></button></li>)}</ol></aside></ResponsiveDialog>}
     </section>
   );
 }

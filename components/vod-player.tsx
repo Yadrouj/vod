@@ -20,6 +20,7 @@ import styles from "./vod-player.module.css";
 import { compatibleMediaIndex } from "@/lib/media-compatibility";
 import { mediaDeliveryRoutes } from "@/lib/media-delivery";
 import { useMediaWarmup } from './use-media-warmup';
+import { mirroredImageUrl } from "@/lib/image-url";
 
 export function VodPlayer({
   title,
@@ -342,7 +343,7 @@ export function VodPlayer({
           key={mediaKey}
           className="player"
           src={sourceReady ? playbackUrl : undefined}
-          poster={posterUrl ?? undefined}
+          poster={mirroredImageUrl(posterUrl ?? undefined)}
           playsInline
           preload={sourceReady ? tvMode ? "auto" : "metadata" : "none"}
           onLoadStart={() => setBuffering(true)}

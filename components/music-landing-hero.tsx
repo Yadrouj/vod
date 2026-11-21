@@ -16,6 +16,7 @@ import { SearchSuggest } from "@/components/search-suggest";
 import { MobileFeatureCard } from "./mobile-feature-card";
 import { WatchTogetherLauncher } from "./watch-together-launcher";
 import featureStyles from "./landing-feature-actions.module.css";
+import { mirroredImageUrl } from "@/lib/image-url";
 
 export type MusicHeroTrack = {
   id: string;
@@ -118,7 +119,7 @@ export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", init
 
           <Link className={`music-landing-artwork ${featureStyles.artwork}`} href={`/music/${activeTrack.id}`} aria-label={`پخش ${trackTitle}`}
             onPointerEnter={() => setIsVisualPlaying(false)} onFocus={() => setIsVisualPlaying(false)}>
-            {activeTrack.coverUrl ? <img src={activeTrack.coverUrl} alt="" decoding="async" fetchPriority="high" /> : <span className="music-landing-fallback-art"><Volume2 size={48} /></span>}
+            {activeTrack.coverUrl ? <img src={mirroredImageUrl(activeTrack.coverUrl)} alt="" decoding="async" fetchPriority="high" /> : <span className="music-landing-fallback-art"><Volume2 size={48} /></span>}
             <span className="music-landing-artwork-shine" aria-hidden="true" />
             <span className={featureStyles.playOverlay} aria-hidden="true"><span className={featureStyles.playIcon}><Play size={28} fill="currentColor" /></span></span>
             <em>{activeTrack.kind === "video" ? "MUSIC VIDEO" : "TRACK"}</em>
@@ -141,7 +142,7 @@ export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", init
 
           {total > 1 && <div className="music-landing-track-picker" aria-label="انتخاب قطعهٔ پیشنهادی">
             <button type="button" onClick={() => selectTrack(-1)} aria-label="قطعهٔ قبلی"><ChevronRight size={17} /></button>
-            <div>{featuredTracks.slice(0, 5).map((track, index) => <button type="button" onClick={() => setActiveIndex(index)} key={track.id} className={index === activeIndex ? "is-active" : ""} aria-label={`انتخاب ${track.persianTitle || track.title}`}><span>{track.coverUrl ? <img src={track.coverUrl} alt="" loading="lazy" decoding="async" /> : <Volume2 size={13} />}</span></button>)}</div>
+            <div>{featuredTracks.slice(0, 5).map((track, index) => <button type="button" onClick={() => setActiveIndex(index)} key={track.id} className={index === activeIndex ? "is-active" : ""} aria-label={`انتخاب ${track.persianTitle || track.title}`}><span>{track.coverUrl ? <img src={mirroredImageUrl(track.coverUrl)} alt="" loading="lazy" decoding="async" /> : <Volume2 size={13} />}</span></button>)}</div>
             <button type="button" onClick={() => selectTrack(1)} aria-label="قطعهٔ بعدی"><ChevronLeft size={17} /></button>
           </div>}
         </aside>

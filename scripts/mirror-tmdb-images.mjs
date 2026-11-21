@@ -11,14 +11,21 @@
 //        TMDB_MIRROR_ENDPOINT=http://127.0.0.1:19000 MINIO_ROOT_USER=... MINIO_ROOT_PASSWORD=... \
 //          node scripts/mirror-tmdb-images.mjs --input=tmdb-images.txt
 //
+// Hosts the server itself cannot reach (TVMaze, YouTube thumbnails) are
+// bulk-copied the same way: `--list --external=static.tvmaze.com,i.ytimg.com`
+// prints full URLs, and `--input` accepts both kinds of lines. Reachable hosts
+// need no bulk copy; /media/img stores them on first view (docs/image-mirror.md).
+//
 // Resumable: objects already in the bucket are skipped.
 import { createReadStream } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
+import { externalObjectKey } from "../lib/image-mirror-key.mjs";
+import { parseMirrorableImageUrl } from "../lib/image-mirror-path.mjs";
 import { s3EnsurePublicBucket, s3PublicUrl, s3PutObject } from "../lib/s3-lite.mjs";
 import { parseTmdbImageUrl, tmdbImageType, tmdbObjectKey, tmdbUpstreamUrl } from "../lib/tmdb-image-path.mjs";
 
-const MAX_BYTES = 8 * 1024 * 1024;
+const MAX_BYTES = 10 * 1024 * 1024;
 const LANDSCAPE_KEY = /backdrop|hero|banner|background|still|landscape|wallpaper|cover/i;
 
 /** Sizes the site actually requests for one referenced image (see lib/image-url.ts). */
@@ -63,26 +70,49 @@ export function scanTmdbText(text, found = new Set()) {
   return found;
 }
 
-async function scanFile(file, found) {
+/** Full image URLs on the given hosts (already allow-listed for /media/img). */
+export function scanExternalText(text, hosts, found = new Set()) {
+  for (const match of text.matchAll(/"(https?:(?:\\?\/){2}([A-Za-z0-9.-]+)(?:\\?\/)[^"\s]{1,1200})"/g)) {
+    if (!hosts.has(match[2].toLowerCase())) continue;
+    const url = parseMirrorableImageUrl(match[1].replace(/\\\//g, "/"));
+    if (url) found.add(url.href);
+  }
+  return found;
+}
+
+async function scanFile(file, scanText) {
   let carry = "";
   for await (const chunk of createReadStream(file, { encoding: "utf8", highWaterMark: 4 * 1024 * 1024 })) {
     const text = carry + chunk;
-    scanTmdbText(text, found);
-    carry = text.slice(-1024); // a URL split across chunks is caught next round
+    scanText(text);
+    carry = text.slice(-1400); // a URL split across chunks is caught next round
   }
 }
 
-async function scan(roots) {
+async function scan(roots, externalHosts = null) {
   const found = new Set();
+  const scanText = externalHosts ? text => scanExternalText(text, externalHosts, found) : text => scanTmdbText(text, found);
   for (const root of roots) {
     for await (const file of jsonFiles(root)) {
-      try { await scanFile(file, found); } catch { /* unreadable file */ }
+      try { await scanFile(file, scanText); } catch { /* unreadable file */ }
     }
   }
   return [...found].sort();
 }
 
-async function upload(keys, { concurrency }) {
+/** One list line → where it lives in the bucket and where to download it. */
+export function mirrorItem(line) {
+  if (/^https?:\/\//i.test(line)) {
+    const url = parseMirrorableImageUrl(line);
+    return url ? { key: externalObjectKey(url), upstream: url.href } : null;
+  }
+  const [size, file, extra] = line.split("/");
+  if (extra || !parseTmdbImageUrl(tmdbUpstreamUrl(size, file))) return null;
+  return { key: tmdbObjectKey(size, file), upstream: tmdbUpstreamUrl(size, file) };
+}
+
+async function upload(lines, { concurrency }) {
+  const keys = lines.map(mirrorItem).filter(Boolean);
   const endpoint = process.env.TMDB_MIRROR_ENDPOINT;
   const bucket = process.env.TMDB_MIRROR_BUCKET || "sarvnema-tmdb";
   const accessKey = process.env.TMDB_MIRROR_ACCESS_KEY || process.env.MINIO_ROOT_USER;
@@ -98,14 +128,13 @@ async function upload(keys, { concurrency }) {
 
   async function worker() {
     while (next < keys.length) {
-      const key = keys[next++];
-      const [size, file] = key.split("/");
+      const { key, upstream } = keys[next++];
       try {
         const existing = await fetch(s3PublicUrl(endpoint, bucket, key), { method: "HEAD" });
         if (existing.ok) { stats.skipped++; continue; }
-        const response = await fetch(tmdbUpstreamUrl(size, file), { signal: AbortSignal.timeout(30_000) });
-        if (response.status === 404) { stats.missing++; continue; }
-        if (!response.ok) throw new Error(`TMDB HTTP ${response.status}`);
+        const response = await fetch(upstream, { signal: AbortSignal.timeout(30_000), headers: { "user-agent": "Mozilla/5.0 (compatible; SarvNemaImageMirror/1.0)" } });
+        if (response.status === 404 || response.status === 410) { stats.missing++; continue; }
+        if (!response.ok) throw new Error(`upstream HTTP ${response.status}`);
         const bytes = new Uint8Array(await response.arrayBuffer());
         const type = tmdbImageType(bytes);
         if (!type || bytes.length > MAX_BYTES) { stats.missing++; continue; }
@@ -128,10 +157,7 @@ async function upload(keys, { concurrency }) {
 
 async function readInput(file) {
   const text = file === "-" ? await new Response(process.stdin).text() : await readFile(file, "utf8");
-  return [...new Set(text.split(/\r?\n/).map(line => line.trim()).filter(line => {
-    const [size, file, extra] = line.split("/");
-    return !extra && parseTmdbImageUrl(tmdbUpstreamUrl(size, file));
-  }))].sort();
+  return [...new Set(text.split(/\r?\n/).map(line => line.trim()).filter(line => mirrorItem(line)))].sort();
 }
 
 async function main() {
@@ -143,13 +169,14 @@ async function main() {
     ? args.roots.split(",")
     : [process.env.VOD_DATA_DIR || "public/data", "data", "content", "lib/data"];
 
+  const externalHosts = typeof args.external === "string" ? new Set(args.external.toLowerCase().split(",").filter(Boolean)) : null;
   if (args.list) {
-    const keys = await scan(roots);
+    const keys = await scan(roots, externalHosts);
     process.stdout.write(keys.join("\n") + (keys.length ? "\n" : ""));
-    process.stderr.write(`${keys.length} TMDB images referenced\n`);
+    process.stderr.write(`${keys.length} ${externalHosts ? "external" : "TMDB"} images referenced\n`);
     return;
   }
-  const keys = typeof args.input === "string" ? await readInput(args.input) : await scan(roots);
+  const keys = typeof args.input === "string" ? await readInput(args.input) : await scan(roots, externalHosts);
   const limit = Number(args.limit) || keys.length;
   const stats = await upload(keys.slice(0, limit), { concurrency: Math.max(1, Math.min(16, Number(args.concurrency) || 6)) });
   if (stats.failed) process.exitCode = 1;

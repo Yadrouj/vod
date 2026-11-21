@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import type { Locale } from "@/lib/i18n";
 import { WatchTogetherLauncher, type WatchTogetherPreset } from "./watch-together-launcher";
 import styles from "./mobile-feature-card.module.css";
+import { mirroredImageUrl } from "@/lib/image-url";
 
 /** A mobile-first feature, sharing selection/data with the desktop carousel. */
 export function MobileFeatureCard({ title, image, meta, eyebrow, item, locale, music = false, playable = true, index, total, rotating, onRotate, onSelect }: {
@@ -31,7 +32,7 @@ export function MobileFeatureCard({ title, image, meta, eyebrow, item, locale, m
         if (Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.5) onSelect((fa ? dx > 0 : dx < 0) ? 1 : -1);
       }}>
       <div className={styles.art} aria-hidden="true">
-        {image && failedImage !== image ? <img src={image} alt="" decoding="async" fetchPriority="high" onError={() => setFailedImage(image)} /> : music ? <Headphones /> : <Film />}
+        {image && failedImage !== image ? <img src={mirroredImageUrl(image)} alt="" decoding="async" fetchPriority="high" onError={() => setFailedImage(image)} /> : music ? <Headphones /> : <Film />}
       </div>
       <div className={styles.shade} aria-hidden="true" />
       <div className={styles.topline}>
