@@ -30,7 +30,9 @@ node scripts/audit-landing-refresh.mjs .deploy-backups/<run>/baseline.json
 The baseline contains `at`, `titles: [{id, links}]` and
 `tracks: [{id, sources}]`. The audit is read-only. It distinguishes new IDs,
 additional links and additional music sources, lists any lost IDs, and reports
-actual index/news dates. No scraper exit code proves that every upstream link
+actual index/news dates. Explicit identity-registry redirects are reported
+separately as canonicalized pages, never silently treated as deleted records.
+No scraper exit code proves that every upstream link
 plays in every browser or that an entire historical archive was crawled.
 
 Focused tests:
