@@ -81,6 +81,18 @@ export function MusicPlayerEngine({
   const hasVideo = activeTrack.kind === "video" || /\.(?:mp4|mkv|webm)(?:$|\?)/i.test(source?.url ?? "");
   const playbackUrl = source ? (useDirectSource ? source.url : musicPlaybackUrl(activeTrack.id, source.url)) : "";
   const mediaKey = `${playbackUrl}:${sourceRevision}`;
+  const nativeQueue = useMemo(()=>JSON.stringify(library.filter(t=>t.kind==='track').slice(0,100).flatMap(t=>{
+    const candidates=uniqueSources(t.sources),s=candidates[preferredSourceIndex(candidates,t.kind)];
+    return s?[{id:t.id,url:musicPlaybackUrl(t.id,s.url),title:t.persianTitle||t.title,artist:t.artists.map(a=>a.name).join(' · ')}]:[];
+  })),[library]);
+  useEffect(()=>{
+    if(preview)return;
+    const restore=(event:Event)=>{const id=(event as CustomEvent<{id?:string}>).detail?.id;const index=library.findIndex(t=>t.id===id);if(index>=0&&index!==activeIndex)chooseTrack(index,false);};
+    window.addEventListener('sarvnema:native-resume',restore);
+    return()=>window.removeEventListener('sarvnema:native-resume',restore);
+  // The native handoff must select without autoplay; it restores the current native clock once ready.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[library,activeIndex,preview]);
   useMediaWarmup(media, preview ? undefined : mediaKey);
   const failureHandler = useRef<(player: HTMLMediaElement) => void>(() => {});
 
@@ -387,7 +399,7 @@ export function MusicPlayerEngine({
           <span className="music-video-quality">{source.quality || "Video"}</span>
         </div>
       ) : !preview ? (
-        <audio data-analytics-media="audio" data-analytics-id={`music:${activeTrack.id}`} data-analytics-provider={source?.provider || "unknown"} key={mediaKey} ref={media as RefObject<HTMLAudioElement>} preload="metadata" src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={handleLoadedMetadata} onCanPlay={() => { setSourceIssue(""); setTerminalError(false); }} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} />
+        <audio data-native-queue={nativeQueue} data-native-repeat={repeat} data-native-shuffle={shuffle ? "true" : "false"} data-analytics-media="audio" data-analytics-id={`music:${activeTrack.id}`} data-analytics-provider={source?.provider || "unknown"} key={mediaKey} ref={media as RefObject<HTMLAudioElement>} preload="metadata" src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={handleLoadedMetadata} onCanPlay={() => { setSourceIssue(""); setTerminalError(false); }} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} />
       ) : null}
 
       <div className="music-player-shell">

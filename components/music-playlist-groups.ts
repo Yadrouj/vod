@@ -22,8 +22,8 @@ export function musicPlaylistGroups(playlists: MoodPlaylist[]) {
     {
       id: "moods",
       title: "ایرانی؛ از جاده تا حال دل",
-      description: "گلچین‌های قابل‌پخش برای جاده، غم، پیکان، پژو و هیجان؛ نام حال‌وهوا، نه تگ خودرو.",
-      playlists: (moods.length ? moods : playlists.filter(playlist => playlist.scope === "persian" && playlist.selection === "editorial-tags")).slice(0, 8),
+      description: "جاده شمال، رفاقت، دوستی و آواهای محلی؛ انتخاب حال‌وهوای امروزت با آهنگ‌های واقعی آرشیو.",
+      playlists: (moods.length ? moods : playlists.filter(playlist => playlist.scope === "persian" && playlist.selection === "editorial-tags")).slice(0, 20),
     },
     {
       id: "styles",

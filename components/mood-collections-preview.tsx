@@ -17,7 +17,7 @@ export function MoodCollectionsPreview({ playlists }: { playlists: MoodPlaylist[
   </Link>;
   return <section className={styles.section} aria-label="پلی‌لیست‌های موسیقی">
     <header><div><small>آهنگ‌های واقعی، انتخاب برای هر سلیقه</small><h2>پلی‌لیست بعدی تو</h2></div><Link href="/music/collections" prefetch={false}>همهٔ پلی‌لیست‌ها <ArrowUpLeft size={17} /></Link></header>
-    {groups.map(group => <section className={styles.group} key={group.id} aria-label={group.title}><h3>{group.title}</h3><p className={styles.description}>{group.description}</p><div className={styles.grid}>{group.playlists.map(card)}</div></section>)}
+    {groups.map(group => <section className={styles.group} key={group.id} aria-label={group.title}><h3>{group.title}</h3><p className={styles.description}>{group.description}</p><div className={group.id==='moods'?styles.iranianRail:styles.grid} tabIndex={group.id==='moods'?0:undefined}>{group.playlists.map(card)}</div></section>)}
     {!groups.length && <div className={styles.grid}>{playlists.filter(playlist => playlist.trackIds.length > 0).slice(0, 4).map(card)}</div>}
   </section>;
 }

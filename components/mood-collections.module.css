@@ -7,6 +7,9 @@
 .group h3 { font-size: clamp(18px, 2.5vw, 24px); margin: 0 0 8px; }
 .description { max-width: 75ch; color: #aec6b6; font-size: 13px; line-height: 1.9; margin: 0 0 18px; }
 .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.iranianRail {display:flex;gap:16px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;padding:6px 2px 18px;scrollbar-color:#759a89 #13281e;}
+.iranianRail .card {flex:0 0 205px;scroll-snap-align:start;}
+@media(max-width:600px){.iranianRail .card{flex-basis:165px;}.iranianRail{gap:12px;}}
 .card { min-width: 0; padding: 12px; border: 1px solid var(--surface-edge); border-radius: 22px !important; background: #0e1b13; transition: transform .2s, background .2s; }
 .card:hover { transform: translateY(-4px); background: #162d1e; }
 .covers { aspect-ratio: 1.35; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; overflow: hidden; border-radius: 14px !important; position: relative; background: #253b2c; gap: 3px; }

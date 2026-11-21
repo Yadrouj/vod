@@ -8,7 +8,7 @@ import { musicPlaylistGroups, musicPlaylistKind, playlistKinds } from "./music-p
 import styles from "./mood-collections.module.css";
 import { mirroredImageUrl } from "@/lib/image-url";
 
-const scopes: Record<string, string> = { tags: "تگ‌های آرشیو جدید", archive: "آرشیو", mix: "ترکیبی", persian: "ایرانی و فارسی", styles: "سبک‌ها", years: "سال انتشار", turkish: "ترکی", korean: "کره‌ای", international: "بین‌المللی", video: "ویدیو" };
+const scopes: Record<string, string> = { iranian: "ایرانی و محلی", tags: "تگ‌های آرشیو جدید", archive: "آرشیو", mix: "ترکیبی", persian: "ایرانی و فارسی", styles: "سبک‌ها", years: "سال انتشار", turkish: "ترکی", korean: "کره‌ای", international: "بین‌المللی", video: "ویدیو" };
 
 export function MoodCollections({ playlists, preview = false }: { playlists: MoodPlaylist[]; preview?: boolean }) {
   const [scope, setScope] = useState("all");

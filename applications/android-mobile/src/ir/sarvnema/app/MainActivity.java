@@ -50,6 +50,7 @@ public final class MainActivity extends Activity {
     private static final int PICK_FILE = 101, MEDIA_PERMISSION = 102;
     private FrameLayout root;
     private WebView web, popup, pendingPopupNavigation;
+    private BackgroundAudio backgroundAudio;
     private LinearLayout popupLayer;
     private View customView, errorView;
     private StartupScreen startup;
@@ -80,6 +81,7 @@ public final class MainActivity extends Activity {
             return Build.VERSION.SDK_INT >= 30 ? WindowInsets.CONSUMED : insets.consumeSystemWindowInsets();
         });
         web = createBrowser(); root.addView(web, new FrameLayout.LayoutParams(-1,-1));
+        backgroundAudio = new BackgroundAudio(this,web);
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         root.addView(progress, new FrameLayout.LayoutParams(-1,dp(3),Gravity.TOP));
         progress.setVisibility(View.GONE);
@@ -294,10 +296,11 @@ public final class MainActivity extends Activity {
         return super.dispatchKeyEvent(event);
     }
     @Override protected void onSaveInstanceState(Bundle state) { super.onSaveInstanceState(state); web.saveState(state); }
-    @Override protected void onPause() { resumed = false; if (startup != null) startup.pause(); if (web != null) { web.evaluateJavascript("document.querySelectorAll('video,audio').forEach(function(m){m.pause();})",null); web.onPause(); } if (popup != null) popup.onPause(); super.onPause(); }
-    @Override protected void onResume() { super.onResume(); resumed = true; if (startup != null) startup.resume(); if (web != null) web.onResume(); if (popup != null) popup.onResume(); }
+    @Override protected void onPause() { resumed = false; if (startup != null) startup.pause(); if (backgroundAudio != null) backgroundAudio.pause(); if (popup != null) popup.onPause(); super.onPause(); }
+    @Override protected void onResume() { super.onResume(); resumed = true; if (startup != null) startup.resume(); if (backgroundAudio != null) backgroundAudio.resume(); if (popup != null) popup.onResume(); }
     @Override protected void onDestroy() {
         if (startup != null) startup.cancel();
+        if (backgroundAudio != null) backgroundAudio.destroy();
         denyPermission(); if (fileCallback != null) { fileCallback.onReceiveValue(null); fileCallback = null; }
         closePopup(); if (web != null) { root.removeView(web); web.destroy(); } super.onDestroy();
     }

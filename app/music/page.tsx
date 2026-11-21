@@ -104,7 +104,8 @@ export default async function MusicPage({ searchParams }: Props) {
   // Music-video artwork is generally larger and more reliable than the tiny
   // archive thumbnails, so it leads the visual hero while the shelves keep
   // their chronological catalog order.
-  const heroSourceTracks = hasFilter && tracks.length ? tracks : [...weeklyTracks, ...recentVideos, ...recentTracks, ...remixes, ...libraryArrivals];
+  const iranianTracks = index.tracks.filter(track=>track.kind==='track' && track.coverUrl && track.artists.some(artist=>/محسن یگانه|معین|هایده|مهستی|بهنام بانی|ابی|داریوش|شادمهر|رضا بهرام|شجریان|آرون افشار|سوسن|حمیرا|اشوان/.test(artist.name)));
+  const heroSourceTracks = hasFilter && tracks.length ? tracks : [...iranianTracks, ...weeklyTracks, ...recentTracks];
   const heroSeen = new Set<string>();
   const heroTracks: MusicHeroTrack[] = [...heroSourceTracks]
     .filter(track => { if (heroSeen.has(track.id)) return false; heroSeen.add(track.id); return true; })
@@ -139,7 +140,7 @@ export default async function MusicPage({ searchParams }: Props) {
               <Link className="pill active" href="/music">موسیقی</Link>
             </div>
           </header>
-          <MusicLandingHero tracks={heroTracks} archiveStats={archiveStats} initialQuery={q} initialKind={kind} />
+          <MusicLandingHero tracks={heroTracks} archiveStats={archiveStats} initialQuery={q} initialKind={kind} iranian={!hasFilter} />
           {hasFilter && <MusicCategoryNav categories={index.categories} categoryCounts={index.categoryCounts} libraryCategoryCounts={index.libraryCategoryCounts} activeCategory={category} libraryOnly={libraryOnly} />}
           <LandingPulse initial={{ version: index.updatedAt, updatedAt: Date.parse(index.updatedAt) > 0 ? index.updatedAt : null, recentCount: 0 }} locale={locale} endpoint="/api/music/pulse" updatesHref="/music?fresh=week" />
         </div>
@@ -167,8 +168,8 @@ export default async function MusicPage({ searchParams }: Props) {
           </>
         ) : (
           <>
-            <MusicShelf eyebrow="اضافه‌شده به سرونما · دسته‌بندی با تگ‌ها" title="تازه‌های آرشیو" tracks={libraryArrivals} viewAll="/music?added=library" preload />
             {moodIndex && moodIndex.playlists.length > 0 && <MoodCollectionsPreview playlists={moodIndex.playlists} />}
+            <MusicShelf eyebrow="اضافه‌شده به سرونما · دسته‌بندی با تگ‌ها" title="تازه‌های آرشیو" tracks={libraryArrivals} viewAll="/music?added=library" preload />
             <PublicPartyRooms mode="listen" locale={locale} />
             <nav className="music-discovery-grid" aria-label="میان‌برهای موسیقی">
               {discovery.map((item, itemIndex) => (

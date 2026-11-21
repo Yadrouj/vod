@@ -1,152 +1,35 @@
 "use client";
-
-import Link from "next/link";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Pause,
-  Play,
-  Radio,
-  Search,
-  Sparkles,
-  Volume2,
-} from "lucide-react";
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { SearchSuggest } from "@/components/search-suggest";
-import { MobileFeatureCard } from "./mobile-feature-card";
-import { WatchTogetherLauncher } from "./watch-together-launcher";
-import featureStyles from "./landing-feature-actions.module.css";
-import { mirroredImageUrl } from "@/lib/image-url";
-
-export type MusicHeroTrack = {
-  id: string;
-  title: string;
-  persianTitle: string;
-  coverUrl: string | null;
-  kind: "track" | "video" | "album";
-  artists: Array<{ name: string }>;
-};
-
-export type MusicArchiveStats = {
-  tracks: number;
-  artists: number;
-  videos: number;
-};
-
-type Props = {
-  tracks: MusicHeroTrack[];
-  archiveStats?: MusicArchiveStats;
-  initialQuery?: string;
-  initialKind?: string;
-};
-
-export function MusicLandingHero({ tracks, archiveStats, initialQuery = "", initialKind = "all" }: Props) {
-  const featuredTracks = useMemo(() => tracks.filter((track) => track.id), [tracks]);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isVisualPlaying, setIsVisualPlaying] = useState(true);
-  const total = featuredTracks.length;
-  const activeTrack = featuredTracks[total ? activeIndex % total : 0];
-
-  useEffect(() => {
-    if (!isVisualPlaying || total < 2) return;
-    const timer = window.setInterval(() => { if (!document.hidden && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) setActiveIndex((current) => (current + 1) % total); }, 7200);
-    return () => window.clearInterval(timer);
-  }, [isVisualPlaying, total]);
-
-  if (!activeTrack) return null;
-
-  const trackTitle = activeTrack.persianTitle || activeTrack.title;
-  const artistLabel = activeTrack.artists.map((artist) => artist.name).filter(Boolean).join(" • ") || "SarvNema Music";
-  const heroStyle = activeTrack.coverUrl
-    ? ({ "--music-hero-art": `url("${activeTrack.coverUrl.replaceAll('"', "\\\"")}")` } as CSSProperties)
-    : undefined;
-  const selectTrack = (direction: -1 | 1) => { setIsVisualPlaying(false); setActiveIndex((current) => (current + direction + total) % total); };
-
-  return (
-    <section className="music-landing-hero" style={heroStyle} data-playing={isVisualPlaying ? "true" : "false"}>
-      <MobileFeatureCard music title={trackTitle} image={activeTrack.coverUrl} meta={artistLabel} eyebrow="انتخاب برای شنیدن"
-        item={{ itemId: activeTrack.id, title: trackTitle, posterUrl: activeTrack.coverUrl }} locale="fa"
-        index={activeIndex % total} total={total} rotating={isVisualPlaying} onRotate={setIsVisualPlaying} onSelect={selectTrack} />
-      {archiveStats && <p className="mobile-music-statline">{archiveStats.tracks.toLocaleString("fa-IR")} آهنگ <span>·</span> {archiveStats.artists.toLocaleString("fa-IR")} هنرمند <span>·</span> {archiveStats.videos.toLocaleString("fa-IR")} موزیک‌ویدیو</p>}
-      <div className="music-landing-hero-glow" aria-hidden="true" />
-      <div className="music-landing-hero-grid">
-        <div className="music-landing-copy">
-          <span className="music-landing-kicker"><Sparkles size={14} /> سرو‌نما موزیک</span>
-          <p className="music-landing-eyebrow">{initialQuery ? `نتیجه‌های جست‌وجوی «${initialQuery}»` : "از آهنگ‌های تازه تا خاطره‌های قدیمی"}</p>
-          <h1>{initialQuery ? "دنبال چی می‌گردی؟" : "یه آهنگ بذار."}</h1>
-          <p className="music-landing-description">برای خودت پلی کن، یا با دوست‌هات توی یک اتاق گوش بده.</p>
-
-          {archiveStats && <div className="music-landing-stats" aria-label="آمار آرشیو موسیقی">
-            <span><strong>{archiveStats.tracks.toLocaleString("fa-IR")}</strong><small>آهنگ</small></span>
-            <span><strong>{archiveStats.artists.toLocaleString("fa-IR")}</strong><small>هنرمند</small></span>
-            <span><strong>{archiveStats.videos.toLocaleString("fa-IR")}</strong><small>موزیک‌ویدیو</small></span>
-          </div>}
-
-          <form className="music-landing-search" action="/music" role="search">
-            <Search size={18} aria-hidden="true" />
-            <SearchSuggest
-              defaultValue={initialQuery}
-              placeholder="نام خواننده، آهنگ یا آلبوم…"
-              locale="fa"
-              endpoint="/api/music/search"
-              hrefForItem={(item) => `/music/${item.imdbCode}`}
-              viewAllHref={(query) => `/music?q=${encodeURIComponent(query)}`}
-              portal
-              maxItems={14}
-            />
-            <select name="kind" defaultValue={initialKind} aria-label="نوع محتوا">
-              <option value="all">همه</option>
-              <option value="track">آهنگ‌ها</option>
-              <option value="video">موزیک‌ویدیوها</option>
-            </select>
-            <button type="submit">جست‌وجو</button>
-          </form>
-
-          <nav className="music-landing-link-row" aria-label="دسترسی‌های موسیقی">
-            <Link href="/music/artists">همهٔ خواننده‌ها</Link>
-            <Link href="/music?kind=video">موزیک‌ویدیو</Link>
-            <Link href="/music/playlists">پلی‌لیست‌های من</Link>
-          </nav>
-        </div>
-
-        <aside className={`music-landing-now-playing ${featureStyles.card} ${featureStyles.music}`} aria-label="قطعهٔ منتخب">
-          <div className="music-landing-now-head">
-            <span><Radio size={14} /> انتخاب برای شنیدن</span>
-            <button type="button" className="music-landing-visual-toggle" onClick={() => setIsVisualPlaying((current) => !current)} aria-label={isVisualPlaying ? "توقف نمایش متحرک" : "شروع نمایش متحرک"}>
-              {isVisualPlaying ? <Pause size={15} fill="currentColor" /> : <Play size={15} fill="currentColor" />}
-            </button>
-          </div>
-
-          <Link className={`music-landing-artwork ${featureStyles.artwork}`} href={`/music/${activeTrack.id}`} aria-label={`پخش ${trackTitle}`}
-            onPointerEnter={() => setIsVisualPlaying(false)} onFocus={() => setIsVisualPlaying(false)}>
-            {activeTrack.coverUrl ? <img src={mirroredImageUrl(activeTrack.coverUrl)} alt="" decoding="async" fetchPriority="high" /> : <span className="music-landing-fallback-art"><Volume2 size={48} /></span>}
-            <span className="music-landing-artwork-shine" aria-hidden="true" />
-            <span className={featureStyles.playOverlay} aria-hidden="true"><span className={featureStyles.playIcon}><Play size={28} fill="currentColor" /></span></span>
-            <em>{activeTrack.kind === "video" ? "MUSIC VIDEO" : "TRACK"}</em>
-          </Link>
-
-          <div className="music-landing-track-copy" dir="auto">
-            <Link className={featureStyles.titleLink} href={`/music/${activeTrack.id}`} aria-label={`جزئیات ${trackTitle}`}><strong>{trackTitle}</strong></Link>
-            <span>{artistLabel}</span>
-          </div>
-
-          <div className={featureStyles.actions}
-            onPointerEnter={() => setIsVisualPlaying(false)} onFocusCapture={() => setIsVisualPlaying(false)}>
-            <WatchTogetherLauncher
-              locale="fa"
-              placement="inline"
-              experience="listen"
-              preset={{ itemId: activeTrack.id, title: trackTitle, posterUrl: activeTrack.coverUrl }}
-            />
-          </div>
-
-          {total > 1 && <div className="music-landing-track-picker" aria-label="انتخاب قطعهٔ پیشنهادی">
-            <button type="button" onClick={() => selectTrack(-1)} aria-label="قطعهٔ قبلی"><ChevronRight size={17} /></button>
-            <div>{featuredTracks.slice(0, 5).map((track, index) => <button type="button" onClick={() => setActiveIndex(index)} key={track.id} className={index === activeIndex ? "is-active" : ""} aria-label={`انتخاب ${track.persianTitle || track.title}`}><span>{track.coverUrl ? <img src={mirroredImageUrl(track.coverUrl)} alt="" loading="lazy" decoding="async" /> : <Volume2 size={13} />}</span></button>)}</div>
-            <button type="button" onClick={() => selectTrack(1)} aria-label="قطعهٔ بعدی"><ChevronLeft size={17} /></button>
-          </div>}
-        </aside>
-      </div>
-    </section>
-  );
+import Link from 'next/link';
+import { Play, Headphones, Disc3 } from 'lucide-react';
+import { useState } from 'react';
+import { SearchSuggest } from '@/components/search-suggest';
+import { WatchTogetherLauncher } from './watch-together-launcher';
+import { mirroredImageUrl } from '@/lib/image-url';
+import styles from './iranian-music-hero.module.css';
+export type MusicHeroTrack={id:string;title:string;persianTitle:string;coverUrl:string|null;kind:'track'|'video'|'album';artists:Array<{name:string}>};
+export type MusicArchiveStats={tracks:number;artists:number;videos:number};
+type Props={tracks:MusicHeroTrack[];archiveStats?:MusicArchiveStats;initialQuery?:string;initialKind?:string;iranian?:boolean};
+const moods=[['north-road','جاده شمال'],['friendship','رفاقت و دوستی'],['northern','شمالی'],['kurdish','کردی'],['lori','لری'],['rain','بارونی']];
+export function MusicLandingHero({tracks,archiveStats,initialQuery='',initialKind='all',iranian=true}:Props){
+ const [index,setIndex]=useState(0),track=tracks[index%Math.max(1,tracks.length)];
+ const title=track?.persianTitle||track?.title||'موسیقی سرونما',artist=track?.artists.map(a=>a.name).join(' · ')||'';
+ return <section className={styles.hero} aria-label="کشف موسیقی" dir="rtl">
+  <div className={styles.copy}><span className={styles.kicker}><Headphones size={17}/> سرونما موزیک · انتخابِ حال خوب</span>
+   <h1>{initialQuery?'آهنگت همین نزدیکی‌ست.':iranian?<>از جاده شمال،<br/><em>تا حالِ خوبِ رفاقت.</em></>:'هر روز، یک کشف تازه.'}</h1>
+   <p>یه آهنگ برای خودت؛ یه پلی‌لیست برای با هم بودن.<br/>ایرانی، محلی، خاطره‌انگیز یا تازه—از همین‌جا شروع کن.</p>
+   <form className={styles.search} action="/music" role="search">
+    <SearchSuggest defaultValue={initialQuery} placeholder="آهنگ، خواننده یا حال‌وهوا…" locale="fa" endpoint="/api/music/search" hrefForItem={item=>'/music/'+item.imdbCode} viewAllHref={q=>'/music?q='+encodeURIComponent(q)} portal maxItems={10}/>
+    <select name="kind" defaultValue={initialKind} aria-label="نوع محتوا"><option value="all">همه</option><option value="track">آهنگ</option><option value="video">موزیک‌ویدیو</option></select><button type="submit">جست‌وجو</button>
+   </form>
+   <nav className={styles.moods} aria-label="حال‌وهوای موسیقی ایرانی">{moods.map(([id,label])=><Link key={id} href={'/music/collections/iranian-'+id} prefetch={false}>{label}</Link>)}</nav>
+   <div className={styles.footer}><Link href="/music/collections">کشف ۲۰ پلی‌لیست ایرانی</Link><span>انتخاب کن، پخش کن، هم‌صدا شو.</span></div>
+  </div>
+  {track&&<div className={styles.feature}>
+   <div className={styles.stack} aria-hidden="true">{tracks.slice(1,3).map((t,i)=><div className={i?styles.backTwo:styles.backOne} key={t.id}>{t.coverUrl&&<img src={mirroredImageUrl(t.coverUrl)} alt="" loading="lazy"/>}</div>)}</div>
+   <Link className={styles.art} href={'/music/'+track.id} aria-label={'پخش '+title}>{track.coverUrl?<img src={mirroredImageUrl(track.coverUrl)} alt={title} fetchPriority="high" decoding="async"/>:<Disc3 size={90}/>}<span className={styles.play}><Play fill="currentColor" size={28}/></span><span className={styles.artLabel}>انتخاب برای شنیدن</span></Link>
+   <div className={styles.caption}><div><Link href={'/music/'+track.id}><strong>{title}</strong></Link><span>{artist}</span></div>{tracks.length>1&&<button onClick={()=>setIndex(i=>(i+1)%tracks.length)} type="button" aria-label="انتخاب قطعه بعدی">بعدی</button>}</div>
+   <WatchTogetherLauncher locale="fa" placement="inline" experience="listen" preset={{itemId:track.id,title,posterUrl:track.coverUrl}}/>
+  </div>}
+  {archiveStats&&<p className={styles.archive}>{archiveStats.tracks.toLocaleString('fa-IR')} آهنگ در آرشیو · {archiveStats.artists.toLocaleString('fa-IR')} هنرمند</p>}
+ </section>;
 }

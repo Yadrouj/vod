@@ -20,7 +20,7 @@ export default async function ApplicationsPage() {
   const tvApk = appReleaseUrl(process.env.ANDROID_TV_APK_URL) || bundledAppReleases.tv.url;
   const editions = [
     { id: "android-mobile", icon: <Smartphone />, platform: "اندروید موبایل", english: "ANDROID · PHONE & TABLET", description: "همان سرونمایی که می‌شناسی، این‌بار در یک اپ سبک؛ بدون نوار آدرس و با دسترسی به فیلم، سریال و موسیقی.", packageId: "ir.sarvnema.app", href: "/", apk: mobileApk, version: mobileApk === bundledAppReleases.mobile.url ? bundledAppReleases.mobile.version : null,
-      features: ["رابط واکنش‌گرای سایت، مناسب لمس و صفحهٔ گوشی", "پخش تمام‌صفحه، چرخش ویدئو و انتخاب فایل زیرنویس", "دانلود و دسترسی اختیاری دوربین و میکروفن برای اتاق‌ها"] },
+      features: ["ادامهٔ موسیقی هنگام قفل صفحه و کوچک‌کردن اپ؛ کنترل از اعلان", "رابط واکنش‌گرای سایت، مناسب لمس و صفحهٔ گوشی", "پخش تمام‌صفحه، چرخش ویدئو و انتخاب فایل زیرنویس", "دانلود و دسترسی اختیاری دوربین و میکروفن برای اتاق‌ها"] },
     { id: "android-tv", icon: <Tv />, platform: "اندروید TV", english: "ANDROID TV · BIG SCREEN", description: "چیدمانی جدا برای فاصلهٔ مبل تا تلویزیون؛ با نوشته‌های خوانا، انتخاب واضح و دکمه‌هایی که با ریموت راحت پیدا می‌شوند.", packageId: "ir.sarvnema.tv", href: "/tv", apk: tvApk, version: tvApk === bundledAppReleases.tv.url ? bundledAppReleases.tv.version : null,
       features: ["انتخاب با جهت‌ها و OK، بدون نیاز به موس", "انتخاب فصل و قسمت، دوبله یا زیرنویس و سپس کیفیت", "کنترل‌های بزرگ پخش و ادامهٔ تماشا روی همین دستگاه"] },
   ];
