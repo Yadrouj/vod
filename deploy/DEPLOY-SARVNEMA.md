@@ -125,6 +125,7 @@ git pull --ff-only origin main
 P=http://127.0.0.1:18181
 NP=registry.npmjs.org,.npmjs.org,localhost,127.0.0.1
 setsid nohup sh -c "docker build --network host \
+  --build-context node:22-bookworm-slim=docker-image://docker.arvancloud.ir/library/node:22-bookworm-slim \
   --build-arg http_proxy=$P --build-arg https_proxy=$P \
   --build-arg HTTP_PROXY=$P --build-arg HTTPS_PROXY=$P \
   --build-arg no_proxy=$NP --build-arg NO_PROXY=$NP \
@@ -134,6 +135,13 @@ setsid nohup sh -c "docker build --network host \
 # 5.3 Watch it (reconnect and re-run this if SSH drops; the build keeps going)
 tail -f /tmp/vod-build.log          # finished when the last line is EXIT=0
 ```
+
+Why `--build-context`: Docker Hub answers `403 Forbidden` from this server, so the
+`node:22-bookworm-slim` base comes from the ArvanCloud mirror without retagging
+anything (`docker pull docker.arvancloud.ir/library/node:22-bookworm-slim` first).
+If server port `18181` is still held by a dropped tunnel
+(`remote port forwarding failed`), use `18182` for both the tunnel and `P=`.
+Check free disk first (`df -h /`): a build needs about 8 GB.
 
 Why `docker build --network host`: the build has to reach the tunnel on the
 server's `127.0.0.1:18181`. It builds the same image (`vod-app`) that the compose
