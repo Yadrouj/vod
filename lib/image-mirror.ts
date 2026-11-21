@@ -16,7 +16,8 @@ const UPSTREAM_TIMEOUT_MS = 8_000;
 const HOST_COOLDOWN_MS = 5 * 60_000;
 const MAX_REDIRECTS = 3;
 // Never fill the shared server disk: below this, images are served but not stored.
-const MIN_FREE_BYTES = Number(process.env.IMAGE_MIRROR_MIN_FREE_BYTES) || 3 * 1024 ** 3;
+// "0" disables the check (the bucket lives on another server with its own quota).
+const MIN_FREE_BYTES = /^\d+$/.test(process.env.IMAGE_MIRROR_MIN_FREE_BYTES ?? "") ? Number(process.env.IMAGE_MIRROR_MIN_FREE_BYTES) : 3 * 1024 ** 3;
 const DISK_CHECK_MS = 60_000;
 
 const blockedHosts = new Map<string, number>();
@@ -27,6 +28,7 @@ let diskHasRoom = true;
 export { externalObjectKey };
 
 async function hasDiskRoom(dir: string) {
+  if (MIN_FREE_BYTES <= 0) return true;
   if (Date.now() - diskCheckedAt < DISK_CHECK_MS) return diskHasRoom;
   diskCheckedAt = Date.now();
   try {

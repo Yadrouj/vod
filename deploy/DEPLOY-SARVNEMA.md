@@ -19,7 +19,7 @@
 | Health check | `curl -fsS http://127.0.0.1:3000/readyz` on the server |
 | Secrets | `/home/ubuntu/vod/.env.local` (not in Git, never print or commit it) |
 | Live data | `/home/ubuntu/vod/public/data` and `/home/ubuntu/vod/data`, mounted into the container |
-| Image storage | container **`vod-minio`** (service `minio`, volume `vod_minio_data`, host port `127.0.0.1:19000`): public bucket `sarvnema-tmdb` behind `sarvnema.ir/media/tmdb/...`, see `docs/tmdb-image-mirror.md` |
+| Image storage | container **`vod-minio`** on **parspack2** (`ssh parspack2`, `/home/ubuntu/vod-minio`, volume `vod_minio_data`), reached over WireGuard at `10.77.0.1:19000`: public bucket `sarvnema-tmdb` behind `sarvnema.ir/media/...`. See `docs/image-mirror.md` |
 
 `deploy/README.md` and the comments at the top of `docker-compose.host.yml` mention
 older hosts (`185.203.118.87`, `46.34.163.178`). **This file is the current source of truth.**
@@ -46,9 +46,10 @@ Never do any of these:
   your own SSH session). Use the bracket trick: `pkill -f "^[d]ocker build"`.
 
 Allowed: everything in sections 3–6 below, which only touches `vod-app`,
-the `vod-app` image and `/home/ubuntu/vod`, plus SarvNema's own `vod-minio`
-container (`docker compose -f docker-compose.host.yml up -d minio`). The
-unrelated `minio` container belongs to another project and is not ours.
+the `vod-app` image and `/home/ubuntu/vod`, plus SarvNema's own `vod-minio` on parspack2
+(`/home/ubuntu/vod-minio`). On parspack2, everything else (`mn-*`, `apps-*` and the
+Swarm `db-replicas` stack, whose replicas run on parspack1) belongs to another
+project. The `minio` and `db-replicas_*` containers on parspack1 are not ours either.
 
 ## 3. Code flow: pull, commit, push (on your laptop)
 

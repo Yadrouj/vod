@@ -1,0 +1,43 @@
+# SarvNema image storage on parspack2 (ssh parspack2, 89.46.217.113).
+#
+# parspack1 (the web server) is short on disk; parspack2 has room. The vod-app
+# container on parspack1 reaches this MinIO over the private WireGuard link
+# (parspack1 = 10.77.0.2, parspack2 = 10.77.0.1). It is never published on a
+# public interface. Visitors keep loading images from sarvnema.ir/media/...,
+# which vod-app serves from here (docs/image-mirror.md).
+#
+# Lives in /home/ubuntu/vod-minio on parspack2, next to a 0600 `.env` holding
+# MINIO_ROOT_USER / MINIO_ROOT_PASSWORD (the same values as parspack1's
+# /home/ubuntu/vod/.env.local).
+#
+#   cd /home/ubuntu/vod-minio && docker compose -f docker-compose.vod-minio.yml up -d
+#
+# parspack2 also runs another project's containers and Swarm services
+# (mn-*, apps-*, db-replicas). Only touch `vod-minio` and the `vod_minio_data` volume.
+name: vod-storage
+
+services:
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    container_name: vod-minio
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    env_file:
+      - path: .env
+    ports:
+      # WireGuard only: reachable from parspack1, not from the internet.
+      - "10.77.0.1:19000:9000"
+      # Loopback, for the laptop upload tunnel: ssh -L 19000:127.0.0.1:19000 parspack2
+      - "127.0.0.1:19000:9000"
+    volumes:
+      - vod_minio_data:/data
+    mem_limit: 1g
+    cpus: 1
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  vod_minio_data:

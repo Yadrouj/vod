@@ -33,9 +33,9 @@ could run script.
 ## Configuration
 
 Compose (`deploy/host/docker-compose.host.yml`) sets these on the app:
-`TMDB_MIRROR_ENDPOINT=http://vod-minio:9000` and `TMDB_MIRROR_BUCKET=sarvnema-tmdb`.
-Set the credentials in the server's `.env.local`. Both `vod-minio` and the app
-read that file:
+`TMDB_MIRROR_ENDPOINT=http://10.77.0.1:19000` and `TMDB_MIRROR_BUCKET=sarvnema-tmdb`.
+Set the credentials in parspack1's `.env.local` (read by the app) and in
+`/home/ubuntu/vod-minio/.env` on parspack2 (read by MinIO), with the same values:
 
 ```
 MINIO_ROOT_USER=sarvnema
@@ -45,8 +45,9 @@ MINIO_ROOT_PASSWORD=<long random secret>
 `TMDB_MIRROR_UPSTREAM=0` turns off step 2. When `TMDB_MIRROR_ENDPOINT` is unset
 (for example in local dev), the route proxies TMDB directly.
 
-`vod-minio` listens on `127.0.0.1:19000` on the host, which the upload tunnel
-uses. It is not published to the internet. Visitors reach the images only
+`vod-minio` runs on **parspack2** (`deploy/parspack2/docker-compose.vod-minio.yml`),
+on `10.77.0.1:19000` (WireGuard, used by vod-app on parspack1) and
+`127.0.0.1:19000` (the upload tunnel). It is not published to the internet. Visitors reach the images only
 through `sarvnema.ir/media/tmdb/...`.
 
 ## Filling the bucket
@@ -62,7 +63,7 @@ ssh parspack1 'cd /home/ubuntu/vod && docker run --rm --network none -m 768m --c
   vod-app node scripts/mirror-tmdb-images.mjs --list' > tmdb-images.txt
 
 # 2. Tunnel MinIO to the laptop (keep it open)
-ssh -N -L 19000:127.0.0.1:19000 parspack1
+ssh -N -L 19000:127.0.0.1:19000 parspack2
 
 # 3. Download from TMDB and upload. Resumable: stored objects are skipped.
 #    The script also creates the bucket and sets its public-read policy.

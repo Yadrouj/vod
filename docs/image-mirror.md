@@ -3,8 +3,10 @@
 Visitors in Iran can't reliably load images from other domains. Some hosts are
 filtered (TVMaze, YouTube thumbnails, TMDB), and others are slow. So pages
 never point at them. Every image on an allow-listed host is served from
-sarvnema.ir and stored in the public MinIO bucket `sarvnema-tmdb` (in the
-`vod-minio` container) under `ext/...`:
+sarvnema.ir and stored in the public MinIO bucket `sarvnema-tmdb` under
+`ext/...`. The bucket lives in the `vod-minio` container on **parspack2**, which
+has the disk space (`deploy/parspack2/docker-compose.vod-minio.yml`). vod-app on
+parspack1 reaches it over WireGuard at `10.77.0.1:19000`, and it is never public:
 
 ```
 https://static.tvmaze.com/uploads/images/medium_landscape/0/1148.jpg
@@ -34,8 +36,10 @@ not on the list stay external. The allowlist stops strangers from using
 2. If it's missing, the route fetches it from the upstream host, following up
    to 3 redirects, and only to allow-listed hosts. It sends the bytes to the
    visitor and stores them in MinIO in the background.
-3. **Disk floor:** nothing is stored while the server has less than 3 GB free
-   (`IMAGE_MIRROR_MIN_FREE_BYTES`). Images are still served.
+3. **Storage cap:** the bucket has a MinIO hard quota on parspack2
+   (`mc quota info`). When it's full, images are still served but not stored.
+   When MinIO is local instead, `IMAGE_MIRROR_MIN_FREE_BYTES` (default 3 GB)
+   stops storing below that much free disk. Production sets it to `0`.
 4. If the upstream is unreachable, the route answers `302` to the original
    URL, so nothing gets worse than before. A host that times out is skipped
    for 5 minutes.
@@ -59,7 +63,7 @@ ssh parspack1 'cd /home/ubuntu/vod && docker run --rm --network none -m 768m --c
   vod-app node scripts/mirror-tmdb-images.mjs --list --external=static.tvmaze.com,i.ytimg.com' > blocked.txt
 
 # 2. Tunnel MinIO, then upload (resumable)
-ssh -N -L 19000:127.0.0.1:19000 parspack1
+ssh -N -L 19000:127.0.0.1:19000 parspack2
 TMDB_MIRROR_ENDPOINT=http://127.0.0.1:19000 MINIO_ROOT_USER=sarvnema MINIO_ROOT_PASSWORD='<secret>' \
   npm run mirror-tmdb-images -- --input=blocked.txt --concurrency=8
 ```
