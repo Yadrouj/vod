@@ -40,14 +40,15 @@
 @media (max-width: 850px) {
  .layout { display: block; }
  .sidebar { display: none; }
- .page { padding-inline: 16px; }
+ .header,.titleRow,.description,.subtitles { padding-inline:12px; }
+ .page { padding-inline: 0; }
 }
 @media (max-width: 600px) {
  .page { padding-inline: 0; }
- .header { padding-inline: 14px; height: 62px; gap: 12px; }
+ .header { padding-inline: 12px; height: 52px; gap: 12px; }
  .header nav { gap: 10px; font-size: 11px; }
- .layout { margin-top: clamp(24px, 5svh, 44px); }
- .titleRow { margin: 14px; gap: 10px; align-items: start; flex-wrap: wrap; }
+ .layout { margin-top: 8px; }
+ .titleRow { margin: 12px 0; gap: 8px; align-items: start; flex-wrap: wrap; }
  .titleRow h1 { font-size: 19px; }
  .titleRow > button { font-size: 11px; }
  .description { margin: 14px; font-size: 12px; }

@@ -135,6 +135,9 @@ public final class MainActivity extends Activity {
                 if (view == currentBrowser() && progress != null) { progress.setProgress(0); progress.setVisibility(startup != null && startup.blocksInput() ? View.GONE : View.VISIBLE); }
                 if (pendingPermission != null && view == permissionOwner) denyPermission();
             }
+            @Override public void onPageCommitVisible(WebView view, String url) {
+                if (view == web && startup != null && UrlPolicy.trusted(url) && url.equals(view.getUrl())) startup.pageFinished();
+            }
             @Override public void onPageFinished(WebView view, String url) {
                 if (view == currentBrowser() && progress != null) progress.setVisibility(View.GONE);
                 if (view == web && startup != null && UrlPolicy.trusted(url) && url.equals(view.getUrl())) startup.pageFinished();

@@ -51,6 +51,18 @@
   .row > .group:first-child > .button:first-child::after { left: 0; transform: none; }
   .touchOnly { display: none; }
 }
+
+.dimmer{position:absolute;inset:0 0 var(--player-controls-reserve,0px);background:#000;z-index:2;pointer-events:none}
+.lock,.rotateIcon,.gestureEdge,.hint{display:none}
+.lock{touch-action:manipulation}
+@media(pointer:coarse){
+  .gestureEdge{position:absolute;display:block;top:0;bottom:0;width:34%;touch-action:none}
+  .gestureEdge[data-gesture="light"]{left:0}.gestureEdge[data-gesture="volume"]{right:0}
+  .lock{position:absolute;left:max(8px,env(safe-area-inset-left));top:max(8px,env(safe-area-inset-top));z-index:32;display:grid;place-items:center;width:44px;height:44px;padding:0;background:#161616b8;color:white;border:0;border-radius:50%!important}
+  .lock[aria-pressed=true]{color:#f4d67f}.button .expandIcon{display:none}.button .rotateIcon{display:block}
+  .hint{display:block;color:#bec1bf;font-size:.84rem;line-height:1.7;margin:8px 12px}
+}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){.button svg{transition:transform .14s}.button:hover svg{transform:scale(1.09)}}
 @media (max-width: 760px), (pointer: coarse) and (max-height: 600px) {
   .controls { padding: 28px max(6px, env(safe-area-inset-right)) max(2px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); }
   .controls .desktop, .settings .desktop, .volume { display: none; }

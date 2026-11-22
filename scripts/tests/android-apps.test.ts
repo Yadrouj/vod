@@ -97,7 +97,7 @@ test("both native editions have one shared branded startup and explicit Persian 
     const java = readFileSync(`applications/${variant}/src/ir/sarvnema/${id}/MainActivity.java`, "utf8");
     for (const value of ["StartupScreen.handoffSystemSplash(this)", "setTitle(R.string.app_name)", "new StartupScreen(", "startup.pageStarted()", "startup.pageFinished()", "startup.progress(value)", "startup.pause()", "startup.resume()", "startup.cancel()"])
       assert.ok(java.includes(value), `${variant}: ${value}`);
-    assert.doesNotMatch(java, /onPageCommitVisible/, "first committed response is too early to dismiss startup");
+    assert.match(java, /onPageCommitVisible[\s\S]*?url.equals\(view.getUrl\(\)\)\) startup.pageFinished\(\)/, "a trusted commit starts the guarded DOM probe");
   }
   const modernTheme = readFileSync("applications/android-common/res/values-v31/styles.xml", "utf8");
   assert.match(modernTheme, /android:windowSplashScreenBackground/);
@@ -109,7 +109,7 @@ test("both native editions have one shared branded startup and explicit Persian 
 
 test("startup uses actual render readiness, bounded waiting and accessible lifecycle-safe motion", () => {
   const java = readFileSync("applications/android-common/src/ir/sarvnema/shell/StartupScreen.java", "utf8");
-  for (const value of ["document.readyState==='complete'", "document.querySelector('main')", "document.fonts.status==='loaded'", "postVisualStateCallback", "state.reveal(id)", "ValueAnimator.areAnimatorsEnabled()", "isFinishing()", "isDestroyed()", "onTimeout.run()", "handler.removeCallbacksAndMessages(null)", "web.setImportantForAccessibility", "web.setDescendantFocusability"])
+  for (const value of ["main:not([aria-busy=true])", "m.getBoundingClientRect().height>0", "postVisualStateCallback", "state.reveal(id)", "ValueAnimator.areAnimatorsEnabled()", "isFinishing()", "isDestroyed()", "onTimeout.run()", "handler.removeCallbacksAndMessages(null)", "web.setImportantForAccessibility", "web.setDescendantFocusability"])
     assert.ok(java.includes(value), value);
   assert.match(java, /SLOW_MS = 8000, TIMEOUT_MS = 35000/);
   const navigation = java.split("public void pageStarted()")[1].split("public void progress(")[0];
@@ -136,7 +136,7 @@ test("cinematic startup bundles three small offline scenes and real Persian font
   assert.doesNotMatch(backdrop, /https?:\/\/|MediaPlayer|VideoView|\.recycle\(/);
   const controller = readFileSync('applications/android-common/src/ir/sarvnema/shell/StartupScreen.java', 'utf8');
   assert.match(controller, /mark\.setClipBounds/); assert.match(controller, /cinema\.pauseMotion\(\)/);
-  assert.match(controller, /smallestScreenWidthDp >= 600 \? 520 : 420/);
+  assert.match(controller, /smallestScreenWidthDp >= 600 \? 220 : 160/);
   assert.match(controller, /UI_MODE_TYPE_TELEVISION/);
   assert.match(readFileSync('applications/android-common/res/values-television/startup.xml', 'utf8'), /60sp/);
 });

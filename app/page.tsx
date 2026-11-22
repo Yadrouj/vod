@@ -30,7 +30,8 @@ import { titleMetadata } from "@/lib/seo";
 import { loadVodHomeIndex, loadVodIndex, selectVodSection } from "@/lib/vod-index";
 import { categoryCounts, categoryCardBuckets } from "@/lib/category-counts";
 import { weeklyDiscovery, recentlyUpdatedTitles } from "@/lib/home-discovery";
-import { DiscoveryUpdateStrip } from "@/components/discovery-update-strip";
+import { Suspense } from "react";
+import { LandingEntry } from "@/components/landing-entry";
 import { loadImdbTrending, loadHeroArtwork } from "@/lib/imdb-trending";
 import { rankDiscovery } from "@/lib/discovery-ranking";
 import { loadAudienceSignals } from "@/lib/discovery-feedback";
@@ -56,15 +57,19 @@ export const metadata: Metadata = titleMetadata({
 
 export default async function HomePage() {
   const locale = await getLocale();
+  return <main className={`shell film-spotify-page ${landingStyles.landing}`} data-media-theme="cinema">
+    <LandingEntry locale={locale}/>
+    <Suspense fallback={<div className={landingStyles.placeholder} aria-busy="true" aria-label={locale === "fa" ? "در حال دریافت پیشنهادها" : "Loading recommendations"}/> }><HomeShelves locale={locale}/></Suspense>
+  </main>;
+}
+
+async function HomeShelves({locale}:{locale:Locale}) {
   const t = getDictionary(locale);
   const {
     index,
-    news,
     updates,
     pulse,
     newEpisodes,
-    topPeople,
-    music,
     heroBanners,
     midBanners,
     initialAiResults,
@@ -89,7 +94,7 @@ export default async function HomePage() {
   const remainingLandingRails = landingRails.filter((section) => section.id !== "kids" && !anchorRailIds.includes(section.id) && !freshRailIds.includes(section.id));
 
   return (
-    <main className={`shell film-spotify-page ${landingStyles.landing}`} data-media-theme="cinema">
+    <>
       <h1 className="sr-only">{locale === 'fa' ? 'سرونما؛ موتور جستجوی فیلم، سریال و موسیقی' : 'SarvNema — film, series and music search'}</h1>
       <StructuredData data={landingJsonLd(FILM_LANDING_SEO, "/")} />
       <section className="film-landing-shell">
@@ -106,10 +111,6 @@ export default async function HomePage() {
       </section>
 
       <section className="home-stack wrap film-landing-content">
-        <DiscoveryUpdateStrip title={locale === "fa" ? "امروز در سرونما" : "Discover SarvNema"}
-          description={locale === "fa" ? `${(news.daily?.count ?? 0).toLocaleString("fa-IR")} خبر در انتخاب روزانه؛ تازه‌های آرشیو و محبوب‌های IMDb، یک‌جا برای انتخاب راحت‌تر.` : "Daily news, archive updates and IMDb's weekly picks."}
-          updatedAt={news.daily?.checkedAt || news.generatedAt}
-          links={[{ href: "#popular-imdb", label: locale === "fa" ? "محبوب‌های IMDb" : "IMDb picks" }, { href: "/updates", label: locale === "fa" ? "فیلم و قسمت‌های به‌روز" : "Archive updates" }, { href: "#daily-news", label: locale === "fa" ? "خبرهای تازه" : "Latest news" }, { href: "/music", label: locale === "fa" ? "تازه‌های موسیقی" : "Music" }]} />
         {weeklyTitles.length > 0 && <section id="popular-imdb" data-weekly-basis={weeklyBasis}><HomeRail section={makeSection("imdb-weekly", locale === "fa" ? (weeklyBasis === "imdb" ? "محبوب‌های امروز IMDb در سرونما" : weeklyBasis === "catalog-week" ? "پیشنهادهای این هفته" : "پیشنهادهایی برای دیدن") : "This week's watchlist", locale === "fa" ? (weeklyBasis === "imdb" ? "از تازه‌ترین جدول محبوبیت IMDb؛ با لینک صفحهٔ خود اثر در سرونما." : "انتخاب از آرشیو به‌روزشده، با توجه به امتیاز و تعداد رأی IMDb؛ نه جدول زندهٔ محبوبیت.") : "Available catalogue picks using IMDb ratings and vote counts. Not a live chart unless indicated.", weeklyTitles, "/browse?minScore=7")} locale={locale} /></section>}
         {updatedTitles.length > 0 && <HomeRail section={makeSection("recently-updated", locale === "fa" ? "تازه به‌روزشده در آرشیو" : "Recently updated", locale === "fa" ? "به ترتیب آخرین تغییر ثبت‌شدهٔ منابع؛ تاریخ به‌روزرسانی با سال انتشار اثر متفاوت است." : "Ordered by actual source/catalog update time, not release year.", updatedTitles, "/updates")} locale={locale} />}
         {freshLandingRails.map((section) => <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />)}
@@ -121,19 +122,32 @@ export default async function HomePage() {
         ))}
         <FocusRail items={midBanners} locale={locale} />
         <WideRailComponent items={wideItems} locale={locale} />
-        <MusicRail tracks={music.tracks} locale={locale} />
+        <Suspense fallback={null}><OptionalShelf kind="music" locale={locale}/></Suspense>
         <PublicPartyRooms mode="watch" locale={locale} />
         <AiSearchPanel locale={locale} initialQuery={aiPrompt} initialResults={initialAiResults} />
         {remainingLandingRails.map((section) => (
           <HomeRail key={section.id} section={localizeSection(section, locale)} locale={locale} />
         ))}
-        <PeopleRail people={topPeople.people} locale={locale} />
+        <Suspense fallback={null}><OptionalShelf kind="people" locale={locale}/></Suspense>
         <LandingSeoContent content={FILM_LANDING_SEO} />
-        <NewsRail items={news.items} daily={news.daily} locale={locale} />
-        <MagazineRail locale={locale} />
+        <Suspense fallback={null}><OptionalShelf kind="news" locale={locale}/></Suspense>
+        <Suspense fallback={null}><MagazineRail locale={locale} /></Suspense>
       </section>
-    </main>
+    </>
   );
+}
+
+async function OptionalShelf({kind,locale}:{kind:"music"|"news"|"people";locale:Locale}) {
+  if(kind==="news") {
+    const news=await loadVodNews().catch(()=>null);
+    return news && <NewsRail items={news.items} daily={news.daily} locale={locale}/>;
+  }
+  if(kind==="music") {
+    const music=await loadMusicHomeIndex().catch(()=>null);
+    return music && <MusicRail tracks={music.tracks} locale={locale}/>;
+  }
+  const people=await loadTopPeople().catch(()=>null);
+  return people && <PeopleRail people={people.people} locale={locale}/>;
 }
 
 async function buildHomePageData(locale: Locale) {
@@ -152,12 +166,9 @@ async function buildHomePageData(locale: Locale) {
 }
 
 async function computeHomePageData(locale: Locale) {
-  const [index, news, topPeople, rawUpdates, music, trending, audience, artwork, catalog] = await Promise.all([
+  const [index, rawUpdates, trending, audience, artwork, catalog] = await Promise.all([
     loadVodHomeIndex(),
-    loadVodNews(),
-    loadTopPeople(),
     loadReleaseUpdates(),
-    loadMusicHomeIndex(),
     loadImdbTrending(100),
     loadAudienceSignals(),
     loadHeroArtwork(),
@@ -289,11 +300,8 @@ async function computeHomePageData(locale: Locale) {
   return {
     index,
     pulse: landingPulse(rawUpdates),
-    news,
     updates,
     newEpisodes,
-    topPeople,
-    music,
     heroBanners,
     midBanners,
     initialAiResults,

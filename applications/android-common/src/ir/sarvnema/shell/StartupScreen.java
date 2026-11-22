@@ -20,8 +20,8 @@ import android.widget.TextView;
 /** Branded, one-shot loading overlay; never exposes an unfinished or failed WebView. */
 public final class StartupScreen {
     private static final long SLOW_MS = 8000, TIMEOUT_MS = 35000;
-    // Read-only JS, no native bridge. Main content + fonts must be ready, not just a committed response.
-    private static final String READY = "(function(){return document.readyState==='complete'&&!!document.querySelector('main')&&(!document.fonts||document.fonts.status==='loaded');})()";
+    // A usable, painted route is enough. Slow posters, fonts and telemetry are not startup gates.
+    private static final String READY = "(function(){return Array.from(document.querySelectorAll('main:not([aria-busy=true])')).some(m=>m.getBoundingClientRect().height>0&&!m.closest('[hidden]')&&!!m.querySelector('a[href],button,h1'));})()";
     private final Activity activity;
     private final FrameLayout root;
     private final WebView web;
@@ -38,6 +38,7 @@ public final class StartupScreen {
     private final ValueAnimator entrance;
     private final Rect clip = new Rect();
     private boolean entered, foreground = true;
+    private long probingGeneration = -1;
 
     public StartupScreen(Activity activity, FrameLayout root, WebView web, int layout, int slowMessage, Runnable onTimeout) {
         this.activity = activity; this.root = root; this.web = web; this.slowMessage = slowMessage; this.onTimeout = onTimeout;
@@ -85,7 +86,9 @@ public final class StartupScreen {
     }
     public void pageFinished() {
         if (!state.awaitingPage()) return;
-        state.finished(); probe(state.generation());
+        long token = state.generation();
+        if (probingGeneration == token) return;
+        probingGeneration = token; state.finished(); probe(token);
     }
     private void scheduleDeadline() {
         handler.postDelayed(() -> { if (state.awaitingPage()) status.setText(slowMessage); }, SLOW_MS);
@@ -117,7 +120,7 @@ public final class StartupScreen {
         web.setScaleX(.992f); web.setScaleY(.992f);
         Configuration config = root.getResources().getConfiguration();
         boolean television = (config.uiMode & Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_TELEVISION;
-        long duration = television || config.smallestScreenWidthDp >= 600 ? 520 : 420;
+        long duration = television || config.smallestScreenWidthDp >= 600 ? 220 : 160;
         PathInterpolator easing = new PathInterpolator(0.2f, 0f, 0f, 1f);
         web.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f).setDuration(duration).setInterpolator(easing).start();
         brand.animate().translationY(-10 * root.getResources().getDisplayMetrics().density).scaleX(1.035f).scaleY(1.035f).setDuration(duration).setInterpolator(easing).start();

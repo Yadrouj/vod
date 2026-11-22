@@ -13,9 +13,9 @@ const moods=[['north-road','جاده شمال'],['friendship','رفاقت و د�
 export function MusicLandingHero({tracks,archiveStats,initialQuery='',initialKind='all',iranian=true}:Props){
  const [index,setIndex]=useState(0),track=tracks[index%Math.max(1,tracks.length)];
  const title=track?.persianTitle||track?.title||'موسیقی سرونما',artist=track?.artists.map(a=>a.name).join(' · ')||'';
- return <section className={styles.hero} aria-label="کشف موسیقی" dir="rtl">
+ return <section data-search-mode={!iranian||undefined} className={styles.hero} aria-label="کشف موسیقی" dir="rtl">
   <div className={styles.copy}><span className={styles.kicker}><Headphones size={17}/> سرونما موزیک · انتخابِ حال خوب</span>
-   <h1>{initialQuery?'آهنگت همین نزدیکی‌ست.':iranian?<>از جاده شمال،<br/><em>تا حالِ خوبِ رفاقت.</em></>:'هر روز، یک کشف تازه.'}</h1>
+   <h1>{!iranian?"جست‌وجوی موسیقی":initialQuery?'آهنگت همین نزدیکی‌ست.':iranian?<>از جاده شمال،<br/><em>تا حالِ خوبِ رفاقت.</em></>:'هر روز، یک کشف تازه.'}</h1>
    <p>یه آهنگ برای خودت؛ یه پلی‌لیست برای با هم بودن.<br/>ایرانی، محلی، خاطره‌انگیز یا تازه—از همین‌جا شروع کن.</p>
    <form className={styles.search} action="/music" role="search">
     <SearchSuggest defaultValue={initialQuery} placeholder="آهنگ، خواننده یا حال‌وهوا…" locale="fa" endpoint="/api/music/search" hrefForItem={item=>'/music/'+item.imdbCode} viewAllHref={q=>'/music?q='+encodeURIComponent(q)} portal maxItems={10}/>

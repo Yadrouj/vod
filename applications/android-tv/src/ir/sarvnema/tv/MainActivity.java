@@ -74,6 +74,9 @@ public final class MainActivity extends Activity {
                 return true;
             }
             @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) { if (startup != null) startup.pageStarted(); }
+            @Override public void onPageCommitVisible(WebView view, String url) {
+                if (startup != null && trusted(Uri.parse(url)) && url.equals(view.getUrl())) startup.pageFinished();
+            }
             @Override public void onPageFinished(WebView view, String url) {
                 if (startup != null && trusted(Uri.parse(url)) && url.equals(view.getUrl())) startup.pageFinished();
                 if (errorView == null && (startup == null || !startup.blocksInput())) web.requestFocus();

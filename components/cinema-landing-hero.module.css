@@ -32,9 +32,9 @@
 .dots [aria-current] span { width: 18px; background: #e8ce88; }
 .hero :focus-visible { outline: 2px solid #e8ce88; outline-offset: 4px; }
 @media (max-width: 760px) {
-  .hero { min-height: 100svh; }
+  .hero { min-height: clamp(380px,70svh,600px); }
   .hero::after, .hero[dir="rtl"]::after { background: linear-gradient(0deg, #090909 0%, #090909e8 25%, #09090965 60%, #09090908 100%); }
-  .content { gap: 20px; padding: 160px 20px 96px; }
+  .content { gap: 10px; padding: 116px 14px 12px; }
   .copy { width: 100%; }
   .copy h2 { font-size: clamp(28px, 7vw, 44px); margin: 14px 0; }
   .meta { gap: 12px; font-size: 12px; }

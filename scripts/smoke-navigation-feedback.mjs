@@ -29,7 +29,7 @@ try {
       observer.observe(node, { attributes: true }); node.click();
     }));
     assert.ok(latency < 150, `Click feedback took ${latency}ms`);
-    await page.waitForFunction(() => document.querySelector(".route-status")?.textContent);
+    assert.equal(await page.locator(".route-status").textContent(), "", "ordinary navigation should not display a blocking toast");
     await page.waitForURL(origin + href);
     await page.waitForFunction(() => !document.documentElement.classList.contains("is-route-pending"));
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));

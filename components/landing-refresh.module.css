@@ -32,6 +32,9 @@
   .landing :global(.film-landing-now-playing) { padding: 16px; }
   .landing :global(.film-landing-info-grid > div) { padding: 8px; }
 }
+
+.placeholder{height:clamp(220px,48svh,560px);background:linear-gradient(145deg,#111510,#0e1011)}
+@media(max-width:760px){.landing :global(.film-landing-content){gap:16px}.landing :global(.film-landing-content>.section){padding-block:12px;border-radius:12px!important}.pulse{margin-block:6px;padding:8px 10px}}
 @media(max-width: 760px) {
   .landing { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
   .landing :global(.gradient-menu) { padding-bottom: 8px; backdrop-filter: none; }

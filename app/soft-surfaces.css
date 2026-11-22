@@ -43,7 +43,7 @@ html .app-mobile-nav {
 }
 html .app-mobile-nav[data-theme=music] { background: linear-gradient(155deg,#202825f7,#111615fa 65%); }
 html .app-mobile-nav [aria-current=page]::after { content: none; }
-html .app-mobile-nav .watch-together-dock .watch-together-launcher-icon { box-shadow: 0 3px 12px #0003, 0 0 0 5px #17191a; }
+html .app-mobile-nav .watch-together-dock .watch-together-launcher-icon { box-shadow: none; }
 .mobile-music-statline { display: none; }
 
 /* Pointer/touch interactions must not paint an accent frame around app chrome.

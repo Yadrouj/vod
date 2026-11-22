@@ -23,15 +23,24 @@ export function NavigationFeedback() {
     }
   }, []);
 
+  const lastRoute = useRef(pathname + "?" + search);
   useEffect(() => {
     finishNavigation();
+    const route = pathname + "?" + search;
+    if (route === lastRoute.current) return;
+    lastRoute.current = route;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Animate only the incoming page; never snapshot or remount persistent audio.
+    const main = document.querySelector("main:not([hidden])");
+    const animation = main?.animate?.([{opacity:.78},{opacity:1}], {duration:155,easing:"ease-out"});
+    return () => animation?.cancel();
   }, [finishNavigation, pathname, search]);
 
   useEffect(() => {
     function startNavigation() {
       document.documentElement.classList.add(PENDING_CLASS);
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
-      if (status.current) status.current.textContent = document.documentElement.lang === "fa" ? "در حال باز کردن صفحه…" : "Opening page…";
+      // A thin progress bar is sufficient unless the request actually stalls.
       timeoutRef.current = window.setTimeout(() => {
         if (status.current) status.current.textContent = document.documentElement.lang === "fa" ? "دریافت صفحه طول کشیده؛ اتصال اینترنت را بررسی کنید." : "Still loading. Please check your connection.";
       }, 15_000);

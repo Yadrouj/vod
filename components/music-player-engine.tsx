@@ -67,6 +67,8 @@ export function MusicPlayerEngine({
   const [volume, setVolume] = useState(settings?.volume ?? 0.9);
   const [muted, setMuted] = useState(settings?.muted ?? false);
   const [rate, setRate] = useState(settings?.rate ?? 1);
+  const [toneShift, setToneShift] = useState(false);
+  function changeSpeed(next: number) { setToneShift(false); setRate(next); }
   const [shuffle, setShuffle] = useState(settings?.shuffle ?? false);
   const [repeat, setRepeat] = useState<RepeatMode>(settings?.repeat ?? "off");
   const mobile = useMobilePlayer();
@@ -228,7 +230,8 @@ export function MusicPlayerEngine({
     player.volume = volume;
     player.muted = muted;
     player.playbackRate = rate;
-  }, [activeTrack.id, muted, mediaKey, rate, volume]);
+    if ("preservesPitch" in player) player.preservesPitch = !toneShift;
+  }, [activeTrack.id, muted, mediaKey, rate, volume, toneShift]);
 
   useEffect(() => {
     const player = media.current;
@@ -400,7 +403,7 @@ export function MusicPlayerEngine({
   }
 
   return (
-    <section className={`music-player music-player-pro ${hasVideo ? "music-player-video" : "music-player-audio"} ${albumMode ? albumStyles.album : ''}`} dir="auto">
+    <section className={`music-player music-player-pro ${hasVideo ? "music-player-video" : "music-player-audio"} ${albumMode ? albumStyles.album : ''}`} dir="auto" data-playing={playing}>
       {hasVideo ? (
         <div className="music-player-video-stage">
           {preview ? <div className="music-player-video-frame" style={{ background: `#020203 url(${JSON.stringify(activeTrack.coverUrl ?? "")}) center / contain no-repeat` }} /> : <video data-analytics-media="video" data-analytics-id={`music:${activeTrack.id}`} data-analytics-provider={source?.provider || "unknown"} key={mediaKey} ref={media as RefObject<HTMLVideoElement>} className="music-player-video-frame" poster={mirroredImageUrl(activeTrack.coverUrl ?? undefined)} preload="metadata" playsInline src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={handleLoadedMetadata} onCanPlay={() => { setSourceIssue(""); setTerminalError(false); }} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} />}
@@ -411,13 +414,16 @@ export function MusicPlayerEngine({
         <audio data-native-queue={nativeQueue} data-native-repeat={repeat} data-native-shuffle={shuffle ? "true" : "false"} data-analytics-media="audio" data-analytics-id={`music:${activeTrack.id}`} data-analytics-provider={source?.provider || "unknown"} key={mediaKey} ref={media as RefObject<HTMLAudioElement>} preload="metadata" src={playbackUrl} onTimeUpdate={syncProgress} onProgress={syncProgress} onLoadedMetadata={handleLoadedMetadata} onCanPlay={() => { setSourceIssue(""); setTerminalError(false); }} onPlay={handlePlay} onPause={() => setPlaying(false)} onEnded={onEnded} />
       ) : null}
 
-      <div className="music-player-shell">
+      <div className="music-player-shell" data-playing={playing}>
         <div className={`music-player-art ${playing ? "is-spinning" : ""}`} style={activeTrack.coverUrl ? { backgroundImage: `url(${mirroredImageUrl(activeTrack.coverUrl)})` } : undefined} />
-        <div className="music-player-now" dir="auto"><span>{activeTrack.kind === "video" ? "موزیک‌ویدیو" : playing ? "در حال پخش" : "آهنگ"}</span><strong>{activeTrack.persianTitle || activeTrack.title}</strong><small>{activeTrack.artists.map((artist, index) => <span key={artist.slug}>{index > 0 && " · "}<Link href={`/music/artists/${encodeURIComponent(artist.slug)}`}>{artist.name}</Link></span>)}</small><button className={`music-lyrics-toggle ${lyricsOpen ? "is-active" : ""}`} type="button" onClick={() => { setQueueOpen(false); setSettingsOpen(false); setLyricsOpen((value) => !value); }}><Captions size={14} /> متن آهنگ</button></div>
+        <div className="music-player-now" dir="auto"><span>{playing && !hasVideo && <i className={albumStyles.meter} aria-hidden="true"><b/><b/><b/><b/></i>}{activeTrack.kind === "video" ? "موزیک‌ویدیو" : playing ? "در حال پخش" : "آهنگ"}</span><strong>{activeTrack.persianTitle || activeTrack.title}</strong><small>{activeTrack.artists.map((artist, index) => <span key={artist.slug}>{index > 0 && " · "}<Link href={`/music/artists/${encodeURIComponent(artist.slug)}`}>{artist.name}</Link></span>)}</small><button className={`music-lyrics-toggle ${lyricsOpen ? "is-active" : ""}`} type="button" onClick={() => { setQueueOpen(false); setSettingsOpen(false); setLyricsOpen((value) => !value); }}><Captions size={14} /> متن آهنگ</button></div>
         <button className={`music-icon-button ${liked ? "is-active" : ""}`} type="button" onClick={toggleLiked} aria-label={liked ? "Remove from liked songs" : "Add to liked songs"}><Heart size={18} fill={liked ? "currentColor" : "none"} /></button>
         {(() => { const downloadSource = activeTrack.sources.find((item) => item.kind === "download") ?? source; return <a className="music-download" href={downloadGateUrl({ url: downloadSource.url, musicId: activeTrack.id, title: activeTrack.title, quality: downloadSource.quality || downloadSource.label })} target="_blank" rel="noreferrer"><Download size={16} /> دانلود</a>; })()}
       </div>
 
+      {!hasVideo && !preview && <details className={albumStyles.fx}><summary>FX · افکت صدا</summary><div role="group" aria-label="افکت سرعت و زیر و بمی">
+        {([[1,"طبیعی"],[.88,"آهسته و بم"],[1.12,"تند و زیر"]] as const).map(([value,name])=><button key={name} type="button" aria-pressed={rate===value && toneShift===(value!==1)} onClick={()=>{setToneShift(value!==1);setRate(value);}}>{name}</button>)}
+      </div></details>}
       {sourceIssue && <div className="music-player-source-issue" role="status"><p>{sourceIssue}</p>{terminalError && <div className="playback-help-actions"><button type="button" onClick={retrySource}><RotateCw size={16} /> تازه‌سازی پخش</button><button type="button" onClick={() => setSettingsOpen(true)}>انتخاب منبع</button></div>}</div>}
 
       <MusicLyrics key={activeTrack.id} trackId={activeTrack.id} title={activeTrack.persianTitle || activeTrack.title} artist={activeTrack.artists.map((item) => item.name).join(" · ")} currentTime={currentTime} duration={duration} open={lyricsOpen || (immersive && !mobile)} immersive={immersive} onSeek={seek} onClose={() => setLyricsOpen(false)} />
@@ -437,7 +443,7 @@ export function MusicPlayerEngine({
         <span>{formatTime(duration)}</span>
         <label className="music-source"><select aria-label={hasVideo ? "Video quality" : "Audio quality"} value={source.url} onChange={(event) => { setSourceIssue(""); setUseDirectSource(false); setSourceIndex(Math.max(0, streams.findIndex((item) => item.url === event.target.value))); }}>{streams.map((item) => <option value={item.url} key={item.url}>{item.quality || item.label}</option>)}</select></label>
         <label className="music-volume"><button type="button" onClick={() => setMuted((value) => !value)} aria-label={muted ? "Unmute" : "Mute"}>{muted ? <VolumeX size={15} /> : <Volume2 size={15} />}</button><input aria-label="Volume" type="range" min="0" max="1" step="0.05" value={volume} onChange={(event) => setVolume(Number(event.target.value))} /></label>
-        <label className="music-rate"><select aria-label="Playback speed" value={rate} onChange={(event) => setRate(Number(event.target.value))}>{[0.75, 1, 1.25, 1.5, 2].map((value) => <option key={value} value={value}>{value}×</option>)}</select></label>
+        <label className="music-rate"><select aria-label="Playback speed" value={rate} onChange={(event) => changeSpeed(Number(event.target.value))}>{[0.75, 1, 1.25, 1.5, 2].map((value) => <option key={value} value={value}>{value}×</option>)}</select></label>
         <button className="music-icon-button music-mobile-settings" type="button" onClick={() => { setQueueOpen(false); setLyricsOpen(false); setSettingsOpen(true); }} aria-label="تنظیمات پخش موسیقی"><Settings size={20} /></button>
         <button className={`music-icon-button ${queueOpen ? "is-active" : ""}`} type="button" onClick={() => { setLyricsOpen(false); setSettingsOpen(false); setQueueOpen((value) => !value); }} aria-label="Listening queue"><ListMusic size={18} /></button>
       </div>
@@ -445,7 +451,7 @@ export function MusicPlayerEngine({
       <ResponsiveDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} title="تنظیمات پخش موسیقی" description={activeTrack.persianTitle || activeTrack.title} theme="music" closeLabel="بستن تنظیمات موسیقی">
         <div className="media-settings-form">
           <label>کیفیت پخش<select value={source.url} onChange={event => { failedSources.current.delete(event.target.value); setTerminalError(false); setSourceIssue(""); setUseDirectSource(false); setSourceIndex(Math.max(0, streams.findIndex(item => item.url === event.target.value))); setSourceRevision(value => value + 1); }}>{streams.map(item => <option value={item.url} key={item.url}>{item.quality || item.label}</option>)}</select></label>
-          <label>سرعت پخش<select value={rate} onChange={event => setRate(Number(event.target.value))}>{[0.75, 1, 1.25, 1.5, 2].map(value => <option key={value} value={value}>{value}×</option>)}</select></label>
+          <label>سرعت پخش<select value={rate} onChange={event => changeSpeed(Number(event.target.value))}>{(toneShift ? [.75,.88,1,1.12,1.25,1.5,2] : [.75,1,1.25,1.5,2]).map(value => <option key={value} value={value}>{value}×</option>)}</select></label>
           <label>بلندی صدا<input aria-label="بلندی صدا" type="range" min="0" max="1" step="0.05" value={volume} onChange={event => setVolume(Number(event.target.value))} /></label>
           <button type="button" onClick={() => setMuted(value => !value)}>{muted ? "وصل‌کردن صدا" : "بی‌صدا کردن"}</button>
         </div>

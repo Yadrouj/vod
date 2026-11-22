@@ -4,7 +4,7 @@ Both editions display **سرونما**, with the original vector mark and the si
 Persian slogan: **هر داستان، در یک قاب روشن**. The application **and** launcher
 Activity labels, plus the task title, use the same `app_name` resource. Package IDs
 are unchanged (`ir.sarvnema.app` / `ir.sarvnema.tv`) so existing installs can update.
-The mobile preview is now version 0.3.0 (3); TV is 0.4.0 (4).
+Both previews are 0.5.0 (5).
 
 ## Experience
 
@@ -23,10 +23,7 @@ The mobile preview is now version 0.3.0 (3); TV is 0.4.0 (4).
 - Android 8–11 get the dark branded launch window. Android 12+ uses its native
   system splash with the same mark/background, handing off to the loading surface
   in the same Activity. No second splash Activity or timed duplicate intro.
-- The overlay dismisses only after `onPageFinished`, a read-only DOM check for a
-  complete document/main content/loaded fonts, and `postVisualStateCallback`.
-  A committed response or progress=100 alone cannot dismiss it. The attached,
-  VISIBLE WebView can prepare its frame while hidden behind the opaque overlay.
+- A trusted main-frame commit starts a read-only DOM check. A visible, non-busy main with content and a confirmed WebView frame can be revealed immediately, without waiting for posters, fonts or analytics. Page finish also starts the check on older WebViews. The reveal lasts 160 ms (220 ms on large screens), or is immediate with animations disabled.
 - Once ready, a 420ms mobile / 520ms TV/tablet eased fade, slight scale and upward reveal opens the
   page. There is **no artificial minimum wait**. Normal in-app page navigation and
   returning from background do not replay startup.

@@ -1,5 +1,10 @@
 /** Keep native fullscreen even when a browser (notably iOS) refuses rotation. */
 export async function enterPlayerFullscreen(element: HTMLElement) {
+  if (!element.requestFullscreen) {
+    const video = element.querySelector("video") as (HTMLVideoElement & {webkitEnterFullscreen?: () => void}) | null;
+    if (video?.webkitEnterFullscreen) { video.webkitEnterFullscreen(); return; }
+    throw new Error("Fullscreen unavailable");
+  }
   await element.requestFullscreen();
   if (!window.matchMedia("(pointer: coarse)").matches) return;
   const orientation = screen.orientation as ScreenOrientation & { lock?: (value: "landscape") => Promise<void> };

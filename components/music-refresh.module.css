@@ -1,3 +1,5 @@
+.filterPanel{margin-block:6px;color:#c9e8d6}.filterPanel summary{cursor:pointer;min-height:44px;align-content:center;font-size:.9rem}
+@media(max-width:760px){.page.page{padding-bottom:12px}}
 .page { --music-accent: #a5edc2; background: #080d0b; padding-bottom: 100px; }
 .page :global(.music-landing-hero) { border: 1px solid var(--surface-edge); border-radius: 28px !important; background: radial-gradient(ellipse at 20% 15%, #254436, transparent 65%), #0c1510; }
 .page :global(.music-landing-hero-grid) { padding: 28px; min-height: 0; gap: 32px; }

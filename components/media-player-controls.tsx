@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { Captions, Check, ChevronLeft, ChevronRight, Keyboard, ListVideo, Maximize, Minimize, Monitor, Pause, PictureInPicture2, Play, RotateCcw, RotateCw, Settings, SkipForward, Volume2, VolumeX, X } from "lucide-react";
+import { Captions, Check, ChevronLeft, ChevronRight, Keyboard, ListVideo, LockKeyhole, UnlockKeyhole, RotateCwSquare, Maximize, Minimize, Monitor, Pause, PictureInPicture2, Play, RotateCcw, RotateCw, Settings, SkipForward, Volume2, VolumeX, X } from "lucide-react";
 import { ResponsiveDialog } from "./responsive-dialog";
 import type { Locale } from "@/lib/i18n";
 import styles from "./media-player-controls.module.css";
@@ -33,6 +33,11 @@ export function MediaPlayerControls(props: Props) {
   const tvMode = props.tvMode ?? false;
   const label = (en: string, persian: string) => fa ? persian : en;
   const [visible, setVisible] = useState(true);
+  const [locked, setLocked] = useState(false);
+  const lockTouch = useRef(0);
+  const [light, setLight] = useState(1);
+  const touchLock = locked && !paused && !audio && !tvMode && !panelOpen && !settingsOpen;
+  const gesture = useRef<{id:number; side:"light"|"volume"; start:number; height:number; engaged:boolean} | null>(null);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
   const [scrub, setScrub] = useState<number | null>(null);
@@ -55,7 +60,7 @@ export function MediaPlayerControls(props: Props) {
   const heldRate = useRef<number | null>(null);
   const latest = useRef(props);
   latest.current = props;
-  const shown = visible || paused || audio || settingsOpen || panelOpen || scrub !== null;
+  const shown = !touchLock && (visible || paused || audio || settingsOpen || panelOpen || scrub !== null);
   const safeDuration = Number.isFinite(duration) ? Math.max(0, duration) : 0;
   const position = Math.min(scrub ?? time, safeDuration);
   const progress = safeDuration ? position / safeDuration * 100 : 0;
@@ -88,6 +93,13 @@ export function MediaPlayerControls(props: Props) {
     setVolume(media.volume); setMuted(media.muted);
   }
   function mute() { const media = mediaRef.current; if (media) { media.muted = !media.muted; setMuted(media.muted); } }
+  function clearLock() { setLocked(false); reveal(); }
+  function toggleLock() {
+    if (touchLock) { clearLock(); return; }
+    finishHold();
+    if (clickTimer.current) clearTimeout(clickTimer.current);
+    setLocked(true);
+  }
   function finishHold() {
     if (holdTimer.current) clearTimeout(holdTimer.current);
     if (heldRate.current === null) return false;
@@ -140,7 +152,8 @@ export function MediaPlayerControls(props: Props) {
       requestAnimationFrame(() => (frame.querySelector<HTMLElement>('[data-player-recovery] button:not(:disabled)') ?? frame.querySelector<HTMLElement>('[data-player-controls] button:not(:disabled)'))?.focus({ preventScroll: true }));
     };
     const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { onSettings(false); setTheater(false); return; }
+      if (event.key === "Escape") { setLocked(false); onSettings(false); setTheater(false); return; }
+      if (touchLock) return;
       if ((event.target as HTMLElement).closest("button, input, select, textarea, a, dialog, [data-camera-user], [contenteditable=true]") || event.ctrlKey || event.metaKey || event.altKey || panelOpen) return;
       const k = event.key.toLowerCase();
       if (tvMode && ((k === "mediaplay" && !mediaRef.current?.paused) || (k === "mediapause" && mediaRef.current?.paused))) { event.preventDefault(); return; }
@@ -184,18 +197,44 @@ export function MediaPlayerControls(props: Props) {
 
   const button = (text: string, icon: ReactNode, action: () => void, options: { disabled?: boolean; pressed?: boolean; desktop?: boolean; settings?: boolean } = {}) => <button type="button" className={`${styles.button} ${options.desktop ? styles.desktop : ""}`} aria-label={text} data-tooltip={text} aria-pressed={options.pressed} disabled={options.disabled} data-settings-trigger={options.settings || undefined} aria-expanded={options.settings ? settingsOpen : undefined} onClick={action}>{icon}</button>;
   return <>
+    {!audio && light < 1 && <div className={styles.dimmer} style={{opacity:1-light}} aria-hidden="true"/>}
+    {!audio && !tvMode && (shown || touchLock) && !paused && !panelOpen && !settingsOpen && <button className={styles.lock} data-player-ui="true" aria-label={touchLock ? label("Unlock controls","باز کردن قفل کنترل‌ها") : label("Lock controls","قفل کنترل‌ها")} aria-pressed={touchLock} type="button"
+      onPointerUp={event => {
+        if(event.pointerType !== "touch" || !event.isPrimary) return;
+        const bounds=event.currentTarget.getBoundingClientRect();
+        if(event.clientX<bounds.left || event.clientX>bounds.right || event.clientY<bounds.top || event.clientY>bounds.bottom) return;
+        lockTouch.current=Date.now(); toggleLock();
+      }}
+      onClick={event=>{ if(event.detail===0 || Date.now()-lockTouch.current>700) toggleLock(); }}>{touchLock ? <UnlockKeyhole size={18}/> : <LockKeyhole size={18}/>}</button>}
     <div className={styles.surface} data-player-surface data-player-ui="true" aria-hidden="true"
-      onContextMenu={event => { event.preventDefault(); setMenu("main"); onSettings(true); }}
+      onContextMenu={event => { event.preventDefault(); if(!touchLock){setMenu("main"); onSettings(true);} }}
       onPointerDown={event => {
-        if (event.button !== 0) return;
+        if (touchLock || event.button !== 0 || !event.isPrimary) return;
+        gesture.current = null;
+        const side = (event.target as HTMLElement).dataset.gesture;
+        if(event.pointerType === "touch" && (side === "light" || side === "volume") && !paused && !audio && !tvMode){
+          gesture.current = {id:event.pointerId,side,start:side === "light" ? light : mediaRef.current?.muted ? 0 : mediaRef.current?.volume ?? volume,height:Math.max(80,event.currentTarget.clientHeight),engaged:false};
+        }
         frameRef.current?.focus({ preventScroll: true });
         pointer.current = { x: event.clientX, y: event.clientY, type: event.pointerType, moved: false };
         event.currentTarget.setPointerCapture(event.pointerId);
         if (!paused && canRate) holdTimer.current = setTimeout(() => { heldRate.current = rate; onRate(2); setFeedback("2×"); }, 600);
       }}
-      onPointerMove={event => { if (pointer.current && Math.hypot(event.clientX - pointer.current.x, event.clientY - pointer.current.y) > 12) { pointer.current.moved = true; finishHold(); } }}
+      onPointerMove={event => {
+        const p=pointer.current, g=gesture.current;
+        if(!p || touchLock || !event.isPrimary) return;
+        const dx=event.clientX-p.x, dy=p.y-event.clientY;
+        if(Math.hypot(dx,dy)>10){p.moved=true;finishHold();}
+        if(!g || event.pointerId!==g.id || (!g.engaged && (Math.abs(dy)<12 || Math.abs(dy)<Math.abs(dx)*1.3)))return;
+        g.engaged=true;
+        const value=Math.max(g.side==="light"?.2:0,Math.min(1,g.start+dy/g.height));
+        if(g.side==="light"){setLight(value);announce(label("Brightness","روشنایی")+" "+Math.round(value*100)+"%");}
+        else {setSound(value);const actual=mediaRef.current?.volume ?? value;announce(Math.abs(actual-value)>.015 ? label("Use device volume keys","از دکمه‌های صدای دستگاه استفاده کن") : label("Volume","صدا")+" "+Math.round(value*100)+"%");}
+      }}
       onPointerUp={event => {
-        const start = pointer.current; pointer.current = null;
+        if(!event.isPrimary)return;
+        const start = pointer.current; pointer.current = null; gesture.current=null;
+        if(touchLock)return;
         if (finishHold() || !start || start.moved) return;
         const touch = start.type !== "mouse";
         const previous = lastTap.current;
@@ -209,7 +248,9 @@ export function MediaPlayerControls(props: Props) {
           lastTap.current = { at: Date.now(), x: event.clientX, y: event.clientY };
           clickTimer.current = setTimeout(() => { if (touch) { if (shown && !paused) setVisible(false); else reveal(); } else play(); }, 300);
         }
-      }} onPointerCancel={() => { pointer.current = null; finishHold(); }} onLostPointerCapture={() => finishHold()} />
+      }} onPointerCancel={() => { pointer.current = null; finishHold(); }} onLostPointerCapture={() => {gesture.current=null;pointer.current=null;finishHold();}} >
+      {!audio && !tvMode && !paused && <><i className={styles.gestureEdge} data-gesture="light"/><i className={styles.gestureEdge} data-gesture="volume"/></>}
+    </div>
     {feedback && <div className={styles.feedback} role="status">{feedback}</div>}
     {(shown || paused) && <button className={`${styles.center} ${!paused ? styles.touchOnly : ""}`} data-player-center data-player-ui="true" type="button" onClick={play} disabled={!canPlay} aria-label={paused ? label("Play", "پخش") : label("Pause", "توقف")}>{paused ? <Play fill="currentColor" /> : <Pause fill="currentColor" />}</button>}
     <div className={`${styles.controls} ${shown ? styles.visible : ""}`} data-player-controls data-player-ui="true" dir="ltr" inert={!shown} onPointerEnter={() => { holding.current = true; reveal(); }} onPointerLeave={() => { holding.current = false; reveal(); }} onFocusCapture={reveal}>
@@ -240,7 +281,7 @@ export function MediaPlayerControls(props: Props) {
           {button(label("Settings", "تنظیمات"), <Settings />, () => { setMenu("main"); onSettings(!settingsOpen); }, { settings: true, pressed: settingsOpen })}
           {canPip && !tvMode && button(label("Miniplayer (i)", "تصویر در تصویر (i)"), <PictureInPicture2 />, () => void picture(), { desktop: true, pressed: pip })}
           {!audio && !tvMode && button(label("Theater mode (t)", "حالت سینما (t)"), <Monitor />, () => setTheater(value => !value), { desktop: true, pressed: theater })}
-          {button(fullscreen ? label("Exit fullscreen (f)", "خروج از تمام‌صفحه (f)") : label("Fullscreen (f)", "تمام‌صفحه (f)"), fullscreen ? <Minimize /> : <Maximize />, onFullscreen)}
+          {button(fullscreen ? label("Exit fullscreen (f)", "خروج از تمام‌صفحه (f)") : label("Fullscreen / rotate (f)", "تمام‌صفحه و چرخش (f)"), fullscreen ? <Minimize /> : <><Maximize className={styles.expandIcon}/><RotateCwSquare className={styles.rotateIcon}/></>, onFullscreen)}
         </div>
       </div>
       {extras && <div className={styles.extras}>{extras}</div>}
@@ -251,6 +292,7 @@ export function MediaPlayerControls(props: Props) {
         {menu === "main" && <>
           <button disabled={!canSource} onClick={() => setMenu("quality")}><span>{label("Quality & source", "کیفیت و منبع")}</span><small>{sources.find(s => s.value === source)?.label}</small><ChevronRight /></button>
           <button disabled={!canRate} onClick={() => setMenu("speed")}><span>{label("Playback speed", "سرعت پخش")}</span><small>{rate === 1 ? label("Normal", "عادی") : `${rate}×`}</small><ChevronRight /></button>
+          {!audio && !tvMode && <p className={styles.hint}>{label("Swipe up or down on the left for brightness, on the right for volume.","هنگام پخش، سمت چپ تصویر را بالا و پایین بکش برای روشنایی؛ سمت راست برای صدا.")}</p>}
           <label className={styles.sound}>{label("Volume", "صدا")}<input type="range" min="0" max="1" step=".05" value={muted ? 0 : volume} onChange={event => setSound(Number(event.target.value))} /></label>
           {onEpisodes && <button onClick={() => { onSettings(false); onEpisodes(); }}><ListVideo />{label("Episodes", "قسمت‌ها")}</button>}
           {onNext && <button disabled={!canPlay} onClick={() => { onNext(); onSettings(false); }}><SkipForward />{label("Next", "بعدی")}</button>}

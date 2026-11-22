@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 // Exercises the exact read-only DOM probe shipped in both APKs, not a recreated expression.
-test("Android startup DOM gate waits for the complete document, main content and fonts", { skip: !process.env.PLAYWRIGHT_MODULE, timeout: 30000 }, async () => {
+test("Android startup DOM gate reveals usable content without waiting for optional resources", { skip: !process.env.PLAYWRIGHT_MODULE, timeout: 30000 }, async () => {
   const source = readFileSync("applications/android-common/src/ir/sarvnema/shell/StartupScreen.java", "utf8");
   const literal = source.match(/private static final String READY = ("(?:\\.|[^"\\])*");/);
   assert.ok(literal);
@@ -19,10 +19,12 @@ test("Android startup DOM gate waits for the complete document, main content and
     await page.setContent("<!doctype html><main><h1>سرونما</h1><button>پخش</button></main>");
     assert.equal(await page.evaluate(probe), true, "complete page with loaded fonts can request its first frame");
     await page.evaluate(() => Object.defineProperty(document, "fonts", { value: { status: "loading" }, configurable: true }));
-    assert.equal(await page.evaluate(probe), false, "no font flash before typography is ready");
+    assert.equal(await page.evaluate(probe), true, "late fonts must not block usable controls");
     await page.evaluate(() => Object.defineProperty(document, "fonts", { value: { status: "loaded" }, configurable: true }));
     assert.equal(await page.evaluate(probe), true);
     await page.evaluate(() => Object.defineProperty(document, "readyState", { value: "interactive", configurable: true }));
-    assert.equal(await page.evaluate(probe), false, "DOMContentLoaded alone isn't full load");
+    assert.equal(await page.evaluate(probe), true, "interactive content can already be used");
+    await page.setContent("<main aria-busy=true><h1>Loading</h1></main><div hidden><main><button>Hidden</button></main></div>");
+    assert.equal(await page.evaluate(probe), false, "streamed placeholders are not useful content");
   } finally { await browser.close(); }
 });
