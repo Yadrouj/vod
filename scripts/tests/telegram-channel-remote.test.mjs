@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { gunzipSync } from 'node:zlib';
+import { gunzipSync, gzipSync } from 'node:zlib';
 import { createRemoteChannelStore } from '../lib/telegram-channel-remote.mjs';
 
 async function harness(handler, t) {
@@ -91,4 +91,10 @@ test('the state is downloaded once per process; later cycles reuse the copy this
   first.posts.c = 3; // later in-memory mutation must not leak into the next load
   assert.deepEqual(await store.loadState(), { posts: { a: 1, b: 2 } });
   assert.deepEqual(calls.map(call => call.method), ['GET', 'PUT']);
+});
+
+test('gzip catalogue bodies are decoded even when the Content-Encoding header was stripped', async t => {
+  const body = gzipSync(JSON.stringify({ items: [1, 2] }));
+  const { store } = await harness(() => new Response(body, { headers: { 'Content-Type': 'application/json', ETag: '"v1"' } }), t);
+  assert.deepEqual(await store.readData('vod-updates'), { items: [1, 2] });
 });

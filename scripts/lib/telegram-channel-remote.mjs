@@ -2,10 +2,19 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { gzip } from 'node:zlib';
+import { gunzip, gzip } from 'node:zlib';
 import { writeJsonAtomic } from '../atomic-json.mjs';
 
 const compress = promisify(gzip);
+const decompress = promisify(gunzip);
+// The site gzips catalogue files itself, but Next.js drops the route's
+// Content-Encoding header, so fetch hands back the raw gzip bytes. Detect the
+// gzip magic number instead of trusting the header.
+const responseText = async response => {
+  const bytes = Buffer.from(await response.arrayBuffer());
+  const gzipped = bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
+  return (gzipped ? await decompress(bytes) : bytes).toString('utf8');
+};
 const digest = text => createHash('sha256').update(text).digest('hex');
 const readOptional = async file => {
   try { return await readFile(file, 'utf8'); }
@@ -68,8 +77,7 @@ export function createRemoteChannelStore({ api, token, directory, fetchImpl = fe
       const response = await request(`data/${name}`, { headers: cached !== null && tag ? { 'If-None-Match': tag } : {} }, 300000);
       if (response.status === 304 && cached !== null) return JSON.parse(cached);
       if (!response.ok) throw new Error(`Channel data ${name} returned ${response.status}`);
-      const text = await response.text();
-      const parsed = JSON.parse(text);
+      const parsed = JSON.parse(await responseText(response));
       await writeJsonAtomic(body, parsed);
       const nextTag = response.headers.get('etag');
       if (nextTag) await writeFile(tagFile, nextTag);
@@ -87,7 +95,7 @@ export function createRemoteChannelStore({ api, token, directory, fetchImpl = fe
       if (current !== null) return JSON.parse(current);
       const response = await request('state?document=state');
       if (!response.ok) throw new Error(`Channel state returned ${response.status}`);
-      const { document } = JSON.parse(await response.text());
+      const { document } = JSON.parse(await responseText(response));
       if (document) { current = JSON.stringify(document); lastUploaded = digest(current); }
       return document ?? null;
     },
